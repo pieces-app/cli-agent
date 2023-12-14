@@ -1,1 +1,1 @@
-# pieces-cli-agent
+# cli-agent
