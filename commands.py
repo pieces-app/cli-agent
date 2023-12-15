@@ -2,8 +2,17 @@ from gui import *
 from api import *
 import platform
 import sys
+import shlex
 
+# Globals
 pieces_os_version = None
+run_in_loop = False
+asset_ids = {}
+parser = None
+
+def set_parser(p):
+    global parser
+    parser = p
 
 def set_pieces_os_version(version):
     global pieces_os_version
@@ -15,17 +24,42 @@ def version(**kwargs):
         print(pieces_os_version)
     else:
         print("No message available")
+        
+def list_assets(max=None, max_flag=None, **kwargs):
+    # Determine which max value to use
+    # If max_flag is provided (i.e., not None), use it; otherwise, use max
+    global run_in_loop, asset_ids
+    
+    default_max_results = 5
+    
+    if max_flag is not None:
+        max_results = max_flag
+    elif max is not None:
+        max_results = max
+    else:
+        max_results = default_max_results  # Use the default if neither max nor max_flag is provided
 
-def list_assets(**kwargs):
-    # Logic to list assets
-    print("list") 
-    pass
+    ids = get_asset_ids(max=max_results)
+    names = get_asset_names(ids)
+    
+    for i, name in enumerate(names, start=1):
+        print(f"{i}: {name}")
+        if i >= max_results:
+            break
+
+    if run_in_loop:
+        asset_ids = {i: id for i, id in enumerate(ids, start=1)}
+
 
 def open_asset(**kwargs):
-    # Logic to open an asset
+    global asset_ids
+
     item_index = kwargs.get('ITEM_INDEX')
-    print(f"open {item_index}")
-    pass
+    asset_id = asset_ids.get(item_index)
+    if asset_id:
+        print(f"Opening asset with ID: {asset_id}")
+    else:
+        print(f"No asset found for index: {item_index}")
 
 def save_asset(**kwargs):
     # Logic to save an asset
@@ -49,6 +83,9 @@ def help(**kwargs):
 def loop(**kwargs):
     # Logic to return operating system and Python version
     welcome()
+    global run_in_loop, parser
+
+    run_in_loop = True
     
     # Check Versions and Ensure Server is Running
     os_info = platform.platform()
@@ -59,7 +96,7 @@ def loop(**kwargs):
     print_instructions()
         
     # Start the loop
-    while True:
+    while run_in_loop:
         is_running, message = check_api()
         if not is_running:
             double_line("Server no longer available. Exiting loop.")
@@ -70,20 +107,29 @@ def loop(**kwargs):
             double_space("Exiting...")
             break
 
-        # Check if the input is a command and call the corresponding function
-        if user_input in commands:
-            print()
-            print("Response: ")
-            command = commands[user_input]
-            command(**kwargs)
-            print()
-        else:
-            print(f"Unknown command: {user_input}")
+        # Use shlex to split the input into command and arguments
+        split_input = shlex.split(user_input)
+        if not split_input:
+            continue  # Skip if the input is empty
 
-commands = {
-        "list": list_assets,
-        "open": open_asset,
-        "save": save_asset,
-        "version": version,
-        "help": help
-    }
+        command_name, *command_args = split_input
+        command_name = command_name.lower()
+
+        if command_name in parser._subparsers._group_actions[0].choices:
+            subparser = parser._subparsers._group_actions[0].choices[command_name]
+            command_func = subparser.get_default('func')  # Get the function associated with the command
+
+            if command_func:
+                # Parse the arguments using the subparser
+                try:
+                    args = subparser.parse_args(command_args)
+                    command_func(**vars(args))
+                except SystemExit:
+                    # Handle the case where the argument parsing fails
+                    print(f"Invalid arguments for command: {command_name}")
+            else:
+                print(f"No function associated with command: {command_name}")
+        else:
+            print(f"Unknown command: {command_name}")
+        
+        print()
