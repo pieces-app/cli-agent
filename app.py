@@ -1,17 +1,21 @@
 import argparse
 import sys
 from commands import *
+from functools import partial
+from commands import pieces_os_version
 
 def main():
     # Directly call the run function on startup
-    global message
+    
     is_running, message = check_api()
     if is_running:
+        # Update the version_message in commands.py
+        set_pieces_os_version(message)
         pass
     else:
         double_line("Please start your Pieces OS Server")
         return
-
+    
     # Create the top-level parser
     parser = argparse.ArgumentParser(description='Pieces CLI Tool')
     subparsers = parser.add_subparsers(dest='command', required=True)
@@ -34,7 +38,10 @@ def main():
     run_parser.set_defaults(func=loop)
 
     version_parser = subparsers.add_parser('version', help='Gets version of Pieces OS')
-    version_parser.set_defaults(func=version_with_message)
+    version_parser.set_defaults(func=version)
+
+    help_parser = subparsers.add_parser('help', help='Prints a list of available commands')
+    help_parser.set_defaults(func=help)
 
     # Parse the arguments if provided
     if len(sys.argv) > 1:
