@@ -3,11 +3,15 @@ from api import *
 import platform
 import sys
 import shlex
+from bs4 import BeautifulSoup
+import os
+import re
 
 # Globals
 pieces_os_version = None
 run_in_loop = False
 asset_ids = {}
+current_asset = {}
 parser = None
 
 def set_parser(p):
@@ -24,6 +28,14 @@ def version(**kwargs):
         print(pieces_os_version)
     else:
         print("No message available")
+
+def sanitize_filename(name):
+    """ Sanitize the filename by removing or replacing invalid characters. """
+    # Replace spaces with underscores
+    name = name.replace(" ", "_")
+    # Remove invalid characters
+    name = re.sub(r'[\\/*?:"<>|]', '', name)
+    return name
         
 def list_assets(max=None, max_flag=None, **kwargs):
     # Determine which max value to use
@@ -53,13 +65,81 @@ def list_assets(max=None, max_flag=None, **kwargs):
 
 def open_asset(**kwargs):
     global asset_ids
+    global current_asset
 
     item_index = kwargs.get('ITEM_INDEX')
     asset_id = asset_ids.get(item_index)
+
+    current_asset = get_asset_details(asset_id)
+
     if asset_id:
-        print(f"Opening asset with ID: {asset_id}")
+        print(f"Loading...")
+        print()
+        # print(current_asset.get('name'))
+        name = current_asset.get('name')
+        created_readable = current_asset.get('created', {}).get('readable')
+        updated_readable = current_asset.get('updated', {}).get('readable')
+        type = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('generic')
+        language = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('specific')
+        # Assuming current_asset is your JSON object
+        formats = current_asset.get('formats', {})
+        string = None
+        
+        if formats:
+            iterable = formats.get('iterable', [])
+            if iterable:
+                first_item = iterable[0] if len(iterable) > 0 else None
+                if first_item:
+                    fragment_string = first_item.get('fragment', {}).get('string').get('raw')
+                    if fragment_string:
+                        raw = fragment_string
+                        string = extract_code_from_markdown(raw, name)
+
+
+        # Printing the values with descriptive text
+        if name:
+            print(f"{name}")
+        if created_readable:
+            print(f"Created: {created_readable}")
+        if updated_readable:
+            print(f"Updated: {updated_readable}")
+        if type:
+            print(f"Type: {type}")
+        if language:
+            print(f"Language: {language}")
+        if formats:
+            print(f"Code: {string}")
+
     else:
         print(f"No asset found for index: {item_index}")
+
+def extract_code_from_markdown(markdown, name):
+    # Sanitize the name to ensure it's a valid filename
+    filename = sanitize_filename(name)
+
+    # Using BeautifulSoup to parse the HTML and extract text
+    soup = BeautifulSoup(markdown, 'html.parser')
+    extracted_code = soup.get_text()
+
+    # Minimize multiple consecutive newlines to a single newline
+    extracted_code = re.sub(r'\n\s*\n', '\n', extracted_code)
+
+    # Define the directory path relative to the current script
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    directory = os.path.join(script_dir, 'opened_snippets')
+
+    # Ensure the directory exists, create it if not
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Path to save the extracted code
+    file_path = os.path.join(directory, f'{filename}.py')
+
+    # Writing the extracted code to a new file
+    with open(file_path, 'w') as file:
+        file.write(extracted_code)
+
+    return file_path
 
 def save_asset(**kwargs):
     # Logic to save an asset

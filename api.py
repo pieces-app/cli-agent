@@ -57,3 +57,25 @@ def get_asset_names(ids):
             print(f"Error occurred for ID {id}: {str(e)}")
 
     return names
+
+def get_asset_details(id):
+    # names = []
+    # print(ids[0]["id"])
+
+    # Iterate over each ID and make a request to the endpoint
+    try:
+        response = requests.get(f'http://localhost:1000/asset/{id}')
+        response.raise_for_status()
+
+        # Parse the JSON response
+        data = response.json()
+
+        # Extract the 'name' field and add it to the names list
+        # name = data.get('name')
+        # if name:
+        #     names.append(name)
+        return data
+    except requests.RequestException as e:
+        print(f"Error occurred for ID {id}: {str(e)}")
+
+    # return names

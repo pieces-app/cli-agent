@@ -35,6 +35,7 @@ def print_instructions():
     print()
     print("Enter command:")
     print(f"  'help' to see all commands")
+    print(f"  '-h' after a command to see detailed help")
     print(f"  'exit' to quit")
     print()
     print(f"Ready...")

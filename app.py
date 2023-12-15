@@ -41,7 +41,11 @@ def main():
     run_parser.set_defaults(func=loop)
 
     # Subparser for the 'version' command
-    version_parser = subparsers.add_parser('version', help='Gets version of Pieces OS')
+    version_parser = subparsers.add_parser(
+    'version',
+    help='Gets version of Pieces OS',
+    description='This command displays the current version of Pieces OS. It does not require any additional arguments.'
+    )
     version_parser.set_defaults(func=version)
 
     # Subparser for the 'help' command
