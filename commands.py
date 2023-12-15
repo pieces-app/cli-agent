@@ -75,13 +75,13 @@ def open_asset(**kwargs):
     if asset_id:
         print(f"Loading...")
         print()
-        # print(current_asset.get('name'))
+
+        # Set Asset Fields
         name = current_asset.get('name')
         created_readable = current_asset.get('created', {}).get('readable')
         updated_readable = current_asset.get('updated', {}).get('readable')
         type = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('generic')
         language = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('specific')
-        # Assuming current_asset is your JSON object
         formats = current_asset.get('formats', {})
         string = None
         
@@ -94,7 +94,6 @@ def open_asset(**kwargs):
                     if fragment_string:
                         raw = fragment_string
                         string = extract_code_from_markdown(raw, name)
-
 
         # Printing the values with descriptive text
         if name:
@@ -109,9 +108,9 @@ def open_asset(**kwargs):
             print(f"Language: {language}")
         if formats:
             print(f"Code: {string}")
-
     else:
         print(f"No asset found for index: {item_index}")
+        print(f"Please use 'list' to load available assets first")
 
 def extract_code_from_markdown(markdown, name):
     # Sanitize the name to ensure it's a valid filename
