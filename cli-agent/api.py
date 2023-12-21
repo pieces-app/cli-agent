@@ -13,27 +13,31 @@ configuration = openapi_client.Configuration(
     host = "http://localhost:1000"
 )
 
-def check_api(**kwargs):
-    # Logic to check the API
-    with openapi_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-        api_instance = openapi_client.WellKnownApi(api_client)
+# Initialize the ApiClient globally
+api_client = openapi_client.ApiClient(configuration)
 
-        try:
-            # /.well-known/version [Get]
-            api_response = api_instance.get_well_known_version()
-            return True, api_response
-        except Exception as e:
-            return False, "Exception when calling WellKnownApi->get_well_known_version: %s\n" % e
+
+
+def check_api(**kwargs):
+    
+    well_known_instance = openapi_client.WellKnownApi(api_client)
+
+    try:
+        # /.well-known/version [Get]
+        api_response = well_known_instance.get_well_known_version()
+        return True, api_response
+    except Exception as e:
+        return False, "Exception when calling WellKnownApi->get_well_known_version: %s\n" % e
     
 def get_asset_ids(max=None, **kwargs):
-    # Logic to check the API
-    try:
-        response = requests.get('http://localhost:1000/assets/identifiers')
-        response.raise_for_status()
+    assets_api = openapi_client.AssetsApi(api_client)
 
-        # Parse the JSON response
-        data = response.json()
+    try:
+        # Call the API to get assets identifiers
+        api_response = assets_api.assets_identifiers_snapshot()
+
+        # Extract data from the response
+        data = api_response.to_dict()  # Convert the response to a dictionary
 
         # Extract the 'id' values from each item in the 'iterable' list
         ids = [item['id'] for item in data.get('iterable', [])]
@@ -44,50 +48,43 @@ def get_asset_ids(max=None, **kwargs):
 
         # Return the list of ids
         return ids
-    except requests.RequestException as e:
-        # Return the error message if there's an exception
-        return str(e)
+    except ApiException as e:
+        # Handle the API exception
+        print("Exception when calling AssetsApi->assets_identifiers_snapshot: %s\n" % e)
+        return None
     
 def get_asset_names(ids):
     names = []
-    # print(ids[0]["id"])
+    asset_api = openapi_client.AssetApi(api_client)
 
-    # Iterate over each ID and make a request to the endpoint
     for id in ids:
         try:
-            response = requests.get(f'http://localhost:1000/asset/{id}')
-            response.raise_for_status()
+            # Use the OpenAPI client to get asset snapshot
+            api_response = asset_api.asset_snapshot(id)
 
-            # Parse the JSON response
-            data = response.json()
+            # Convert the response to a dictionary
+            data = api_response.to_dict()
 
             # Extract the 'name' field and add it to the names list
             name = data.get('name')
             if name:
                 names.append(name)
-        except requests.RequestException as e:
+        except ApiException as e:
             print(f"Error occurred for ID {id}: {str(e)}")
 
     return names
 
 def get_asset_details(id):
-    # names = []
-    # print(ids[0]["id"])
+    asset_api = openapi_client.AssetApi(api_client)
 
-    # Iterate over each ID and make a request to the endpoint
     try:
-        response = requests.get(f'http://localhost:1000/asset/{id}')
-        response.raise_for_status()
+        # Use the OpenAPI client to get asset snapshot
+        api_response = asset_api.asset_snapshot(id)
 
-        # Parse the JSON response
-        data = response.json()
+        # Convert the response to a dictionary
+        data = api_response.to_dict()
 
-        # Extract the 'name' field and add it to the names list
-        # name = data.get('name')
-        # if name:
-        #     names.append(name)
         return data
-    except requests.RequestException as e:
+    except ApiException as e:
         print(f"Error occurred for ID {id}: {str(e)}")
-
-    # return names
+        return None
