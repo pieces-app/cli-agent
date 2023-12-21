@@ -6,6 +6,7 @@ import shlex
 from bs4 import BeautifulSoup
 import os
 import re
+import pyperclip
 
 # Globals
 pieces_os_version = None
@@ -140,9 +141,6 @@ def open_asset(**kwargs):
     if formats:
         print(f"Code: {string}")
     print()
-    # else:
-    #     print(f"No asset found for index: {item_index}")
-    #     print(f"Please use 'list' to load available assets first")
 
 def extract_code_from_markdown(markdown, name):
     # Sanitize the name to ensure it's a valid filename
@@ -173,21 +171,44 @@ def extract_code_from_markdown(markdown, name):
     return file_path
 
 def save_asset(**kwargs):
-    # Logic to save an asset
-    print("Saving the File")
     pass
+
 
 def create_asset(**kwargs):
     global application
     global current_asset
-    # Logic to create an asset
     
-    new_asset = create_new_asset(application, raw_string="This is a 10th test", metadata=None)
-    
-    current_asset = {new_asset.id}
-    print(f"Asset Created use 'open' to view")
+    # TODO add more ways to create an asset such as an entire file
 
-    return new_asset
+    # Save text copied to the clipboard as an asset
+    try:
+        text = pyperclip.paste()
+        double_line("Content to save: ")
+        print(text)
+        print()
+
+        # Ask the user for confirmation to save
+        user_input = input("Do you want to save this content? (y/n): ").strip().lower()
+        if user_input == 'y':
+            print("Saving content...")
+            print()
+            new_asset = create_new_asset(application, raw_string=text, metadata=None)
+    
+            current_asset = {new_asset.id}
+            print(f"Asset Created use 'open' to view")
+
+            return new_asset
+            # Add your saving logic here
+        elif user_input == 'n':
+            print("Save cancelled.")
+            print()
+        else:
+            print("Invalid input. Please type 'y' to save or 'n' to cancel.")
+
+    except pyperclip.PyperclipException as e:
+        print("Error accessing clipboard:", str(e))
+    
+    
 
 def check():
     # Check if Pieces is Running
