@@ -43,20 +43,45 @@ def sanitize_filename(name):
     # Remove invalid characters
     name = re.sub(r'[\\/*?:"<>|]', '', name)
     return name
-        
-def list_assets(max=None, max_flag=None, **kwargs):
-    # Determine which max value to use
-    # If max_flag is provided (i.e., not None), use it; otherwise, use max
+
+def list_assets(list_type_or_max='assets', **kwargs):
+    max_results = None
+    list_apps = False
+
+    # Check if the argument is a digit (for max_results value) or 'apps'
+    if list_type_or_max.isdigit():
+        max_results = int(list_type_or_max)
+    elif list_type_or_max == 'apps':
+        list_apps = True
+
+    if list_apps:
+        # Logic for listing applications
+        double_space("Listing applications...")
+        application_list = list_applications()
+
+        from collections.abc import Iterable
+
+
+        if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
+            for i, app in enumerate(application_list.iterable, start=1):
+                app_name = getattr(app, 'name', 'Unknown').value if hasattr(app, 'name') and hasattr(app.name, 'value') else 'Unknown'
+                app_version = getattr(app, 'version', 'Unknown')
+                app_platform = getattr(app, 'platform', 'Unknown').value if hasattr(app, 'platform') and hasattr(app.platform, 'value') else 'Unknown'
+
+                print(f"{i}: {app_name}, {app_version}, {app_platform}")
+        else:
+            print("Error: The 'Applications' object does not contain an iterable list of applications.")
+
+        print()
+        return  
+
+    # Existing logic for listing assets
     global run_in_loop, asset_ids
     
     default_max_results = 10
     
-    if max_flag is not None:
-        max_results = max_flag
-    elif max is not None:
-        max_results = max
-    else:
-        max_results = default_max_results  # Use the default if neither max nor max_flag is provided
+    if max_results is None:
+        max_results = default_max_results
 
     ids = get_asset_ids(max=max_results)
     names = get_asset_names(ids)

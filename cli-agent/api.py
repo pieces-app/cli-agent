@@ -182,6 +182,15 @@ def create_new_asset(application, raw_string="testing", metadata=None):
         print("An exception occurred when calling AssetsApi->assets_create_new_asset: %s\n" % e)
         return None
     
+def list_applications():
+    applications_api = openapi_client.ApplicationsApi(api_client)
+
+    apps_raw = applications_api.applications_snapshot()
+
+    # apps_dict = 
+    
+    return apps_raw
+
 def register_application(existing_application=None):
     # Application
     applications_api = openapi_client.ApplicationsApi(api_client)
