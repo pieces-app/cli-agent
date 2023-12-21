@@ -146,7 +146,7 @@ def save_asset(**kwargs):
 
 def check():
     # Check if Pieces is Running
-    is_running, message = check_api()
+    is_running, message, application = check_api()
     if is_running:
         print("Pieces OS is Running")
         line()
@@ -168,14 +168,14 @@ def loop(**kwargs):
     # Check Versions and Ensure Server is Running
     os_info = platform.platform()
     python_version = sys.version.split()[0]
-    os_running, os_version = check_api()
+    os_running, os_version, application = check_api()
   
-    print_response(f"Operating System: {os_info}", f"Python Version: {python_version}", f"Pieces OS Version: {os_version if os_running else 'Not available'}")
+    print_response(f"Operating System: {os_info}", f"Python Version: {python_version}", f"Pieces OS Version: {os_version if os_running else 'Not available'}", f"Application: {application.name.name}")
     print_instructions()
         
     # Start the loop
     while run_in_loop:
-        is_running, message = check_api()
+        is_running, message, application = check_api()
         if not is_running:
             double_line("Server no longer available. Exiting loop.")
             break

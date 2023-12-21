@@ -5,10 +5,11 @@ from commands import pieces_os_version
 
 def main():
     # Ensure the Server is running and store Pieces OS version
-    is_running, message = check_api()
+    is_running, message, application = check_api()
     if is_running:
         # Update the version_message in commands.py
         set_pieces_os_version(message)
+        # print(application)
         pass
     else:
         double_line("Please start your Pieces OS Server")
