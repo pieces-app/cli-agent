@@ -1,8 +1,3 @@
-import requests
-import pprint
-import json
-import time
-import os
 import openapi_client
 from openapi_client.rest import ApiException
 from pprint import pprint
@@ -16,8 +11,7 @@ configuration = openapi_client.Configuration(
 # Initialize the ApiClient globally
 api_client = openapi_client.ApiClient(configuration)
 
-
-
+# API CALLS
 def check_api(**kwargs):
     
     well_known_instance = openapi_client.WellKnownApi(api_client)
@@ -88,3 +82,32 @@ def get_asset_details(id):
     except ApiException as e:
         print(f"Error occurred for ID {id}: {str(e)}")
         return None
+    
+def create_new_asset(application, raw_string="testing", metadata=None):
+    # Assuming there is an OpenAPI generated client for the Assets API
+    assets_api = openapi_client.AssetsApi(api_client)
+    
+    # Constructing the Seed object similar to the Dart example
+    seed = openapi_client.Seed(
+        asset=openapi_client.SeededAsset(
+            application=application,
+            format=openapi_client.SeededFormat(
+                fragment=openapi_client.SeededFragment(
+                    string=openapi_client.TransferableString(
+                        raw=raw_string
+                    )
+                )
+            ),
+            metadata=metadata  # This should be constructed as per the SDK's definition
+        ),
+        type=openapi_client.SeedTypeEnum.ASSET
+    )
+    
+    # Creating the new asset using the assets API
+    try:
+        created_asset = assets_api.assets_create_new_asset(seed)
+        return created_asset
+    except ApiException as e:
+        print("An exception occurred when calling AssetsApi->assets_create_new_asset: %s\n" % e)
+        return None
+    

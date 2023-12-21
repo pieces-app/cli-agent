@@ -62,7 +62,6 @@ def list_assets(max=None, max_flag=None, **kwargs):
     if run_in_loop:
         asset_ids = {i: id for i, id in enumerate(ids, start=1)}
 
-
 def open_asset(**kwargs):
     global asset_ids
     global current_asset
