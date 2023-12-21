@@ -186,8 +186,6 @@ def list_applications():
     applications_api = openapi_client.ApplicationsApi(api_client)
 
     apps_raw = applications_api.applications_snapshot()
-
-    # apps_dict = 
     
     return apps_raw
 

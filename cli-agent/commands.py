@@ -207,12 +207,13 @@ def extract_code_from_markdown(markdown, name, language):
 def save_asset(**kwargs):
     global application
     global current_asset
+    print("Not Currently Working")
 
-    if not current_asset:
-        open_asset()
-    else:
-        asset_to_update = current_asset.get('id')
-        update_asset(asset_to_update)
+    # if not current_asset:
+    #     open_asset()
+    # else:
+    #     asset_to_update = current_asset.get('id')
+    #     update_asset(asset_to_update)
 
 def delete_asset(**kwargs):
     global application
