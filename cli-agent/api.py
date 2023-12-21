@@ -155,10 +155,10 @@ def get_asset_details(id):
         return None
     
 def create_new_asset(application, raw_string="testing", metadata=None):
-    # Assuming there is an OpenAPI generated client for the Assets API
+    
     assets_api = openapi_client.AssetsApi(api_client)
     
-    # Constructing the Seed object similar to the Dart example
+    # Construct a Seed
     seed = openapi_client.Seed(
         asset=openapi_client.SeededAsset(
             application=application,

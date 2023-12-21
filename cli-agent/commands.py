@@ -112,8 +112,8 @@ def open_asset(**kwargs):
     name = current_asset.get('name')
     created_readable = current_asset.get('created', {}).get('readable')
     updated_readable = current_asset.get('updated', {}).get('readable')
-    type = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('generic')
-    language = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('specific')
+    type = "No Type"
+    language = "No Language"
     formats = current_asset.get('formats', {})
     string = None
     
@@ -122,10 +122,20 @@ def open_asset(**kwargs):
         if iterable:
             first_item = iterable[0] if len(iterable) > 0 else None
             if first_item:
+                classification_str = first_item.get('classification', {}).get('generic')
+                if classification_str:
+                # Extract the last part after the dot
+                    type = classification_str.split('.')[-1]
+
+                language_str = first_item.get('classification', {}).get('specific')
+                if language_str:
+                    # Extract the last part after the dot
+                    language = language_str.split('.')[-1]
+                
                 fragment_string = first_item.get('fragment', {}).get('string').get('raw')
                 if fragment_string:
                     raw = fragment_string
-                    string = extract_code_from_markdown(raw, name)
+                    string = extract_code_from_markdown(raw, name, language)
 
     # Printing the values with descriptive text
     if name:
@@ -142,9 +152,10 @@ def open_asset(**kwargs):
         print(f"Code: {string}")
     print()
 
-def extract_code_from_markdown(markdown, name):
+def extract_code_from_markdown(markdown, name, language):
     # Sanitize the name to ensure it's a valid filename
     filename = sanitize_filename(name)
+    file_extension = get_file_extension(language)
 
     # Using BeautifulSoup to parse the HTML and extract text
     soup = BeautifulSoup(markdown, 'html.parser')
@@ -162,13 +173,79 @@ def extract_code_from_markdown(markdown, name):
         os.makedirs(directory)
 
     # Path to save the extracted code
-    file_path = os.path.join(directory, f'{filename}.py')
+    file_path = os.path.join(directory, f'{filename}{file_extension}')
 
     # Writing the extracted code to a new file
     with open(file_path, 'w') as file:
         file.write(extracted_code)
 
     return file_path
+
+def get_file_extension(language):
+    extension_mapping = {
+        'csx': '.csx', 'cs': '.cs', 'html': '.html', 'htm': '.htm', 'shtml': '.shtml',
+        'xhtml': '.xhtml', 'hs': '.hs', 'hs-boot': '.hs-boot', 'hsig': '.hsig',
+        'cpp': '.cpp', 'cc': '.cc', 'cp': '.cpp', 'cxx': '.cpp', 'c': '.c',
+        'h': '.h', 'hh': '.h', 'hpp': '.hpp', 'hxx': '.hxx', 'inl': '.inl',
+        'ipp': '.ipp', 'ixx': '.ixx', 'cppm': '.cppm', 'csv': '.csv', 'doc': '.doc',
+        'docm': '.docm', 'docx': '.docx', 'exe': '.exe', 'gif': '.gif', 'ico': '.ico',
+        'jpe': '.jpg', 'jpeg': '.jpg', 'jpg': '.jpg', 'jpgm': '.jpgm', 'jpgv': '.jpgv',
+        'log': '.log', 'mp2': '.mp2', 'mp2a': '.mp2a', 'mp3': '.mp3', 'mp4': '.mp4',
+        'mp4a': '.mp4', 'oga': '.ogg', 'ogg': '.ogg', 'ogv': '.ogv', 'ogx': '.ogx',
+        'ppt': '.ppt', 'pptx': '.pptx', 'pptm': '.pptm', 'qt': '.mov', 'text': '.txt',
+        'tif': '.tif', 'tiff': '.tiff', 'txt': '.txt', 'wav': '.wav', 'weba': '.weba',
+        'webm': '.webm', 'webp': '.webp', 'xla': '.xls', 'xlam': '.xlam', 'xlc': '.xlc',
+        'xlm': '.xlm', 'xls': '.xls', 'xlsb': '.xlsb', 'xlsm': '.xlsm', 'xlsx': '.xlsx',
+        'xlt': '.xlt', 'xltm': '.xltm', 'xltx': '.xltx', 'pdf': '.pdf', 'png': '.png',
+        'rpm': '.rpm', 'zip': '.zip', 'woff': '.woff', 'woff2': '.woff2', 'svgz': '.svgz',
+        'bin': '.bin', 'bmp': '.bmp', 'eot': '.eot', 'gz': '.gz', 'jar': '.jar',
+        'mpkg': '.mpkg', 'ai': '.ai', 'eps': '.eps', 'dmg': '.dmg', 'list': '.txt',
+        'rtx': '.rtx', 'uri': '.uri', 'uris': '.txt', 'urls': '.txt', 'css': '.css',
+        'dart': '.dart', 'java': '.java', 'bsh': '.bsh', 'js': '.js', 'jsx': '.jsx',
+        'mjs': '.mjs', 'htc': '.htc', 'json': '.json', 'ipynb': '.ipynb', 'gltf': '.gltf',
+        'jsonml': '.jsonml', 'ps': '.ps', 'ssml': '.ssml', 'wasm': '.wasm', 'rtf': '.rtf',
+        'cco': '.txt', 'pl': '.pl', 'pc': '.txt', 'pm': '.pm', 'pmc': '.txt',
+        'pod': '.pod', 't': '.t', 'xml': '.xml', 'tld': '.txt', 'dtml': '.dtml',
+        'rng': '.rng', 'rss': '.rss', 'opml': '.opml', 'svg': '.svg', 'xaml': '.xaml',
+        'sublime-snippet': '.txt', 'tmLanguage': '.txt', 'tmPreferences': '.txt',
+        'tmSnippet': '.txt', 'tmTheme': '.txt', 'csproj': '.csproj', 'fsproj': '.fsproj',
+        'sqlproj': '.sqlproj', 'vbproj': '.vbproj', 'vcproj': '.vcproj', 'vcxproj': '.vcxproj',
+        'dae': '.dae', 'props': '.props', 'targets': '.targets', 'xsd': '.xsd', 'xsl': '.xsl',
+        'xslt': '.xslt', 'ecma': '.txt', 'node': '.txt', 'php': '.php', 'php3': '.php',
+        'php4': '.php', 'php5': '.php', 'php7': '.php', 'php8': '.php', 'phps': '.php',
+        'phpt': '.phpt', 'phtml': '.phtml', 'py': '.py', 'py3': '.py', 'pyw': '.pyw',
+        'pyi': '.pyi', 'pyx': '.pyx', 'pyx.in': '.pyx', 'pxd': '.pxd', 'pxd.in': '.pxd',
+        'pxi': '.pxi', 'pxi.in': '.pxi', 'rpy': '.rpy', 'cpy': '.cpy', 'gyp': '.gyp',
+        'gypi': '.gypi', 'vpy': '.vpy', 'smk': '.smk', 'wscript': '.wscript', 'bazel': '.bazel',
+        'bzl': '.bzl', 'pyc': '.pyc', 'class': '.class', 'p': '.p', 'pas': '.pas',
+        'curl': '.curl', 'mcurl': '.txt', 'go': '.go', 'swift': '.swift', 'rs': '.rs',
+        'ts': '.ts', 'tsx': '.tsx', 'rb': '.rb', 'rbi': '.rbi', 'rbx': '.rbx',
+        'rjs': '.rjs', 'rabl': '.rabl', 'rake': '.rake', 'capfile': '.capfile', 'jbuilder': '.jbuilder',
+        'gemspec': '.gemspec', 'podspec': '.podspec', 'irbrc': '.irbrc', 'pryrc': '.pryrc', 'prawn': '.prawn',
+        'thor': '.thor', 'Appfile': '.txt', 'Appraisals': '.txt', 'Berksfile': '.txt', 'Brewfile': '.txt',
+        'Cheffile': '.txt', 'Deliverfile': '.txt', 'Fastfile': '.txt', 'Gemfile': '.Gemfile', 'Guardfile': '.txt',
+        'Podfile': '.Podfile', 'Rakefile': '.Rakefile', 'Rantfile': '.txt', 'Scanfile': '.txt', 'simplecov': '.txt',
+        'Snapfile': '.txt', 'Thorfile': '.txt', 'Vagrantfile': '.Vagrantfile', 'scala': '.scala', 'sbt': '.sbt',
+        'sc': '.txt', 'cmd': '.cmd', 'bat': '.bat', 'coffee': '.coffee', 'erl': '.erl',
+        'hrl': '.hrl', 'escript': '.escript', 'lua': '.lua', 'md': '.md', 'mdown': '.mdown',
+        'mdwn': '.mdwn', 'markdown': '.md', 'markdn': '.md', 'matlab': '.matlab', 'm': '.m',
+        'ps1': '.ps1', 'sh': '.sh', 'bash': '.sh', 'bashrc': '.bashrc', 'ash': '.sh',
+        'zsh': '.zsh', '.bash_aliases': '.bash_aliases', '.bash_completions': '.bash_completions', '.bash_functions': '.bash_functions', '.bash_login': '.bash_login',
+        '.bash_logout': '.bash_logout', '.bash_profile': '.bash_profile', '.bash_variables': '.bash_variables', '.profile': '.profile', '.textmate_init': '.textmate_init',
+        '.zlogin': '.zlogin', '.zlogout': '.zlogout', '.zprofile': '.zprofile', '.zshenv': '.zshenv', '.zshrc': '.zshrc',
+        'PKGBUILD': '.PKGBUILD', 'ebuild': '.ebuild', 'eclass': '.eclass', 'r': '.r', 'sql': '.sql',
+        'ddl': '.ddl', 'dml': '.dml', 'tex': '.tex', 'ltx': '.ltx', 'sty': '.sty',
+        'cls': '.cls', 'unknown': '.txt', 'yaml': '.yaml', 'yml': '.yml', 'toml': '.toml',
+        'tml': '.txt', 'Cargo.lock': '.lock', 'Gopkg.lock': '.lock', 'Pipfile': '.Pipfile', 'poetry.lock': '.lock',
+        'uniform_resource_locator': '.txt', 'custom_url_scheme': '.txt', 'unix_file_path': '.txt', 'windows_file_path': '.txt', 'uniform_resource_identifier': '.txt',
+        # ... add all other mappings here ...
+    }
+
+    # Lowercase the language for case-insensitive matching
+    language = language.lower()
+
+    # Return the corresponding file extension or default to '.txt' if not found
+    return extension_mapping.get(language, '.txt')
 
 def save_asset(**kwargs):
     pass
