@@ -49,7 +49,7 @@ def list_assets(max=None, max_flag=None, **kwargs):
     # If max_flag is provided (i.e., not None), use it; otherwise, use max
     global run_in_loop, asset_ids
     
-    default_max_results = 5
+    default_max_results = 10
     
     if max_flag is not None:
         max_results = max_flag
@@ -88,8 +88,6 @@ def open_asset(**kwargs):
             open_from_command_line()
             ## TODO store the list to a local database and call the database
             recent_id = list_assets()
-            # print(recent_id)
-            
             current_asset = get_asset_details(recent_id)
             print()
 
@@ -181,6 +179,107 @@ def extract_code_from_markdown(markdown, name, language):
 
     return file_path
 
+def save_asset(**kwargs):
+    global application
+    global current_asset
+
+    if not current_asset:
+        open_asset()
+    else:
+        asset_to_update = current_asset.get('id')
+        update_asset(asset_to_update)
+
+def delete_asset(**kwargs):
+    global application
+    global current_asset
+
+    if not current_asset:
+        # Open the most recent asset
+        if run_in_loop:
+            open_asset()
+            print("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone.")
+            print("type 'delete' to confirm")
+        else:
+            print()
+            asset_to_delete = list_assets(max=1)
+            # open_asset()
+            print()
+            confirm = input("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone. (y/n): ").strip().lower()
+            if confirm == 'y':
+                print("Deleting asset...")
+                print(asset_to_delete)
+                delete_result = delete_asset_by_id(asset_to_delete)
+                print(delete_result)
+                print("Asset deleted.")
+                print()
+                list_assets()
+            elif confirm == 'n':
+                print("Deletion cancelled.")
+                print()
+            else:
+                print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
+                print()
+    else:
+        asset_to_delete = current_asset.get('id')
+
+        # Ask the user for confirmation before deleting
+        confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
+        if confirm == 'y':
+            print("Deleting asset...")
+            delete_asset_by_id(asset_to_delete) 
+            print("Asset deleted.")
+            print()
+            list_assets()
+        elif confirm == 'n':
+            print("Deletion cancelled.")
+        else:
+            print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
+    
+
+def create_asset(**kwargs):
+    global application
+    global current_asset
+    
+    # TODO add more ways to create an asset such as an entire file
+
+    # Save text copied to the clipboard as an asset
+    try:
+        text = pyperclip.paste()
+        double_line("Content to save: ")
+        print(text)
+        print()
+
+        # Ask the user for confirmation to save
+        user_input = input("Do you want to save this content? (y/n): ").strip().lower()
+        if user_input == 'y':
+            print("Saving content...")
+            print()
+            new_asset = create_new_asset(application, raw_string=text, metadata=None)
+    
+            current_asset = {new_asset.id}
+            print(f"Asset Created use 'open' to view")
+
+            return new_asset
+            # Add your saving logic here
+        elif user_input == 'n':
+            print("Save cancelled.")
+            print()
+        else:
+            print("Invalid input. Please type 'y' to save or 'n' to cancel.")
+
+    except pyperclip.PyperclipException as e:
+        print("Error accessing clipboard:", str(e))
+    
+def check():
+    # Check if Pieces is Running
+    is_running, message, application = check_api()
+    if is_running:
+        print("Pieces OS is Running")
+        line()
+    else:
+        double_line("Please start your Pieces OS Server")
+    return is_running
+
 def get_file_extension(language):
     extension_mapping = {
         'csx': '.csx', 'cs': '.cs', 'html': '.html', 'htm': '.htm', 'shtml': '.shtml',
@@ -238,7 +337,6 @@ def get_file_extension(language):
         'cls': '.cls', 'unknown': '.txt', 'yaml': '.yaml', 'yml': '.yml', 'toml': '.toml',
         'tml': '.txt', 'Cargo.lock': '.lock', 'Gopkg.lock': '.lock', 'Pipfile': '.Pipfile', 'poetry.lock': '.lock',
         'uniform_resource_locator': '.txt', 'custom_url_scheme': '.txt', 'unix_file_path': '.txt', 'windows_file_path': '.txt', 'uniform_resource_identifier': '.txt',
-        # ... add all other mappings here ...
     }
 
     # Lowercase the language for case-insensitive matching
@@ -246,56 +344,6 @@ def get_file_extension(language):
 
     # Return the corresponding file extension or default to '.txt' if not found
     return extension_mapping.get(language, '.txt')
-
-def save_asset(**kwargs):
-    pass
-
-
-def create_asset(**kwargs):
-    global application
-    global current_asset
-    
-    # TODO add more ways to create an asset such as an entire file
-
-    # Save text copied to the clipboard as an asset
-    try:
-        text = pyperclip.paste()
-        double_line("Content to save: ")
-        print(text)
-        print()
-
-        # Ask the user for confirmation to save
-        user_input = input("Do you want to save this content? (y/n): ").strip().lower()
-        if user_input == 'y':
-            print("Saving content...")
-            print()
-            new_asset = create_new_asset(application, raw_string=text, metadata=None)
-    
-            current_asset = {new_asset.id}
-            print(f"Asset Created use 'open' to view")
-
-            return new_asset
-            # Add your saving logic here
-        elif user_input == 'n':
-            print("Save cancelled.")
-            print()
-        else:
-            print("Invalid input. Please type 'y' to save or 'n' to cancel.")
-
-    except pyperclip.PyperclipException as e:
-        print("Error accessing clipboard:", str(e))
-    
-    
-
-def check():
-    # Check if Pieces is Running
-    is_running, message, application = check_api()
-    if is_running:
-        print("Pieces OS is Running")
-        line()
-    else:
-        double_line("Please start your Pieces OS Server")
-    return is_running
 
 def help(**kwargs):
     print_help()

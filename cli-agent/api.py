@@ -197,67 +197,20 @@ def register_application(existing_application=None):
     except Exception as e:
         print("Exception when calling ApplicationsApi->applications_register: %s\n" % e)
 
-# def created_seeded_format():
-#     json = {}
+def update_asset(asset, raw_string, ):
+    asset_api = openapi_client.AssetApi(api_client)
 
-#     try:
-#         seeded_format_instance = SeededFormat.from_json(json)
+    
+    
+    response = asset_api.asset_update(asset=asset, transferables=False)
 
-#         # convert the object into a dict
-#         seeded_format_dict = seeded_format_instance.to_dict()
-        
-#         # create an instance of SeededFormat from a dict
-#         seeded_format_from_dict = SeededFormat.from_dict(seeded_format_dict)
+    print(response)
 
-#         return seeded_format_from_dict
-        
-#         # Code from SDK that seems like a typo
-#         # seeded_format_form_dict = seeded_format.from_dict(seeded_format_dict)
-
-#     except Exception as e:
-#         print("Exception when attempting to create a SeededFormat: %s\n" % e)
-
-# def created_seeded_fragment(var_schema=None, string=None, bytes=None, metadata=None):
-#     json = {
-#     }
-
-#     try:
-#         seeded_fragment_instance = SeededFragment.from_json(json)
-
-#         # convert the object into a dict
-#         seeded_fragment_dict = seeded_fragment_instance.to_dict()
-        
-#         # create an instance of SeededFormat from a dict
-#         seeded_fragment_from_dict = SeededFragment.from_dict(seeded_fragment_dict)
-
-#         return seeded_fragment_from_dict
-        
-#         # Code from SDK that seems like a typo
-#         # seeded_format_form_dict = seeded_format.from_dict(seeded_format_dict)
-
-#     except Exception as e:
-#         print("Exception when attempting to create a SeededFormat: %s\n" % e)
-
-
-# def created_tras(var_schema=None, string=None, bytes=None, metadata=None):
-#     json = {
-#     }
-
-#     openapi_client.SeededFragment()
-
-#     try:
-#         seeded_fragment_instance = SeededFragment.from_json(json)
-
-#         # convert the object into a dict
-#         seeded_fragment_dict = seeded_fragment_instance.to_dict()
-        
-#         # create an instance of SeededFormat from a dict
-#         seeded_fragment_from_dict = SeededFragment.from_dict(seeded_fragment_dict)
-
-#         return seeded_fragment_from_dict
-        
-#         # Code from SDK that seems like a typo
-#         # seeded_format_form_dict = seeded_format.from_dict(seeded_format_dict)
-
-#     except Exception as e:
-#         print("Exception when attempting to create a SeededFormat: %s\n" % e)
+def delete_asset_by_id(asset_id):
+    delete_instance = openapi_client.AssetsApi(api_client)
+    
+    try:
+        response = delete_instance.assets_delete_asset(asset_id)
+        return response
+    except Exception as e:
+        return f"Failed to delete {asset_id}"

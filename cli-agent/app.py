@@ -38,6 +38,10 @@ def main():
     save_parser = subparsers.add_parser('save', help='Save the current asset')
     save_parser.set_defaults(func=save_asset)
 
+    # Subparser for the 'delete' command
+    save_parser = subparsers.add_parser('delete', help='Delete the current asset')
+    save_parser.set_defaults(func=delete_asset)
+
     # Subparser for the 'save' command
     save_parser = subparsers.add_parser('create', help='Create a new asset')
     save_parser.set_defaults(func=create_asset)
