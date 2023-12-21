@@ -1,5 +1,7 @@
 import openapi_client
 from openapi_client.rest import ApiException
+from openapi_client.models.seeded_format import SeededFormat
+from openapi_client.models.seeded_fragment import SeededFragment
 from openapi_client.models.application import Application
 from store import create_connection, get_application, insert_application, create_table
 from pprint import pprint
@@ -116,6 +118,27 @@ def get_asset_names(ids):
 
     return names
 
+def get_single_asset_name(id):
+    
+    asset_api = openapi_client.AssetApi(api_client)
+
+    try:
+        # Use the OpenAPI client to get asset snapshot
+        api_response = asset_api.asset_snapshot(id)
+
+        # Convert the response to a dictionary
+        data = api_response.to_dict()
+
+        print()
+        print(data)
+        print()
+
+        # Extract the 'name' field and add it to the names list
+        name = data.get('name')
+        return name
+    except ApiException as e:
+        print(f"Error occurred for ID {id}: {str(e)}")
+
 def get_asset_details(id):
     asset_api = openapi_client.AssetApi(api_client)
 
@@ -148,12 +171,12 @@ def create_new_asset(application, raw_string="testing", metadata=None):
             ),
             metadata=metadata  # This should be constructed as per the SDK's definition
         ),
-        type=openapi_client.SeedTypeEnum.ASSET
+        type="SEEDED_ASSET"
     )
     
     # Creating the new asset using the assets API
     try:
-        created_asset = assets_api.assets_create_new_asset(seed)
+        created_asset = assets_api.assets_create_new_asset(transferables=False, seed=seed)
         return created_asset
     except ApiException as e:
         print("An exception occurred when calling AssetsApi->assets_create_new_asset: %s\n" % e)
@@ -173,3 +196,68 @@ def register_application(existing_application=None):
         # pprint(api_response)
     except Exception as e:
         print("Exception when calling ApplicationsApi->applications_register: %s\n" % e)
+
+# def created_seeded_format():
+#     json = {}
+
+#     try:
+#         seeded_format_instance = SeededFormat.from_json(json)
+
+#         # convert the object into a dict
+#         seeded_format_dict = seeded_format_instance.to_dict()
+        
+#         # create an instance of SeededFormat from a dict
+#         seeded_format_from_dict = SeededFormat.from_dict(seeded_format_dict)
+
+#         return seeded_format_from_dict
+        
+#         # Code from SDK that seems like a typo
+#         # seeded_format_form_dict = seeded_format.from_dict(seeded_format_dict)
+
+#     except Exception as e:
+#         print("Exception when attempting to create a SeededFormat: %s\n" % e)
+
+# def created_seeded_fragment(var_schema=None, string=None, bytes=None, metadata=None):
+#     json = {
+#     }
+
+#     try:
+#         seeded_fragment_instance = SeededFragment.from_json(json)
+
+#         # convert the object into a dict
+#         seeded_fragment_dict = seeded_fragment_instance.to_dict()
+        
+#         # create an instance of SeededFormat from a dict
+#         seeded_fragment_from_dict = SeededFragment.from_dict(seeded_fragment_dict)
+
+#         return seeded_fragment_from_dict
+        
+#         # Code from SDK that seems like a typo
+#         # seeded_format_form_dict = seeded_format.from_dict(seeded_format_dict)
+
+#     except Exception as e:
+#         print("Exception when attempting to create a SeededFormat: %s\n" % e)
+
+
+# def created_tras(var_schema=None, string=None, bytes=None, metadata=None):
+#     json = {
+#     }
+
+#     openapi_client.SeededFragment()
+
+#     try:
+#         seeded_fragment_instance = SeededFragment.from_json(json)
+
+#         # convert the object into a dict
+#         seeded_fragment_dict = seeded_fragment_instance.to_dict()
+        
+#         # create an instance of SeededFormat from a dict
+#         seeded_fragment_from_dict = SeededFragment.from_dict(seeded_fragment_dict)
+
+#         return seeded_fragment_from_dict
+        
+#         # Code from SDK that seems like a typo
+#         # seeded_format_form_dict = seeded_format.from_dict(seeded_format_dict)
+
+#     except Exception as e:
+#         print("Exception when attempting to create a SeededFormat: %s\n" % e)

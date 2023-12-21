@@ -9,6 +9,7 @@ def main():
     if is_running:
         # Update the version_message in commands.py
         set_pieces_os_version(message)
+        set_application(application)
         # print(application)
         pass
     else:
@@ -27,15 +28,19 @@ def main():
     list_parser.add_argument('max', type=int, nargs='?', default=None, help='(Optional) Maximum number of results to return')
     list_parser.add_argument('--max', dest='max_flag', type=int, help='Maximum number of results to return')
     list_parser.set_defaults(func=list_assets)
-
+    
     # Subparser for the 'open' command
     open_parser = subparsers.add_parser('open', help='Open an asset')
-    open_parser.add_argument('ITEM_INDEX', type=int, help='Index of the item to open')
+    open_parser.add_argument('ITEM_INDEX', type=int, nargs='?', default=None, help='Index of the item to open (optional)')
     open_parser.set_defaults(func=open_asset)
 
     # Subparser for the 'save' command
     save_parser = subparsers.add_parser('save', help='Save the current asset')
     save_parser.set_defaults(func=save_asset)
+
+    # Subparser for the 'save' command
+    save_parser = subparsers.add_parser('create', help='Create a new asset')
+    save_parser.set_defaults(func=create_asset)
 
     # Subparser for the 'run' command
     run_parser = subparsers.add_parser('run', help='Runs CLI in a loop')

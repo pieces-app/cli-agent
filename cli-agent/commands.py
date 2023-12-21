@@ -13,6 +13,12 @@ run_in_loop = False
 asset_ids = {}
 current_asset = {}
 parser = None
+application = None
+
+# New function to set the application
+def set_application(app):
+    global application
+    application = app
 
 def set_parser(p):
     global parser
@@ -61,55 +67,82 @@ def list_assets(max=None, max_flag=None, **kwargs):
 
     if run_in_loop:
         asset_ids = {i: id for i, id in enumerate(ids, start=1)}
+        first_id = ids[0]
+        return first_id
+    else:
+        first_id = ids[0]
+        return first_id
 
 def open_asset(**kwargs):
     global asset_ids
     global current_asset
 
     item_index = kwargs.get('ITEM_INDEX')
-    asset_id = asset_ids.get(item_index)
 
-    current_asset = get_asset_details(asset_id)
+    if item_index is not None:
+        asset_id = asset_ids.get(item_index)
+        if asset_id:
+            current_asset = get_asset_details(asset_id)
+        else:
+            open_from_command_line()
+            ## TODO store the list to a local database and call the database
+            recent_id = list_assets()
+            # print(recent_id)
+            
+            current_asset = get_asset_details(recent_id)
+            print()
 
-    if asset_id:
-        print(f"Loading...")
-        print()
-
-        # Set Asset Fields
-        name = current_asset.get('name')
-        created_readable = current_asset.get('created', {}).get('readable')
-        updated_readable = current_asset.get('updated', {}).get('readable')
-        type = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('generic')
-        language = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('specific')
-        formats = current_asset.get('formats', {})
-        string = None
-        
-        if formats:
-            iterable = formats.get('iterable', [])
-            if iterable:
-                first_item = iterable[0] if len(iterable) > 0 else None
-                if first_item:
-                    fragment_string = first_item.get('fragment', {}).get('string').get('raw')
-                    if fragment_string:
-                        raw = fragment_string
-                        string = extract_code_from_markdown(raw, name)
-
-        # Printing the values with descriptive text
-        if name:
-            print(f"{name}")
-        if created_readable:
-            print(f"Created: {created_readable}")
-        if updated_readable:
-            print(f"Updated: {updated_readable}")
-        if type:
-            print(f"Type: {type}")
-        if language:
-            print(f"Language: {language}")
-        if formats:
-            print(f"Code: {string}")
     else:
-        print(f"No asset found for index: {item_index}")
-        print(f"Please use 'list' to load available assets first")
+        # If ITEM_INDEX is not provided, use the current_asset
+        if not current_asset:
+            # no_assets_in_memory()
+            open_from_command_line()
+            recent_id = list_assets()  # Calling list_assets to display available assets
+            current_asset = get_asset_details(recent_id)
+            print()
+            asset_id = current_asset.get('id')
+            print()
+
+    # if asset_id:
+    print(f"Loading...")
+    print()
+
+    # Set Asset Fields
+    name = current_asset.get('name')
+    created_readable = current_asset.get('created', {}).get('readable')
+    updated_readable = current_asset.get('updated', {}).get('readable')
+    type = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('generic')
+    language = current_asset.get('preview', {}).get('base', {}).get('reference', {}).get('classification', {}).get('specific')
+    formats = current_asset.get('formats', {})
+    string = None
+    
+    if formats:
+        iterable = formats.get('iterable', [])
+        if iterable:
+            first_item = iterable[0] if len(iterable) > 0 else None
+            if first_item:
+                fragment_string = first_item.get('fragment', {}).get('string').get('raw')
+                if fragment_string:
+                    raw = fragment_string
+                    string = extract_code_from_markdown(raw, name)
+
+    # Printing the values with descriptive text
+    if name:
+        print(f"{name}")
+    if created_readable:
+        print(f"Created: {created_readable}")
+    if updated_readable:
+        print(f"Updated: {updated_readable}")
+    if type:
+        print(f"Type: {type}")
+    if language:
+        print(f"Language: {language}")
+    if formats:
+        print(f"Code: {string}")
+    print()
+    # else:
+    #     print(f"No asset found for index: {item_index}")
+    #     print(f"Please use 'list' to load available assets first")
 
 def extract_code_from_markdown(markdown, name):
     # Sanitize the name to ensure it's a valid filename
@@ -143,6 +176,18 @@ def save_asset(**kwargs):
     # Logic to save an asset
     print("Saving the File")
     pass
+
+def create_asset(**kwargs):
+    global application
+    global current_asset
+    # Logic to create an asset
+    
+    new_asset = create_new_asset(application, raw_string="This is a 10th test", metadata=None)
+    
+    current_asset = {new_asset.id}
+    print(f"Asset Created use 'open' to view")
+
+    return new_asset
 
 def check():
     # Check if Pieces is Running
@@ -185,12 +230,18 @@ def loop(**kwargs):
             double_space("Exiting...")
             break
 
-        # Use shlex to split the input into command and arguments
-        split_input = shlex.split(user_input)
-        if not split_input:
-            continue  # Skip if the input is empty
+        # Check if the input is a number and treat it as an index for 'open' command
+        if user_input.isdigit():
+            command_name = 'open'
+            command_args = [user_input]
+        else:
+            # Use shlex to split the input into command and arguments
+            split_input = shlex.split(user_input)
+            if not split_input:
+                continue  # Skip if the input is empty
 
-        command_name, *command_args = split_input
+            command_name, *command_args = split_input
+
         command_name = command_name.lower()
 
         if command_name in parser._subparsers._group_actions[0].choices:

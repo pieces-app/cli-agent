@@ -48,6 +48,21 @@ def print_help():
     print("  list    - List all assets")
     print("  open    - Open an asset")
     print("  save    - Save the current asset")
+    print("  create  - Creates a new asset")
     print("  version - Gets version of Pieces OS")
     print("  help    - Show this help message")
+    print()
+
+def no_assets_in_memory():
+    print()
+    print("No Asset is Currently Saved in Memory")
+    print("Please choose from the list or use 'find'")
+    print()
+
+def open_from_command_line():
+    print()
+    print("No active search results or lists open")
+    print("or you typed an invalid option.")
+    print()
+    print("Opening most recent asset:")
     print()
