@@ -49,7 +49,7 @@ def check_api(**kwargs):
         create_table(conn)
 
         # Check the database for an existing application
-        application_id = "test"  # Replace with a default application ID
+        application_id = "DEFAULT"  # Replace with a default application ID
         application = get_application(conn, application_id)
 
         # If no application is found in the database, create and store a new one
