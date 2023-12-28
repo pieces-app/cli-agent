@@ -108,12 +108,12 @@ def open_asset(**kwargs):
     if item_index is not None:
         asset_id = asset_ids.get(item_index)
         if asset_id:
-            current_asset = get_asset_details(asset_id)
+            current_asset = get_asset_by_id(asset_id)
         else:
             open_from_command_line()
             ## TODO store the list to a local database and call the database
             recent_id = list_assets()
-            current_asset = get_asset_details(recent_id)
+            current_asset = get_asset_by_id(recent_id)
             print()
 
     else:
@@ -122,7 +122,7 @@ def open_asset(**kwargs):
             # no_assets_in_memory()
             open_from_command_line()
             recent_id = list_assets()  # Calling list_assets to display available assets
-            current_asset = get_asset_details(recent_id)
+            current_asset = get_asset_by_id(recent_id)
             print()
             asset_id = current_asset.get('id')
             print()
@@ -209,11 +209,45 @@ def save_asset(**kwargs):
     global current_asset
     print("Not Currently Working")
 
-    # if not current_asset:
-    #     open_asset()
-    # else:
-    #     asset_to_update = current_asset.get('id')
-    #     update_asset(asset_to_update)
+    if not current_asset:
+        open_asset()
+    else:
+        asset_to_update = current_asset.get('id')
+        # Pass asset and file name
+        update_asset(asset_to_update, "Awesome_Code_Snippet_Pieces.tex")
+
+def edit_asset(**kwargs):
+    global application
+    global current_asset
+
+    if not current_asset:
+        open_asset()
+        asset_to_update = current_asset.get('id')
+
+        # Ask the user for a new name
+        new_name = input("Enter the new name for the asset: ")
+
+        # Check if the user actually entered a name
+        if new_name.strip():
+            # Pass asset and new name to the edit_asset_name function
+            edit_asset_name(asset_to_update, new_name)
+        else:
+            print("No new name provided. Asset name not updated.")
+    else:
+        asset_to_update = current_asset.get('id')
+        if asset_to_update is None:
+            print("No asset to update.")
+            return
+
+        # Ask the user for a new name
+        new_name = input("Enter the new name for the asset: ")
+
+        # Check if the user actually entered a name
+        if new_name.strip():
+            # Pass asset and new name to the edit_asset_name function
+            edit_asset_name(asset_to_update, new_name)
+        else:
+            print("No new name provided. Asset name not updated.")
 
 def delete_asset(**kwargs):
     global application

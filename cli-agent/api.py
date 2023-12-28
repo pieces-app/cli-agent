@@ -139,7 +139,7 @@ def get_single_asset_name(id):
     except ApiException as e:
         print(f"Error occurred for ID {id}: {str(e)}")
 
-def get_asset_details(id):
+def get_asset_by_id(id):
     asset_api = openapi_client.AssetApi(api_client)
 
     try:
@@ -204,14 +204,164 @@ def register_application(existing_application=None):
     except Exception as e:
         print("Exception when calling ApplicationsApi->applications_register: %s\n" % e)
 
-def update_asset(asset, raw_string, ):
+def edit_asset_name(asset_id, new_name):
     asset_api = openapi_client.AssetApi(api_client)
+    
+    # Get the asset using the provided asset_id
+    asset = get_asset_by_id(asset_id)
+
+    # Check if the existing name is found and update it
+    existing_name = asset.get('name', 'Existing name not found')
+    if existing_name != 'Existing name not found':
+        asset['name'] = new_name
+        print(f"Asset name changed from '{existing_name}' to '{new_name}'")
+    else:
+        print(existing_name)
+        return
+
+    # Print the entire asset with updates
+    print("Asset with updates, ready to send to API:\n", asset)
+
+    # Update the asset using the API
+    try:
+        response = asset_api.asset_update(asset=asset, transferables=False)
+        print("Asset name updated successfully.")
+    except Exception as e:
+        print(f"Error updating asset: {e}")
+
+
+def update_asset(asset_id, file_name):
+    asset_api = openapi_client.AssetApi(api_client)
+    asset = get_asset_by_id(asset_id)
+
+    # print(asset)
+
+    first_occurrence = asset.get('name', 'First occurrence not found')
+
+    # Second occurrence
+    formats = asset.get('formats', {}).get('iterable', [])
+    second_occurrence = 'Second occurrence not found'
+    if formats:
+        second_occurrence = formats[0].get('asset', {}).get('name', 'Second occurrence not found')
+
+    # Printing the occurrences
+    print("First occurrence:", first_occurrence)
+    print("Second occurrence:", second_occurrence)
+
+    # Define the path to the file
+    file_path = f"opened_snippets/{file_name}"
+
+    # Open and read the file content
+    try:
+        with open(file_path, 'r') as file:
+            new_content = file.read()
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return
+
+    def update_string(obj):
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if isinstance(value, dict):
+                    update_string(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        update_string(item)
+                elif key == 'raw' and isinstance(value, str):
+                    obj[key] = new_content
+
+    # Update all string occurrences within the asset
+    update_string(asset)  # Uncomment this line to enable updating
+
+    # Print the entire asset with updates
+    print("Asset with updates, ready to send to API:\n", asset)
+
+    # Update the asset using the API
+    try:
+        response = asset_api.asset_update(asset=asset, transferables=False)
+        print("Asset updated successfully.")
+    except Exception as e:
+        print(f"Error updating asset: {e}")
+
+
+
+
+# def update_asset(asset_id, file_name):
+       
+#     asset_api = openapi_client.AssetApi(api_client)
+#     asset = get_asset_by_id(asset_id)
+
+#     # Define the path to the file
+#     file_path = f"opened_snippets/{file_name}"
+
+#     # Open and read the file content
+#     try:
+#         with open(file_path, 'r') as file:
+#             file_content = file.read()
+#     except FileNotFoundError:
+#         print(f"File not found: {file_path}")
+#         return
+#     except Exception as e:
+#         print(f"Error reading file: {e}")
+#         return
+
+#     print(file_content)
+    
+#     # Update the asset with the new content
+#     formats = asset.get('formats', {})
+#     if formats:
+#         iterable = formats.get('iterable', [])
+#         if iterable:
+#             first_item = iterable[0] if len(iterable) > 0 else None
+#             if first_item:
+#                 if 'fragment' in first_item and 'string' in first_item['fragment']:
+#                     first_item['fragment']['string']['raw'] = file_content
+#                 else:
+#                     print("The 'fragment' or 'string' key is missing in the asset's first item.")
+#                     return
+#     else:
+#         print("No formats found in the asset.")
+#         return
+    
+#     print("Asset with updates, ready to send to API:\n", asset)
+
+#     # Update the asset using the API
+#     try:
+#         response = asset_api.asset_update(asset=asset, transferables=False)
+#         print("Asset updated successfully.")
+#         # print(response)
+#     except Exception as e:
+#         print(f"Error updating asset: {e}")
+
+
+
+# def update_asset(asset_id, file_name):
+#     asset_api = openapi_client.AssetApi(api_client)
+#     asset = get_asset_by_id(asset_id)
+
+#     formats = asset.get('formats', {})
+
+#     if formats:
+#         iterable = formats.get('iterable', [])
+#         if iterable:
+#             first_item = iterable[0] if len(iterable) > 0 else None
+#             if first_item:              
+#                 fragment_string = first_item.get('fragment', {}).get('string').get('raw')
+#                 if fragment_string:
+#                     raw = fragment_string
+#                     print(raw)
+
+#     # print(asset)
+    
 
     
     
-    response = asset_api.asset_update(asset=asset, transferables=False)
+#     # response = asset_api.asset_update(asset=asset, transferables=False)
 
-    print(response)
+#     # print(response)
 
 def delete_asset_by_id(asset_id):
     delete_instance = openapi_client.AssetsApi(api_client)

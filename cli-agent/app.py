@@ -49,6 +49,10 @@ def main():
     run_parser = subparsers.add_parser('run', help='Runs CLI in a loop')
     run_parser.set_defaults(func=loop)
 
+    # Subparser for the 'edit' command
+    run_parser = subparsers.add_parser('edit', help='Runs CLI in a loop')
+    run_parser.set_defaults(func=edit_asset)
+
     # Subparser for the 'version' command
     version_parser = subparsers.add_parser(
     'version',
