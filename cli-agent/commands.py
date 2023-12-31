@@ -214,7 +214,7 @@ def save_asset(**kwargs):
     else:
         asset_to_update = current_asset.get('id')
         # Pass asset and file name
-        update_asset(asset_to_update, "Awesome_Code_Snippet_Pieces.tex")
+        update_asset(asset_to_update)
 
 def edit_asset(**kwargs):
     global application

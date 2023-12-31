@@ -229,24 +229,12 @@ def edit_asset_name(asset_id, new_name):
     except Exception as e:
         print(f"Error updating asset: {e}")
 
-
-def update_asset(asset_id, file_name):
+def update_asset(asset_id):
     asset_api = openapi_client.AssetApi(api_client)
-    asset = get_asset_by_id(asset_id)
 
-    # print(asset)
-
-    first_occurrence = asset.get('name', 'First occurrence not found')
-
-    # Second occurrence
-    formats = asset.get('formats', {}).get('iterable', [])
-    second_occurrence = 'Second occurrence not found'
-    if formats:
-        second_occurrence = formats[0].get('asset', {}).get('name', 'Second occurrence not found')
-
-    # Printing the occurrences
-    print("First occurrence:", first_occurrence)
-    print("Second occurrence:", second_occurrence)
+    working_asset = get_asset_by_id(asset_id)
+    # file_name = working_asset.get('name')
+    file_name = "Pieces_is_the_Best.tex" ################ TEST
 
     # Define the path to the file
     file_path = f"opened_snippets/{file_name}"
@@ -273,18 +261,76 @@ def update_asset(asset_id, file_name):
                 elif key == 'raw' and isinstance(value, str):
                     obj[key] = new_content
 
+    # Get the formats and update the raw string in each format
+    formats = working_asset.get('formats', {}).get('iterable', [])
+    for format in formats:
+        string_obj = format.get('fragment', {}).get('string', {})
+        if 'raw' in string_obj:
+            string_obj['raw'] = new_content
+
     # Update all string occurrences within the asset
-    update_string(asset)  # Uncomment this line to enable updating
+    update_string(working_asset)  # Uncomment this line to enable updating
 
     # Print the entire asset with updates
-    print("Asset with updates, ready to send to API:\n", asset)
+    # print("Asset with updates, ready to send to API:\n", working_asset)
 
     # Update the asset using the API
     try:
-        response = asset_api.asset_update(asset=asset, transferables=False)
+        response = asset_api.asset_update(asset=working_asset, transferables=False)
+        print(response)
         print("Asset updated successfully.")
     except Exception as e:
         print(f"Error updating asset: {e}")
+
+
+
+# def update_asset(asset_id, file_name):
+#     asset_api = openapi_client.AssetApi(api_client)
+
+#     working_asset = get_asset_by_id(asset_id)
+
+#     formats = working_asset.get('formats', {}).get('iterable', [])
+#     raw_string = 'Raw String not found'
+#     if formats:
+#         raw_string = formats[0].get('fragment', {}).get('string', "No string").get('raw', 'Nothing saved')
+
+#     # Define the path to the file
+#     file_path = f"opened_snippets/{file_name}"
+
+#     # Open and read the file content
+#     try:
+#         with open(file_path, 'r') as file:
+#             new_content = file.read()
+#     except FileNotFoundError:
+#         print(f"File not found: {file_path}")
+#         return
+#     except Exception as e:
+#         print(f"Error reading file: {e}")
+#         return
+
+#     def update_string(obj):
+#         if isinstance(obj, dict):
+#             for key, value in obj.items():
+#                 if isinstance(value, dict):
+#                     update_string(value)
+#                 elif isinstance(value, list):
+#                     for item in value:
+#                         update_string(item)
+#                 elif key == 'raw' and isinstance(value, str):
+#                     obj[key] = new_content
+
+#     # Update all string occurrences within the asset
+#     update_string(working_asset)  # Uncomment this line to enable updating
+
+#     # Print the entire asset with updates
+#     print("Asset with updates, ready to send to API:\n", working_asset)
+
+#     # Update the asset using the API
+#     try:
+#         response = asset_api.asset_update(asset=working_asset, transferables=False)
+#         print("Asset updated successfully.")
+#     except Exception as e:
+#         print(f"Error updating asset: {e}")
 
 
 
