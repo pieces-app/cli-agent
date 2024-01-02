@@ -44,16 +44,46 @@ def sanitize_filename(name):
     name = re.sub(r'[\\/*?:"<>|]', '', name)
     return name
 
-def search(query):
+def search(query, search_type='assets', **kwargs):
+    global asset_ids  # Declare the use of the global variable
+
     # Join the list of strings into a single search phrase
     search_phrase = ' '.join(query)
 
-    # Perform the search operation
-    # This is a placeholder for your search logic.
-    # You might want to call an API, search a database, etc.
-    # For demonstration, I'll just print the search phrase.
-    print(f"Searching for: {search_phrase}")
+    # Call the API function with the search phrase and type
+    results = search_api(search_phrase, search_type)
 
+    # Check and extract asset IDs from the results
+    if results:
+        # Extract the iterable which contains the search results
+        iterable_list = results.iterable if hasattr(results, 'iterable') else []
+
+        # Check if iterable_list is a list and contains SearchedAsset objects
+        if isinstance(iterable_list, list) and all(hasattr(asset, 'exact') and hasattr(asset, 'identifier') for asset in iterable_list):
+            # Extracting suggested and exact IDs
+            suggested_ids = [asset.identifier for asset in iterable_list if not asset.exact]
+            exact_ids = [asset.identifier for asset in iterable_list if asset.exact]
+
+            # Combine and store best and suggested matches in asset_ids
+            combined_ids = exact_ids + suggested_ids
+            asset_ids = {index + 1: asset_id for index, asset_id in enumerate(combined_ids)}
+
+            # Prepare the combined list of names for printing
+            combined_details = [(asset_id, get_asset_name_by_id(asset_id)) for asset_id in combined_ids]
+
+            # Print the combined asset details
+            if combined_details:
+                print_asset_details(combined_details, "Asset Matches:")
+            else:
+                print("No matches found.")
+        else:
+            print("Unexpected response format or empty iterable.")
+    else:
+        print("No results found.")
+
+def get_asset_name_by_id(asset_id):
+    asset = get_asset_by_id(asset_id)  # Assuming this function returns the asset details
+    return asset.get('name') if asset else "Unknown"
 
 def list_assets(list_type_or_max='assets', **kwargs):
     max_results = None

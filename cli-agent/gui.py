@@ -30,6 +30,13 @@ def double_space(text):
 def print_response(*args):
     for arg in args:
         print(arg)
+    
+def print_asset_details(asset_details, title):
+    print()
+    print(title)
+    for index, (_, asset_name) in enumerate(asset_details, start=1):
+        print(f"{index}: {asset_name}")
+    print()
 
 def print_instructions():
     print()

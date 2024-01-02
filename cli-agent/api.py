@@ -3,6 +3,7 @@ from openapi_client.rest import ApiException
 from openapi_client.models.seeded_format import SeededFormat
 from openapi_client.models.seeded_fragment import SeededFragment
 from openapi_client.models.application import Application
+from openapi_client.models.searched_assets import SearchedAssets
 from store import create_connection, get_application, insert_application, create_table
 from pprint import pprint
 import platform
@@ -32,45 +33,28 @@ def categorize_os():
 
     return os_info
 
-# API CALLS
-# def check_api(**kwargs):
-#     # Create an instance of the API class
-#     well_known_instance = openapi_client.WellKnownApi(api_client)
+def search_api(search_phrase, search_type):
+    query = search_phrase
+    
+    # # Initialize the API client
+    # api_client = openapi_client.ApiClient(api_client)  # Replace with your actual API client initialization
 
-#     try:        
-#         # Make Sure Server is Running and Get Version
-#         version = well_known_instance.get_well_known_version()
-        
-#         # Decide if it's Windows, Mac, Linux or Web
-#         local_os = categorize_os()
+    # Determine the endpoint and perform the search based on the search type
+    if search_type == 'assets':
+        api_instance = openapi_client.AssetsApi(api_client)
+        response = api_instance.assets_search_assets(query=query, transferables=False)
+    elif search_type == 'ncs':
+        api_instance = openapi_client.SearchApi(api_client)
+        response = api_instance.search_ncs(query=query)
+    elif search_type == 'fts':
+        api_instance = openapi_client.SearchApi(api_client)
+        response = api_instance.search_fts(query=query)
+    else:
+        # Handle unknown search type
+        raise ValueError("Unknown search type")
 
-#         # Establish a local database connection
-#         conn = create_connection('applications.db')
-
-#         # Create the table if it does not exist
-#         create_table(conn)
-
-#         # Check the database for an existing application
-#         application_id = "DEFAULT"  # Replace with a default application ID
-#         application = get_application(conn, application_id)
-
-#         # If no application is found in the database, create and store a new one
-#         if application is None:
-#             application = Application(id=application_id, name="OPEN_SOURCE", version=version, platform=local_os, onboarded=False, privacy="OPEN")
-#             insert_application(conn, application)
-
-#         # Register the application
-#         registered_application = register_application(application)
-
-#         # Close the database connection
-#         conn.close()
-
-#         return True, version, registered_application
-
-#     except Exception as e:
-#         # Close the database connection in case of an exception
-#         conn.close()
-#         return False, "Exception when calling WellKnownApi->get_well_known_version: %s\n" % e
+    # Return the response from the API
+    return response
 
 def check_api(**kwargs):
     # Create an instance of the API class
@@ -174,10 +158,6 @@ def get_single_asset_name(id):
         # Convert the response to a dictionary
         data = api_response.to_dict()
 
-        print()
-        print(data)
-        print()
-
         # Extract the 'name' field and add it to the names list
         name = data.get('name')
         return name
@@ -241,11 +221,9 @@ def register_application(existing_application=None):
     application = existing_application
 
     try:
-        # /applications/register [POST]
         api_response = applications_api.applications_register(application=application)
-        # print("The response of ApplicationsApi->applications_register:\n")
+        
         return api_response
-        # pprint(api_response)
     except Exception as e:
         print("Exception when calling ApplicationsApi->applications_register: %s\n" % e)
 
@@ -316,143 +294,13 @@ def update_asset(asset_id):
     # Update all string occurrences within the asset
     update_string(working_asset)  # Uncomment this line to enable updating
 
-    # Print the entire asset with updates
-    # print("Asset with updates, ready to send to API:\n", working_asset)
-
     # Update the asset using the API
     try:
         response = asset_api.asset_update(asset=working_asset, transferables=False)
-        print(response)
+        # print(response)
         print("Asset updated successfully.")
     except Exception as e:
         print(f"Error updating asset: {e}")
-
-
-
-# def update_asset(asset_id, file_name):
-#     asset_api = openapi_client.AssetApi(api_client)
-
-#     working_asset = get_asset_by_id(asset_id)
-
-#     formats = working_asset.get('formats', {}).get('iterable', [])
-#     raw_string = 'Raw String not found'
-#     if formats:
-#         raw_string = formats[0].get('fragment', {}).get('string', "No string").get('raw', 'Nothing saved')
-
-#     # Define the path to the file
-#     file_path = f"opened_snippets/{file_name}"
-
-#     # Open and read the file content
-#     try:
-#         with open(file_path, 'r') as file:
-#             new_content = file.read()
-#     except FileNotFoundError:
-#         print(f"File not found: {file_path}")
-#         return
-#     except Exception as e:
-#         print(f"Error reading file: {e}")
-#         return
-
-#     def update_string(obj):
-#         if isinstance(obj, dict):
-#             for key, value in obj.items():
-#                 if isinstance(value, dict):
-#                     update_string(value)
-#                 elif isinstance(value, list):
-#                     for item in value:
-#                         update_string(item)
-#                 elif key == 'raw' and isinstance(value, str):
-#                     obj[key] = new_content
-
-#     # Update all string occurrences within the asset
-#     update_string(working_asset)  # Uncomment this line to enable updating
-
-#     # Print the entire asset with updates
-#     print("Asset with updates, ready to send to API:\n", working_asset)
-
-#     # Update the asset using the API
-#     try:
-#         response = asset_api.asset_update(asset=working_asset, transferables=False)
-#         print("Asset updated successfully.")
-#     except Exception as e:
-#         print(f"Error updating asset: {e}")
-
-
-
-
-# def update_asset(asset_id, file_name):
-       
-#     asset_api = openapi_client.AssetApi(api_client)
-#     asset = get_asset_by_id(asset_id)
-
-#     # Define the path to the file
-#     file_path = f"opened_snippets/{file_name}"
-
-#     # Open and read the file content
-#     try:
-#         with open(file_path, 'r') as file:
-#             file_content = file.read()
-#     except FileNotFoundError:
-#         print(f"File not found: {file_path}")
-#         return
-#     except Exception as e:
-#         print(f"Error reading file: {e}")
-#         return
-
-#     print(file_content)
-    
-#     # Update the asset with the new content
-#     formats = asset.get('formats', {})
-#     if formats:
-#         iterable = formats.get('iterable', [])
-#         if iterable:
-#             first_item = iterable[0] if len(iterable) > 0 else None
-#             if first_item:
-#                 if 'fragment' in first_item and 'string' in first_item['fragment']:
-#                     first_item['fragment']['string']['raw'] = file_content
-#                 else:
-#                     print("The 'fragment' or 'string' key is missing in the asset's first item.")
-#                     return
-#     else:
-#         print("No formats found in the asset.")
-#         return
-    
-#     print("Asset with updates, ready to send to API:\n", asset)
-
-#     # Update the asset using the API
-#     try:
-#         response = asset_api.asset_update(asset=asset, transferables=False)
-#         print("Asset updated successfully.")
-#         # print(response)
-#     except Exception as e:
-#         print(f"Error updating asset: {e}")
-
-
-
-# def update_asset(asset_id, file_name):
-#     asset_api = openapi_client.AssetApi(api_client)
-#     asset = get_asset_by_id(asset_id)
-
-#     formats = asset.get('formats', {})
-
-#     if formats:
-#         iterable = formats.get('iterable', [])
-#         if iterable:
-#             first_item = iterable[0] if len(iterable) > 0 else None
-#             if first_item:              
-#                 fragment_string = first_item.get('fragment', {}).get('string').get('raw')
-#                 if fragment_string:
-#                     raw = fragment_string
-#                     print(raw)
-
-#     # print(asset)
-    
-
-    
-    
-#     # response = asset_api.asset_update(asset=asset, transferables=False)
-
-#     # print(response)
 
 def delete_asset_by_id(asset_id):
     delete_instance = openapi_client.AssetsApi(api_client)
