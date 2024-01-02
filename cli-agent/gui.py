@@ -31,12 +31,28 @@ def print_response(*args):
     for arg in args:
         print(arg)
     
-def print_asset_details(asset_details, title):
-    print()
+# def print_asset_details(asset_details, title):
+#     print()
+#     print(title)
+#     for index, (_, asset_name) in enumerate(asset_details, start=1):
+#         print(f"{index}: {asset_name}")
+#     print()
+        
+def print_asset_details(asset_details, title, search_type):
+    # Map search_type to descriptive text
+    search_type_map = {
+        'ncs': 'Neural Code Search',
+        'fts': 'Full Text Search',
+        'assets': 'Fuzzy Search'
+    }
+    search_type_text = search_type_map.get(search_type, 'Search')
+
+    print(f"\n{search_type_text}\n")
     print(title)
     for index, (_, asset_name) in enumerate(asset_details, start=1):
         print(f"{index}: {asset_name}")
     print()
+
 
 def print_instructions():
     print()

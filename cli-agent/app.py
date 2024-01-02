@@ -61,9 +61,16 @@ def main():
         version_parser.set_defaults(func=version)
 
         # Subparser for the 'search' command
+        # search_parser = subparsers.add_parser('search', help='Search with a query string')
+        # search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
+        # search_parser.set_defaults(func=search)
         search_parser = subparsers.add_parser('search', help='Search with a query string')
         search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
+        search_parser.add_argument('--type', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search (assets, ncs, fts)')
         search_parser.set_defaults(func=search)
+
+
+
 
         # Subparser for the 'help' command
         help_parser = subparsers.add_parser('help', help='Prints a list of available commands')
@@ -78,9 +85,6 @@ def main():
     else:
         # Display the message if the server is not running or application is not present
         double_line("Please start your Pieces OS Server")
-
-
-    
 
 if __name__ == '__main__':
     main()

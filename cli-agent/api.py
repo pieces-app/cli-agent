@@ -36,19 +36,16 @@ def categorize_os():
 def search_api(search_phrase, search_type):
     query = search_phrase
     
-    # # Initialize the API client
-    # api_client = openapi_client.ApiClient(api_client)  # Replace with your actual API client initialization
-
     # Determine the endpoint and perform the search based on the search type
     if search_type == 'assets':
         api_instance = openapi_client.AssetsApi(api_client)
         response = api_instance.assets_search_assets(query=query, transferables=False)
     elif search_type == 'ncs':
         api_instance = openapi_client.SearchApi(api_client)
-        response = api_instance.search_ncs(query=query)
+        response = api_instance.neural_code_search(query=query)
     elif search_type == 'fts':
         api_instance = openapi_client.SearchApi(api_client)
-        response = api_instance.search_fts(query=query)
+        response = api_instance.full_text_search(query=query)
     else:
         # Handle unknown search type
         raise ValueError("Unknown search type")
@@ -99,8 +96,6 @@ def check_api(**kwargs):
         if 'conn' in locals():
             conn.close()
         return False, "Exception when calling WellKnownApi->get_well_known_version: %s\n" % e
-
-
 
 def get_asset_ids(max=None, **kwargs):
     assets_api = openapi_client.AssetsApi(api_client)

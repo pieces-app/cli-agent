@@ -44,8 +44,10 @@ def sanitize_filename(name):
     name = re.sub(r'[\\/*?:"<>|]', '', name)
     return name
 
-def search(query, search_type='assets', **kwargs):
+def search(query, **kwargs):
     global asset_ids  # Declare the use of the global variable
+
+    search_type = kwargs.get('search_type', 'assets')
 
     # Join the list of strings into a single search phrase
     search_phrase = ' '.join(query)
@@ -73,7 +75,7 @@ def search(query, search_type='assets', **kwargs):
 
             # Print the combined asset details
             if combined_details:
-                print_asset_details(combined_details, "Asset Matches:")
+                print_asset_details(combined_details, "Asset Matches:", search_type)
             else:
                 print("No matches found.")
         else:
