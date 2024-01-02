@@ -8,10 +8,11 @@ import os
 import re
 import pyperclip
 
-# Globals
+# Globals for CLI Memory
 pieces_os_version = None
 run_in_loop = False
 asset_ids = {}
+assets_are_models = False
 current_asset = {}
 parser = None
 application = None
@@ -44,44 +45,34 @@ def sanitize_filename(name):
     name = re.sub(r'[\\/*?:"<>|]', '', name)
     return name
 
-# def list_all_models(**kwargs):
-
-#     try:
-#         response = list_models()
-#     except Exception as e:
-#         print(f"Error occurred while fetching models: {e}")
-#         return
-
-#     # Check if response is valid and contains model data
-#     if hasattr(response, 'iterable') and response.iterable:
-#         for index, model in enumerate(response.iterable, start=1):
-#             model_name = getattr(model, 'name', 'Unknown')
-#             model_version = getattr(model, 'version', 'Unknown')
-#             print(f"{index}: Model Name: {model_name}, Model Version: {model_version}")
-#     else:
-#         print("No models found or invalid response format.")
-
 def list_all_models(**kwargs):
+    global asset_ids
+    global assets_are_models
+
     try:
-        response = list_models()  # Assuming this calls the function from api.py
+        response = list_models() 
     except Exception as e:
         print(f"Error occurred while fetching models: {e}")
         return
 
     # Check if response is valid and contains model data
     if hasattr(response, 'iterable') and response.iterable:
-        print()
-        print("Models")
+        print("\nModels")
+        asset_ids = {}  # Reset asset_ids to store new model IDs
         for index, model in enumerate(response.iterable, start=1):
             model_name = getattr(model, 'name', 'Unknown')
             model_version = getattr(model, 'version', 'Unknown')
+            model_id = getattr(model, 'id', 'Unknown')
             print(f"{index}: Model Name: {model_name}, Model Version: {model_version}")
+
+            # Store model ID in asset_ids with the index as the key
+            asset_ids[index] = model_id
+        assets_are_models = True
     else:
         print("No models found or invalid response format.")
 
-
 def search(query, **kwargs):
-    global asset_ids  # Declare the use of the global variable
+    global asset_ids 
 
     search_type = kwargs.get('search_type', 'assets')
 
@@ -126,6 +117,7 @@ def get_asset_name_by_id(asset_id):
 def list_assets(list_type_or_max='assets', **kwargs):
     max_results = None
     list_apps = False
+    global assets_are_models
 
     # Check if the argument is a digit (for max_results value) or 'apps'
     if list_type_or_max.isdigit():
@@ -165,6 +157,8 @@ def list_assets(list_type_or_max='assets', **kwargs):
     if max_results is None:
         max_results = default_max_results
 
+    assets_are_models = False
+
     ids = get_asset_ids(max=max_results)
     names = get_asset_names(ids)
     
@@ -180,82 +174,51 @@ def list_assets(list_type_or_max='assets', **kwargs):
     else:
         first_id = ids[0]
         return first_id
-
+    
 def open_asset(**kwargs):
     global asset_ids
     global current_asset
+    global assets_are_models
 
     item_index = kwargs.get('ITEM_INDEX')
+
+    if assets_are_models:
+        if item_index is not None and item_index in asset_ids:
+            print(f"Model ID: {asset_ids[item_index]}")
+        else:
+            print("Invalid model index or model index not provided.")
+        return
 
     if item_index is not None:
         asset_id = asset_ids.get(item_index)
         if asset_id:
             current_asset = get_asset_by_id(asset_id)
         else:
-            open_from_command_line()
-            ## TODO store the list to a local database and call the database
-            recent_id = list_assets()
-            current_asset = get_asset_by_id(recent_id)
-            print()
-
+            print("Asset not found for the provided index.")
+            return
     else:
         # If ITEM_INDEX is not provided, use the current_asset
         if not current_asset:
-            # no_assets_in_memory()
-            open_from_command_line()
-            recent_id = list_assets()  # Calling list_assets to display available assets
-            current_asset = get_asset_by_id(recent_id)
-            print()
-            asset_id = current_asset.get('id')
-            print()
-
-    # if asset_id:
-    print(f"Loading...")
-    print()
+            print("No current asset in memory.")
+            return
 
     # Set Asset Fields
-    name = current_asset.get('name')
-    created_readable = current_asset.get('created', {}).get('readable')
-    updated_readable = current_asset.get('updated', {}).get('readable')
-    type = "No Type"
-    language = "No Language"
-    formats = current_asset.get('formats', {})
-    string = None
-    
-    if formats:
-        iterable = formats.get('iterable', [])
-        if iterable:
-            first_item = iterable[0] if len(iterable) > 0 else None
-            if first_item:
-                classification_str = first_item.get('classification', {}).get('generic')
-                if classification_str:
-                # Extract the last part after the dot
-                    type = classification_str.split('.')[-1]
+    name = current_asset.get('name', 'Unknown')
+    created_readable = current_asset.get('created', {}).get('readable', 'Unknown')
+    updated_readable = current_asset.get('updated', {}).get('readable', 'Unknown')
+    type = current_asset.get('type', 'No Type')
+    language = current_asset.get('language', 'No Language')
+    code_snippet = current_asset.get('code_snippet', 'No Code Available')
 
-                language_str = first_item.get('classification', {}).get('specific')
-                if language_str:
-                    # Extract the last part after the dot
-                    language = language_str.split('.')[-1]
-                
-                fragment_string = first_item.get('fragment', {}).get('string').get('raw')
-                if fragment_string:
-                    raw = fragment_string
-                    string = extract_code_from_markdown(raw, name, language)
-
-    # Printing the values with descriptive text
-    if name:
-        print(f"{name}")
-    if created_readable:
-        print(f"Created: {created_readable}")
-    if updated_readable:
-        print(f"Updated: {updated_readable}")
-    if type:
-        print(f"Type: {type}")
-    if language:
-        print(f"Language: {language}")
-    if formats:
-        print(f"Code: {string}")
+    # Printing the asset details
+    print(f"Name: {name}")
+    print(f"Created: {created_readable}")
+    print(f"Updated: {updated_readable}")
+    print(f"Type: {type}")
+    print(f"Language: {language}")
+    print(f"Code: {code_snippet}")
     print()
+
 
 def extract_code_from_markdown(markdown, name, language):
     # Sanitize the name to ensure it's a valid filename
@@ -550,3 +513,82 @@ def loop(**kwargs):
             print(f"Unknown command: {command_name}")
         
         print()
+
+
+
+# def open_asset(**kwargs):
+#     global asset_ids
+#     global current_asset
+#     global assets_are_models
+
+#     item_index = kwargs.get('ITEM_INDEX')
+
+#     if item_index is not None:
+#         asset_id = asset_ids.get(item_index)
+#         if asset_id:
+#             current_asset = get_asset_by_id(asset_id)
+#         else:
+#             open_from_command_line()
+#             ## TODO store the list to a local database and call the database
+#             recent_id = list_assets()
+#             current_asset = get_asset_by_id(recent_id)
+#             print()
+
+#     else:
+#         # If ITEM_INDEX is not provided, use the current_asset
+#         if not current_asset:
+#             # no_assets_in_memory()
+#             open_from_command_line()
+#             recent_id = list_assets()  # Calling list_assets to display available assets
+#             current_asset = get_asset_by_id(recent_id)
+#             print()
+#             asset_id = current_asset.get('id')
+#             print()
+
+#     # if asset_id:
+#     print(f"Loading...")
+#     print()
+
+#     # Set Asset Fields
+#     name = current_asset.get('name')
+#     created_readable = current_asset.get('created', {}).get('readable')
+#     updated_readable = current_asset.get('updated', {}).get('readable')
+#     type = "No Type"
+#     language = "No Language"
+#     formats = current_asset.get('formats', {})
+#     string = None
+    
+#     if formats:
+#         iterable = formats.get('iterable', [])
+#         if iterable:
+#             first_item = iterable[0] if len(iterable) > 0 else None
+#             if first_item:
+#                 classification_str = first_item.get('classification', {}).get('generic')
+#                 if classification_str:
+#                 # Extract the last part after the dot
+#                     type = classification_str.split('.')[-1]
+
+#                 language_str = first_item.get('classification', {}).get('specific')
+#                 if language_str:
+#                     # Extract the last part after the dot
+#                     language = language_str.split('.')[-1]
+                
+#                 fragment_string = first_item.get('fragment', {}).get('string').get('raw')
+#                 if fragment_string:
+#                     raw = fragment_string
+#                     string = extract_code_from_markdown(raw, name, language)
+
+#     # Printing the values with descriptive text
+#     if name:
+#         print(f"{name}")
+#     if created_readable:
+#         print(f"Created: {created_readable}")
+#     if updated_readable:
+#         print(f"Updated: {updated_readable}")
+#     if type:
+#         print(f"Type: {type}")
+#     if language:
+#         print(f"Language: {language}")
+#     if formats:
+#         print(f"Code: {string}")
+#     print()
