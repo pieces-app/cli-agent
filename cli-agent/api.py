@@ -3,7 +3,8 @@ from openapi_client.rest import ApiException
 from openapi_client.models.seeded_format import SeededFormat
 from openapi_client.models.seeded_fragment import SeededFragment
 from openapi_client.models.application import Application
-from openapi_client.models.searched_assets import SearchedAssets
+from openapi_client.models.searched_assets import SearchedAssets 
+from openapi_client.models.models import Models
 from store import create_connection, get_application, insert_application, create_table
 from pprint import pprint
 import platform
@@ -32,6 +33,13 @@ def categorize_os():
         os_info = 'WEB'  # Default to WEB if the OS doesn't match others
 
     return os_info
+
+def list_models():
+    
+    models_api = openapi_client.ModelsApi(api_client)
+
+    response = models_api.models_snapshot()
+    return response
 
 def search_api(search_phrase, search_type):
     query = search_phrase

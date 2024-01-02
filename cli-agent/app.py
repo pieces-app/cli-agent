@@ -60,14 +60,15 @@ def main():
         )
         version_parser.set_defaults(func=version)
 
-        # Subparser for the 'search' command
-        # search_parser = subparsers.add_parser('search', help='Search with a query string')
-        # search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
-        # search_parser.set_defaults(func=search)
+        # Subparser for Search
         search_parser = subparsers.add_parser('search', help='Search with a query string')
         search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
         search_parser.add_argument('--type', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search (assets, ncs, fts)')
         search_parser.set_defaults(func=search)
+
+        # TEMP Subparser for listing models
+        models_parser = subparsers.add_parser('list_models', help='List available models')
+        models_parser.set_defaults(func=list_all_models)
 
 
 

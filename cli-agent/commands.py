@@ -44,6 +44,42 @@ def sanitize_filename(name):
     name = re.sub(r'[\\/*?:"<>|]', '', name)
     return name
 
+# def list_all_models(**kwargs):
+
+#     try:
+#         response = list_models()
+#     except Exception as e:
+#         print(f"Error occurred while fetching models: {e}")
+#         return
+
+#     # Check if response is valid and contains model data
+#     if hasattr(response, 'iterable') and response.iterable:
+#         for index, model in enumerate(response.iterable, start=1):
+#             model_name = getattr(model, 'name', 'Unknown')
+#             model_version = getattr(model, 'version', 'Unknown')
+#             print(f"{index}: Model Name: {model_name}, Model Version: {model_version}")
+#     else:
+#         print("No models found or invalid response format.")
+
+def list_all_models(**kwargs):
+    try:
+        response = list_models()  # Assuming this calls the function from api.py
+    except Exception as e:
+        print(f"Error occurred while fetching models: {e}")
+        return
+
+    # Check if response is valid and contains model data
+    if hasattr(response, 'iterable') and response.iterable:
+        print()
+        print("Models")
+        for index, model in enumerate(response.iterable, start=1):
+            model_name = getattr(model, 'name', 'Unknown')
+            model_version = getattr(model, 'version', 'Unknown')
+            print(f"{index}: Model Name: {model_name}, Model Version: {model_version}")
+    else:
+        print("No models found or invalid response format.")
+
+
 def search(query, **kwargs):
     global asset_ids  # Declare the use of the global variable
 
@@ -96,6 +132,9 @@ def list_assets(list_type_or_max='assets', **kwargs):
         max_results = int(list_type_or_max)
     elif list_type_or_max == 'apps':
         list_apps = True
+
+    if list_type_or_max == 'models':
+        return list_all_models(**kwargs)  # Call the function to list all models
 
     if list_apps:
         # Logic for listing applications
