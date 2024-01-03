@@ -52,6 +52,12 @@ def main():
         run_parser = subparsers.add_parser('edit', help='Runs CLI in a loop')
         run_parser.set_defaults(func=edit_asset)
 
+        # Subparser for the 'ask' command
+        ask_parser = subparsers.add_parser('ask', help='Ask a question to a model')
+        # ask_parser.add_argument('model_id', type=str, help='Model ID to use for asking the question')
+        ask_parser.add_argument('query', type=str, help='Question to be asked to the model')
+        ask_parser.set_defaults(func=ask)
+
         # Subparser for the 'version' command
         version_parser = subparsers.add_parser(
         'version',

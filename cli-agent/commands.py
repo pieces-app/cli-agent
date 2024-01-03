@@ -13,6 +13,7 @@ pieces_os_version = None
 run_in_loop = False
 asset_ids = {}
 assets_are_models = False
+current_model = {'ac61838c-4676-4cae-98aa-037e4d3ad27c'}
 current_asset = {}
 parser = None
 application = None
@@ -70,6 +71,18 @@ def list_all_models(**kwargs):
         assets_are_models = True
     else:
         print("No models found or invalid response format.")
+
+def ask(query, **kwargs):
+    global current_model
+
+    model_id = current_model.pop()
+
+    try:
+        response = ask_question(model_id, query)
+        print("Response from the model:")
+        print(response)
+    except Exception as e:
+        print(f"Error occurred while asking the question: {e}")
 
 def search(query, **kwargs):
     global asset_ids 

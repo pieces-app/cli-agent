@@ -6,6 +6,12 @@ from openapi_client.models.application import Application
 from openapi_client.models.searched_assets import SearchedAssets 
 from openapi_client.models.models import Models
 from store import create_connection, get_application, insert_application, create_table
+from openapi_client.models.qgpt_stream_input import QGPTStreamInput
+from openapi_client.models.qgpt_question_input import QGPTQuestionInput
+from openapi_client.models.qgpt_stream_output import QGPTStreamOutput
+from openapi_client.models.relevant_qgpt_seed import RelevantQGPTSeed
+from openapi_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
+from openapi_client.models.seed import Seed
 from pprint import pprint
 import platform
 
@@ -33,6 +39,28 @@ def categorize_os():
         os_info = 'WEB'  # Default to WEB if the OS doesn't match others
 
     return os_info
+
+def ask_question(model_id, query="This is a test"):
+   
+    demo_seed = RelevantQGPTSeed()
+    iterable = [demo_seed]
+
+    api_instance = openapi_client.QGPTApi(api_client)
+    
+    qgpt_stream_input = QGPTStreamInput(
+        question=QGPTQuestionInput(
+            query=query, model=model_id, relevant=RelevantQGPTSeeds(iterable=iterable)
+            ))
+
+    response = api_instance.qgpt_stream(qgpt_stream_input=qgpt_stream_input)
+    
+    
+    print(response)
+
+    
+ 
+    
+    
 
 def list_models():
     
