@@ -41,12 +41,24 @@ def categorize_os():
     return os_info
 
 def ask_question(model_id, query="This is a test"):
-   
+
+    ## QGPTStreamInput
+    ## You can either pass in relevance or question
+    ## QGPTQuestionInput requires a model id and query
+    ## When running, the error message indicates that you MUST pass in relevant
+    ## Pass in the query, model and RelevantQGPTSeeds
+    ## RelevantQGPTSeeds has iterable which is a list of RelevantQGPTSeed
+
+    ## Try creating a blank seed
     demo_seed = RelevantQGPTSeed()
+
+    ## Add the seed to a list
     iterable = [demo_seed]
 
+    ## Create Instance
     api_instance = openapi_client.QGPTApi(api_client)
     
+    ## Create the stream input
     qgpt_stream_input = QGPTStreamInput(
         question=QGPTQuestionInput(
             query=query, model=model_id, relevant=RelevantQGPTSeeds(iterable=iterable)
@@ -80,6 +92,7 @@ def search_api(search_phrase, search_type):
         api_instance = openapi_client.SearchApi(api_client)
         response = api_instance.neural_code_search(query=query)
     elif search_type == 'fts':
+        # print(query)
         api_instance = openapi_client.SearchApi(api_client)
         response = api_instance.full_text_search(query=query)
     else:

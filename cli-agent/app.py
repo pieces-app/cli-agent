@@ -77,8 +77,6 @@ def main():
         models_parser.set_defaults(func=list_all_models)
 
 
-
-
         # Subparser for the 'help' command
         help_parser = subparsers.add_parser('help', help='Prints a list of available commands')
         help_parser.set_defaults(func=help)
@@ -86,6 +84,7 @@ def main():
         # Parse the arguments if provided
         if len(sys.argv) > 1:
             args = parser.parse_args()
+            print(args)
             # Execute the corresponding function with the parsed arguments
             args.func(**vars(args))
 

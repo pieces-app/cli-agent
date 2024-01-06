@@ -87,10 +87,14 @@ def ask(query, **kwargs):
 def search(query, **kwargs):
     global asset_ids 
 
+    # print(query)
+
     search_type = kwargs.get('search_type', 'assets')
 
     # Join the list of strings into a single search phrase
     search_phrase = ' '.join(query)
+
+    # print(search_phrase)
 
     # Call the API function with the search phrase and type
     results = search_api(search_phrase, search_type)
@@ -489,7 +493,16 @@ def loop(**kwargs):
             double_line("Server no longer available. Exiting loop.")
             break
 
-        user_input = input("User: ").strip().lower()
+        # user_input = input("User: ").strip().lower()
+        user_input = input("User: ").strip()
+        command_parts = shlex.split(user_input)
+        if command_parts:
+            command_name = command_parts[0].lower()  # Lowercase only the command name
+            command_args = command_parts[1:]  # Keep the arguments in their original case
+        else:
+            continue  # Skip if the input is empty
+
+
         if user_input == 'exit':
             double_space("Exiting...")
             break
