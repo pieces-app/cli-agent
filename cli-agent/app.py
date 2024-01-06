@@ -69,7 +69,7 @@ def main():
         # Subparser for Search
         search_parser = subparsers.add_parser('search', help='Search with a query string')
         search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
-        search_parser.add_argument('--type', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search (assets, ncs, fts)')
+        search_parser.add_argument('--mode', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search (assets, ncs, fts)')
         search_parser.set_defaults(func=search)
 
         # TEMP Subparser for listing models
@@ -84,7 +84,7 @@ def main():
         # Parse the arguments if provided
         if len(sys.argv) > 1:
             args = parser.parse_args()
-            print(args)
+            # print(args)
             # Execute the corresponding function with the parsed arguments
             args.func(**vars(args))
 
