@@ -482,8 +482,9 @@ def loop(**kwargs):
     os_info = platform.platform()
     python_version = sys.version.split()[0]
     os_running, os_version, application = check_api()
+    placeholder_cli_version = "0.1.0"
   
-    print_response(f"Operating System: {os_info}", f"Python Version: {python_version}", f"Pieces OS Version: {os_version if os_running else 'Not available'}", f"Application: {application.name.name}")
+    print_response(f"Operating System: {os_info}", f"Python Version: {python_version}", f"Pieces OS Version: {os_version if os_running else 'Not available'}", f"Pieces CLI Version: {placeholder_cli_version}", f"Application: {application.name.name}")
     print_instructions()
         
     # Start the loop
