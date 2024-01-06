@@ -11,6 +11,7 @@ from openapi_client.models.qgpt_question_input import QGPTQuestionInput
 from openapi_client.models.qgpt_stream_output import QGPTStreamOutput
 from openapi_client.models.relevant_qgpt_seed import RelevantQGPTSeed
 from openapi_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
+from openapi_client.models.format import Format
 from openapi_client.models.seed import Seed
 from pprint import pprint
 import platform
@@ -317,34 +318,39 @@ def update_asset(asset_id):
         print(f"Error reading file: {e}")
         return
 
-    def update_string(obj):
-        if isinstance(obj, dict):
-            for key, value in obj.items():
-                if isinstance(value, dict):
-                    update_string(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        update_string(item)
-                elif key == 'raw' and isinstance(value, str):
-                    obj[key] = new_content
+    # def update_string(obj):
+    #     if isinstance(obj, dict):
+    #         for key, value in obj.items():
+    #             if isinstance(value, dict):
+    #                 update_string(value)
+    #             elif isinstance(value, list):
+    #                 for item in value:
+    #                     update_string(item)
+    #             elif key == 'raw' and isinstance(value, str):
+    #                 obj[key] = new_content
 
-    # Get the formats and update the raw string in each format
-    formats = working_asset.get('formats', {}).get('iterable', [])
-    for format in formats:
-        string_obj = format.get('fragment', {}).get('string', {})
-        if 'raw' in string_obj:
-            string_obj['raw'] = new_content
+    format_api_instance = openapi_client.FormatApi(api_client)
+    format = openapi_client.Format(asset=working_asset)
+    api_response = format_api_instance.format_update_value(transferable=False, format=format)
+    print(api_response)
 
-    # Update all string occurrences within the asset
-    update_string(working_asset)  # Uncomment this line to enable updating
+    # # Get the formats and update the raw string in each format
+    # formats = working_asset.get('formats', {}).get('iterable', [])
+    # for format in formats:
+    #     string_obj = format.get('fragment', {}).get('string', {})
+    #     if 'raw' in string_obj:
+    #         string_obj['raw'] = new_content
 
-    # Update the asset using the API
-    try:
-        response = asset_api.asset_update(asset=working_asset, transferables=False)
-        # print(response)
-        print("Asset updated successfully.")
-    except Exception as e:
-        print(f"Error updating asset: {e}")
+    # # # Update all string occurrences within the asset
+    # # update_string(working_asset)  # Uncomment this line to enable updating
+
+    # # # Update the asset using the API
+    # # try:
+    # #     response = asset_api.asset_update(asset=working_asset, transferables=False)
+    # #     # print(response)
+    # #     print("Asset updated successfully.")
+    # except Exception as e:
+    #     print(f"Error updating asset: {e}")
 
 def delete_asset_by_id(asset_id):
     delete_instance = openapi_client.AssetsApi(api_client)

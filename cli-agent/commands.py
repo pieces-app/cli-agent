@@ -199,6 +199,9 @@ def open_asset(**kwargs):
 
     item_index = kwargs.get('ITEM_INDEX')
 
+    print("Item Index: ")
+    print(item_index)
+
     if assets_are_models:
         if item_index is not None and item_index in asset_ids:
             print(f"Model ID: {asset_ids[item_index]}")
@@ -209,7 +212,9 @@ def open_asset(**kwargs):
     if item_index is not None:
         asset_id = asset_ids.get(item_index)
         if asset_id:
+            # print("Getting Current Asset")
             current_asset = get_asset_by_id(asset_id)
+            # print(current_asset)
         else:
             print("Asset not found for the provided index.")
             return
@@ -218,14 +223,40 @@ def open_asset(**kwargs):
         if not current_asset:
             print("No current asset in memory.")
             return
+        
+    # print(current_asset)
 
     # Set Asset Fields
     name = current_asset.get('name', 'Unknown')
     created_readable = current_asset.get('created', {}).get('readable', 'Unknown')
     updated_readable = current_asset.get('updated', {}).get('readable', 'Unknown')
-    type = current_asset.get('type', 'No Type')
-    language = current_asset.get('language', 'No Language')
-    code_snippet = current_asset.get('code_snippet', 'No Code Available')
+    # type = current_asset.get('type', 'No Type')
+    # language = current_asset.get('language', 'No Language')
+    type = "No Type"
+    language = "No Language"
+    # code_snippet = current_asset.get('code_snippet', 'No Code Available')
+    code_snippet = "No Code Available"
+    formats = current_asset.get('formats', {})
+
+    if formats:
+        iterable = formats.get('iterable', [])
+        if iterable:
+            first_item = iterable[0] if len(iterable) > 0 else None
+            if first_item:
+                classification_str = first_item.get('classification', {}).get('generic')
+                if classification_str:
+                # Extract the last part after the dot
+                    type = classification_str.split('.')[-1]
+
+                language_str = first_item.get('classification', {}).get('specific')
+                if language_str:
+                    # Extract the last part after the dot
+                    language = language_str.split('.')[-1]
+                
+                fragment_string = first_item.get('fragment', {}).get('string').get('raw')
+                if fragment_string:
+                    raw = fragment_string
+                    code_snippet = extract_code_from_markdown(raw, name, language)
 
     # Printing the asset details
     print(f"Name: {name}")
