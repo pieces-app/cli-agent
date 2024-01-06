@@ -17,6 +17,7 @@ current_model = {'ac61838c-4676-4cae-98aa-037e4d3ad27c'}
 current_asset = {}
 parser = None
 application = None
+ws = None
 
 # New function to set the application
 def set_application(app):
@@ -75,12 +76,15 @@ def list_all_models(**kwargs):
 def ask(query, **kwargs):
     global current_model
 
-    model_id = current_model.pop()
+    if current_model:
+        model_id = next(iter(current_model))
+    else:
+        raise ValueError("No model ID available")
 
     try:
         response = ask_question(model_id, query)
-        print("Response from the model:")
-        print(response)
+        # print("Response from the model:")
+        # print(response)
     except Exception as e:
         print(f"Error occurred while asking the question: {e}")
 
@@ -307,7 +311,7 @@ def save_asset(**kwargs):
     else:
         asset_to_update = current_asset.get('id')
         # Pass asset and file name
-        update_asset(asset_to_update)
+        update_asset(asset_to_update, application)
 
 def edit_asset(**kwargs):
     global application
@@ -505,9 +509,11 @@ def help(**kwargs):
 def loop(**kwargs):
     # Logic to return operating system and Python version
     welcome()
-    global run_in_loop, parser
+    global run_in_loop, parser, ws
 
     run_in_loop = True
+
+    # Open Websocket Connection
     
     # Check Versions and Ensure Server is Running
     os_info = platform.platform()
@@ -537,6 +543,8 @@ def loop(**kwargs):
 
         if user_input == 'exit':
             double_space("Exiting...")
+            if ws:
+                close_websocket_connection(ws)
             break
 
         # Check if the input is a number and treat it as an index for 'open' command

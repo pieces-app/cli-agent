@@ -13,8 +13,20 @@ from openapi_client.models.relevant_qgpt_seed import RelevantQGPTSeed
 from openapi_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
 from openapi_client.models.format import Format
 from openapi_client.models.seed import Seed
+# from openapi_client.models.flattened_asset import FlattendAsset
+from openapi_client.models.classification import Classification
 from pprint import pprint
 import platform
+import json
+import websocket
+import threading
+import time
+
+#Globals
+response_received = None
+existing_model_id = ""
+query = ""
+ws = websocket
 
 # Defining the host is optional and defaults to http://localhost:1000
 # See configuration.py for a list of all supported configuration parameters.
@@ -24,6 +36,174 @@ configuration = openapi_client.Configuration(
 
 # Initialize the ApiClient globally
 api_client = openapi_client.ApiClient(configuration)
+
+# def on_message(ws, message):
+#     try:
+#         response = json.loads(message)
+#         # Extract and print only the text from the response
+#         answers = response.get('question', {}).get('answers', {}).get('iterable', [])
+#         for answer in answers:
+#             text = answer.get('text')
+#             if text:
+#                 print(text, end='')
+
+#     except Exception as e:
+#         print(f"Error processing message: {e}")
+
+def on_message(ws, message):
+    try:
+        response = json.loads(message)
+        answers = response.get('question', {}).get('answers', {}).get('iterable', [])
+        for answer in answers:
+            text = answer.get('text')
+            if text:
+                print(text, end='')
+
+        # Check if the response is complete and add a newline
+        status = response.get('status', '')
+        if status == 'COMPLETED':
+            print("\n")  # Add a newline after the complete response
+
+    except Exception as e:
+        print(f"Error processing message: {e}")
+
+
+
+def on_error(ws, error):
+    print(f"WebSocket error: {error}")
+
+def on_close(ws, close_status_code, close_msg):
+    print(f"WebSocket closed, Close status code: {close_status_code}, Message: {close_msg}")
+
+def on_open(ws):
+    # global existing_model_id
+    print("WebSocket connection opened.")
+    send_message(ws=ws)  # Send a test message upon connection
+
+# def start_websocket_connection():
+#     print("Starting WebSocket connection...")
+#     ws = websocket.WebSocketApp("ws://localhost:1000/qgpt/stream",
+#                                 on_open=on_open,
+#                                 on_message=on_message,
+#                                 on_error=on_error,
+#                                 on_close=on_close)
+#     ws.run_forever()
+#     print("WebSocket run_forever() has ended.")
+
+# # Modify the start_ws function in the ask_question to only start the connection
+# def start_ws():
+#     # print("Thread for WebSocket started.")
+#     ws = start_websocket_connection()
+    
+def start_websocket_connection():
+    print("Starting WebSocket connection...")
+    ws_app = websocket.WebSocketApp("ws://localhost:1000/qgpt/stream",
+                                    on_open=on_open,
+                                    on_message=on_message,
+                                    on_error=on_error,
+                                    on_close=on_close)
+    # Note: We are not calling ws_app.run_forever() here; 
+    # it will be called in the thread.
+    return ws_app
+
+def start_ws():
+    global ws
+    
+    if ws is None:
+        print("No WebSocket provided, opening a new connection.")
+        ws = start_websocket_connection()
+    else:
+        print("Using provided WebSocket connection.")
+    print(f"Type of ws before sending message: {type(ws)}")  # Debug print
+    ws.run_forever()  # Start the WebSocket connection
+    send_message(ws=ws)
+
+
+def send_message(ws):
+    global existing_model_id
+    global this_query
+
+    # Construct the message in the format expected by the server
+    message = {
+        "question": {
+            "query": this_query,
+            "relevant": {"iterable": []},
+            "model": existing_model_id
+        }
+    }
+
+    # Convert the message to a JSON string
+    json_message = json.dumps(message)
+
+    # Send the JSON message through the WebSocket
+    ws.send(json_message)
+    # print(f"Sent message to server: {json_message}")
+    print("Response: ")
+
+def close_websocket_connection(ws):
+    if ws:
+        print("Closing WebSocket connection...")
+        ws.close()
+
+
+# def ask_question(ws, model_id, query="This is a test"):
+#     global response_received
+#     global existing_model_id
+#     global this_query
+
+#     existing_model_id = model_id
+#     this_query = query
+
+#     def start_ws():
+#         nonlocal ws
+#         if ws is None:
+#             print("No WebSocket provided, opening a new connection.")
+#             ws = start_websocket_connection()
+#         else:
+#             print("Using provided WebSocket connection.")
+#         print(f"Type of ws before sending message: {type(ws)}")  # Debug print
+#         send_message(ws=ws)
+
+#     ws_thread = threading.Thread(target=start_ws)
+#     ws_thread.start()
+
+def ask_question(model_id, query="This is a test"):
+    global response_received, existing_model_id, this_query, ws
+
+    existing_model_id = model_id
+    this_query = query
+
+    def start_ws(ws):
+        if ws is None:
+            print("No WebSocket provided, opening a new connection.")
+            ws = start_websocket_connection()
+        else:
+            print("Using provided WebSocket connection.")
+        print(f"Type of ws before sending message: {type(ws)}")
+        ws.run_forever()
+        send_message(ws=ws)
+
+    ws = None
+    ws_thread = threading.Thread(target=start_ws, args=(ws,))
+    ws_thread.start()
+
+    # ws_thread = threading.Thread(target=start_ws)
+    # ws_thread.start()
+
+    print("Waiting for response...")
+    timeout = 5  # seconds
+    start_time = time.time()
+    while response_received is None and (time.time() - start_time) < timeout:
+        time.sleep(0.1)  # Sleep briefly to yield execution
+
+    if response_received is not None:
+        print("Response:", response_received)
+        print()
+    else:
+        # print("No response received within the timeout period.")
+        pass
+
+    # print("ask_question function completed.")
 
 def categorize_os():
     # Get detailed platform information
@@ -41,9 +221,32 @@ def categorize_os():
 
     return os_info
 
-def ask_question(model_id, query="This is a test"):
 
-    ## QGPTStreamInput
+
+# def ask_question(model_id, query="This is a test"):
+#     global response_received
+
+#     def start_ws():
+#         ws = start_websocket_connection()
+#         send_message(ws, query=query)
+
+#     # Start WebSocket in a new thread
+#     ws_thread = threading.Thread(target=start_ws)
+#     ws_thread.start()
+
+#     # Wait for the response (with a timeout to prevent infinite waiting)
+#     timeout = 60  # seconds
+#     start_time = time.time()
+#     while response_received is None and (time.time() - start_time) < timeout:
+#         time.sleep(0.1)  # Sleep briefly to yield execution
+
+#     if response_received is not None:
+#         print("Response:", response_received)
+#     else:
+#         print("No response received within the timeout period.")
+
+
+     ## QGPTStreamInput
     ## You can either pass in relevance or question
     ## QGPTQuestionInput requires a model id and query
     ## When running, the error message indicates that you MUST pass in relevant
@@ -51,25 +254,21 @@ def ask_question(model_id, query="This is a test"):
     ## RelevantQGPTSeeds has iterable which is a list of RelevantQGPTSeed
 
     ## Try creating a blank seed
-    demo_seed = RelevantQGPTSeed()
+    # demo_seed = RelevantQGPTSeed()
 
-    ## Add the seed to a list
-    iterable = [demo_seed]
+    # ## Add the seed to a list
+    # iterable = [demo_seed]
 
-    ## Create Instance
-    api_instance = openapi_client.QGPTApi(api_client)
+    # ## Create Instance
+    # api_instance = openapi_client.QGPTApi(api_client)
     
-    ## Create the stream input
-    qgpt_stream_input = QGPTStreamInput(
-        question=QGPTQuestionInput(
-            query=query, model=model_id, relevant=RelevantQGPTSeeds(iterable=iterable)
-            ))
+    # ## Create the stream input
+    # qgpt_stream_input = QGPTStreamInput(
+    #     question=QGPTQuestionInput(
+    #         query=query, model=model_id, relevant=RelevantQGPTSeeds(iterable=iterable)
+    #         ))
 
-    response = api_instance.qgpt_stream(qgpt_stream_input=qgpt_stream_input)
-    
-    
-    print(response)
-
+    # response = api_instance.qgpt_stream(qgpt_stream_input=qgpt_stream_input)
     
  
     
@@ -297,7 +496,9 @@ def edit_asset_name(asset_id, new_name):
     except Exception as e:
         print(f"Error updating asset: {e}")
 
-def update_asset(asset_id):
+def update_asset(asset_id, application):
+    ## NOT CURRENTLY WORKING ##
+    
     asset_api = openapi_client.AssetApi(api_client)
 
     working_asset = get_asset_by_id(asset_id)
@@ -318,19 +519,30 @@ def update_asset(asset_id):
         print(f"Error reading file: {e}")
         return
 
-    # def update_string(obj):
-    #     if isinstance(obj, dict):
-    #         for key, value in obj.items():
-    #             if isinstance(value, dict):
-    #                 update_string(value)
-    #             elif isinstance(value, list):
-    #                 for item in value:
-    #                     update_string(item)
-    #             elif key == 'raw' and isinstance(value, str):
-    #                 obj[key] = new_content
+    def update_string(obj):
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if isinstance(value, dict):
+                    update_string(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        update_string(item)
+                elif key == 'raw' and isinstance(value, str):
+                    obj[key] = new_content
 
+    # print(working_asset)
+
+    from openapi_client.models.exported_asset import ExportedAsset
+    from openapi_client.models.grouped_timestamp import GroupedTimestamp
+    from openapi_client.models.file_format import FileFormat
+
+    from datetime import datetime
+
+    # exported_asset = ExportedAsset(name="This is a test", description="Testing description", raw=FileFormat(string={"string": "This, This is me testing export asset"}), created=GroupedTimestamp(value=datetime.now()))
+
+    # print(exported_asset)
     format_api_instance = openapi_client.FormatApi(api_client)
-    format = openapi_client.Format(asset=working_asset)
+    format = openapi_client.Format(asset=working_asset, id=asset_id, creator="ea47fe2f-a503-4edb-861a-7c55ca446859", classification=Classification(generic="CODE",specific="tex"), role="BOTH", application=application),
     api_response = format_api_instance.format_update_value(transferable=False, format=format)
     print(api_response)
 
