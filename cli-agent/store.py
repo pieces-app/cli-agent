@@ -1,3 +1,5 @@
+### TODO need to implement caching for the cli version and more advanced caching strategies ###
+
 import sqlite3
 from openapi_client.models.application import Application
 

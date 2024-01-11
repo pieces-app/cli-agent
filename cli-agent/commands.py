@@ -18,6 +18,8 @@ current_asset = {}
 parser = None
 application = None
 ws = None
+ws_thread = None
+cli_version = None
 
 # New function to set the application
 def set_application(app):
@@ -34,10 +36,27 @@ def set_pieces_os_version(version):
 
 def version(**kwargs):
     global pieces_os_version
+    global cli_version
+
     if pieces_os_version:
-        print(pieces_os_version)
+        print(f"Pieces Version: {pieces_os_version}")
+        print(f"Cli Version: {cli_version}")
     else:
-        print("No message available")
+        ### LOGIC TO look up cache from SQLite3 to get the cli and pieces os version
+
+        # Get the version from cache
+        # Establish a local database connection
+        # conn = create_connection('applications.db')
+
+        # # Create the table if it does not exist
+        # create_table(conn)
+        # # create_tables(conn)
+
+        # # Check the database for an existing application
+        # application_id = "DEFAULT"  # Replace with a default application ID
+        # application = get_application(conn, application_id)
+        # # application =  get_application_with_versions(conn, application_id)
+        pass
 
 def sanitize_filename(name):
     """ Sanitize the filename by removing or replacing invalid characters. """
@@ -74,7 +93,9 @@ def list_all_models(**kwargs):
         print("No models found or invalid response format.")
 
 def ask(query, **kwargs):
-    global current_model
+    # global current_model
+
+    global current_model, ws, ws_thread
 
     if current_model:
         model_id = next(iter(current_model))
@@ -82,7 +103,11 @@ def ask(query, **kwargs):
         raise ValueError("No model ID available")
 
     try:
-        response = ask_question(model_id, query)
+        # response = ask_question(model_id, query)
+        ws, ws_thread = ask_question(model_id, query)
+        # print("INSIDE ASK: ")
+        # print()
+        # print(response)
         # print("Response from the model:")
         # print(response)
     except Exception as e:
@@ -97,6 +122,9 @@ def search(query, **kwargs):
 
     # Join the list of strings into a single search phrase
     search_phrase = ' '.join(query)
+
+    print(search_type)
+    print(search_phrase)
 
     # print(search_phrase)
 
@@ -203,44 +231,59 @@ def open_asset(**kwargs):
 
     item_index = kwargs.get('ITEM_INDEX')
 
-    print("Item Index: ")
-    print(item_index)
-
     if assets_are_models:
         if item_index is not None and item_index in asset_ids:
             print(f"Model ID: {asset_ids[item_index]}")
         else:
             print("Invalid model index or model index not provided.")
         return
+    
+    opened_asset = None
 
     if item_index is not None:
         asset_id = asset_ids.get(item_index)
+        # current_asset = {asset_id}
+        
+        
         if asset_id:
             # print("Getting Current Asset")
-            current_asset = get_asset_by_id(asset_id)
+            opened_asset = get_asset_by_id(asset_id)
             # print(current_asset)
         else:
-            print("Asset not found for the provided index.")
+            asset_id = list_assets(max=1)
+            print()
+            opened_asset = get_asset_by_id(asset_id)
             return
     else:
+        asset_id = list_assets(max=1)
+        print()
+        opened_asset = get_asset_by_id(asset_id)
         # If ITEM_INDEX is not provided, use the current_asset
-        if not current_asset:
-            print("No current asset in memory.")
-            return
+        # if not current_asset:
+        #     # asset_id = list_assets(max=1)
+        #     # opened_asset = get_asset_by_id(asset_id)
+        #     print("fail")
+        #     return
         
-    # print(current_asset)
-
+    
+    # print(opened_asset)
     # Set Asset Fields
-    name = current_asset.get('name', 'Unknown')
-    created_readable = current_asset.get('created', {}).get('readable', 'Unknown')
-    updated_readable = current_asset.get('updated', {}).get('readable', 'Unknown')
-    # type = current_asset.get('type', 'No Type')
-    # language = current_asset.get('language', 'No Language')
+    # opened_asset = get_asset_by_id(asset_id)
+    # name = current_asset.get('name', 'Unknown')
+    # created_readable = current_asset.get('created', {}).get('readable', 'Unknown')
+    # updated_readable = current_asset.get('updated', {}).get('readable', 'Unknown')
+    # type = "No Type"
+    # language = "No Language"
+    # code_snippet = "No Code Available"
+    # formats = current_asset.get('formats', {})
+    current_asset = {asset_id}
+    name = opened_asset.get('name', 'Unknown')
+    created_readable = opened_asset.get('created', {}).get('readable', 'Unknown')
+    updated_readable = opened_asset.get('updated', {}).get('readable', 'Unknown')
     type = "No Type"
     language = "No Language"
-    # code_snippet = current_asset.get('code_snippet', 'No Code Available')
     code_snippet = "No Code Available"
-    formats = current_asset.get('formats', {})
+    formats = opened_asset.get('formats', {})
 
     if formats:
         iterable = formats.get('iterable', [])
@@ -353,9 +396,13 @@ def delete_asset(**kwargs):
     if not current_asset:
         # Open the most recent asset
         if run_in_loop:
-            open_asset()
-            print("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone.")
-            print("type 'delete' to confirm")
+            # if current_asset:
+                open_asset()
+                print("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone.")
+                print("type 'delete' to confirm")
+            # else:
+                # list_assets(max=1)
+                # print("Please open an asset before deleting it")
         else:
             print()
             asset_to_delete = list_assets(max=1)
@@ -367,6 +414,7 @@ def delete_asset(**kwargs):
                 print(asset_to_delete)
                 delete_result = delete_asset_by_id(asset_to_delete)
                 print(delete_result)
+                current_asset = None
                 print("Asset deleted.")
                 print()
                 list_assets()
@@ -377,13 +425,16 @@ def delete_asset(**kwargs):
                 print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
                 print()
     else:
-        asset_to_delete = current_asset.get('id')
+        asset_to_delete = list(current_asset)[0]
 
         # Ask the user for confirmation before deleting
+        # print()
+        # open_asset()
         confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
         if confirm == 'y':
             print("Deleting asset...")
-            delete_asset_by_id(asset_to_delete) 
+            delete_asset_by_id(asset_to_delete)
+            current_asset = None
             print("Asset deleted.")
             print()
             list_assets()
@@ -414,6 +465,7 @@ def create_asset(**kwargs):
             new_asset = create_new_asset(application, raw_string=text, metadata=None)
     
             current_asset = {new_asset.id}
+            # print(current_asset)
             print(f"Asset Created use 'open' to view")
 
             return new_asset
@@ -509,7 +561,7 @@ def help(**kwargs):
 def loop(**kwargs):
     # Logic to return operating system and Python version
     welcome()
-    global run_in_loop, parser, ws
+    global run_in_loop, parser, ws, pieces_os_version, cli_version, application
 
     run_in_loop = True
 
@@ -518,8 +570,14 @@ def loop(**kwargs):
     # Check Versions and Ensure Server is Running
     os_info = platform.platform()
     python_version = sys.version.split()[0]
-    os_running, os_version, application = check_api()
+    os_running, os_version, this_application = check_api()
+    
+    #### PLACEHOLDER ####
     placeholder_cli_version = "0.1.0"
+
+    pieces_os_version = os_version
+    cli_version = placeholder_cli_version
+    application = this_application
   
     print_response(f"Operating System: {os_info}", f"Python Version: {python_version}", f"Pieces OS Version: {os_version if os_running else 'Not available'}", f"Pieces CLI Version: {placeholder_cli_version}", f"Application: {application.name.name}")
     print_instructions()
@@ -541,10 +599,17 @@ def loop(**kwargs):
             continue  # Skip if the input is empty
 
 
+        # if user_input == 'exit':
+        #     double_space("Exiting...")
+        #     if ws:
+        #         close_websocket_connection(ws)
+        #     break
         if user_input == 'exit':
             double_space("Exiting...")
             if ws:
                 close_websocket_connection(ws)
+            if ws_thread and ws_thread.is_alive():
+                ws_thread.join()  # Wait for the WebSocket thread to finish
             break
 
         # Check if the input is a number and treat it as an index for 'open' command

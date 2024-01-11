@@ -5,7 +5,8 @@ from openapi_client.models.seeded_fragment import SeededFragment
 from openapi_client.models.application import Application
 from openapi_client.models.searched_assets import SearchedAssets 
 from openapi_client.models.models import Models
-from store import create_connection, get_application, insert_application, create_table
+# from store import create_connection, get_application, insert_application, create_table
+from store import *
 from openapi_client.models.qgpt_stream_input import QGPTStreamInput
 from openapi_client.models.qgpt_question_input import QGPTQuestionInput
 from openapi_client.models.qgpt_stream_output import QGPTStreamOutput
@@ -13,7 +14,9 @@ from openapi_client.models.relevant_qgpt_seed import RelevantQGPTSeed
 from openapi_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
 from openapi_client.models.format import Format
 from openapi_client.models.seed import Seed
-# from openapi_client.models.flattened_asset import FlattendAsset
+from openapi_client.models.exported_asset import ExportedAsset
+from openapi_client.models.grouped_timestamp import GroupedTimestamp
+from openapi_client.models.file_format import FileFormat
 from openapi_client.models.classification import Classification
 from pprint import pprint
 import platform
@@ -21,12 +24,20 @@ import json
 import websocket
 import threading
 import time
+from datetime import datetime
 
 #Globals
 response_received = None
 existing_model_id = ""
 query = ""
 ws = websocket
+loading = False
+last_message_time = None
+initial_timeout = 10  # seconds
+subsequent_timeout = 3  # seconds
+first_token_received = False
+
+
 
 # Defining the host is optional and defaults to http://localhost:1000
 # See configuration.py for a list of all supported configuration parameters.
@@ -37,20 +48,11 @@ configuration = openapi_client.Configuration(
 # Initialize the ApiClient globally
 api_client = openapi_client.ApiClient(configuration)
 
-# def on_message(ws, message):
-#     try:
-#         response = json.loads(message)
-#         # Extract and print only the text from the response
-#         answers = response.get('question', {}).get('answers', {}).get('iterable', [])
-#         for answer in answers:
-#             text = answer.get('text')
-#             if text:
-#                 print(text, end='')
-
-#     except Exception as e:
-#         print(f"Error processing message: {e}")
-
 def on_message(ws, message):
+    global last_message_time, first_token_received
+    last_message_time = time.time()
+    first_token_received = True
+    
     try:
         response = json.loads(message)
         answers = response.get('question', {}).get('answers', {}).get('iterable', [])
@@ -63,37 +65,23 @@ def on_message(ws, message):
         status = response.get('status', '')
         if status == 'COMPLETED':
             print("\n")  # Add a newline after the complete response
+            loading = False
 
     except Exception as e:
         print(f"Error processing message: {e}")
-
-
 
 def on_error(ws, error):
     print(f"WebSocket error: {error}")
 
 def on_close(ws, close_status_code, close_msg):
-    print(f"WebSocket closed, Close status code: {close_status_code}, Message: {close_msg}")
+    print("Closed")
+    print()
+    # print(f"WebSocket closed, Close status code: {close_status_code}, Message: {close_msg}")
 
 def on_open(ws):
     # global existing_model_id
     print("WebSocket connection opened.")
     send_message(ws=ws)  # Send a test message upon connection
-
-# def start_websocket_connection():
-#     print("Starting WebSocket connection...")
-#     ws = websocket.WebSocketApp("ws://localhost:1000/qgpt/stream",
-#                                 on_open=on_open,
-#                                 on_message=on_message,
-#                                 on_error=on_error,
-#                                 on_close=on_close)
-#     ws.run_forever()
-#     print("WebSocket run_forever() has ended.")
-
-# # Modify the start_ws function in the ask_question to only start the connection
-# def start_ws():
-#     # print("Thread for WebSocket started.")
-#     ws = start_websocket_connection()
     
 def start_websocket_connection():
     print("Starting WebSocket connection...")
@@ -102,8 +90,7 @@ def start_websocket_connection():
                                     on_message=on_message,
                                     on_error=on_error,
                                     on_close=on_close)
-    # Note: We are not calling ws_app.run_forever() here; 
-    # it will be called in the thread.
+
     return ws_app
 
 def start_ws():
@@ -118,10 +105,30 @@ def start_ws():
     ws.run_forever()  # Start the WebSocket connection
     send_message(ws=ws)
 
+# def send_message(ws):
+#     global existing_model_id
+#     global this_query
+
+#     # Construct the message in the format expected by the server
+#     message = {
+#         "question": {
+#             "query": this_query,
+#             "relevant": {"iterable": []},
+#             "model": existing_model_id
+#         }
+#     }
+
+#     # Convert the message to a JSON string
+#     json_message = json.dumps(message)
+
+#     # Send the JSON message through the WebSocket
+#     ws.send(json_message)
+#     # print(f"Sent message to server: {json_message}")
+#     print()
+#     print("Response: ")
 
 def send_message(ws):
-    global existing_model_id
-    global this_query
+    global existing_model_id, this_query
 
     # Construct the message in the format expected by the server
     message = {
@@ -135,75 +142,98 @@ def send_message(ws):
     # Convert the message to a JSON string
     json_message = json.dumps(message)
 
-    # Send the JSON message through the WebSocket
-    ws.send(json_message)
-    # print(f"Sent message to server: {json_message}")
-    print("Response: ")
+    # Check if the WebSocket is still open before sending the message
+    if ws and ws.sock and ws.sock.connected:
+        try:
+            # Send the JSON message through the WebSocket
+            ws.send(json_message)
+            print("Response: ")
+        except Exception as e:
+            print(f"Error sending message: {e}")
+    else:
+        pass
+        # print("WebSocket connection is not open, unable to send message.")
+
 
 def close_websocket_connection(ws):
     if ws:
         print("Closing WebSocket connection...")
         ws.close()
 
-
-# def ask_question(ws, model_id, query="This is a test"):
-#     global response_received
-#     global existing_model_id
-#     global this_query
+# def ask_question(model_id, query):
+#     global response_received, existing_model_id, this_query, ws, last_message_time, first_token_received
 
 #     existing_model_id = model_id
 #     this_query = query
 
-#     def start_ws():
-#         nonlocal ws
+#     def start_ws(ws):
 #         if ws is None:
 #             print("No WebSocket provided, opening a new connection.")
 #             ws = start_websocket_connection()
 #         else:
 #             print("Using provided WebSocket connection.")
-#         print(f"Type of ws before sending message: {type(ws)}")  # Debug print
+        
+#         # print(f"Type of ws before sending message: {type(ws)}")
+#         ws.run_forever()
 #         send_message(ws=ws)
 
+#     ws = None
+#     # ws_thread = threading.Thread(target=start_ws, args=(ws,))
+#     # ws_thread.start()
 #     ws_thread = threading.Thread(target=start_ws)
 #     ws_thread.start()
-
-def ask_question(model_id, query="This is a test"):
-    global response_received, existing_model_id, this_query, ws
+        
+def ask_question(model_id, query):
+    global response_received, existing_model_id, this_query, last_message_time, first_token_received
 
     existing_model_id = model_id
     this_query = query
+    ws = None  # Define ws here
 
-    def start_ws(ws):
+    def start_ws():
+        nonlocal ws  # Use the non-local ws variable
         if ws is None:
             print("No WebSocket provided, opening a new connection.")
             ws = start_websocket_connection()
         else:
             print("Using provided WebSocket connection.")
-        print(f"Type of ws before sending message: {type(ws)}")
+
         ws.run_forever()
         send_message(ws=ws)
 
-    ws = None
-    ws_thread = threading.Thread(target=start_ws, args=(ws,))
+    ws_thread = threading.Thread(target=start_ws)
     ws_thread.start()
 
-    # ws_thread = threading.Thread(target=start_ws)
-    # ws_thread.start()
-
     print("Waiting for response...")
-    timeout = 5  # seconds
-    start_time = time.time()
-    while response_received is None and (time.time() - start_time) < timeout:
+    timeout = 7  # seconds
+    last_message_time = time.time()  # Initialize last message time
+
+    while response_received is None:
+        current_time = time.time()
+        if first_token_received:
+            # Subsequent timeout check
+            if current_time - last_message_time > subsequent_timeout:
+                break
+        else:
+            # Initial timeout check
+            if current_time - last_message_time > initial_timeout:
+                break
         time.sleep(0.1)  # Sleep briefly to yield execution
 
-    if response_received is not None:
-        print("Response:", response_received)
-        print()
-    else:
-        # print("No response received within the timeout period.")
-        pass
+    return ws, ws_thread
 
-    # print("ask_question function completed.")
+    # print("Waiting for response...")
+    # timeout = 7  # seconds
+    # start_time = time.time()
+    # while response_received is None and (time.time() - start_time) < timeout:
+    #     time.sleep(0.1)  # Sleep briefly to yield execution
+
+    # if response_received is not None:
+    #     print("Response:", response_received)
+    #     print()
+    # else:
+    #     # print("No response received within the timeout period.")
+    #     pass
 
 def categorize_os():
     # Get detailed platform information
@@ -322,10 +352,12 @@ def check_api(**kwargs):
 
         # Create the table if it does not exist
         create_table(conn)
+        # create_tables(conn)
 
         # Check the database for an existing application
         application_id = "DEFAULT"  # Replace with a default application ID
         application = get_application(conn, application_id)
+        # application =  get_application_with_versions(conn, application_id)
 
         # If no application is found in the database, create and store a new one
         if application is None:
@@ -423,7 +455,7 @@ def get_asset_by_id(id):
         print(f"Error occurred for ID {id}: {str(e)}")
         return None
     
-def create_new_asset(application, raw_string="testing", metadata=None):
+def create_new_asset(application, raw_string, metadata=None):
     
     assets_api = openapi_client.AssetsApi(api_client)
     
@@ -532,11 +564,7 @@ def update_asset(asset_id, application):
 
     # print(working_asset)
 
-    from openapi_client.models.exported_asset import ExportedAsset
-    from openapi_client.models.grouped_timestamp import GroupedTimestamp
-    from openapi_client.models.file_format import FileFormat
-
-    from datetime import datetime
+    
 
     # exported_asset = ExportedAsset(name="This is a test", description="Testing description", raw=FileFormat(string={"string": "This, This is me testing export asset"}), created=GroupedTimestamp(value=datetime.now()))
 
@@ -545,6 +573,16 @@ def update_asset(asset_id, application):
     format = openapi_client.Format(asset=working_asset, id=asset_id, creator="ea47fe2f-a503-4edb-861a-7c55ca446859", classification=Classification(generic="CODE",specific="tex"), role="BOTH", application=application),
     api_response = format_api_instance.format_update_value(transferable=False, format=format)
     print(api_response)
+
+    ## Update the format's value that lives on the asset
+    ## Requires format update. Get format from asset we want to update (from the actual asset)
+    ## Update value locally. Send through api. 
+    ## Optional: Need assets stream running
+    ## Once we get a 200, refetch asset or replace locally
+    ## One option is to run in background for speed
+    ## Lister on conversations and assets
+    ## 
+
 
     # # Get the formats and update the raw string in each format
     # formats = working_asset.get('formats', {}).get('iterable', [])
