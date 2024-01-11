@@ -92,10 +92,26 @@ def list_all_models(**kwargs):
     else:
         print("No models found or invalid response format.")
 
-def ask(query, **kwargs):
-    # global current_model
+# def ask(query, **kwargs):
+#     # global current_model
 
-    global current_model, ws, ws_thread
+#     global current_model, ws, ws_thread
+
+#     if current_model:
+#         model_id = next(iter(current_model))
+#     else:
+#         raise ValueError("No model ID available")
+
+#     try:
+#         # response = ask_question(model_id, query)
+#         ws, ws_thread = ask_question(model_id, query)
+#         # print("INSIDE ASK: ")
+#         # print()
+#         # print(response)
+#         # print("Response from the model:")
+#         # print(response)
+def ask(query, **kwargs):
+    global current_model, ws
 
     if current_model:
         model_id = next(iter(current_model))
@@ -103,13 +119,7 @@ def ask(query, **kwargs):
         raise ValueError("No model ID available")
 
     try:
-        # response = ask_question(model_id, query)
-        ws, ws_thread = ask_question(model_id, query)
-        # print("INSIDE ASK: ")
-        # print()
-        # print(response)
-        # print("Response from the model:")
-        # print(response)
+        ws, ws_thread = ask_question(model_id, query, ws)
     except Exception as e:
         print(f"Error occurred while asking the question: {e}")
 
@@ -598,12 +608,6 @@ def loop(**kwargs):
         else:
             continue  # Skip if the input is empty
 
-
-        # if user_input == 'exit':
-        #     double_space("Exiting...")
-        #     if ws:
-        #         close_websocket_connection(ws)
-        #     break
         if user_input == 'exit':
             double_space("Exiting...")
             if ws:

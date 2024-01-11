@@ -81,6 +81,7 @@ def on_close(ws, close_status_code, close_msg):
 def on_open(ws):
     # global existing_model_id
     print("WebSocket connection opened.")
+    print()
     send_message(ws=ws)  # Send a test message upon connection
     
 def start_websocket_connection():
@@ -97,6 +98,7 @@ def start_ws():
     global ws
     
     if ws is None:
+        print()
         print("No WebSocket provided, opening a new connection.")
         ws = start_websocket_connection()
     else:
@@ -183,57 +185,83 @@ def close_websocket_connection(ws):
 #     ws_thread = threading.Thread(target=start_ws)
 #     ws_thread.start()
         
-def ask_question(model_id, query):
+def ask_question(model_id, query, ws=None):
     global response_received, existing_model_id, this_query, last_message_time, first_token_received
 
     existing_model_id = model_id
     this_query = query
-    ws = None  # Define ws here
 
     def start_ws():
-        nonlocal ws  # Use the non-local ws variable
-        if ws is None:
-            print("No WebSocket provided, opening a new connection.")
+        nonlocal ws
+        if ws is None or not ws.sock or not ws.sock.connected:
+            print()
+            print("No WebSocket provided or connection is closed, opening a new connection.")
             ws = start_websocket_connection()
         else:
             print("Using provided WebSocket connection.")
-
+        
         ws.run_forever()
         send_message(ws=ws)
 
-    ws_thread = threading.Thread(target=start_ws)
-    ws_thread.start()
+    if ws is None or not ws.sock or not ws.sock.connected:
+        ws_thread = threading.Thread(target=start_ws)
+        ws_thread.start()
+    else:
+        send_message(ws=ws)  # If ws is already connected, just send the message
 
-    print("Waiting for response...")
-    timeout = 7  # seconds
-    last_message_time = time.time()  # Initialize last message time
+    # print("Waiting for response...")
+    last_message_time = time.time()
 
     while response_received is None:
         current_time = time.time()
         if first_token_received:
-            # Subsequent timeout check
             if current_time - last_message_time > subsequent_timeout:
                 break
         else:
-            # Initial timeout check
             if current_time - last_message_time > initial_timeout:
                 break
-        time.sleep(0.1)  # Sleep briefly to yield execution
+        time.sleep(0.1)
 
-    return ws, ws_thread
+    return ws, ws_thread if 'ws_thread' in locals() else None
 
-    # print("Waiting for response...")
-    # timeout = 7  # seconds
-    # start_time = time.time()
-    # while response_received is None and (time.time() - start_time) < timeout:
-    #     time.sleep(0.1)  # Sleep briefly to yield execution
+# def ask_question(model_id, query):
+#     global response_received, existing_model_id, this_query, last_message_time, first_token_received
 
-    # if response_received is not None:
-    #     print("Response:", response_received)
-    #     print()
-    # else:
-    #     # print("No response received within the timeout period.")
-    #     pass
+#     existing_model_id = model_id
+#     this_query = query
+#     ws = None  # Define ws here
+
+#     def start_ws():
+#         nonlocal ws  # Use the non-local ws variable
+#         if ws is None:
+#             print("No WebSocket provided, opening a new connection.")
+#             ws = start_websocket_connection()
+#         else:
+#             print("Using provided WebSocket connection.")
+
+#         ws.run_forever()
+#         send_message(ws=ws)
+
+#     ws_thread = threading.Thread(target=start_ws)
+#     ws_thread.start()
+
+#     print("Waiting for response...")
+#     timeout = 7  # seconds
+#     last_message_time = time.time()  # Initialize last message time
+
+#     while response_received is None:
+#         current_time = time.time()
+#         if first_token_received:
+#             # Subsequent timeout check
+#             if current_time - last_message_time > subsequent_timeout:
+#                 break
+#         else:
+#             # Initial timeout check
+#             if current_time - last_message_time > initial_timeout:
+#                 break
+#         time.sleep(0.1)  # Sleep briefly to yield execution
+
+#     return ws, ws_thread
 
 def categorize_os():
     # Get detailed platform information
