@@ -1,30 +1,18 @@
+## WEBSOCKET FUNCTIONS | Line ~41
+## WELLNESS AND SYSTEM | Line ~164
+## MAIN FUNCTION CALLS | Line ~250
+## ASSET CALLS | Line ~281
+
 import openapi_client
 from openapi_client.rest import ApiException
-from openapi_client.models.seeded_format import SeededFormat
-from openapi_client.models.seeded_fragment import SeededFragment
-from openapi_client.models.application import Application
-from openapi_client.models.searched_assets import SearchedAssets 
-from openapi_client.models.models import Models
-# from store import create_connection, get_application, insert_application, create_table
-from store import *
-from openapi_client.models.qgpt_stream_input import QGPTStreamInput
-from openapi_client.models.qgpt_question_input import QGPTQuestionInput
-from openapi_client.models.qgpt_stream_output import QGPTStreamOutput
-from openapi_client.models.relevant_qgpt_seed import RelevantQGPTSeed
-from openapi_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
-from openapi_client.models.format import Format
-from openapi_client.models.seed import Seed
-from openapi_client.models.exported_asset import ExportedAsset
-from openapi_client.models.grouped_timestamp import GroupedTimestamp
-from openapi_client.models.file_format import FileFormat
 from openapi_client.models.classification import Classification
+from store import *
 from pprint import pprint
 import platform
 import json
 import websocket
 import threading
 import time
-from datetime import datetime
 
 #Globals
 response_received = None
@@ -37,8 +25,6 @@ initial_timeout = 10  # seconds
 subsequent_timeout = 3  # seconds
 first_token_received = False
 
-
-
 # Defining the host is optional and defaults to http://localhost:1000
 # See configuration.py for a list of all supported configuration parameters.
 configuration = openapi_client.Configuration(
@@ -48,264 +34,132 @@ configuration = openapi_client.Configuration(
 # Initialize the ApiClient globally
 api_client = openapi_client.ApiClient(configuration)
 
-def on_message(ws, message):
-    global last_message_time, first_token_received
-    last_message_time = time.time()
-    first_token_received = True
-    
-    try:
-        response = json.loads(message)
-        answers = response.get('question', {}).get('answers', {}).get('iterable', [])
-        for answer in answers:
-            text = answer.get('text')
-            if text:
-                print(text, end='')
+###############################################################################
+############################## WEBSOCKET FUNCTIONS ############################
+###############################################################################
 
-        # Check if the response is complete and add a newline
-        status = response.get('status', '')
-        if status == 'COMPLETED':
-            print("\n")  # Add a newline after the complete response
-            loading = False
+class WebSocketManager:
+    def __init__(self):
+        self.ws = None
+        self.is_connected = False
+        self.response_received = None
+        self.existing_model_id = ""
+        self.query = ""
+        self.loading = False
+        self.last_message_time = None
+        self.initial_timeout = 10  # seconds
+        self.subsequent_timeout = 3  # seconds
+        self.first_token_received = False
 
-    except Exception as e:
-        print(f"Error processing message: {e}")
+    def on_message(self, ws, message):
+        self.last_message_time = time.time()
+        self.first_token_received = True
 
-def on_error(ws, error):
-    print(f"WebSocket error: {error}")
-
-def on_close(ws, close_status_code, close_msg):
-    print("Closed")
-    print()
-    # print(f"WebSocket closed, Close status code: {close_status_code}, Message: {close_msg}")
-
-def on_open(ws):
-    # global existing_model_id
-    print("WebSocket connection opened.")
-    print()
-    send_message(ws=ws)  # Send a test message upon connection
-    
-def start_websocket_connection():
-    print("Starting WebSocket connection...")
-    ws_app = websocket.WebSocketApp("ws://localhost:1000/qgpt/stream",
-                                    on_open=on_open,
-                                    on_message=on_message,
-                                    on_error=on_error,
-                                    on_close=on_close)
-
-    return ws_app
-
-def start_ws():
-    global ws
-    
-    if ws is None:
-        print()
-        print("No WebSocket provided, opening a new connection.")
-        ws = start_websocket_connection()
-    else:
-        print("Using provided WebSocket connection.")
-    print(f"Type of ws before sending message: {type(ws)}")  # Debug print
-    ws.run_forever()  # Start the WebSocket connection
-    send_message(ws=ws)
-
-# def send_message(ws):
-#     global existing_model_id
-#     global this_query
-
-#     # Construct the message in the format expected by the server
-#     message = {
-#         "question": {
-#             "query": this_query,
-#             "relevant": {"iterable": []},
-#             "model": existing_model_id
-#         }
-#     }
-
-#     # Convert the message to a JSON string
-#     json_message = json.dumps(message)
-
-#     # Send the JSON message through the WebSocket
-#     ws.send(json_message)
-#     # print(f"Sent message to server: {json_message}")
-#     print()
-#     print("Response: ")
-
-def send_message(ws):
-    global existing_model_id, this_query
-
-    # Construct the message in the format expected by the server
-    message = {
-        "question": {
-            "query": this_query,
-            "relevant": {"iterable": []},
-            "model": existing_model_id
-        }
-    }
-
-    # Convert the message to a JSON string
-    json_message = json.dumps(message)
-
-    # Check if the WebSocket is still open before sending the message
-    if ws and ws.sock and ws.sock.connected:
         try:
-            # Send the JSON message through the WebSocket
-            ws.send(json_message)
-            print("Response: ")
+            response = json.loads(message)
+            answers = response.get('question', {}).get('answers', {}).get('iterable', [])
+            for answer in answers:
+                text = answer.get('text')
+                if text:
+                    print(text, end='')
+
+            # Check if the response is complete and add a newline
+            status = response.get('status', '')
+            if status == 'COMPLETED':
+                print("\n")  # Add a newline after the complete response
+                self.loading = False
+
         except Exception as e:
-            print(f"Error sending message: {e}")
-    else:
-        pass
-        # print("WebSocket connection is not open, unable to send message.")
+            print(f"Error processing message: {e}")
 
+    def on_error(self, ws, error):
+        print(f"WebSocket error: {error}")
+        self.is_connected = False
 
-def close_websocket_connection(ws):
-    if ws:
-        print("Closing WebSocket connection...")
-        ws.close()
+    def on_close(self, ws, close_status_code, close_msg):
+        print("WebSocket closed")
+        self.is_connected = False
 
-# def ask_question(model_id, query):
-#     global response_received, existing_model_id, this_query, ws, last_message_time, first_token_received
+    def on_open(self, ws):
+        print("WebSocket connection opened.")
+        self.is_connected = True
+        self.send_message()
 
-#     existing_model_id = model_id
-#     this_query = query
+    def start_websocket_connection(self):
+        print("Starting WebSocket connection...")
+        self.ws = websocket.WebSocketApp("ws://localhost:1000/qgpt/stream",
+                                         on_open=self.on_open,
+                                         on_message=self.on_message,
+                                         on_error=self.on_error,
+                                         on_close=self.on_close)
+        return self.ws
 
-#     def start_ws(ws):
-#         if ws is None:
-#             print("No WebSocket provided, opening a new connection.")
-#             ws = start_websocket_connection()
-#         else:
-#             print("Using provided WebSocket connection.")
-        
-#         # print(f"Type of ws before sending message: {type(ws)}")
-#         ws.run_forever()
-#         send_message(ws=ws)
-
-#     ws = None
-#     # ws_thread = threading.Thread(target=start_ws, args=(ws,))
-#     # ws_thread.start()
-#     ws_thread = threading.Thread(target=start_ws)
-#     ws_thread.start()
-        
-def ask_question(model_id, query, ws=None, run_in_loop=False):
-    global response_received, existing_model_id, this_query, last_message_time, first_token_received
-
-    existing_model_id = model_id
-    this_query = query
-
-    def start_ws():
-        nonlocal ws
-        if ws is None or not ws.sock or not ws.sock.connected:
+    def start_ws(self):
+        if self.ws is None or not self.is_connected:
             print("No WebSocket provided or connection is closed, opening a new connection.")
-            ws = start_websocket_connection()
+            self.ws = self.start_websocket_connection()
         else:
             print("Using provided WebSocket connection.")
-        
-        ws.run_forever()
-        send_message(ws=ws)
 
-    if ws is None or not ws.sock or not ws.sock.connected:
-        ws_thread = threading.Thread(target=start_ws)
-        ws_thread.start()
-    else:
-        send_message(ws=ws)  # If ws is already connected, just send the message
+        self.ws.run_forever()
 
-    # print("Waiting for response...")
-    last_message_time = time.time()
+    def send_message(self):
+        message = {
+            "question": {
+                "query": self.query,
+                "relevant": {"iterable": []},
+                "model": self.existing_model_id
+            }
+        }
 
-    while response_received is None:
-        current_time = time.time()
-        if first_token_received:
-            if current_time - last_message_time > subsequent_timeout:
-                break
+        json_message = json.dumps(message)
+
+        if self.is_connected:
+            try:
+                self.ws.send(json_message)
+                print("Response: ")
+            except Exception as e:
+                print(f"Error sending message: {e}")
         else:
-            if current_time - last_message_time > initial_timeout:
-                break
-        time.sleep(0.1)
+            print("WebSocket connection is not open, unable to send message.")
 
-    if not run_in_loop:
-        if ws:
-            close_websocket_connection(ws)
-        ws_thread = None if 'ws_thread' in locals() else ws_thread
+    def close_websocket_connection(self):
+        if self.ws and self.is_connected:
+            print("Closing WebSocket connection...")
+            self.ws.close()
+            self.is_connected = False
 
-    return ws, ws_thread if 'ws_thread' in locals() else None
+    def ask_question(self, model_id, query, run_in_loop=False):
+        self.existing_model_id = model_id
+        self.query = query
 
+        if self.ws is None or not self.is_connected:
+            ws_thread = threading.Thread(target=self.start_ws)
+            ws_thread.start()
+        else:
+            self.send_message()
 
-# def ask_question(model_id, query, isLoop, ws=None):
-#     global response_received, existing_model_id, this_query, last_message_time, first_token_received
+        self.wait_for_response(run_in_loop)
+        return self.ws, ws_thread if 'ws_thread' in locals() else None
 
-#     existing_model_id = model_id
-#     this_query = query
+    def wait_for_response(self, run_in_loop):
+        self.last_message_time = time.time()
+        while self.response_received is None:
+            current_time = time.time()
+            if self.first_token_received:
+                if current_time - self.last_message_time > self.subsequent_timeout:
+                    break
+            else:
+                if current_time - self.last_message_time > self.initial_timeout:
+                    break
+            time.sleep(0.1)
 
-#     def start_ws():
-#         nonlocal ws
-#         if ws is None or not ws.sock or not ws.sock.connected:
-#             print()
-#             print("No WebSocket provided or connection is closed, opening a new connection.")
-#             ws = start_websocket_connection()
-#         else:
-#             print("Using provided WebSocket connection.")
-        
-#         ws.run_forever()
-#         send_message(ws=ws)
+        if not run_in_loop and self.is_connected:
+            self.close_websocket_connection()
 
-#     if ws is None or not ws.sock or not ws.sock.connected:
-#         ws_thread = threading.Thread(target=start_ws)
-#         ws_thread.start()
-#     else:
-#         send_message(ws=ws)  # If ws is already connected, just send the message
-
-#     # print("Waiting for response...")
-#     last_message_time = time.time()
-
-#     while response_received is None:
-#         current_time = time.time()
-#         if first_token_received:
-#             if current_time - last_message_time > subsequent_timeout:
-#                 break
-#         else:
-#             if current_time - last_message_time > initial_timeout:
-#                 break
-#         time.sleep(0.1)
-
-#     return ws, ws_thread if 'ws_thread' in locals() else None
-
-# def ask_question(model_id, query):
-#     global response_received, existing_model_id, this_query, last_message_time, first_token_received
-
-#     existing_model_id = model_id
-#     this_query = query
-#     ws = None  # Define ws here
-
-#     def start_ws():
-#         nonlocal ws  # Use the non-local ws variable
-#         if ws is None:
-#             print("No WebSocket provided, opening a new connection.")
-#             ws = start_websocket_connection()
-#         else:
-#             print("Using provided WebSocket connection.")
-
-#         ws.run_forever()
-#         send_message(ws=ws)
-
-#     ws_thread = threading.Thread(target=start_ws)
-#     ws_thread.start()
-
-#     print("Waiting for response...")
-#     timeout = 7  # seconds
-#     last_message_time = time.time()  # Initialize last message time
-
-#     while response_received is None:
-#         current_time = time.time()
-#         if first_token_received:
-#             # Subsequent timeout check
-#             if current_time - last_message_time > subsequent_timeout:
-#                 break
-#         else:
-#             # Initial timeout check
-#             if current_time - last_message_time > initial_timeout:
-#                 break
-#         time.sleep(0.1)  # Sleep briefly to yield execution
-
-#     return ws, ws_thread
+###############################################################################
+############################## WELLNESS AND SYSTEM ############################
+###############################################################################
 
 def categorize_os():
     # Get detailed platform information
@@ -322,87 +176,6 @@ def categorize_os():
         os_info = 'WEB'  # Default to WEB if the OS doesn't match others
 
     return os_info
-
-
-
-# def ask_question(model_id, query="This is a test"):
-#     global response_received
-
-#     def start_ws():
-#         ws = start_websocket_connection()
-#         send_message(ws, query=query)
-
-#     # Start WebSocket in a new thread
-#     ws_thread = threading.Thread(target=start_ws)
-#     ws_thread.start()
-
-#     # Wait for the response (with a timeout to prevent infinite waiting)
-#     timeout = 60  # seconds
-#     start_time = time.time()
-#     while response_received is None and (time.time() - start_time) < timeout:
-#         time.sleep(0.1)  # Sleep briefly to yield execution
-
-#     if response_received is not None:
-#         print("Response:", response_received)
-#     else:
-#         print("No response received within the timeout period.")
-
-
-     ## QGPTStreamInput
-    ## You can either pass in relevance or question
-    ## QGPTQuestionInput requires a model id and query
-    ## When running, the error message indicates that you MUST pass in relevant
-    ## Pass in the query, model and RelevantQGPTSeeds
-    ## RelevantQGPTSeeds has iterable which is a list of RelevantQGPTSeed
-
-    ## Try creating a blank seed
-    # demo_seed = RelevantQGPTSeed()
-
-    # ## Add the seed to a list
-    # iterable = [demo_seed]
-
-    # ## Create Instance
-    # api_instance = openapi_client.QGPTApi(api_client)
-    
-    # ## Create the stream input
-    # qgpt_stream_input = QGPTStreamInput(
-    #     question=QGPTQuestionInput(
-    #         query=query, model=model_id, relevant=RelevantQGPTSeeds(iterable=iterable)
-    #         ))
-
-    # response = api_instance.qgpt_stream(qgpt_stream_input=qgpt_stream_input)
-    
- 
-    
-    
-
-def list_models():
-    
-    models_api = openapi_client.ModelsApi(api_client)
-
-    response = models_api.models_snapshot()
-    return response
-
-def search_api(search_phrase, search_type):
-    query = search_phrase
-    
-    # Determine the endpoint and perform the search based on the search type
-    if search_type == 'assets':
-        api_instance = openapi_client.AssetsApi(api_client)
-        response = api_instance.assets_search_assets(query=query, transferables=False)
-    elif search_type == 'ncs':
-        api_instance = openapi_client.SearchApi(api_client)
-        response = api_instance.neural_code_search(query=query)
-    elif search_type == 'fts':
-        # print(query)
-        api_instance = openapi_client.SearchApi(api_client)
-        response = api_instance.full_text_search(query=query)
-    else:
-        # Handle unknown search type
-        raise ValueError("Unknown search type")
-
-    # Return the response from the API
-    return response
 
 def check_api(**kwargs):
     # Create an instance of the API class
@@ -449,6 +222,89 @@ def check_api(**kwargs):
         if 'conn' in locals():
             conn.close()
         return False, "Exception when calling WellKnownApi->get_well_known_version: %s\n" % e
+    
+def list_applications():
+    applications_api = openapi_client.ApplicationsApi(api_client)
+
+    apps_raw = applications_api.applications_snapshot()
+    
+    return apps_raw
+
+def register_application(existing_application=None):
+    # Application
+    applications_api = openapi_client.ApplicationsApi(api_client)
+    # application = Application(id="test", name="VS_CODE", version="1.9.1", platform="WINDOWS", onboarded=False, privacy="OPEN")
+    application = existing_application
+
+    try:
+        api_response = applications_api.applications_register(application=application)
+        
+        return api_response
+    except Exception as e:
+        print("Exception when calling ApplicationsApi->applications_register: %s\n" % e)
+
+###############################################################################
+############################## MAIN FUNCTION CALLS ############################
+###############################################################################
+
+def list_models():
+    
+    models_api = openapi_client.ModelsApi(api_client)
+
+    response = models_api.models_snapshot()
+    return response
+
+def search_api(search_phrase, search_type):
+    query = search_phrase
+    
+    # Determine the endpoint and perform the search based on the search type
+    if search_type == 'assets':
+        api_instance = openapi_client.AssetsApi(api_client)
+        response = api_instance.assets_search_assets(query=query, transferables=False)
+    elif search_type == 'ncs':
+        api_instance = openapi_client.SearchApi(api_client)
+        response = api_instance.neural_code_search(query=query)
+    elif search_type == 'fts':
+        api_instance = openapi_client.SearchApi(api_client)
+        response = api_instance.full_text_search(query=query)
+    else:
+        # Handle unknown search type
+        raise ValueError("Unknown search type")
+
+    # Return the response from the API
+    return response
+
+###############################################################################
+############################## ASSET CALLS ####################################
+###############################################################################
+
+def create_new_asset(application, raw_string, metadata=None):
+    
+    assets_api = openapi_client.AssetsApi(api_client)
+    
+    # Construct a Seed
+    seed = openapi_client.Seed(
+        asset=openapi_client.SeededAsset(
+            application=application,
+            format=openapi_client.SeededFormat(
+                fragment=openapi_client.SeededFragment(
+                    string=openapi_client.TransferableString(
+                        raw=raw_string
+                    )
+                )
+            ),
+            metadata=metadata  # This should be constructed as per the SDK's definition
+        ),
+        type="SEEDED_ASSET"
+    )
+    
+    # Creating the new asset using the assets API
+    try:
+        created_asset = assets_api.assets_create_new_asset(transferables=False, seed=seed)
+        return created_asset
+    except ApiException as e:
+        print("An exception occurred when calling AssetsApi->assets_create_new_asset: %s\n" % e)
+        return None
 
 def get_asset_ids(max=None, **kwargs):
     assets_api = openapi_client.AssetsApi(api_client)
@@ -526,54 +382,6 @@ def get_asset_by_id(id):
     except ApiException as e:
         print(f"Error occurred for ID {id}: {str(e)}")
         return None
-    
-def create_new_asset(application, raw_string, metadata=None):
-    
-    assets_api = openapi_client.AssetsApi(api_client)
-    
-    # Construct a Seed
-    seed = openapi_client.Seed(
-        asset=openapi_client.SeededAsset(
-            application=application,
-            format=openapi_client.SeededFormat(
-                fragment=openapi_client.SeededFragment(
-                    string=openapi_client.TransferableString(
-                        raw=raw_string
-                    )
-                )
-            ),
-            metadata=metadata  # This should be constructed as per the SDK's definition
-        ),
-        type="SEEDED_ASSET"
-    )
-    
-    # Creating the new asset using the assets API
-    try:
-        created_asset = assets_api.assets_create_new_asset(transferables=False, seed=seed)
-        return created_asset
-    except ApiException as e:
-        print("An exception occurred when calling AssetsApi->assets_create_new_asset: %s\n" % e)
-        return None
-    
-def list_applications():
-    applications_api = openapi_client.ApplicationsApi(api_client)
-
-    apps_raw = applications_api.applications_snapshot()
-    
-    return apps_raw
-
-def register_application(existing_application=None):
-    # Application
-    applications_api = openapi_client.ApplicationsApi(api_client)
-    # application = Application(id="test", name="VS_CODE", version="1.9.1", platform="WINDOWS", onboarded=False, privacy="OPEN")
-    application = existing_application
-
-    try:
-        api_response = applications_api.applications_register(application=application)
-        
-        return api_response
-    except Exception as e:
-        print("Exception when calling ApplicationsApi->applications_register: %s\n" % e)
 
 def edit_asset_name(asset_id, new_name):
     asset_api = openapi_client.AssetApi(api_client)
@@ -599,6 +407,15 @@ def edit_asset_name(asset_id, new_name):
         print("Asset name updated successfully.")
     except Exception as e:
         print(f"Error updating asset: {e}")
+
+def delete_asset_by_id(asset_id):
+    delete_instance = openapi_client.AssetsApi(api_client)
+    
+    try:
+        response = delete_instance.assets_delete_asset(asset_id)
+        return response
+    except Exception as e:
+        return f"Failed to delete {asset_id}"
 
 def update_asset(asset_id, application):
     ## NOT CURRENTLY WORKING ##
@@ -635,9 +452,6 @@ def update_asset(asset_id, application):
                     obj[key] = new_content
 
     # print(working_asset)
-
-    
-
     # exported_asset = ExportedAsset(name="This is a test", description="Testing description", raw=FileFormat(string={"string": "This, This is me testing export asset"}), created=GroupedTimestamp(value=datetime.now()))
 
     # print(exported_asset)
@@ -674,11 +488,136 @@ def update_asset(asset_id, application):
     # except Exception as e:
     #     print(f"Error updating asset: {e}")
 
-def delete_asset_by_id(asset_id):
-    delete_instance = openapi_client.AssetsApi(api_client)
+# def on_message(ws, message):
+#     global last_message_time, first_token_received
+#     last_message_time = time.time()
+#     first_token_received = True
     
-    try:
-        response = delete_instance.assets_delete_asset(asset_id)
-        return response
-    except Exception as e:
-        return f"Failed to delete {asset_id}"
+#     try:
+#         response = json.loads(message)
+#         answers = response.get('question', {}).get('answers', {}).get('iterable', [])
+#         for answer in answers:
+#             text = answer.get('text')
+#             if text:
+#                 print(text, end='')
+
+#         # Check if the response is complete and add a newline
+#         status = response.get('status', '')
+#         if status == 'COMPLETED':
+#             print("\n")  # Add a newline after the complete response
+#             loading = False
+
+#     except Exception as e:
+#         print(f"Error processing message: {e}")
+
+# def on_error(ws, error):
+#     print(f"WebSocket error: {error}")
+
+# def on_close(ws, close_status_code, close_msg):
+#     print("Closed")
+#     print()
+#     # print(f"WebSocket closed, Close status code: {close_status_code}, Message: {close_msg}")
+
+# def on_open(ws):
+#     # global existing_model_id
+#     print("WebSocket connection opened.")
+#     print()
+#     send_message(ws=ws)  # Send a test message upon connection
+    
+# def start_websocket_connection():
+#     print("Starting WebSocket connection...")
+#     ws_app = websocket.WebSocketApp("ws://localhost:1000/qgpt/stream",
+#                                     on_open=on_open,
+#                                     on_message=on_message,
+#                                     on_error=on_error,
+#                                     on_close=on_close)
+
+#     return ws_app
+
+# def start_ws():
+#     global ws
+    
+#     if ws is None:
+#         print()
+#         print("No WebSocket provided, opening a new connection.")
+#         ws = start_websocket_connection()
+#     else:
+#         print("Using provided WebSocket connection.")
+#     print(f"Type of ws before sending message: {type(ws)}")  # Debug print
+#     ws.run_forever()  # Start the WebSocket connection
+#     send_message(ws=ws)
+
+# def send_message(ws):
+#     global existing_model_id, this_query
+
+#     # Construct the message in the format expected by the server
+#     message = {
+#         "question": {
+#             "query": this_query,
+#             "relevant": {"iterable": []},
+#             "model": existing_model_id
+#         }
+#     }
+
+#     # Convert the message to a JSON string
+#     json_message = json.dumps(message)
+
+#     # Check if the WebSocket is still open before sending the message
+#     if ws and ws.sock and ws.sock.connected:
+#         try:
+#             # Send the JSON message through the WebSocket
+#             ws.send(json_message)
+#             print("Response: ")
+#         except Exception as e:
+#             print(f"Error sending message: {e}")
+#     else:
+#         pass
+#         # print("WebSocket connection is not open, unable to send message.")
+
+# def close_websocket_connection(ws):
+#     if ws:
+#         print("Closing WebSocket connection...")
+#         ws.close()
+        
+# def ask_question(model_id, query, ws=None, run_in_loop=False):
+#     global response_received, existing_model_id, this_query, last_message_time, first_token_received
+
+#     existing_model_id = model_id
+#     this_query = query
+
+#     def start_ws():
+#         nonlocal ws
+#         if ws is None or not ws.sock or not ws.sock.connected:
+#             print("No WebSocket provided or connection is closed, opening a new connection.")
+#             ws = start_websocket_connection()
+#         else:
+#             print("Using provided WebSocket connection.")
+        
+#         ws.run_forever()
+#         send_message(ws=ws)
+
+#     if ws is None or not ws.sock or not ws.sock.connected:
+#         ws_thread = threading.Thread(target=start_ws)
+#         ws_thread.start()
+#     else:
+#         send_message(ws=ws)  # If ws is already connected, just send the message
+
+#     # print("Waiting for response...")
+#     last_message_time = time.time()
+
+#     while response_received is None:
+#         current_time = time.time()
+#         if first_token_received:
+#             if current_time - last_message_time > subsequent_timeout:
+#                 break
+#         else:
+#             if current_time - last_message_time > initial_timeout:
+#                 break
+#         time.sleep(0.1)
+
+#     if not run_in_loop:
+#         if ws:
+#             close_websocket_connection(ws)
+#         ws_thread = None if 'ws_thread' in locals() else ws_thread
+
+#     return ws, ws_thread if 'ws_thread' in locals() else None

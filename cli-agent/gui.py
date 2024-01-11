@@ -27,16 +27,13 @@ def double_space(text):
     print(text)
     print()
 
+def space_below(text):
+    print(text)
+    print()
+
 def print_response(*args):
     for arg in args:
         print(arg)
-    
-# def print_asset_details(asset_details, title):
-#     print()
-#     print(title)
-#     for index, (_, asset_name) in enumerate(asset_details, start=1):
-#         print(f"{index}: {asset_name}")
-#     print()
         
 def print_asset_details(asset_details, title, search_type):
     # Map search_type to descriptive text
@@ -88,6 +85,19 @@ def print_help():
     print("  version      - Gets version of Pieces OS")
     print("  help         - Show this help message")
     print()
+
+def print_model_details(name, created_readable, updated_readable, type, language, code_snippet):
+    print(f"Name: {name}")
+    print(f"Created: {created_readable}")
+    print(f"Updated: {updated_readable}")
+    print(f"Type: {type}")
+    print(f"Language: {language}")
+    print(f"Code: {code_snippet}")
+    print()
+
+def delete_most_recent():
+    print("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone.")
+    print("type 'delete' to confirm")
 
 def no_assets_in_memory():
     print()

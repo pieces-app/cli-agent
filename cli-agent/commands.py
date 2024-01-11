@@ -1,3 +1,7 @@
+## MAIN FUNCTIONS | Line ~33
+## HELPER FUNCTIONS | Line ~381
+## MAIN CLI FUNCTION | Line ~556
+
 from gui import *
 from api import *
 import platform
@@ -7,126 +11,29 @@ from bs4 import BeautifulSoup
 import os
 import re
 import pyperclip
+from collections.abc import Iterable
 
-# Globals for CLI Memory
+# Globals for CLI Memory.
+ws_manager = WebSocketManager()
+
 pieces_os_version = None
-run_in_loop = False
-asset_ids = {}
+run_in_loop = False # is CLI looping?
+asset_ids = {} # Asset ids for any list or search
 assets_are_models = False
-current_model = {'ac61838c-4676-4cae-98aa-037e4d3ad27c'}
+current_model = {'ac61838c-4676-4cae-98aa-037e4d3ad27c'} # GPT 3.5
 current_asset = {}
 parser = None
 application = None
-ws = None
-ws_thread = None
+ws = None # Websocket connection to pass to api.py when running
+ws_thread = None # Websocket thread to pass to api.py when running
 cli_version = None
 
-# New function to set the application
-def set_application(app):
-    global application
-    application = app
+###############################################################################
+############################## MAIN FUNCTIONS #################################
+###############################################################################
 
-def set_parser(p):
-    global parser
-    parser = p
-
-def set_pieces_os_version(version):
-    global pieces_os_version
-    pieces_os_version = version
-
-def version(**kwargs):
-    global pieces_os_version
-    global cli_version
-
-    if pieces_os_version:
-        print(f"Pieces Version: {pieces_os_version}")
-        print(f"Cli Version: {cli_version}")
-    else:
-        ### LOGIC TO look up cache from SQLite3 to get the cli and pieces os version
-
-        # Get the version from cache
-        # Establish a local database connection
-        # conn = create_connection('applications.db')
-
-        # # Create the table if it does not exist
-        # create_table(conn)
-        # # create_tables(conn)
-
-        # # Check the database for an existing application
-        # application_id = "DEFAULT"  # Replace with a default application ID
-        # application = get_application(conn, application_id)
-        # # application =  get_application_with_versions(conn, application_id)
-        pass
-
-def sanitize_filename(name):
-    """ Sanitize the filename by removing or replacing invalid characters. """
-    # Replace spaces with underscores
-    name = name.replace(" ", "_")
-    # Remove invalid characters
-    name = re.sub(r'[\\/*?:"<>|]', '', name)
-    return name
-
-def list_all_models(**kwargs):
-    global asset_ids
-    global assets_are_models
-
-    try:
-        response = list_models() 
-    except Exception as e:
-        print(f"Error occurred while fetching models: {e}")
-        return
-
-    # Check if response is valid and contains model data
-    if hasattr(response, 'iterable') and response.iterable:
-        print("\nModels")
-        asset_ids = {}  # Reset asset_ids to store new model IDs
-        for index, model in enumerate(response.iterable, start=1):
-            model_name = getattr(model, 'name', 'Unknown')
-            model_version = getattr(model, 'version', 'Unknown')
-            model_id = getattr(model, 'id', 'Unknown')
-            print(f"{index}: Model Name: {model_name}, Model Version: {model_version}")
-
-            # Store model ID in asset_ids with the index as the key
-            asset_ids[index] = model_id
-        assets_are_models = True
-    else:
-        print("No models found or invalid response format.")
-
-# def ask(query, **kwargs):
-#     # global current_model
-
-#     global current_model, ws, ws_thread
-
-#     if current_model:
-#         model_id = next(iter(current_model))
-#     else:
-#         raise ValueError("No model ID available")
-
-#     try:
-#         # response = ask_question(model_id, query)
-#         ws, ws_thread = ask_question(model_id, query)
-#         # print("INSIDE ASK: ")
-#         # print()
-#         # print(response)
-#         # print("Response from the model:")
-#         # print(response)
-
-
-# def ask(query, **kwargs):
-#     global current_model, ws
-
-#     if current_model:
-#         model_id = next(iter(current_model))
-#     else:
-#         raise ValueError("No model ID available")
-
-#     try:
-#         ws, ws_thread = ask_question(model_id, query, ws)
-#     except Exception as e:
-#         print(f"Error occurred while asking the question: {e}")
-        
 def ask(query, **kwargs):
-    global current_model, ws, run_in_loop
+    global current_model, ws_manager, run_in_loop
 
     if current_model:
         model_id = next(iter(current_model))
@@ -134,25 +41,17 @@ def ask(query, **kwargs):
         raise ValueError("No model ID available")
 
     try:
-        ws, ws_thread = ask_question(model_id, query, ws, run_in_loop)
+        ws, ws_thread = ws_manager.ask_question(model_id, query, run_in_loop)
     except Exception as e:
         print(f"Error occurred while asking the question: {e}")
 
-
 def search(query, **kwargs):
     global asset_ids 
-
-    # print(query)
 
     search_type = kwargs.get('search_type', 'assets')
 
     # Join the list of strings into a single search phrase
     search_phrase = ' '.join(query)
-
-    # print(search_type)
-    # print(search_phrase)
-
-    # print(search_phrase)
 
     # Call the API function with the search phrase and type
     results = search_api(search_phrase, search_type)
@@ -185,10 +84,6 @@ def search(query, **kwargs):
     else:
         print("No results found.")
 
-def get_asset_name_by_id(asset_id):
-    asset = get_asset_by_id(asset_id)  # Assuming this function returns the asset details
-    return asset.get('name') if asset else "Unknown"
-
 def list_assets(list_type_or_max='assets', **kwargs):
     max_results = None
     list_apps = False
@@ -207,9 +102,6 @@ def list_assets(list_type_or_max='assets', **kwargs):
         # Logic for listing applications
         double_space("Listing applications...")
         application_list = list_applications()
-
-        from collections.abc import Iterable
-
 
         if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
             for i, app in enumerate(application_list.iterable, start=1):
@@ -267,14 +159,10 @@ def open_asset(**kwargs):
     opened_asset = None
 
     if item_index is not None:
-        asset_id = asset_ids.get(item_index)
-        # current_asset = {asset_id}
-        
+        asset_id = asset_ids.get(item_index)        
         
         if asset_id:
-            # print("Getting Current Asset")
             opened_asset = get_asset_by_id(asset_id)
-            # print(current_asset)
         else:
             asset_id = list_assets(max_results=1)
             print()
@@ -284,24 +172,7 @@ def open_asset(**kwargs):
         asset_id = list_assets(max_results=1)
         print()
         opened_asset = get_asset_by_id(asset_id)
-        # If ITEM_INDEX is not provided, use the current_asset
-        # if not current_asset:
-        #     # asset_id = list_assets(max=1)
-        #     # opened_asset = get_asset_by_id(asset_id)
-        #     print("fail")
-        #     return
         
-    
-    # print(opened_asset)
-    # Set Asset Fields
-    # opened_asset = get_asset_by_id(asset_id)
-    # name = current_asset.get('name', 'Unknown')
-    # created_readable = current_asset.get('created', {}).get('readable', 'Unknown')
-    # updated_readable = current_asset.get('updated', {}).get('readable', 'Unknown')
-    # type = "No Type"
-    # language = "No Language"
-    # code_snippet = "No Code Available"
-    # formats = current_asset.get('formats', {})
     current_asset = {asset_id}
     name = opened_asset.get('name', 'Unknown')
     created_readable = opened_asset.get('created', {}).get('readable', 'Unknown')
@@ -332,45 +203,10 @@ def open_asset(**kwargs):
                     code_snippet = extract_code_from_markdown(raw, name, language)
 
     # Printing the asset details
-    print(f"Name: {name}")
-    print(f"Created: {created_readable}")
-    print(f"Updated: {updated_readable}")
-    print(f"Type: {type}")
-    print(f"Language: {language}")
-    print(f"Code: {code_snippet}")
-    print()
-
-
-def extract_code_from_markdown(markdown, name, language):
-    # Sanitize the name to ensure it's a valid filename
-    filename = sanitize_filename(name)
-    file_extension = get_file_extension(language)
-
-    # Using BeautifulSoup to parse the HTML and extract text
-    soup = BeautifulSoup(markdown, 'html.parser')
-    extracted_code = soup.get_text()
-
-    # Minimize multiple consecutive newlines to a single newline
-    extracted_code = re.sub(r'\n\s*\n', '\n', extracted_code)
-
-    # Define the directory path relative to the current script
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    directory = os.path.join(script_dir, 'opened_snippets')
-
-    # Ensure the directory exists, create it if not
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    # Path to save the extracted code
-    file_path = os.path.join(directory, f'{filename}{file_extension}')
-
-    # Writing the extracted code to a new file
-    with open(file_path, 'w') as file:
-        file.write(extracted_code)
-
-    return file_path
+    print_model_details(name, created_readable, updated_readable, type, language, code_snippet)
 
 def save_asset(**kwargs):
+    ### THIS DOES NOT CURRENTLY WORK ###
     global application
     global current_asset
     print("Not Currently Working")
@@ -382,6 +218,7 @@ def save_asset(**kwargs):
         # Pass asset and file name
         update_asset(asset_to_update, application)
 
+# Probably needs renamed. This only currently edits the Asset's name
 def edit_asset(**kwargs):
     global application
     global current_asset
@@ -422,13 +259,8 @@ def delete_asset(**kwargs):
     if not current_asset:
         # Open the most recent asset
         if run_in_loop:
-            # if current_asset:
-                open_asset()
-                print("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone.")
-                print("type 'delete' to confirm")
-            # else:
-                # list_assets(max=1)
-                # print("Please open an asset before deleting it")
+            open_asset()
+            delete_most_recent()
         else:
             print()
             asset_to_delete = list_assets(max_results=1)
@@ -437,19 +269,16 @@ def delete_asset(**kwargs):
             confirm = input("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone. (y/n): ").strip().lower()
             if confirm == 'y':
                 print("Deleting asset...")
-                print(asset_to_delete)
+                # print(asset_to_delete)
                 delete_result = delete_asset_by_id(asset_to_delete)
                 print(delete_result)
                 current_asset = None
-                print("Asset deleted.")
-                print()
+                space_below("Asset Deleted")
                 list_assets()
             elif confirm == 'n':
-                print("Deletion cancelled.")
-                print()
+                space_below("Deletion cancelled")
             else:
-                print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
-                print()
+                space_below("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
     else:
         asset_to_delete = list(current_asset)[0]
 
@@ -461,15 +290,13 @@ def delete_asset(**kwargs):
             print("Deleting asset...")
             delete_asset_by_id(asset_to_delete)
             current_asset = None
-            print("Asset deleted.")
-            print()
+            space_below("Asset Deleted")
             list_assets()
         elif confirm == 'n':
             print("Deletion cancelled.")
         else:
             print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
     
-
 def create_asset(**kwargs):
     global application
     global current_asset
@@ -480,14 +307,12 @@ def create_asset(**kwargs):
     try:
         text = pyperclip.paste()
         double_line("Content to save: ")
-        print(text)
-        print()
+        space_below(text)
 
         # Ask the user for confirmation to save
         user_input = input("Do you want to save this content? (y/n): ").strip().lower()
         if user_input == 'y':
-            print("Saving content...")
-            print()
+            space_below("Saving Content...")
             new_asset = create_new_asset(application, raw_string=text, metadata=None)
     
             current_asset = {new_asset.id}
@@ -497,8 +322,7 @@ def create_asset(**kwargs):
             return new_asset
             # Add your saving logic here
         elif user_input == 'n':
-            print("Save cancelled.")
-            print()
+            space_below("Save Cancelled")
         else:
             print("Invalid input. Please type 'y' to save or 'n' to cancel.")
 
@@ -514,6 +338,94 @@ def check():
     else:
         double_line("Please start your Pieces OS Server")
     return is_running
+
+###############################################################################
+############################## HELPER FUNCTIONS ###############################
+###############################################################################
+
+def list_all_models(**kwargs):
+    global asset_ids
+    global assets_are_models
+
+    try:
+        response = list_models() 
+    except Exception as e:
+        print(f"Error occurred while fetching models: {e}")
+        return
+
+    # Check if response is valid and contains model data
+    if hasattr(response, 'iterable') and response.iterable:
+        print("\nModels")
+        asset_ids = {}  # Reset asset_ids to store new model IDs
+        for index, model in enumerate(response.iterable, start=1):
+            model_name = getattr(model, 'name', 'Unknown')
+            model_version = getattr(model, 'version', 'Unknown')
+            model_id = getattr(model, 'id', 'Unknown')
+            print(f"{index}: Model Name: {model_name}, Model Version: {model_version}")
+
+            # Store model ID in asset_ids with the index as the key
+            asset_ids[index] = model_id
+        assets_are_models = True
+    else:
+        print("No models found or invalid response format.")
+
+def get_asset_name_by_id(asset_id):
+    asset = get_asset_by_id(asset_id)  # Assuming this function returns the asset details
+    return asset.get('name') if asset else "Unknown"
+
+def set_application(app):
+    global application
+    application = app
+
+def set_parser(p):
+    global parser
+    parser = p
+
+def help(**kwargs):
+    print_help()
+    pass
+
+def set_pieces_os_version(version):
+    global pieces_os_version
+    pieces_os_version = version
+
+# Used to create a valid file name when opening to "Opened Snippets"
+def sanitize_filename(name):
+    """ Sanitize the filename by removing or replacing invalid characters. """
+    # Replace spaces with underscores
+    name = name.replace(" ", "_")
+    # Remove invalid characters
+    name = re.sub(r'[\\/*?:"<>|]', '', name)
+    return name
+
+def extract_code_from_markdown(markdown, name, language):
+    # Sanitize the name to ensure it's a valid filename
+    filename = sanitize_filename(name)
+    file_extension = get_file_extension(language)
+
+    # Using BeautifulSoup to parse the HTML and extract text
+    soup = BeautifulSoup(markdown, 'html.parser')
+    extracted_code = soup.get_text()
+
+    # Minimize multiple consecutive newlines to a single newline
+    extracted_code = re.sub(r'\n\s*\n', '\n', extracted_code)
+
+    # Define the directory path relative to the current script
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    directory = os.path.join(script_dir, 'opened_snippets')
+
+    # Ensure the directory exists, create it if not
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Path to save the extracted code
+    file_path = os.path.join(directory, f'{filename}{file_extension}')
+
+    # Writing the extracted code to a new file
+    with open(file_path, 'w') as file:
+        file.write(extracted_code)
+
+    return file_path
 
 def get_file_extension(language):
     extension_mapping = {
@@ -580,9 +492,34 @@ def get_file_extension(language):
     # Return the corresponding file extension or default to '.txt' if not found
     return extension_mapping.get(language, '.txt')
 
-def help(**kwargs):
-    print_help()
-    pass
+def version(**kwargs):
+    ### INCOMPLETE ###
+    global pieces_os_version
+    global cli_version
+
+    if pieces_os_version:
+        print(f"Pieces Version: {pieces_os_version}")
+        print(f"Cli Version: {cli_version}")
+    else:
+        ### LOGIC TO look up cache from SQLite3 to get the cli and pieces os version
+
+        # Get the version from cache
+        # Establish a local database connection
+        # conn = create_connection('applications.db')
+
+        # # Create the table if it does not exist
+        # create_table(conn)
+        # # create_tables(conn)
+
+        # # Check the database for an existing application
+        # application_id = "DEFAULT"  # Replace with a default application ID
+        # application = get_application(conn, application_id)
+        # # application =  get_application_with_versions(conn, application_id)
+        pass
+
+###############################################################################
+############################## MAIN CLI FUNCTION ##############################
+###############################################################################
 
 def loop(**kwargs):
     # Logic to return operating system and Python version
@@ -626,8 +563,7 @@ def loop(**kwargs):
 
         if user_input == 'exit':
             double_space("Exiting...")
-            if ws:
-                close_websocket_connection(ws)
+            ws_manager.close_websocket_connection()  # Close using the ws_manager instance
             if ws_thread and ws_thread.is_alive():
                 ws_thread.join()  # Wait for the WebSocket thread to finish
             break
@@ -666,80 +602,30 @@ def loop(**kwargs):
         print()
 
 
+## def ask(query, **kwargs):
+#     global current_model, ws, run_in_loop
 
-# def open_asset(**kwargs):
-#     global asset_ids
-#     global current_asset
-#     global assets_are_models
-
-#     item_index = kwargs.get('ITEM_INDEX')
-
-#     if item_index is not None:
-#         asset_id = asset_ids.get(item_index)
-#         if asset_id:
-#             current_asset = get_asset_by_id(asset_id)
-#         else:
-#             open_from_command_line()
-#             ## TODO store the list to a local database and call the database
-#             recent_id = list_assets()
-#             current_asset = get_asset_by_id(recent_id)
-#             print()
-
+#     if current_model:
+#         model_id = next(iter(current_model))
 #     else:
-#         # If ITEM_INDEX is not provided, use the current_asset
-#         if not current_asset:
-#             # no_assets_in_memory()
-#             open_from_command_line()
-#             recent_id = list_assets()  # Calling list_assets to display available assets
-#             current_asset = get_asset_by_id(recent_id)
-#             print()
-#             asset_id = current_asset.get('id')
-#             print()
+#         raise ValueError("No model ID available")
 
-#     # if asset_id:
-#     print(f"Loading...")
-#     print()
+#     try:
+#         # ws, ws_thread = ask_question(model_id, query, ws, run_in_loop)
+#         ws_manager = WebSocketManager()
+#         ws, ws_thread = ws_manager.ask_question(model_id, query, run_in_loop)
 
-#     # Set Asset Fields
-#     name = current_asset.get('name')
-#     created_readable = current_asset.get('created', {}).get('readable')
-#     updated_readable = current_asset.get('updated', {}).get('readable')
-#     type = "No Type"
-#     language = "No Language"
-#     formats = current_asset.get('formats', {})
-#     string = None
-    
-#     if formats:
-#         iterable = formats.get('iterable', [])
-#         if iterable:
-#             first_item = iterable[0] if len(iterable) > 0 else None
-#             if first_item:
-#                 classification_str = first_item.get('classification', {}).get('generic')
-#                 if classification_str:
-#                 # Extract the last part after the dot
-#                     type = classification_str.split('.')[-1]
+#     except Exception as e:
+#         print(f"Error occurred while asking the question: {e}")
+        
 
-#                 language_str = first_item.get('classification', {}).get('specific')
-#                 if language_str:
-#                     # Extract the last part after the dot
-#                     language = language_str.split('.')[-1]
-                
-#                 fragment_string = first_item.get('fragment', {}).get('string').get('raw')
-#                 if fragment_string:
-#                     raw = fragment_string
-#                     string = extract_code_from_markdown(raw, name, language)
-
-#     # Printing the values with descriptive text
-#     if name:
-#         print(f"{name}")
-#     if created_readable:
-#         print(f"Created: {created_readable}")
-#     if updated_readable:
-#         print(f"Updated: {updated_readable}")
-#     if type:
-#         print(f"Type: {type}")
-#     if language:
-#         print(f"Language: {language}")
-#     if formats:
-#         print(f"Code: {string}")
-#     print()
+## LOOP
+        # if user_input == 'exit':
+        #     double_space("Exiting...")
+        #     if ws:
+        #         ws_manager = WebSocketManager()
+        #         ws_manager.close_websocket_connection(ws)
+        #         # close_websocket_connection(ws)
+        #     if ws_thread and ws_thread.is_alive():
+        #         ws_thread.join()  # Wait for the WebSocket thread to finish
+        #     break
