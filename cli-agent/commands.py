@@ -110,8 +110,23 @@ def list_all_models(**kwargs):
 #         # print(response)
 #         # print("Response from the model:")
 #         # print(response)
+
+
+# def ask(query, **kwargs):
+#     global current_model, ws
+
+#     if current_model:
+#         model_id = next(iter(current_model))
+#     else:
+#         raise ValueError("No model ID available")
+
+#     try:
+#         ws, ws_thread = ask_question(model_id, query, ws)
+#     except Exception as e:
+#         print(f"Error occurred while asking the question: {e}")
+        
 def ask(query, **kwargs):
-    global current_model, ws
+    global current_model, ws, run_in_loop
 
     if current_model:
         model_id = next(iter(current_model))
@@ -119,9 +134,10 @@ def ask(query, **kwargs):
         raise ValueError("No model ID available")
 
     try:
-        ws, ws_thread = ask_question(model_id, query, ws)
+        ws, ws_thread = ask_question(model_id, query, ws, run_in_loop)
     except Exception as e:
         print(f"Error occurred while asking the question: {e}")
+
 
 def search(query, **kwargs):
     global asset_ids 

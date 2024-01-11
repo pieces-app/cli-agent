@@ -185,7 +185,7 @@ def close_websocket_connection(ws):
 #     ws_thread = threading.Thread(target=start_ws)
 #     ws_thread.start()
         
-def ask_question(model_id, query, ws=None):
+def ask_question(model_id, query, ws=None, run_in_loop=False):
     global response_received, existing_model_id, this_query, last_message_time, first_token_received
 
     existing_model_id = model_id
@@ -194,7 +194,6 @@ def ask_question(model_id, query, ws=None):
     def start_ws():
         nonlocal ws
         if ws is None or not ws.sock or not ws.sock.connected:
-            print()
             print("No WebSocket provided or connection is closed, opening a new connection.")
             ws = start_websocket_connection()
         else:
@@ -222,7 +221,52 @@ def ask_question(model_id, query, ws=None):
                 break
         time.sleep(0.1)
 
+    if not run_in_loop:
+        if ws:
+            close_websocket_connection(ws)
+        ws_thread = None if 'ws_thread' in locals() else ws_thread
+
     return ws, ws_thread if 'ws_thread' in locals() else None
+
+
+# def ask_question(model_id, query, isLoop, ws=None):
+#     global response_received, existing_model_id, this_query, last_message_time, first_token_received
+
+#     existing_model_id = model_id
+#     this_query = query
+
+#     def start_ws():
+#         nonlocal ws
+#         if ws is None or not ws.sock or not ws.sock.connected:
+#             print()
+#             print("No WebSocket provided or connection is closed, opening a new connection.")
+#             ws = start_websocket_connection()
+#         else:
+#             print("Using provided WebSocket connection.")
+        
+#         ws.run_forever()
+#         send_message(ws=ws)
+
+#     if ws is None or not ws.sock or not ws.sock.connected:
+#         ws_thread = threading.Thread(target=start_ws)
+#         ws_thread.start()
+#     else:
+#         send_message(ws=ws)  # If ws is already connected, just send the message
+
+#     # print("Waiting for response...")
+#     last_message_time = time.time()
+
+#     while response_received is None:
+#         current_time = time.time()
+#         if first_token_received:
+#             if current_time - last_message_time > subsequent_timeout:
+#                 break
+#         else:
+#             if current_time - last_message_time > initial_timeout:
+#                 break
+#         time.sleep(0.1)
+
+#     return ws, ws_thread if 'ws_thread' in locals() else None
 
 # def ask_question(model_id, query):
 #     global response_received, existing_model_id, this_query, last_message_time, first_token_received
