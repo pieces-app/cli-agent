@@ -149,8 +149,8 @@ def search(query, **kwargs):
     # Join the list of strings into a single search phrase
     search_phrase = ' '.join(query)
 
-    print(search_type)
-    print(search_phrase)
+    # print(search_type)
+    # print(search_phrase)
 
     # print(search_phrase)
 
@@ -276,12 +276,12 @@ def open_asset(**kwargs):
             opened_asset = get_asset_by_id(asset_id)
             # print(current_asset)
         else:
-            asset_id = list_assets(max=1)
+            asset_id = list_assets(max_results=1)
             print()
             opened_asset = get_asset_by_id(asset_id)
             return
     else:
-        asset_id = list_assets(max=1)
+        asset_id = list_assets(max_results=1)
         print()
         opened_asset = get_asset_by_id(asset_id)
         # If ITEM_INDEX is not provided, use the current_asset
@@ -431,8 +431,8 @@ def delete_asset(**kwargs):
                 # print("Please open an asset before deleting it")
         else:
             print()
-            asset_to_delete = list_assets(max=1)
-            # open_asset()
+            asset_to_delete = list_assets(max_results=1)
+            open_asset()
             print()
             confirm = input("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone. (y/n): ").strip().lower()
             if confirm == 'y':
