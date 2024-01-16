@@ -1,5 +1,5 @@
 # Ignore opened_snippets folder in cli-agent directory
-cli-agent/opened_snippets/
+opened_snippets/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
