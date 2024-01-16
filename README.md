@@ -1,13 +1,15 @@
 ![Pieces CLI for Developers](https://camo.githubusercontent.com/69c990240f877927146712d45be2f690085b9e45b4420736aa373917f8e0b2c8/68747470733a2f2f73746f726167652e676f6f676c65617069732e636f6d2f7069656365735f7374617469635f7265736f75726365732f7066645f77696b692f5049454345535f4d41494e5f4c4f474f5f57494b492e706e67)
+<p align="center">
 
-<center>
+# <p align="center"> Pieces Python CLI Tool
 
-# Pieces Python CLI Tool
-This is a comprehensive command-line interface (CLI) tool designed to interact seamlessly with Pieces OS. It provides a range of functionalities such as asset management, application interaction, and integration with various Pieces OS features.
+<p align="center"> This is a comprehensive command-line interface (CLI) tool designed to interact seamlessly with Pieces OS. It provides a range of functionalities such as asset management, application interaction, and integration with various Pieces OS features.
 
-## [Website](https://pieces.app/) • [Pieces OS Documentation](https://docs.pieces.app/) • [Pieces Python CLI Documentation](https://github.com/pieces-app/cli-agent/blob/prod/Documentation.md){:target="_blank"}
-
-</center>
+</p>
+  
+##### <p align="center"> [Website](https://pieces.app/) • [Pieces OS Documentation](https://docs.pieces.app/) • [Pieces Python CLI Documentation](https://github.com/pieces-app/cli-agent/blob/prod/Documentation.md)
+</p>
+<br>
 
 ### Table of Contents
 - [Operating System Support](#operating-system-support)
@@ -149,6 +151,7 @@ pieces search query --mode fts
 Examines all words in a document to find matches to search criteria
 
 ##### Ask a question to a model:
+** Requires quotes around question **
 
 This currently only supports GPT 3.5 and it does not have working memory. Only coding questions are currently supported. To use the model's code you can copy it from the console and use the create command to create an asset using the copied code. 
 
