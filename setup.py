@@ -18,7 +18,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'pieces=pieces.app:main'  # Adjust the method to your main function
+            'pieces=pieces-cli.app:main'  # Adjust the method to your main function
         ]
     },
 )
