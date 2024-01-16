@@ -26,6 +26,11 @@
 #### Operating System Support
 The Pieces Python CLI Tool is compatible with various operating systems, ensuring a wide range of usage and adaptability. While it offers full support across most systems, specific features might have varied performance based on the OS environment.
 
+The CLI Supports
+- Windows 10 or greater
+- Mac
+- Windows
+
 #### Installing
 To get started with the Pieces Python CLI Tool, you need to:
 
@@ -54,7 +59,11 @@ The run command starts the CLI in a loop. While you can use each command without
 
 Once the CLI is running in a loop you can simply type the command.
 
-For instance - open instead of pieces open
+    For instance: 
+    open
+
+    Instead of: 
+    pieces open
 
 If you have a numbered list or search open you can just type the number and it will open the asset associated. 
 
@@ -63,7 +72,7 @@ If you have a numbered list or search open you can just type the number and it w
   ```
 
 #### List Assets
-- To list assets or applications, use the command:
+To list assets or applications, use the command:
 
 ##### Default of 10
   ```bash
@@ -131,7 +140,7 @@ pieces delete
 ##### Perform a fuzzy search:
 
 ```bash
-pieces search query
+pieces search [your query]
 ```
 
 Finds strings that approximately match patterns. Normal search.
