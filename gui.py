@@ -22,6 +22,18 @@ def double_line(text):
     print("############################")
     print()
 
+def server_startup_failed():
+    print()
+    print("############################")
+    print()
+    print("Please start your Pieces OS Server")
+    print()
+    print("Or to install pieces OS: ")
+    print("https://docs.pieces.app/installation-getting-started/what-am-i-installing")
+    print()
+    print("############################")
+    print()
+
 def double_space(text):
     print()
     print(text)
@@ -76,6 +88,8 @@ def print_help():
     print("  save         - Save the current asset (not currently functional)")
     print("  delete       - Deletes the current or most recent asset.")
     print("  create       - Creates a new asset based on what you've copied to your clipboard")
+    print()
+    print("  ask \"ask\"    - Asks a single question to GPT 3.5 for now. Default timeout set to 10 seconds")
     print()
     print("  search q     - Does a fuzzy search for your query")
     print("  --mode ncs   - Does a neural code search for your query")
