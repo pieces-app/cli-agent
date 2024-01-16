@@ -81,7 +81,7 @@ def print_help():
     print("  list         - List all assets")
     print("  list x       - Lists maximum of x number of assets")
     print("  list apps    - List all registered applications")
-    print("  list models  - List all registered applications")
+    print("  list models  - List all registered AI models")
     print()
     print("  open         - Opens your current or most recent asset")
     print("  open x       - Open an asset in a list. The CLI must be running")
