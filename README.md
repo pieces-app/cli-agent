@@ -5,11 +5,9 @@
 # Pieces Python CLI Tool
 This is a comprehensive command-line interface (CLI) tool designed to interact seamlessly with Pieces OS. It provides a range of functionalities such as asset management, application interaction, and integration with various Pieces OS features.
 
-[Website](https://pieces.app/) • [Pieces OS Documentation](https://docs.pieces.app/) • [Pieces Python CLI Documentation](https://github.com/pieces-app/cli-agent/blob/prod/Documentation.md){:target="_blank"}
+## [Website](https://pieces.app/) • [Pieces OS Documentation](https://docs.pieces.app/) • [Pieces Python CLI Documentation](https://github.com/pieces-app/cli-agent/blob/prod/Documentation.md){:target="_blank"}
 
 </center>
-
-## Website • Documentation
 
 ### Table of Contents
 - [Operating System Support](#operating-system-support)
