@@ -178,6 +178,7 @@ def categorize_os():
 
 def check_api(**kwargs):
     # Create an instance of the API class
+    
     well_known_instance = openapi_client.WellKnownApi(api_client)
 
     try:        
@@ -205,6 +206,7 @@ def check_api(**kwargs):
 
         # If no application is found in the database, create and store a new one
         if application is None:
+            
             application = Application(id=application_id, name="OPEN_SOURCE", version=version, platform=local_os, onboarded=False, privacy="OPEN")
             insert_application(conn, application)
 

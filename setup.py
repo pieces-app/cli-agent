@@ -14,11 +14,13 @@ setup(
         'requests==2.31.0',
         'typing-extensions==4.9.0',
         'urllib3==2.0.7',
-        'websocket-client==1.7.0'
+        'websocket-client==1.7.0',
+        'pieces-os-client==1.2.2',
+        'openapi_client'
     ],
     entry_points={
         'console_scripts': [
-            'pieces=pieces-cli.app:main'  # Adjust the method to your main function
+            'pieces=app:main'  # Adjust the method to your main function
         ]
     },
 )
