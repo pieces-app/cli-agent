@@ -1,0 +1,14 @@
+name: Staging
+
+on:
+  push:
+    branches:
+      - testing_ci
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      deploy: false
+    secrets:
+      access_token: ${{ secrets.GITHUB_TOKEN }}

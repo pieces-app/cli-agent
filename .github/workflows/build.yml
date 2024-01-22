@@ -1,0 +1,67 @@
+name: Build and Release Jupyter plugin
+
+on:
+  workflow_call:
+    inputs:
+      deploy:
+        type: boolean
+        required: true
+        default: false
+    secrets:
+      access_token:
+        required: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+
+      ### Checkout Code Repo
+      - uses: actions/checkout@v3
+
+      ### Getting the version from the git tag or the branch name if there is none
+      - name: Get the version
+        shell: bash
+        id: get_version
+        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+      ### Setting the version in the package.json for unix builds
+      - name: Set Version Shell Script
+        run: |
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          then
+                echo "This is a tagged build"
+                # TODO: @NATHAN Setup Versioning Based on Git tag
+          elif [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+-test ]]
+          then
+                echo "This is a test build"
+                # TODO: @NATHAN Setup Versioning for TestPy  if we want 
+          else
+                echo "This is not a tagged build"
+                # TODO: @NATHAN Setup Staging if we want it auto incrementing
+          fi
+
+      ### Installing Python Dependencies
+      - name: Install Python Dependencies
+        run: python -m pip install --upgrade build
+
+      ### Installing Twine
+      ###TODO @NATHAN ~ Need this for Pypi distribution later
+      - name: Install Twine
+        run: python3 -m pip install --upgrade twine
+
+      - name: Python Build & Package
+        run: python -m build
+
+      ### Temp ~ Whats in here?
+      - name: Run LS
+        run: ls -la
+
+      ### Uploading our builds to GitHub Artifacts
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: |-
+            dist
+
+
