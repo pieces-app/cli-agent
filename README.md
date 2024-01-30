@@ -187,3 +187,27 @@ pieces help
 - Linux (insert later)
 
 It is advised to keep the CLI tool updated to the latest version to ensure compatibility with Pieces OS and access to all features. Please refer to our documentation for details on supported versions.
+
+## Contributing
+
+This project uses poetry for managing dependencies and builds. Install poetry with:
+```shell
+pip install poetry
+```
+
+Then use poetry to install the required dependencies
+```shell
+poetry install
+```
+
+You build with
+```shell
+poetry build
+```
+
+Finally any project dependencies should be added to the pyproject.toml file with
+```shell
+poetry add 
+```
+
+these can be local/github/pypi etc.
