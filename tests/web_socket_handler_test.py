@@ -1,8 +1,7 @@
-# test_websocket_manager.py
 import json
 from unittest.mock import Mock, patch
 import pytest
-from src.pieces.api import WebSocketManager  # Replace with the actual module name
+from src.pieces.api import WebSocketManager
 
 class TestWebSocketManager:
 
