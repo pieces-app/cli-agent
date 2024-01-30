@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install poetry -U
+          poetry install
+
+      - name: Run tests
+        run: poetry run pytest tests/
+
+      - name: Build package
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: poetry build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: my-package
+          path: dist/*.whl
+
