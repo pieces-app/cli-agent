@@ -33,9 +33,13 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: poetry build
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: my-package
-          path: dist/*.whl
+          files: dist/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
 
