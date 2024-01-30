@@ -3,10 +3,11 @@
 ## MAIN FUNCTION CALLS | Line ~250
 ## ASSET CALLS | Line ~281
 
-import openapi_client
 from openapi_client.rest import ApiException
-from store import *
-from pprint import pprint
+from pieces_os_client.models.application import Application
+from pieces_os_client.models.classification import Classification
+
+from src.pieces.store import *
 import platform
 import json
 import websocket
@@ -193,7 +194,7 @@ def check_api(**kwargs):
         local_os = categorize_os()
 
         # Establish a local database connection
-        conn = create_connection('applications.db')
+        conn = create_connection('../data/applications.db')
 
         # Create the table if it does not exist
         create_table(conn)
@@ -456,7 +457,6 @@ def update_asset(asset_id, application):
     # exported_asset = ExportedAsset(name="This is a test", description="Testing description", raw=FileFormat(string={"string": "This, This is me testing export asset"}), created=GroupedTimestamp(value=datetime.now()))
 
     # print(exported_asset)
-    from openapi_client.models.classification import Classification                
     format_api_instance = openapi_client.FormatApi(api_client)
     format = openapi_client.Format(asset=working_asset, id=asset_id, creator="ea47fe2f-a503-4edb-861a-7c55ca446859", classification=Classification(generic="CODE",specific="tex"), role="BOTH", application=application),
     api_response = format_api_instance.format_update_value(transferable=False, format=format)

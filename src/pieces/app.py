@@ -1,5 +1,4 @@
 import argparse
-import sys
 from commands import *
 
 def main():
