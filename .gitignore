@@ -1,6 +1,9 @@
 # Ignore opened_snippets folder in cli-agent directory
 opened_snippets/
 
+# Local DB
+applications.db
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -80,6 +83,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
 
 # IPython
 profile_default/

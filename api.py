@@ -4,7 +4,11 @@
 ## ASSET CALLS | Line ~281
 
 import openapi_client
+import pieces_os_client
+# import pieces_client
+from pieces_os_client import api, Application
 from openapi_client.rest import ApiException
+# from openapi_client.api.well_known_api import WellKnownApi
 from store import *
 from pprint import pprint
 import platform
@@ -12,6 +16,8 @@ import json
 import websocket
 import threading
 import time
+
+# openapi_client.
 
 #Globals
 response_received = None
@@ -176,12 +182,63 @@ def categorize_os():
 
     return os_info
 
+# def check_api(**kwargs):
+#     # Create an instance of the API class
+    
+#     well_known_instance = openapi_client.WellKnownApi(api_client)
+#     print("INSIDE")
+    
+#     try:        
+#         # Make Sure Server is Running and Get Version
+#         version = well_known_instance.get_well_known_version()
+
+#         # Check if version is None or empty
+#         if not version:
+#             return False, "Server is not running", None
+
+#         # Decide if it's Windows, Mac, Linux or Web
+#         local_os = categorize_os()
+
+#         # Establish a local database connection
+#         conn = create_connection('applications.db')
+
+#         # Create the table if it does not exist
+#         create_table(conn)
+#         print("Table created")
+
+#         # Check the database for an existing application
+#         application_id = "DEFAULT"  # Replace with a default application ID
+#         application = get_application(conn, application_id)
+
+#         print(application_id)
+#         print()
+#         print(application)
+
+#         # If no application is found in the database, create and store a new one
+#         if application is None:
+            
+#             application = Application(id=application_id, name="OPEN_SOURCE", version=version, platform=local_os, onboarded=False, privacy="OPEN")
+#             insert_application(conn, application)
+
+#         # Register the application
+#         registered_application = register_application(application)
+
+#         # Close the database connection
+#         conn.close()
+
+#         return True, version, registered_application
+
+#     except Exception as e:
+#         # Close the database connection in case of an exception
+#         if 'conn' in locals():
+#             conn.close()
+#         return False, "Exception when calling WellKnownApi->get_well_known_version: %s\n" % e
+
 def check_api(**kwargs):
     # Create an instance of the API class
-    
     well_known_instance = openapi_client.WellKnownApi(api_client)
 
-    try:        
+    try:
         # Make Sure Server is Running and Get Version
         version = well_known_instance.get_well_known_version()
 
@@ -190,25 +247,36 @@ def check_api(**kwargs):
             return False, "Server is not running", None
 
         # Decide if it's Windows, Mac, Linux or Web
-        local_os = categorize_os()
+        local_os = categorize_os()  # Ensure this function is defined
 
         # Establish a local database connection
         conn = create_connection('applications.db')
 
         # Create the table if it does not exist
         create_table(conn)
-        # create_tables(conn)
+
+        # Generate a unique application ID or fetch the next available ID
+        application_id = generate_unique_application_id()  # Implement this function
 
         # Check the database for an existing application
-        application_id = "DEFAULT"  # Replace with a default application ID
         application = get_application(conn, application_id)
-        # application =  get_application_with_versions(conn, application_id)
+
 
         # If no application is found in the database, create and store a new one
         if application is None:
-            
-            application = Application(id=application_id, name="OPEN_SOURCE", version=version, platform=local_os, onboarded=False, privacy="OPEN")
+            application_data = {
+                'id': application_id,
+                'name': "OPEN_SOURCE",
+                'version': version,
+                'platform': local_os,
+                'onboarded': False,
+                'privacy': "OPEN"
+            }
+            application = Application(**application_data)
             insert_application(conn, application)
+        else:
+            # Update the existing application record if needed
+            update_application(conn, application)  # Implement this if needed
 
         # Register the application
         registered_application = register_application(application)
@@ -223,7 +291,7 @@ def check_api(**kwargs):
         if 'conn' in locals():
             conn.close()
         return False, "Exception when calling WellKnownApi->get_well_known_version: %s\n" % e
-    
+
 def list_applications():
     applications_api = openapi_client.ApplicationsApi(api_client)
 

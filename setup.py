@@ -15,7 +15,7 @@ setup(
         'typing-extensions==4.9.0',
         'urllib3==2.0.7',
         'websocket-client==1.7.0',
-        'pieces-os-client==1.2.2',
+        'pieces-os-client==1.2.3',
         'openapi_client'
     ],
     entry_points={
