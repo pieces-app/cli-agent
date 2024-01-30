@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "pieces"
+version = "0.2"
+description = ""  # Add your description here
+authors = ["Sam Jones <sam@pieces.app>", ]  # Add your name and email
+
+[tool.poetry.dependencies]
+python = "^3.9"  # Specify your Python version
+beautifulsoup4 = "4.12.3"
+aenum = "3.1.15"
+certifi = "2023.11.17"
+charset-normalizer = "3.3.2"
+pydantic = "1.10.13"
+pyperclip = "1.8.2"
+requests = "2.31.0"
+typing-extensions = "4.9.0"
+urllib3 = "2.0.7"
+websocket-client = "1.7.0"
+pieces-os-client = "1.2.2"
+pieces_client = "*"
+openapi_client = "*"  # Replace with specific version if needed
+
+[tool.poetry.dev-dependencies]
+# Add any development dependencies here
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+pieces = "app:main"  # Adjust the method to your main function

@@ -6,6 +6,8 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
+        'beautifulsoup4-4.12.3',
+        'bs4-4.12.3',
         'aenum==3.1.15',
         'certifi==2023.11.17',
         'charset-normalizer==3.3.2',
