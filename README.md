@@ -31,6 +31,35 @@ The CLI Supports
 - Mac
 - Windows
 
+#### Building and installing from source
+To build and install both the python sdk and the cli from source, you need to:
+
+1. Clone both cli-agent and pieces-os-client-sdk-for-python.
+```bash
+git clone https://github.com/pieces-app/cli-agent.git;
+git clone https://github.com/pieces-app/pieces-os-client-sdk-for-python.git
+```
+2. (temporary) Check out to cli-agent/fix/refactor and pieces-os-client-sdk-for-python/fix/refactor_and_add_tests-dom respectively.
+```bash
+git checkout fix/refactor;
+git checkout fix/refactor_and_add_tests-dom
+```
+3. Make sure you have a clean python env just to be sure (>=3.9)
+4. First in pieces-os-client-sdk-for-python run:
+```bash
+pip install poetry;
+poetry install;
+poetry build
+```
+5. Then in cli-agent run:
+```bash
+pip install poetry;
+poetry install;
+poetry build;
+pip install dist/pieces-0.1-py3-none-any.whl
+```
+6. This should have installed the cli correctly. Now you should be able to use `pieces` commands.
+
 #### Installing
 To get started with the Pieces Python CLI Tool, you need to:
 
