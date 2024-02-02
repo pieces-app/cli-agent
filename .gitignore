@@ -1,3 +1,5 @@
+**/.DS_Store
+
 # Ignore opened_snippets folder in cli-agent directory
 opened_snippets/
 

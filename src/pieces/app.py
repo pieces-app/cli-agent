@@ -1,5 +1,5 @@
 import argparse
-from commands import *
+from pieces.commands import *
 
 def main():
     # Create the top-level parser
