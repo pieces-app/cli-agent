@@ -52,9 +52,9 @@ def get_application(conn, app_id):
             configuration = pos_client.Configuration(host="http://localhost:1000")
 
             with pos_client.ApiClient(configuration) as api_client:
-                application = pos_client.Application()
+                #application = pos_client.Application()
 
-                return application(
+                return pos_client.Application(
                     id=result[0],
                     name=result[1],
                     version=result[2],
