@@ -1,8 +1,8 @@
 ### TODO need to implement caching for the cli version and more advanced caching strategies ###
 
 import sqlite3
-# from openapi_client.models.application import Application
-import openapi_client
+import pieces_os_client as pos_client
+
 
 # Function to create a database connection
 def create_connection(db_file):
@@ -49,13 +49,19 @@ def get_application(conn, app_id):
         cursor.execute("SELECT * FROM applications WHERE id=:id", {'id': app_id})
         result = cursor.fetchone()
         if result:
-            configuration = openapi_client.Configuration(
-            host = "http://localhost:1000")
-            
-            with openapi_client.ApiClient(configuration) as api_client:
-                application = openapi_client.Application()
-                
-                return application(id=result[0], name=result[1], version=result[2], platform=result[3], onboarded=bool(result[4]), privacy=result[5])
+            configuration = pos_client.Configuration(host="http://localhost:1000")
+
+            with pos_client.ApiClient(configuration) as api_client:
+                #application = pos_client.Application()
+
+                return pos_client.Application(
+                    id=result[0],
+                    name=result[1],
+                    version=result[2],
+                    platform=result[3],
+                    onboarded=bool(result[4]),
+                    privacy=result[5],
+                )
         return None
     except Exception as e:
         print(e)
