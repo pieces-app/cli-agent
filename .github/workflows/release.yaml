@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install poetry -U
-          poetry install --without dev
+          poetry install 
 
       - name: Run tests
         run: poetry run pytest tests/
