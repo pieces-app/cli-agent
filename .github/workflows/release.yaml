@@ -23,16 +23,11 @@ jobs:
           pip install poetry -U
           poetry install 
 
-#      - name: Run tests
-#        run: poetry run pytest tests/
-
       - name: Build package
-        if: startsWith(github.ref, 'refs/tags/v')
         run: poetry build
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: dist/
         env:
