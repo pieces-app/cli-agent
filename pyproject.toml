@@ -1,0 +1,32 @@
+[tool.poetry]
+  name = "pieces"
+  version = "0.1"
+  description = ""  # Add your description here
+  authors = ["Pieces <development@pieces.app>"]  # Add your name and email
+
+[tool.poetry.dependencies]
+  python = "^3.9"
+  beautifulsoup4 = "4.12.3"
+  aenum = "3.1.15"
+  certifi = "2023.11.17"
+  charset-normalizer = "3.3.2"
+  pydantic = "1.10.13"
+  pyperclip = "1.8.2"
+  requests = "2.31.0"
+  typing-extensions = "4.9.0"
+  urllib3 = "2.0.7"
+  websocket-client = "1.7.0"
+  pieces_os_client = "*"
+
+[tool.poetry.dev-dependencies]
+  pytest = "^8.0.0"
+  # this is ugly but works well
+  pieces_os_client = {path = "../pieces-os-client-sdk-for-python/dist/pieces_os_client-1.2.3-py3-none-any.whl"}
+
+[build-system]
+  requires = ["poetry-core>=1.0.0"]
+  build-backend = "poetry.core.masonry.api"
+  
+[tool.poetry.scripts]
+  pieces = "pieces.app:main"
+

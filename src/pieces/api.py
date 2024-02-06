@@ -3,15 +3,19 @@
 ## MAIN FUNCTION CALLS | Line ~250
 ## ASSET CALLS | Line ~281
 
-import openapi_client
-from openapi_client.rest import ApiException
-from store import *
-from pprint import pprint
+import pieces_os_client as pos_client
+from pieces_os_client.rest import ApiException
+from pieces_os_client.models.application import Application
+from pieces_os_client.models.classification import Classification
+
+from pieces.store import *
 import platform
 import json
 import websocket
 import threading
 import time
+import importlib.resources
+from pathlib import Path
 
 #Globals
 response_received = None
@@ -23,15 +27,19 @@ last_message_time = None
 initial_timeout = 10  # seconds
 subsequent_timeout = 3  # seconds
 first_token_received = False
+pieces_data_dir = importlib.resources.files(
+    "pieces.data"
+)  # our static packaged data files directory
+applications_db_path = Path(
+    pieces_data_dir, "applications.db"
+)  # path to our applications.db
 
 # Defining the host is optional and defaults to http://localhost:1000
 # See configuration.py for a list of all supported configuration parameters.
-configuration = openapi_client.Configuration(
-    host = "http://localhost:1000"
-)
+configuration = pos_client.Configuration(host="http://localhost:1000")
 
 # Initialize the ApiClient globally
-api_client = openapi_client.ApiClient(configuration)
+api_client = pos_client.ApiClient(configuration)
 
 ###############################################################################
 ############################## WEBSOCKET FUNCTIONS ############################
@@ -178,8 +186,7 @@ def categorize_os():
 
 def check_api(**kwargs):
     # Create an instance of the API class
-    
-    well_known_instance = openapi_client.WellKnownApi(api_client)
+    well_known_instance = pos_client.WellKnownApi(api_client)
 
     try:        
         # Make Sure Server is Running and Get Version
@@ -193,7 +200,7 @@ def check_api(**kwargs):
         local_os = categorize_os()
 
         # Establish a local database connection
-        conn = create_connection('applications.db')
+        conn = create_connection(applications_db_path)
 
         # Create the table if it does not exist
         create_table(conn)
@@ -225,7 +232,7 @@ def check_api(**kwargs):
         return False, "Exception when calling WellKnownApi->get_well_known_version: %s\n" % e
     
 def list_applications():
-    applications_api = openapi_client.ApplicationsApi(api_client)
+    applications_api = pos_client.ApplicationsApi(api_client)
 
     apps_raw = applications_api.applications_snapshot()
     
@@ -233,7 +240,7 @@ def list_applications():
 
 def register_application(existing_application=None):
     # Application
-    applications_api = openapi_client.ApplicationsApi(api_client)
+    applications_api = pos_client.ApplicationsApi(api_client)
     # application = Application(id="test", name="VS_CODE", version="1.9.1", platform="WINDOWS", onboarded=False, privacy="OPEN")
     application = existing_application
 
@@ -249,8 +256,7 @@ def register_application(existing_application=None):
 ###############################################################################
 
 def list_models():
-    
-    models_api = openapi_client.ModelsApi(api_client)
+    models_api = pos_client.ModelsApi(api_client)
 
     response = models_api.models_snapshot()
     return response
@@ -260,13 +266,13 @@ def search_api(search_phrase, search_type):
     
     # Determine the endpoint and perform the search based on the search type
     if search_type == 'assets':
-        api_instance = openapi_client.AssetsApi(api_client)
+        api_instance = pos_client.AssetsApi(api_client)
         response = api_instance.assets_search_assets(query=query, transferables=False)
     elif search_type == 'ncs':
-        api_instance = openapi_client.SearchApi(api_client)
+        api_instance = pos_client.SearchApi(api_client)
         response = api_instance.neural_code_search(query=query)
     elif search_type == 'fts':
-        api_instance = openapi_client.SearchApi(api_client)
+        api_instance = pos_client.SearchApi(api_client)
         response = api_instance.full_text_search(query=query)
     else:
         # Handle unknown search type
@@ -280,18 +286,15 @@ def search_api(search_phrase, search_type):
 ###############################################################################
 
 def create_new_asset(application, raw_string, metadata=None):
-    
-    assets_api = openapi_client.AssetsApi(api_client)
-    
+    assets_api = pos_client.AssetsApi(api_client)
+
     # Construct a Seed
-    seed = openapi_client.Seed(
-        asset=openapi_client.SeededAsset(
+    seed = pos_client.Seed(
+        asset=pos_client.SeededAsset(
             application=application,
-            format=openapi_client.SeededFormat(
-                fragment=openapi_client.SeededFragment(
-                    string=openapi_client.TransferableString(
-                        raw=raw_string
-                    )
+            format=pos_client.SeededFormat(
+                fragment=pos_client.SeededFragment(
+                    string=pos_client.TransferableString(raw=raw_string)
                 )
             ),
             metadata=metadata  # This should be constructed as per the SDK's definition
@@ -308,7 +311,7 @@ def create_new_asset(application, raw_string, metadata=None):
         return None
 
 def get_asset_ids(max=None, **kwargs):
-    assets_api = openapi_client.AssetsApi(api_client)
+    assets_api = pos_client.AssetsApi(api_client)
 
     try:
         # Call the API to get assets identifiers
@@ -333,7 +336,7 @@ def get_asset_ids(max=None, **kwargs):
     
 def get_asset_names(ids):
     names = []
-    asset_api = openapi_client.AssetApi(api_client)
+    asset_api = pos_client.AssetApi(api_client)
 
     for id in ids:
         try:
@@ -352,9 +355,9 @@ def get_asset_names(ids):
 
     return names
 
+
 def get_single_asset_name(id):
-    
-    asset_api = openapi_client.AssetApi(api_client)
+    asset_api = pos_client.AssetApi(api_client)
 
     try:
         # Use the OpenAPI client to get asset snapshot
@@ -370,7 +373,7 @@ def get_single_asset_name(id):
         print(f"Error occurred for ID {id}: {str(e)}")
 
 def get_asset_by_id(id):
-    asset_api = openapi_client.AssetApi(api_client)
+    asset_api = pos_client.AssetApi(api_client)
 
     try:
         # Use the OpenAPI client to get asset snapshot
@@ -385,8 +388,8 @@ def get_asset_by_id(id):
         return None
 
 def edit_asset_name(asset_id, new_name):
-    asset_api = openapi_client.AssetApi(api_client)
-    
+    asset_api = pos_client.AssetApi(api_client)
+
     # Get the asset using the provided asset_id
     asset = get_asset_by_id(asset_id)
 
@@ -410,8 +413,8 @@ def edit_asset_name(asset_id, new_name):
         print(f"Error updating asset: {e}")
 
 def delete_asset_by_id(asset_id):
-    delete_instance = openapi_client.AssetsApi(api_client)
-    
+    delete_instance = pos_client.AssetsApi(api_client)
+
     try:
         response = delete_instance.assets_delete_asset(asset_id)
         return response
@@ -420,8 +423,8 @@ def delete_asset_by_id(asset_id):
 
 def update_asset(asset_id, application):
     ## NOT CURRENTLY WORKING ##
-    
-    asset_api = openapi_client.AssetApi(api_client)
+
+    asset_api = pos_client.AssetApi(api_client)
 
     working_asset = get_asset_by_id(asset_id)
     # file_name = working_asset.get('name')
@@ -456,10 +459,20 @@ def update_asset(asset_id, application):
     # exported_asset = ExportedAsset(name="This is a test", description="Testing description", raw=FileFormat(string={"string": "This, This is me testing export asset"}), created=GroupedTimestamp(value=datetime.now()))
 
     # print(exported_asset)
-    from openapi_client.models.classification import Classification                
-    format_api_instance = openapi_client.FormatApi(api_client)
-    format = openapi_client.Format(asset=working_asset, id=asset_id, creator="ea47fe2f-a503-4edb-861a-7c55ca446859", classification=Classification(generic="CODE",specific="tex"), role="BOTH", application=application),
-    api_response = format_api_instance.format_update_value(transferable=False, format=format)
+    format_api_instance = pos_client.FormatApi(api_client)
+    format = (
+        pos_client.Format(
+            asset=working_asset,
+            id=asset_id,
+            creator="ea47fe2f-a503-4edb-861a-7c55ca446859",
+            classification=Classification(generic="CODE", specific="tex"),
+            role="BOTH",
+            application=application,
+        ),
+    )
+    api_response = format_api_instance.format_update_value(
+        transferable=False, format=format
+    )
     print(api_response)
 
     ## Update the format's value that lives on the asset

@@ -2,8 +2,8 @@
 ## HELPER FUNCTIONS | Line ~381
 ## MAIN CLI FUNCTION | Line ~556
 
-from gui import *
-from api import *
+from pieces.gui import *
+from pieces.api import *
 import platform
 import sys
 import shlex
