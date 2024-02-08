@@ -1,6 +1,6 @@
 [tool.poetry]
   name = "pieces"
-  version = "0.1"
+  version = "0.0.2"
   description = ""  # Add your description here
   authors = ["Pieces <development@pieces.app>"]  # Add your name and email
 
@@ -10,18 +10,16 @@
   aenum = "3.1.15"
   certifi = "2023.11.17"
   charset-normalizer = "3.3.2"
-  pydantic = "1.10.13"
+  pydantic = ">=2.6.0,<3.0.0"
   pyperclip = "1.8.2"
   requests = "2.31.0"
   typing-extensions = "4.9.0"
-  urllib3 = "2.0.7"
+  urllib3 =  ">=2.2.0,<3.0.0"
   websocket-client = "1.7.0"
-  pieces_os_client = "*"
+  pieces_os_client = "1.2.5"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
   pytest = "^8.0.0"
-  # this is ugly but works well
-#  pieces_os_client = {path = "../pieces-os-client-sdk-for-python/dist/pieces_os_client-1.2.3-py3-none-any.whl"}
 
 [build-system]
   requires = ["poetry-core>=1.0.0"]
