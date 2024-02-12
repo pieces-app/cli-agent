@@ -21,6 +21,15 @@ jobs:
         run: |
           pip install poetry -U
           poetry install 
+          
+      ### Installing SSH keys to pull our dependencies down from GitHub
+#      - name: Install SSH key
+      #        uses: shimataro/ssh-key-action@v2
+      #        with:
+      #          key: '${{ secrets.SSH_PRIVATE_KEY }}'
+      #          name: id_rsa
+      #          known_hosts: 'github.com'
+      #          if_key_exists: fail
 
       ### Setting up our fastlane certificates
       - name: Setup Certificates
@@ -29,8 +38,8 @@ jobs:
           bundle install
           bundle exec fastlane setup
         env:
-          MATCH_PASSWORD: ${{ secrets.match_password }}
-          FASTLANE_PASSWORD: ${{ secrets.fastlane_password }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          FASTLANE_PASSWORD: ${{ secrets.FASTLANE_PASSWORD }}
 
       - name: Build library
         run: poetry build
