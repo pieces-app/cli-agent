@@ -58,7 +58,7 @@ jobs:
       ### https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
       - name: Pack & Notarize Intel
         run: |-
-          ditto -c -k --sequesterRsrc --keepParent "dist/pieces" dist/pieces-cli.zip
+          ditto -c -k --sequesterRsrc "dist/pieces" dist/pieces-cli.zip
           xcrun notarytool submit dist/pieces-cli.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
           # xcrun stapler staple "dist/pieces" - NOTE Currently Not Possible 
 
