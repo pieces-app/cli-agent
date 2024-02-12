@@ -63,7 +63,7 @@ jobs:
         run: |-
           ditto -c -k --sequesterRsrc --keepParent "dist/pieces" dist/pieces-cli.zip
           xcrun notarytool submit dist/pieces-cli.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-          xcrun stapler staple "dist/pieces"
+          xcrun stapler staple "dist/pieces" -v
           ditto -c -k --sequesterRsrc --keepParent "dist/pieces" dist/pieces-cli.zip
           
       - name: What is in the dist folder again
