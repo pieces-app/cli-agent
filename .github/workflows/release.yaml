@@ -48,29 +48,19 @@ jobs:
         run: |
           poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --add-data="src/pieces/data/applications.db:." --name=pieces
 
+      ### Code signing the binary file
       - name: Codesign Binary
         run: |
           codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements Release.entitlements --timestamp -f dist/pieces -v
 
-      - name: What is in the dist folder
-        run: |
-          ls -la
-          cd dist 
-          ls -la
-
       ### Packing and Notarizing the app bundle for intel macs
+      ### NOTE IMPORTANT @NATHAN ~ Currently not possible to staple a ticket to a binary directly see:
+      ### https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
       - name: Pack & Notarize Intel
         run: |-
           ditto -c -k --sequesterRsrc --keepParent "dist/pieces" dist/pieces-cli.zip
           xcrun notarytool submit dist/pieces-cli.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-          xcrun stapler -v staple "dist/pieces"
-          ditto -c -k --sequesterRsrc --keepParent "dist/pieces" dist/pieces-cli.zip
-          
-      - name: What is in the dist folder again
-        run: |
-          ls -la
-          cd dist 
-          ls -la
+          # xcrun stapler staple "dist/pieces" - NOTE Currently Not Possible 
 
       ### Uploading our builds to GitHub Artifacts
       - name: Upload Artifacts
