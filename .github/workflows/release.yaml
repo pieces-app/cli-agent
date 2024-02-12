@@ -28,7 +28,7 @@ jobs:
 
       - name: Build stand alone
         run: |
-          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --add-data=".data/applications.db:." --name=pieces
+          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --add-data="src/pieces/data/applications.db:." --name=pieces
 
       - name: Release
         uses: softprops/action-gh-release@v1
