@@ -1,6 +1,6 @@
 [tool.poetry]
   name = "pieces"
-  version = "0.0.7"
+  version = "0.0.8"
   description = ""  # Add your description here
   authors = ["Pieces <development@pieces.app>"]  # Add your name and email
 
