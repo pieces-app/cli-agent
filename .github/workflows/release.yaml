@@ -23,13 +23,13 @@ jobs:
           poetry install 
           
       ### Installing SSH keys to pull our dependencies down from GitHub
-#      - name: Install SSH key
-      #        uses: shimataro/ssh-key-action@v2
-      #        with:
-      #          key: '${{ secrets.SSH_PRIVATE_KEY }}'
-      #          name: id_rsa
-      #          known_hosts: 'github.com'
-      #          if_key_exists: fail
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: '${{ secrets.SSH_PRIVATE_KEY }}'
+          name: id_rsa
+          known_hosts: 'github.com'
+          if_key_exists: fail
 
       ### Setting up our fastlane certificates
       - name: Setup Certificates
