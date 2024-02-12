@@ -7,7 +7,7 @@ import pieces_os_client as pos_client
 from pieces_os_client.rest import ApiException
 from pieces_os_client.models.application import Application
 from pieces_os_client.models.classification import Classification
-
+from pydantic import ValidationError
 from pieces.store import *
 import platform
 import json
@@ -27,11 +27,11 @@ last_message_time = None
 initial_timeout = 10  # seconds
 subsequent_timeout = 3  # seconds
 first_token_received = False
-pieces_data_dir = importlib.resources.files(
-    "pieces.data"
-)  # our static packaged data files directory
+# pieces_data_dir = importlib.resources.files(
+#     "data"
+# )  # our static packaged data files directory
 applications_db_path = Path(
-    pieces_data_dir, "applications.db"
+    "applications.db"
 )  # path to our applications.db
 
 # Defining the host is optional and defaults to http://localhost:1000
@@ -386,6 +386,8 @@ def get_asset_by_id(id):
     except ApiException as e:
         print(f"Error occurred for ID {id}: {str(e)}")
         return None
+    except ValidationError as e:
+        print(f"Parsing error in asset with ID {id}: {str(e)}")
 
 def edit_asset_name(asset_id, new_name):
     asset_api = pos_client.AssetApi(api_client)

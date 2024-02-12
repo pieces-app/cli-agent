@@ -23,8 +23,12 @@ jobs:
           pip install poetry -U
           poetry install 
 
-      - name: Build
+      - name: Build library
         run: poetry build
+
+      - name: Build stand alone
+        run: |
+          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --add-data="/Users/samjones/SourceTree/cli_agent/src/pieces/data/applications.db:." --name=pieces
 
       - name: Release
         uses: softprops/action-gh-release@v1
