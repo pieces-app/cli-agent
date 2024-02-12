@@ -2,14 +2,13 @@ name: Release
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, codesign_init ]
     tags:
       - 'v*.*.*'
 
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -23,12 +22,41 @@ jobs:
           pip install poetry -U
           poetry install 
 
+      ### Setting up our fastlane certificates
+      - name: Setup Certificates
+        run: |-
+          cd macos
+          bundle install
+          bundle exec fastlane setup
+        env:
+          MATCH_PASSWORD: ${{ secrets.match_password }}
+          FASTLANE_PASSWORD: ${{ secrets.fastlane_password }}
+
       - name: Build library
         run: poetry build
 
       - name: Build stand alone
         run: |
           poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --add-data="src/pieces/data/applications.db:." --name=pieces
+
+      - name: Codesign Binary
+        run: |  
+          codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements Release.entitlements --timestamp -f dist/pieces
+          
+      ### Packing and Notarizing the app bundle for intel macs
+      - name: Pack & Notarize Intel
+        run: |-
+          # ditto -c -k --sequesterRsrc --keepParent "dist/pieces" dist/pieces-cli.zip
+          xcrun notarytool submit dist/*.tar.gz --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+          xcrun stapler staple "dist/pieces"
+        if: matrix.os == 'macos-latest'
+
+      ### Uploading our builds to GitHub Artifacts
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: |-
+            dist
 
       - name: Release
         uses: softprops/action-gh-release@v1
