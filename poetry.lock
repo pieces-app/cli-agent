@@ -257,13 +257,14 @@ files = [
 ]
 
 [[package]]
-name = "pieces_os_client"
-version = "1.2.6"
+name = "pieces-os-client"
+version = "1.2.7"
 description = "A powerful code engine package for writing applications on top of Pieces OS"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pieces_os_client-1.2.6-py3-none-any.whl", hash = "sha256:607379d9853eb7bc86b5ab4bbe4da2f4e6fcde07a6db246926fb15a387be4371"},
+    {file = "pieces_os_client-1.2.7-py3-none-any.whl", hash = "sha256:3372723700cf4206af99b1547f7e1ef14167474b31f14ebfea3c975948dc8b8b"},
+    {file = "pieces_os_client-1.2.7.tar.gz", hash = "sha256:e8cfd05fee1550c6db5f24f51242e91752f4836f0b97c8fc0d53baf716292a98"},
 ]
 
 [package.dependencies]
@@ -271,10 +272,6 @@ aenum = ">=3.1.15,<4.0.0"
 pydantic = "1.10.13"
 python-dateutil = ">=2.8.2,<3.0.0"
 urllib3 = ">=2.2.0,<3.0.0"
-
-[package.source]
-type = "file"
-url = "../pieces-os-client-sdk-for-python/dist/pieces_os_client-1.2.6-py3-none-any.whl"
 
 [[package]]
 name = "pluggy"
@@ -583,4 +580,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "4800df5a7fdec7562f271c40d3da634be87b256b87a3e9f552c500fd058f3c3f"
+content-hash = "13eca037202c03093674cbc088c9464bf0d7e1cef0afc531b780236ecd201814"
