@@ -50,7 +50,7 @@ jobs:
 
       - name: Codesign Binary
         run: |  
-          codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements Release.entitlements --timestamp -f dist/pieces
+          codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements Release.entitlements --timestamp -f dist/pieces -v
           
       ### Packing and Notarizing the app bundle for intel macs
       - name: Pack & Notarize Intel
