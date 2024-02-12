@@ -21,7 +21,7 @@ jobs:
         run: |
           pip install poetry -U
           poetry install 
-          
+
       ### Installing SSH keys to pull our dependencies down from GitHub
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
@@ -49,15 +49,28 @@ jobs:
           poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --add-data="src/pieces/data/applications.db:." --name=pieces
 
       - name: Codesign Binary
-        run: |  
+        run: |
           codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements Release.entitlements --timestamp -f dist/pieces -v
-          
+
+      - name: What is in the dist folder
+        run: |
+          ls -la
+          cd dist 
+          ls -la
+
       ### Packing and Notarizing the app bundle for intel macs
       - name: Pack & Notarize Intel
         run: |-
-          # ditto -c -k --sequesterRsrc --keepParent "dist/pieces" dist/pieces-cli.zip
-          xcrun notarytool submit dist/*.tar.gz --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+          ditto -c -k --sequesterRsrc --keepParent "dist/pieces" dist/pieces-cli.zip
+          xcrun notarytool submit dist/pieces-cli.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
           xcrun stapler staple "dist/pieces"
+          ditto -c -k --sequesterRsrc --keepParent "dist/pieces" dist/pieces-cli.zip
+          
+      - name: What is in the dist folder again
+        run: |
+          ls -la
+          cd dist 
+          ls -la
 
       ### Uploading our builds to GitHub Artifacts
       - name: Upload Artifacts
