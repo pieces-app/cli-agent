@@ -29,28 +29,37 @@ The Pieces Python CLI Tool is compatible with various operating systems, ensurin
 The CLI Supports
 - Windows 10 or greater
 - Mac
-- Windows
+- Linux
 
 #### Installing
 To get started with the Pieces Python CLI Tool, you need to:
 
 1. Ensure Pieces OS is installed and running on your system.
-2. Install the Python package:
+2. This project uses poetry for managing dependencies and builds. Install poetry with:
+```shell
+pip install poetry
+```
 
-   ```bash
-   pip install pieces-cli
-   ```
+Then use poetry to install the required dependencies
+```shell
+poetry install
+```
 
-   ```bash
-   brew install pieces-cli
-   ```
+Build with
+```shell
+poetry build
+```
 
-   ```bash
-   conda install pieces-cli
-   ```
+cd to dist and 
+```shell
+pip install pieces_os_client-1.2.3-py3-none-any.whl
+```
+
 
 #### Getting Started
 After installing the CLI tool, you can access its functionalities through the terminal. The tool is initialized with the command `pieces` followed by various subcommands and options.
+
+It's recommended to use the Run command for greatest speed/performance.
 
 ### Usage
 
@@ -102,14 +111,6 @@ Opens an asset from a list or search. If only "open" is used then it will open y
 
 ```bash
 pieces open [ITEM_INDEX]
-```
-
-##### Save the current asset:
-
-** Does Not Currently Work **
-
-```bash
-pieces save
 ```
 
 ##### Create a new asset:
@@ -183,31 +184,7 @@ pieces help
 
 ##### Supported Versions
 - Windows 10 or Greater
-- Mac (insert later)
-- Linux (insert later)
+- Mac
+- Linux
 
 It is advised to keep the CLI tool updated to the latest version to ensure compatibility with Pieces OS and access to all features. Please refer to our documentation for details on supported versions.
-
-## Contributing
-
-This project uses poetry for managing dependencies and builds. Install poetry with:
-```shell
-pip install poetry
-```
-
-Then use poetry to install the required dependencies
-```shell
-poetry install
-```
-
-You build with
-```shell
-poetry build
-```
-
-Finally any project dependencies should be added to the pyproject.toml file with
-```shell
-poetry add 
-```
-
-these can be local/github/pypi etc.
