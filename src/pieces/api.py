@@ -27,9 +27,9 @@ last_message_time = None
 initial_timeout = 10  # seconds
 subsequent_timeout = 3  # seconds
 first_token_received = False
-# pieces_data_dir = importlib.resources.files(
-#     "data"
-# )  # our static packaged data files directory
+pieces_data_dir = importlib.resources.files(
+    "pieces.data"
+)  # our static packaged data files directory
 applications_db_path = Path(
     "applications.db"
 )  # path to our applications.db
