@@ -17,6 +17,7 @@
   urllib3 =  ">=2.2.0,<3.0.0"
   websocket-client = "1.7.0"
   pieces_os_client = "1.2.7"
+  prompt-toolkit = "^3.0.43"
 
 [tool.poetry.group.dev.dependencies]
   pytest = "^8.0.0"

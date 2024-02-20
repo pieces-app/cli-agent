@@ -12,6 +12,7 @@ import os
 import re
 import pyperclip
 from collections.abc import Iterable
+from prompt_toolkit import PromptSession
 
 # Globals for CLI Memory.
 ws_manager = WebSocketManager()
@@ -43,7 +44,7 @@ def ask(query, **kwargs):
     try:
         ws, ws_thread = ws_manager.ask_question(model_id, query, run_in_loop)
     except Exception as e:
-        print(f"Error occurred while asking the question: {e}")
+        show_error("Error occurred while asking the question:", e)
 
 def search(query, **kwargs):
     global asset_ids 
@@ -327,7 +328,7 @@ def create_asset(**kwargs):
             print("Invalid input. Please type 'y' to save or 'n' to cancel.")
 
     except pyperclip.PyperclipException as e:
-        print("Error accessing clipboard:", str(e))
+        show_error("Error accessing clipboard:", str(e))
     
 def check():
     try:
@@ -348,6 +349,40 @@ def check():
 ###############################################################################
 ############################## HELPER FUNCTIONS ###############################
 ###############################################################################
+def levenshtein_distance(s1, s2):
+    # If s1 is shorter than s2, swap them to minimize the number of operations
+    if len(s1) < len(s2):
+        return levenshtein_distance(s2, s1)
+
+    # If one of the strings is empty, the distance is the length of the other string
+    if len(s2) == 0:
+        return len(s1)
+
+    # Initialize the previous row of distances
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        # Initialize the current row, starting with the deletion distance
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            # Calculate the cost of insertions, deletions, and substitutions
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            # Append the minimum cost of the operations to the current row
+            current_row.append(min(insertions, deletions, substitutions))
+        # Set the current row as the previous row for the next iteration
+        previous_row = current_row
+    
+    # The last element of the previous row contains the levenshtein distance
+    return previous_row[-1]
+
+
+def find_most_similar_command(valid_commands, user_input):
+    # Calculate the Levenshtein distance between the user input and each valid command
+    distances = {cmd: levenshtein_distance(user_input, cmd) for cmd in valid_commands}
+    # Find the command with the smallest Levenshtein distance to the user input
+    most_similar_command = min(distances, key=distances.get)
+    return most_similar_command
 
 def list_all_models(**kwargs):
     global asset_ids
@@ -356,7 +391,7 @@ def list_all_models(**kwargs):
     try:
         response = list_models() 
     except Exception as e:
-        print(f"Error occurred while fetching models: {e}")
+        show_error("Error occurred while fetching models",{e})
         return
 
     # Check if response is valid and contains model data
@@ -643,6 +678,9 @@ def loop(**kwargs):
                    f"Application: {application.name.name if application else 'Unknown'}")
     print_instructions()
 
+    # Create a prompt session, which will maintain the history of inputs
+    session = PromptSession()
+
     # Start the loop
     while run_in_loop:
         try:
@@ -650,7 +688,7 @@ def loop(**kwargs):
             if not is_running:
                 raise RuntimeError("Server no longer available")
         except Exception as e:
-            print(f"Error in loop: {e}")
+            show_error(f"Error in loop:", {e})
             break
 
         if not is_running:
@@ -658,7 +696,8 @@ def loop(**kwargs):
             break
 
         try:
-            user_input = input("User: ").strip()
+            # Use the session to prompt the user, enabling history navigation
+            user_input = session.prompt("User: ").strip()
             command_parts = shlex.split(user_input)
             if command_parts:
                 command_name = command_parts[0].lower()  # Lowercase only the command name
@@ -703,8 +742,10 @@ def loop(**kwargs):
                     print(f"No function associated with command: {command_name}")
             else:
                 print(f"Unknown command: {command_name}")
+                most_similar_command = find_most_similar_command(list(parser._subparsers._group_actions[0].choices.keys()), user_input)
+                print(f"Did you mean {most_similar_command}")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            show_error(f"An error occurred:", {e})
 
         print()
 

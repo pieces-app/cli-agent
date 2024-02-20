@@ -16,6 +16,7 @@ import threading
 import time
 import importlib.resources
 from pathlib import Path
+from pieces.gui import show_error
 
 #Globals
 response_received = None
@@ -77,7 +78,7 @@ class WebSocketManager:
                 self.loading = False
 
         except Exception as e:
-            print(f"Error processing message: {e}")
+            show_error("Error processing message:", e)
 
     def on_error(self, ws, error):
         print(f"WebSocket error: {error}")
@@ -126,7 +127,7 @@ class WebSocketManager:
                 self.ws.send(json_message)
                 print("Response: ")
             except Exception as e:
-                print(f"Error sending message: {e}")
+                show_error(f"Error sending message:", e)
         else:
             print("WebSocket connection is not open, unable to send message.")
 
@@ -249,7 +250,7 @@ def register_application(existing_application=None):
         
         return api_response
     except Exception as e:
-        print("Exception when calling ApplicationsApi->applications_register: %s\n" % e)
+        show_error("Exception when calling ApplicationsApi->applications_register:" , e)
 
 ###############################################################################
 ############################## MAIN FUNCTION CALLS ############################
@@ -307,7 +308,7 @@ def create_new_asset(application, raw_string, metadata=None):
         created_asset = assets_api.assets_create_new_asset(transferables=False, seed=seed)
         return created_asset
     except ApiException as e:
-        print("An exception occurred when calling AssetsApi->assets_create_new_asset: %s\n" % e)
+        show_error("An exception occurred when calling AssetsApi->assets_create_new_asset:" , e)
         return None
 
 def get_asset_ids(max=None, **kwargs):
@@ -331,7 +332,7 @@ def get_asset_ids(max=None, **kwargs):
         return ids
     except ApiException as e:
         # Handle the API exception
-        print("Exception when calling AssetsApi->assets_identifiers_snapshot: %s\n" % e)
+        show_error("Exception when calling AssetsApi->assets_identifiers_snapshot:" ,e)
         return None
     
 def get_asset_names(ids):
@@ -351,7 +352,7 @@ def get_asset_names(ids):
             if name:
                 names.append(name)
         except ApiException as e:
-            print(f"Error occurred for ID {id}: {str(e)}")
+            show_error(f"Error occurred for ID {id}:", str(e))
 
     return names
 
@@ -370,7 +371,7 @@ def get_single_asset_name(id):
         name = data.get('name')
         return name
     except ApiException as e:
-        print(f"Error occurred for ID {id}: {str(e)}")
+        show_error(f"Error occurred for ID {id}: ",str(e))
 
 def get_asset_by_id(id):
     asset_api = pos_client.AssetApi(api_client)
@@ -384,10 +385,10 @@ def get_asset_by_id(id):
 
         return data
     except ApiException as e:
-        print(f"Error occurred for ID {id}: {str(e)}")
+        show_error(f"Error occurred for ID {id}:" ,str(e))
         return None
     except ValidationError as e:
-        print(f"Parsing error in asset with ID {id}: {str(e)}")
+        show_error(f"Parsing error in asset with ID {id}:", str(e))
 
 def edit_asset_name(asset_id, new_name):
     asset_api = pos_client.AssetApi(api_client)
@@ -412,7 +413,7 @@ def edit_asset_name(asset_id, new_name):
         response = asset_api.asset_update(asset=asset, transferables=False)
         print("Asset name updated successfully.")
     except Exception as e:
-        print(f"Error updating asset: {e}")
+        show_error("Error updating asset: ",{e})
 
 def delete_asset_by_id(asset_id):
     delete_instance = pos_client.AssetsApi(api_client)
@@ -443,7 +444,7 @@ def update_asset(asset_id, application):
         print(f"File not found: {file_path}")
         return
     except Exception as e:
-        print(f"Error reading file: {e}")
+        show_error("Error reading file: ",{e})
         return
 
     def update_string(obj):
