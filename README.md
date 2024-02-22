@@ -190,24 +190,61 @@ It is advised to keep the CLI tool updated to the latest version to ensure compa
 
 ## Contributing
 
-This project uses poetry for managing dependencies and builds. Install poetry with:
+To run this project locally, follow these steps:
+
+1. Fork this project via GitHub. 
+
+2. Clone this project: 
+```shell
+git clone https://github.com/pieces-app/cli-agent
+```
+
+3. Create a Virtual Environment
+```shell
+python3 -m venv venv
+``` 
+
+4. Activate Your Virtualenv
+```shell
+source venv/bin/activate for Mac & Linux OS
+
+cd venv\Scripts for Windows OS
+activate 
+```
+
+5. This project uses poetry for managing dependencies and builds. Install poetry with:
 ```shell
 pip install poetry
 ```
 
-Then use poetry to install the required dependencies
+6. Then use poetry to install the required dependencies
 ```shell
 poetry install
 ```
 
-You build with
+7. You build with
 ```shell
 poetry build
 ```
 
-Finally any project dependencies should be added to the pyproject.toml file with
+8. Finally any project dependencies should be added to the pyproject.toml file with
 ```shell
 poetry add 
 ```
+
+9. Open the Dist folder
+```shell
+cd dist
+``` 
+
+10. Install the WHL file
+```shell
+pip install whl file
+``` 
+
+11. To view all the CLI Commands
+```shell 
+Pieces help 
+``` 
 
 these can be local/github/pypi etc.
