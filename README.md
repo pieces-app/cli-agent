@@ -239,7 +239,7 @@ cd dist
 
 10. Install the WHL file
 ```shell
-pip install pieces-0.0.13-py3-none-any.whl 
+pip install whl file
 ``` 
 
 11. To view all the CLI Commands
