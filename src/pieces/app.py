@@ -1,6 +1,7 @@
 import argparse
 from pieces.commands import *
-from pieces.gui import show_error
+import sys
+from pieces.gui import show_error,double_line
 
 class PiecesCli(argparse.ArgumentParser): # subclassing the ArgumentParser class to modify the error messages
     def error(self, message):
@@ -74,13 +75,24 @@ def main():
     search_parser.add_argument('--mode', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search (assets, ncs, fts)')
     search_parser.set_defaults(func=search)
 
-    # TEMP Subparser for listing models
-    models_parser = subparsers.add_parser('list_models', help='List available models')
-    models_parser.set_defaults(func=list_all_models)
 
     # Subparser for the 'help' command
     help_parser = subparsers.add_parser('help', help='Prints a list of available commands')
     help_parser.set_defaults(func=help)
+
+
+
+    # Subparser for the 'change_model' command
+    change_model_parser = subparsers.add_parser('change_model', help='Change the model that you are using in the ask')
+    change_model_parser.add_argument('MODEL_INDEX', type=int, nargs='?', default=None, help='Index of the model to use (optional)')
+    change_model_parser.set_defaults(func=change_model)
+
+
+
+    # Subparser for the 'commit' command
+    commit_parser = subparsers.add_parser('commit', help='Auto generate a github commit messaage and commit changes')
+    commit_parser.set_defaults(func=git_commit)
+
 
     # Check if the 'run' command is explicitly provided
     if len(sys.argv) > 1 and sys.argv[1] in ['help', 'run']:

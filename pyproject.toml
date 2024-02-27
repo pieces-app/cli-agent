@@ -10,13 +10,12 @@
   aenum = "3.1.15"
   certifi = "2023.11.17"
   charset-normalizer = "3.3.2"
-  pydantic = "1.10.13"
   pyperclip = ">=1.8.2"
   requests = ">=2.31.0"
   typing-extensions = "4.9.0"
   urllib3 =  ">=2.2.0,<3.0.0"
   websocket-client = "1.7.0"
-  pieces_os_client = "1.2.7"
+  pieces-os-client = "2.0.0.post1"
   prompt-toolkit = "^3.0.43"
 
 [tool.poetry.group.dev.dependencies]

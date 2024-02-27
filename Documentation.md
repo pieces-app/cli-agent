@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This documentation provides an overview of five key Python scripts (`app.py`, `commands.py`, `api.py`, `gui.py`, and `store.py`) that form the backbone of the 'Pieces CLI Tool'. This tool is designed to offer a comprehensive command-line interface for asset and model management.
+This documentation provides an overview of five key Python scripts (`app.py`, `commands package`, `api package`, `gui.py`, and `store.py`) that form the backbone of the 'Pieces CLI Tool'. This tool is designed to offer a comprehensive command-line interface for asset and model management.
 
 ### `app.py` - The Command Line Interface Core
 **Purpose:** Serves as the entry point for the CLI, handling user inputs and command execution.
@@ -13,7 +13,7 @@ This documentation provides an overview of five key Python scripts (`app.py`, `c
 - **Dynamic Response:** Adjusts its behavior based on the server's status, which it checks using `check_api`.
 - **User Interaction:** Provides feedback and guidance to the user based on the input commands and server responses.
 
-### `commands.py` - The Functional Hub
+### `commands package` - The Functional Hub
 **Purpose:** Acts as a repository of functions that `app.py` calls in response to various commands.
 
 **Key Aspects:**
@@ -22,7 +22,7 @@ This documentation provides an overview of five key Python scripts (`app.py`, `c
 - **Asset and Model Operations:** Facilitates operations like listing, editing, and deleting assets and models.
 - **Interactive CLI Loop:** Maintains an interactive command loop, enhancing the user experience.
 
-### `api.py` - The API Interaction Layer
+### `api package` - The API Interaction Layer
 **Purpose:** Manages all interactions with the external API, serving as the communication layer between the CLI tool and server.
 
 **Core Functions:**
