@@ -126,3 +126,12 @@ def open_from_command_line():
     print()
     print("Opening most recent asset:")
     print()
+
+
+def show_error(error_message,error):
+    # Show an error message in red color
+    print()
+    print(f"\033[31m{error_message}\033[0m")
+    print(f"\033[31m{error}\033[0m")
+    print()
+    
