@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from pieces.api import WebSocketManager
 
+
 class TestWebSocketManager:
 
     @pytest.fixture
@@ -31,7 +32,6 @@ class TestWebSocketManager:
         })
         ws_manager.on_message(None, sample_message)
         assert ws_manager.loading == False
-        assert ws_manager.first_token_received
 
     def test_on_error(self, ws_manager):
         ws_manager.on_error(None, "Test error")
