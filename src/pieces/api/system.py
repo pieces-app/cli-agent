@@ -3,7 +3,7 @@ import platform
 from pieces.gui import show_error
 from pieces_os_client.models.application import Application
 from pieces.store import *
-from . import *
+from .config import *
 def categorize_os():
     # Get detailed platform information
     platform_info = platform.platform()

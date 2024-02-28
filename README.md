@@ -160,14 +160,14 @@ pieces search query --mode fts
 Examines all words in a document to find matches to search criteria
 ##### change the llm model you are using:
 
-Lists all the avaiable models on your machine with their indices to choose from 
+Lists all the avaiable models on your machine with their indices to choose from .
 
 ```bash
 pieces change_model 
 ```
 ##### change the llm model you are using:
 
-Change the model in the ask command
+Change the model in the ask command.
 
 ```bash
 pieces change_model [MODEL_INDEX]
@@ -175,7 +175,7 @@ pieces change_model [MODEL_INDEX]
 ##### Ask a question to a model:
 ** Requires quotes around question **
 
-Ask the copoilt a question it uses chatGPT3 as a defualt model to ask a question you can change the model using the change model command
+Ask the copoilt a question it uses chatGPT3 as a defualt model to ask a question, you can change the model using the change model command.
 
 ```bash
 pieces ask "your question"

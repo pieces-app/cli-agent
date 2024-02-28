@@ -1,6 +1,8 @@
 ## MAIN FUNCTION CALLS 
 from typing import Dict,Union
-from . import *
+from .config import *
+import urllib.request
+import json
 
 def search_api(search_phrase, search_type):
     query = search_phrase
@@ -24,8 +26,15 @@ def search_api(search_phrase, search_type):
 
 
 def get_models_ids() -> Dict[str, Dict[str, Union[str, int]]]:
-    api_instance = pos_client.ModelsApi(api_client)
+    # api_instance = pos_client.ModelsApi(api_client)
 
-    api_response = api_instance.models_snapshot()
-    models = {model.name: {"uuid":model.id,"word_limit":model.max_tokens.input} for model in api_response.iterable if model.cloud or model.downloading} # getting the models that are available in the cloud or is downloaded
+    # api_response = api_instance.models_snapshot()
+    # models = {model.name: {"uuid":model.id,"word_limit":model.max_tokens.input} for model in api_response.iterable if model.cloud or model.downloading} # getting the models that are available in the cloud or is downloaded
+    
+
+    
+    # call the api until the sdks updated
+    response = urllib.request.urlopen('http://localhost:1000/models').read()
+    response = json.loads(response)["iterable"]
+    models = {model["name"]:{"uuid":model["id"] ,"word_limit" :model["maxTokens"]["input"]} for model in response if model["cloud"] or model["downloading"]}
     return models

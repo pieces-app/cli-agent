@@ -5,8 +5,13 @@ import platform
 import sys
 import shlex
 from prompt_toolkit import PromptSession
-from .commands_functions import check, print_instructions, print_response, welcome,ws_manager,parser
-
+from pieces.api.config import run_in_loop
+from .commands_functions import (check, print_instructions,
+                                 print_response, welcome,
+                                 set_pieces_os_version,
+                                 set_application,
+                                 ws_manager,
+                                 cli_version)
 
 
 def levenshtein_distance(s1, s2):
@@ -45,8 +50,8 @@ def find_most_similar_command(valid_commands, user_input):
     return most_similar_command
 
 def loop(**kwargs):
-    global run_in_loop, parser, pieces_os_version, cli_version, application
-
+    from .commands_functions import parser # it should be here to make sure that the parser is setted correctly
+    global run_in_loop,cli_version
     run_in_loop = True
 
 
@@ -55,7 +60,7 @@ def loop(**kwargs):
     python_version = sys.version.split()[0]
 
     try:
-        os_running, os_version, this_application = check()
+        os_running, os_version, application = check()
         if not os_running:
             raise RuntimeError("Server not running")
     except Exception as e:
@@ -64,16 +69,15 @@ def loop(**kwargs):
 
     welcome()
 
-    # Placeholder values
-    placeholder_cli_version = "0.1.0"
 
-    pieces_os_version = os_version
-    cli_version = placeholder_cli_version
-    application = this_application
+    
+
+    set_pieces_os_version(os_version)
+    set_application(application)
 
     print_response(f"Operating System: {os_info}", f"Python Version: {python_version}",
-                   f"Pieces OS Version: {pieces_os_version}",
-                   f"Pieces CLI Version: {placeholder_cli_version}",
+                   f"Pieces OS Version: {os_version}",
+                   f"Pieces CLI Version: {cli_version}",
                    f"Application: {application.name.name if application else 'Unknown'}")
     print_instructions()
 
@@ -83,7 +87,7 @@ def loop(**kwargs):
     # Start the loop
     while run_in_loop:
         try:
-            is_running, message, application = check()
+            is_running, _ , _ = check()
             if not is_running:
                 raise RuntimeError("Server no longer available")
         except Exception as e:
@@ -107,6 +111,7 @@ def loop(**kwargs):
             if user_input == 'exit':
                 double_space("Exiting...")
                 ws_manager.close_websocket_connection()  # Close using the ws_manager instance
+                break
 
             # Check if the input is a number and treat it as an index for 'open' command
             if user_input.isdigit():
@@ -138,7 +143,9 @@ def loop(**kwargs):
                     print(f"No function associated with command: {command_name}")
             else:
                 print(f"Unknown command: {command_name}")
-                most_similar_command = find_most_similar_command(list(parser._subparsers._group_actions[0].choices.keys()), user_input)
+                commands = list(parser._subparsers._group_actions[0].choices.keys())
+                commands.append("exit")
+                most_similar_command = find_most_similar_command(commands, user_input)
                 print(f"Did you mean {most_similar_command}")
         except Exception as e:
             show_error(f"An error occurred:", {e})

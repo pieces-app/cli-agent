@@ -12,24 +12,24 @@ from pieces.api.pieces_websocket import WebSocketManager
 from pieces.api.api_functions import *
 from pieces.api.system import *
 from pieces.api.assets import *
+from pieces.api.config import *
+
 # Globals for CLI Memory.
 ws_manager = WebSocketManager()
 
 
-
 pieces_os_version = None
-run_in_loop = False # is CLI looping?
 asset_ids = {} # Asset ids for any list or search
 assets_are_models = False
-models = get_models_ids()
+
+models = get_models_ids() # Wait for the sdks to be updated!
 default_model_name = "GPT-3.5-turbo Chat Model"
 model_id = models[default_model_name]["uuid"] # default model id
 word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
 current_asset = {}
 parser = None
 application = None
-cli_version = None
-
+cli_version = "0.0.13"
 ###############################################################################
 ############################## MAIN FUNCTIONS #################################
 ###############################################################################
@@ -142,13 +142,13 @@ def change_model(**kwargs): # Change the model used in the ask command
     global model_id,word_limit
     model_index = kwargs.get('MODEL_INDEX')
     if model_index:
-        model_name = [*models][model_index]
+        model_name = list(models.keys())[model_index-1] # because we begin from 1
         word_limit = models[model_name].get("word_limit")
         model_id  = models[model_name].get("uuid")
         print(f"Switched to {model_name} with uuid {model_id}")
     else:
-        for idx,model_name in enumerate(models):
-            print(f"{idx+1}:{model_name}")
+        for idx,model_name in enumerate(models,start=1):
+            print(f"{idx}: {model_name}")
 
 
 
@@ -372,7 +372,7 @@ def set_parser(p):
     global parser
     parser = p
 
-def help(**kwargs):
+def help_command(**kwargs):
     print_help()
     pass
 
@@ -419,7 +419,7 @@ def extract_code_from_markdown(markdown, name, language):
     return file_path
 
 def get_file_extension(language):
-    with open('extensions.json') as f:
+    with open(f'{BASE_DIR}/commands/extensions.json') as f:
         extension_mapping = json.load(f)
 
     # Lowercase the language for case-insensitive matching

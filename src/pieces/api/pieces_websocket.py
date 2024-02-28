@@ -3,15 +3,16 @@ import json
 import websocket
 import threading
 import pieces_os_client
-from pieces.commands import run_in_loop
+from .config import run_in_loop
+
+
 WEBSOCKET_URL = "ws://localhost:1000/qgpt/stream"
-TIMEOUT = 10  # seconds
+TIMEOUT = 20  # seconds
 
 
 
 
 class WebSocketManager:
-
     def __init__(self):
         self.ws = None
         self.is_connected = False
@@ -19,9 +20,12 @@ class WebSocketManager:
         self.query = ""
         self.loading = False
         self.final_answer = ""
-        self.open_event = threading.Event()  # wait for opening event
         self.conversation = None
+        self.verbose = True
         self.message_compeleted = threading.Event()
+    def open_websocket(self):
+        """Opens a websocket connection"""
+        self.open_event = threading.Event()  # wait for opening event
         self.start_thread = threading.Thread(target=self._start_ws)
         self.start_thread.start()
         self.open_event.wait()
@@ -34,16 +38,17 @@ class WebSocketManager:
                 answers = response.question.answers.iterable
                 for answer in answers:
                     text = answer.text
-                    if text:
+                    self.final_answer += text + " "
+                    if text and self.verbose:
                         print(text, end='')
 
             if response.status == 'COMPLETED':
                 print("\n")
                 self.conversation = response.conversation
-                self.message_compeleted.set()
-                
                 if not run_in_loop and self.is_connected:
                     self.close_websocket_connection()
+
+                self.message_compeleted.clear()
 
         except Exception as e:
             print(f"Error processing message: {e}")
@@ -55,18 +60,21 @@ class WebSocketManager:
 
     def on_close(self, ws, close_status_code, close_msg):
         """Handle websocket closure."""
-        print("WebSocket closed")
+        if self.verbose:
+            print("WebSocket closed")
         self.is_connected = False
 
     def on_open(self, ws):
         """Handle websocket opening."""
-        print("WebSocket connection opened.")
+        if self.verbose:
+            print("WebSocket connection opened.")
         self.is_connected = True
         self.open_event.set()
 
     def _start_ws(self):
         """Start a new websocket connection."""
-        print("Starting WebSocket connection...")
+        if self.verbose:
+            print("Starting WebSocket connection...")
         ws =  websocket.WebSocketApp(WEBSOCKET_URL,
                                          on_open=self.on_open,
                                          on_message=self.on_message,
@@ -91,30 +99,35 @@ class WebSocketManager:
         if self.is_connected:
             try:
                 self.ws.send(json_message)
-                print("Response: ")
+                if self.verbose:
+                    print("Response: ")
             except websocket.WebSocketException as e:
                 print(f"Error sending message: {e}")
         else:
-            raise ConnectionError("WebSocket connection is not open, unable to send message.")
+            self.open_websocket()
+            self.send_message()
 
     def close_websocket_connection(self):
         """Close the websocket connection."""
         if self.ws and self.is_connected:
-            if self.start_thread.is_alive():
-                self.start_thread.join()  # Wait for the WebSocket thread to finish
             self.ws.close()
             self.is_connected = False
 
-    def ask_question(self, model_id, query):
+    def ask_question(self, model_id, query,verbose = True):
         """Ask a question using the websocket."""
         if self.loading:
             return
+        self.final_answer = ""
         self.loading = True
         self.model_id = model_id
         self.query = query
+        self.verbose = verbose
 
         self.send_message()
-
-        self.message_compeleted.wait(TIMEOUT)
-        self.message_compeleted = threading.Event() # creat new instance for another question
+        finishes = self.message_compeleted.wait(TIMEOUT)
+        if not finishes:
+            if not run_in_loop and self.is_connected:
+                self.close_websocket_connection()
+                self.message_compeleted.clear()
+            raise ConnectionError("Failed to get the reponse back")
         return self.final_answer

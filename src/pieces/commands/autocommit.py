@@ -1,6 +1,5 @@
 import subprocess
 import re
-from .commands_functions import ws_manager,model_id,word_limit
 
 def get_current_working_changes(word_limit=2000):
     """
@@ -22,6 +21,8 @@ def get_current_working_changes(word_limit=2000):
     for line in detailed_diff.split('\n'):
         if line.startswith('diff --git'):
             file_changed = re.search(r'diff --git a/(.+) b/\1', line)
+            if file_changed.group(1).endswith("poetry.lock"):
+                continue
             if file_changed:
                 changes_summary.append(f"Modified {file_changed.group(1)}")
         elif line.startswith('+') and not line.startswith('+++'):
@@ -37,10 +38,11 @@ def get_current_working_changes(word_limit=2000):
     return truncated_summary
 
 
-def git_commit():
+def git_commit(**kwargs):
+    from .commands_functions import ws_manager,model_id,word_limit # just make sure the model id is already updated
     changes_summary = get_current_working_changes(word_limit)
-    prompt = f"Generate a github commit message for a Python CLI tool update based on the following changes:\n{changes_summary}"
-    commit_message = ws_manager.ask_question(model_id,prompt)
+    prompt = f"Generate a github commit message for a Python CLI tool based on the following changes.Remember to follow the git commit message best practices:\n{changes_summary}"
+    commit_message = ws_manager.ask_question(model_id,prompt,False)
     print(f"The generated commit message is:\n {commit_message}")
     r = input("Are you sure you want commit these changes? (y/n): ")
     if r.lower() == "y":

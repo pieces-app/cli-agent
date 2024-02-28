@@ -3,7 +3,6 @@ from .autocommit import git_commit
 from .commands_functions import (version,
                                  save_asset,
                                  edit_asset,
-                                 set_parser,
                                  list_assets,
                                  open_asset,
                                  create_asset,
@@ -13,9 +12,9 @@ from .commands_functions import (version,
                                  check_api,
                                  set_pieces_os_version,
                                  change_model,
-                                 run_in_loop)
-
-
+                                 help_command,
+                                 set_application,
+                                 set_parser)
 __all__ = ['loop', 
            'find_most_similar_command',
            'git_commit',
@@ -33,5 +32,5 @@ __all__ = ['loop',
            'set_pieces_os_version',
            'set_application',
            'change_model',
-           'run_in_loop']
+           "help_command"]
 

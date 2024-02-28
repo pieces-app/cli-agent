@@ -1,5 +1,5 @@
 ## ASSET CALLS 
-from . import *
+from .config import *
 from pieces.gui import show_error
 from pydantic import ValidationError
 from pieces_os_client.models.classification import Classification

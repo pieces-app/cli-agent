@@ -78,7 +78,7 @@ def main():
 
     # Subparser for the 'help' command
     help_parser = subparsers.add_parser('help', help='Prints a list of available commands')
-    help_parser.set_defaults(func=help)
+    help_parser.set_defaults(func=help_command)
 
 
 
