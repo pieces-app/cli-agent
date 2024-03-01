@@ -14,7 +14,7 @@ from .commands_functions import (version,
                                  change_model,
                                  help_command,
                                  set_application,
-                                 set_parser)
+                                 set_parser,startup)
 __all__ = ['loop', 
            'find_most_similar_command',
            'git_commit',
@@ -32,5 +32,6 @@ __all__ = ['loop',
            'set_pieces_os_version',
            'set_application',
            'change_model',
-           "help_command"]
+           "help_command",
+           "startup"]
 

@@ -16,16 +16,9 @@ from pieces.api.config import *
 
 # Globals for CLI Memory.
 ws_manager = WebSocketManager()
-
-
 pieces_os_version = None
 asset_ids = {} # Asset ids for any list or search
 assets_are_models = False
-
-models = get_models_ids() # Wait for the sdks to be updated!
-default_model_name = "GPT-3.5-turbo Chat Model"
-model_id = models[default_model_name]["uuid"] # default model id
-word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
 current_asset = {}
 parser = None
 application = None
@@ -33,6 +26,14 @@ cli_version = "0.0.13"
 ###############################################################################
 ############################## MAIN FUNCTIONS #################################
 ###############################################################################
+def startup(): # startup function to run before the cli begin
+    global models,default_model_name,model_id,word_limit,cli_version
+    
+    if open_pieces_os():
+        models = get_models_ids() # Wait for the sdks to be updated!
+        default_model_name = "GPT-3.5-turbo Chat Model"
+        model_id = models[default_model_name]["uuid"] # default model id
+        word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
 
 def ask(query, **kwargs):
     global model_id, ws_manager

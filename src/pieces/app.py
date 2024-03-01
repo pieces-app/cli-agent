@@ -99,6 +99,7 @@ def main():
         args = parser.parse_args()
         args.func(**vars(args))
     else:
+        startup()
         # Call check_api and store its return value
         api_response = check_api()
 

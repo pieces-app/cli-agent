@@ -4,6 +4,8 @@ from pieces.gui import show_error
 from pieces_os_client.models.application import Application
 from pieces.store import *
 from .config import *
+import os
+import time
 def categorize_os():
     # Get detailed platform information
     platform_info = platform.platform()
@@ -19,6 +21,23 @@ def categorize_os():
         os_info = 'WEB'  # Default to WEB if the OS doesn't match others
 
     return os_info
+
+
+def open_pieces_os():
+    try:
+        pos_client.WellKnownApi(api_client).get_well_known_health()
+    except: 
+        pl = categorize_os()
+        if pl == "WINDOWS":
+            os.system("start os_server")
+        elif pl == "LINUX":
+            os.system("nohup os_server &")
+        elif pl == "MACOS":
+            os.system("osascript -e 'tellapp \"Termianl\" to do script \"os_server\"'")
+        else:
+            return False
+        time.sleep(1) # wait for the server to open
+    return True
 
 def check_api(**kwargs):
     # Create an instance of the API class

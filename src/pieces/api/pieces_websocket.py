@@ -3,7 +3,6 @@ import json
 import websocket
 import threading
 import pieces_os_client
-from .config import run_in_loop
 
 
 WEBSOCKET_URL = "ws://localhost:1000/qgpt/stream"
@@ -14,15 +13,17 @@ TIMEOUT = 20  # seconds
 
 class WebSocketManager:
     def __init__(self):
+        from .config import run_in_loop
+        self.run_in_loop = run_in_loop
         self.ws = None
         self.is_connected = False
         self.model_id = ""
         self.query = ""
-        self.loading = False
         self.final_answer = ""
         self.conversation = None
         self.verbose = True
         self.message_compeleted = threading.Event()
+    
     def open_websocket(self):
         """Opens a websocket connection"""
         self.open_event = threading.Event()  # wait for opening event
@@ -45,10 +46,8 @@ class WebSocketManager:
             if response.status == 'COMPLETED':
                 print("\n")
                 self.conversation = response.conversation
-                if not run_in_loop and self.is_connected:
-                    self.close_websocket_connection()
 
-                self.message_compeleted.clear()
+                self.message_compeleted.set()
 
         except Exception as e:
             print(f"Error processing message: {e}")
@@ -115,19 +114,16 @@ class WebSocketManager:
 
     def ask_question(self, model_id, query,verbose = True):
         """Ask a question using the websocket."""
-        if self.loading:
-            return
         self.final_answer = ""
-        self.loading = True
         self.model_id = model_id
         self.query = query
         self.verbose = verbose
-
         self.send_message()
         finishes = self.message_compeleted.wait(TIMEOUT)
+        self.verbose = True
+        self.message_compeleted.clear()
         if not finishes:
-            if not run_in_loop and self.is_connected:
+            if not self.run_in_loop and self.is_connected:
                 self.close_websocket_connection()
-                self.message_compeleted.clear()
             raise ConnectionError("Failed to get the reponse back")
         return self.final_answer

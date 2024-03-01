@@ -1,5 +1,6 @@
 import subprocess
 import re
+from pieces.gui import show_error
 
 def get_current_working_changes(word_limit=2000):
     """
@@ -42,7 +43,11 @@ def git_commit(**kwargs):
     from .commands_functions import ws_manager,model_id,word_limit # just make sure the model id is already updated
     changes_summary = get_current_working_changes(word_limit)
     prompt = f"Generate a github commit message for a Python CLI tool based on the following changes.Remember to follow the git commit message best practices:\n{changes_summary}"
-    commit_message = ws_manager.ask_question(model_id,prompt,False)
+    try:
+        commit_message = ws_manager.ask_question(model_id,prompt,False)
+    except Exception as e:
+        show_error("Error in getting the commit message",e)
+        return
     print(f"The generated commit message is:\n {commit_message}")
     r = input("Are you sure you want commit these changes? (y/n): ")
     if r.lower() == "y":

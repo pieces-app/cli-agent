@@ -9,10 +9,9 @@ from pieces.api.config import run_in_loop
 from .commands_functions import (check, print_instructions,
                                  print_response, welcome,
                                  set_pieces_os_version,
-                                 set_application,
+                                 set_application,startup,
                                  ws_manager,
                                  cli_version)
-
 
 def levenshtein_distance(s1, s2):
     # If s1 is shorter than s2, swap them to minimize the number of operations
@@ -54,10 +53,10 @@ def loop(**kwargs):
     global run_in_loop,cli_version
     run_in_loop = True
 
-
+    startup()
     # Initial setup
     os_info = platform.platform()
-    python_version = sys.version.split()[0]
+    python_version = sys.version.split()[0] 
 
     try:
         os_running, os_version, application = check()
