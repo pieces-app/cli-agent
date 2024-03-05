@@ -72,7 +72,7 @@ def main():
     # Subparser for Search
     search_parser = subparsers.add_parser('search', help='Search with a query string')
     search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
-    search_parser.add_argument('--mode', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search (assets, ncs, fts)')
+    search_parser.add_argument('--mode', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search')
     search_parser.set_defaults(func=search)
 
 
@@ -91,6 +91,7 @@ def main():
 
     # Subparser for the 'commit' command
     commit_parser = subparsers.add_parser('commit', help='Auto generate a github commit messaage and commit changes')
+    commit_parser.add_argument("-p","--push",action="store_true", help="push the code to github")
     commit_parser.set_defaults(func=git_commit)
 
 

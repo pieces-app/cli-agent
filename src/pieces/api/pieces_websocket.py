@@ -120,10 +120,11 @@ class WebSocketManager:
         self.verbose = verbose
         self.send_message()
         finishes = self.message_compeleted.wait(TIMEOUT)
-        self.verbose = True
         self.message_compeleted.clear()
+        if not self.run_in_loop and self.is_connected:
+            self.close_websocket_connection()
         if not finishes:
-            if not self.run_in_loop and self.is_connected:
-                self.close_websocket_connection()
+            self.verbose = True
             raise ConnectionError("Failed to get the reponse back")
+        self.verbose = True
         return self.final_answer

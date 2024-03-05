@@ -30,7 +30,7 @@ def startup(): # startup function to run before the cli begin
     global models,default_model_name,model_id,word_limit,cli_version
     
     if open_pieces_os():
-        models = get_models_ids() # Wait for the sdks to be updated!
+        models = get_models_ids()
         default_model_name = "GPT-3.5-turbo Chat Model"
         model_id = models[default_model_name]["uuid"] # default model id
         word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
