@@ -39,7 +39,7 @@ class WebSocketManager:
                 answers = response.question.answers.iterable
                 for answer in answers:
                     text = answer.text
-                    self.final_answer += text + " "
+                    self.final_answer += text
                     if text and self.verbose:
                         print(text, end='')
 

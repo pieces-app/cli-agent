@@ -4,8 +4,8 @@ from pieces.gui import show_error
 from pieces_os_client.models.application import Application
 from pieces.store import *
 from .config import *
-import os
 import time
+import subprocess
 def categorize_os():
     # Get detailed platform information
     platform_info = platform.platform()
@@ -29,11 +29,11 @@ def open_pieces_os():
     except: 
         pl = categorize_os()
         if pl == "WINDOWS":
-            os.system("start os_server")
+            subprocess.Popen(["start", "os_server"], shell=True)
         elif pl == "LINUX":
-            os.system("nohup os_server &")
+            subprocess.Popen(["os_server"])
         elif pl == "MACOS":
-            os.system("osascript -e 'tellapp \"Termianl\" to do script \"os_server\"'")
+            subprocess.Popen(["open", "os_server"])
         else:
             return False
         time.sleep(1) # wait for the server to open

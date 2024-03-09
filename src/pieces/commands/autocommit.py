@@ -1,10 +1,10 @@
 import subprocess
 import re
-import sys
 from pieces.gui import show_error
 from pieces.api.config import pos_client,api_client
+import re
 
-def get_current_working_changes(word_limit=2000):
+def get_current_working_changes(word_limit:int=2000) -> str:
     """
     Fetches the detailed changes in the files you are currently working on, limited to a specific word count.
     
@@ -19,25 +19,22 @@ def get_current_working_changes(word_limit=2000):
     result = subprocess.run(["git", "diff"], capture_output=True, text=True)
     detailed_diff = result.stdout.strip()
     
-    changes_summary = []
-    
+    summary = ""
     for line in detailed_diff.split('\n'):
         if line.startswith('diff --git'):
             file_changed = re.search(r'diff --git a/(.+) b/\1', line)
             if file_changed.group(1).endswith("poetry.lock"):
                 continue
             if file_changed:
-                changes_summary.append(f"Modified {file_changed.group(1)}")
+                summary += f"File changed: **{file_changed.group(1)}**\n"
         elif line.startswith('+') and not line.startswith('+++'):
-            changes_summary.append("Addition: " + line[1:].strip())
+            summary += "Addition: " + line[1:].strip() + "\n"
         elif line.startswith('-') and not line.startswith('---'):
-            changes_summary.append("Deletion: " + line[1:].strip())
+            summary += "Deletion: " + line[1:].strip() + "\n"
     
-    summary_text = " ".join(changes_summary)
-    words = summary_text.split()
     
     # Truncate the summary to the specified word limit
-    truncated_summary = " ".join(words[:word_limit-340]) # removeing 340 characters because of the prompt
+    truncated_summary = summary[:word_limit-340] # removeing 340 characters because of the prompt characters
     return truncated_summary
 
 
@@ -51,13 +48,20 @@ def git_commit(**kwargs):
         Here are the changes lists:\n{changes_summary}"""
     try:
         commit_message = ws_manager.ask_question(model_id,prompt,False)
-        commit_message = commit_message[1:-1] if commit_message.startswith('"') or commit_message.endswith("'") else commit_message
-        commit_message.replace("``` plaintext ","")
-        commit_message.replace("```","")
+        # Remove extras
+        # Remove leading and trailing quotes
+        commit_message = re.sub(r'^["\']|["\']$', '', commit_message)
 
-        res = pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation_with_http_info(conversation=ws_manager.conversation)
+        # Remove markdown code block syntax
+        commit_message = re.sub(r'^```|```$', '', commit_message)
+
+        # Remove leading 'plaintext'
+        commit_message = re.sub(r'^plaintext', '', commit_message)
+
+        # Remove leading and trailing whitespace
+        commit_message = commit_message.strip()
+        pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation(conversation=ws_manager.conversation)
         ws_manager.conversation = None
-        print(res)
     except Exception as e:
         show_error("Error in getting the commit message",e)
         return
