@@ -2,6 +2,7 @@ import subprocess
 import re
 import sys
 from pieces.gui import show_error
+from pieces.api.config import pos_client,api_client
 
 def get_current_working_changes(word_limit=2000):
     """
@@ -36,24 +37,27 @@ def get_current_working_changes(word_limit=2000):
     words = summary_text.split()
     
     # Truncate the summary to the specified word limit
-    truncated_summary = " ".join(words[:word_limit-230]) # removeing 230 characters because of the prompt
+    truncated_summary = " ".join(words[:word_limit-340]) # removeing 340 characters because of the prompt
     return truncated_summary
 
 
 def git_commit(**kwargs):
     from .commands_functions import ws_manager,model_id,word_limit # just make sure the model id is already updated
     changes_summary = get_current_working_changes(word_limit)
-    prompt = f"Generate a github commit message for a Python CLI tool based on the following changes.Remember to follow the git commit message best practices and don't exceed 72 character and your answer must be between two quotes in one sentence :\n{changes_summary}"
+    prompt = f"""Generate a concise git commit message written in present tense for the following code diff with the given specifications below:',
+		`Message language: English`,
+		`Commit message must be a maximum of 72 characters.`,
+		`Exclude anything unnecessary such as translation. Your entire response will be passed directly into git commit`,
+        Here are the changes lists:\n{changes_summary}"""
     try:
         commit_message = ws_manager.ask_question(model_id,prompt,False)
-        # remove extras
-        commit_message = commit_message[1:] if commit_message.startswith('"') or commit_message.startswith("'") else commit_message 
-        commit_message = commit_message[:-1] if commit_message.endswith('"') or commit_message.endswith("'") else commit_message
-        commit_message = commit_message[3:] if commit_message.startswith("```") else commit_message 
-        commit_message = commit_message[:-3] if commit_message.endswith('```') else commit_message
-        commit_message = commit_message[9:] if commit_message.startswith("plaintext") else commit_message 
-        commit_message = commit_message.strip()
-        
+        commit_message = commit_message[1:-1] if commit_message.startswith('"') or commit_message.endswith("'") else commit_message
+        commit_message.replace("``` plaintext ","")
+        commit_message.replace("```","")
+
+        res = pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation_with_http_info(conversation=ws_manager.conversation)
+        ws_manager.conversation = None
+        print(res)
     except Exception as e:
         show_error("Error in getting the commit message",e)
         return
