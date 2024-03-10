@@ -1,9 +1,30 @@
 import argparse
 from pieces.commands import *
+import sys
+from pieces.gui import show_error,double_line
+
+class PiecesCli(argparse.ArgumentParser): # subclassing the ArgumentParser class to modify the error messages
+    def error(self, message):
+        if 'invalid choice' in message:
+            try:
+                invalid_command = message.split("'")[1]
+                suggestion_text = f"Did you mean '{find_most_similar_command(list(self._subparsers._group_actions[0].choices.keys()),invalid_command)}'?"
+            except IndexError:
+                suggestion_text = ""
+                invalid_command = "Unknown"
+            
+            # Custom error message for invalid command choices
+            print(f"Invalid command '{invalid_command}'\n{suggestion_text}")
+        else:
+            # Default error message for other types of errors
+            show_error("Error occured",message)
+        sys.exit(2)
+
+
 
 def main():
     # Create the top-level parser
-    parser = argparse.ArgumentParser(description='Pieces CLI Tool')
+    parser = PiecesCli(description='Pieces CLI Tool')
     subparsers = parser.add_subparsers(dest='command', required=True)
 
     # Passes the Parser to commands.py
@@ -54,9 +75,6 @@ def main():
     search_parser.add_argument('--mode', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search')
     search_parser.set_defaults(func=search)
 
-    # TEMP Subparser for listing models
-    models_parser = subparsers.add_parser('list_models', help='List available models')
-    models_parser.set_defaults(func=list_all_models)
 
     # Subparser for the 'help' command
     help_parser = subparsers.add_parser('help', help='Prints a list of available commands')
