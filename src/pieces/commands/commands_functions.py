@@ -13,6 +13,7 @@ from pieces.api.api_functions import *
 from pieces.api.system import *
 from pieces.api.assets import *
 from pieces.api.config import *
+import pickle
 
 # Globals for CLI Memory.
 ws_manager = WebSocketManager()
@@ -26,14 +27,22 @@ cli_version = "0.0.13"
 ###############################################################################
 ############################## MAIN FUNCTIONS #################################
 ###############################################################################
+
 def startup(): # startup function to run before the cli begin
-    global models,default_model_name,model_id,word_limit,cli_version
-    
+    global models,model_id,word_limit
     if open_pieces_os():
         models = get_models_ids()
-        default_model_name = "GPT-3.5-turbo Chat Model"
-        model_id = models[default_model_name]["uuid"] # default model id
-        word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
+        # Check if the models file exists
+        if not models_file.is_file():
+            default_model_name = "GPT-3.5-turbo Chat Model"
+            model_id = models[default_model_name]["uuid"] # default model id
+            word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
+            dump_pickle(file = models_file, model_id=model_id, word_limit=word_limit)
+        else:
+            with open(models_file, 'rb') as f:
+                model_data = pickle.load(f)
+            model_id = model_data["model_id"]
+            word_limit = model_data["word_limit"]
 
 def ask(query, **kwargs):
     global model_id, ws_manager
@@ -146,10 +155,12 @@ def change_model(**kwargs): # Change the model used in the ask command
         model_name = list(models.keys())[model_index-1] # because we begin from 1
         word_limit = models[model_name].get("word_limit")
         model_id  = models[model_name].get("uuid")
+        dump_pickle(file = models_file,model_id = model_id,word_limit = word_limit)
         print(f"Switched to {model_name} with uuid {model_id}")
     else:
         for idx,model_name in enumerate(models,start=1):
             print(f"{idx}: {model_name}")
+        print(f"Currently using: {get_current_model_name()} with uuid {model_id}")
 
 
 
@@ -359,8 +370,16 @@ def check():
 ###############################################################################
 ############################## HELPER FUNCTIONS ###############################
 ###############################################################################
-
-
+def dump_pickle(file,**data):
+    """Store data in a pickle file."""
+    with open(file, 'wb') as f:
+        pickle.dump(data, f)
+def get_current_model_name() -> str:
+    with open(models_file, 'rb') as f:
+        model_data = pickle.load(f)
+    model_id = model_data["model_id"]
+    models_reverse = {v.get("uuid"):k for k,v in models.items()}
+    return models_reverse[model_id]
 def get_asset_name_by_id(asset_id):
     asset = get_asset_by_id(asset_id)  # Assuming this function returns the asset details
     return asset.get('name') if asset else "Unknown"

@@ -44,7 +44,7 @@ def git_commit(**kwargs):
     prompt = f"""Generate a concise git commit message written in present tense for the following code diff with the given specifications below:',
 		`Message language: English`,
 		`Commit message must be a maximum of 72 characters.`,
-		`Exclude anything unnecessary such as translation. Your entire response will be passed directly into git commit`,
+		`Exclude anything unnecessary such as translation, your git commit. Your entire response will be passed directly into git commit without **any edits**`,
         Here are the changes lists:\n{changes_summary}"""
     try:
         commit_message = ws_manager.ask_question(model_id,prompt,False)

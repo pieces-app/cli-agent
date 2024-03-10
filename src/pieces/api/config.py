@@ -11,9 +11,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # same as
 pieces_data_dir = importlib.resources.files(
     "pieces.data"
 )  # our static packaged data files directory
+
 applications_db_path = Path(
-    "applications.db"
+    pieces_data_dir,"applications.db"
 )  # path to our applications.db
+
+models_file  = Path(pieces_data_dir, "model_data.pkl") # model data file
 
 # Defining the host is optional and defaults to http://localhost:1000
 # See configuration.py for a list of all supported configuration parameters.

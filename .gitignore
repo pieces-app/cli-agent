@@ -165,5 +165,9 @@ cython_debug/
 #.idea/
 
 
-# The database file
-applications.db
+# Data dir
+# Ignore everything in the 'src/pieces/data/' directory
+src/pieces/data/*
+
+# Except for the 'init' file
+!src/pieces/data/init
