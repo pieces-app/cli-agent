@@ -181,6 +181,15 @@ Ask the copoilt a question it uses chatGPT3 as a defualt model to ask a question
 pieces ask "your question"
 ```
 
+
+##### Commiting to github
+
+Auto commit the code to github and generate a commit message you can use the `-p` or `--push` flags to push the code to the repo too
+
+```bash
+pieces commit -p
+```
+
 #### Additional Commands
 ##### Retrieve the version of Pieces OS and the CLI:
 

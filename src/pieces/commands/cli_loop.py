@@ -5,7 +5,7 @@ import platform
 import sys
 import shlex
 from prompt_toolkit import PromptSession
-from pieces.api.config import run_in_loop
+from pieces.api import config
 from .commands_functions import (check, print_instructions,
                                  print_response, welcome,
                                  set_pieces_os_version,
@@ -50,8 +50,8 @@ def find_most_similar_command(valid_commands, user_input):
 
 def loop(**kwargs):
     from .commands_functions import parser # it should be here to make sure that the parser is setted correctly
-    global run_in_loop,cli_version
-    run_in_loop = True
+    global cli_version
+    config.run_in_loop = True
 
     startup()
     # Initial setup
@@ -84,7 +84,7 @@ def loop(**kwargs):
     session = PromptSession()
 
     # Start the loop
-    while run_in_loop:
+    while config.run_in_loop:
         try:
             is_running, _ , _ = check()
             if not is_running:

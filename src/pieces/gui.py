@@ -92,6 +92,7 @@ def print_help():
     print("  change_model    - Lists all the avaiable models that are on your machine")
     print("  change_model x  - Change the model that is used in the ask command defaults to chatGPT 3.5 similar to list models")
     print("  ask \"ask\"       - Asks a single question to the model selected in change model. Default timeout set to 10 seconds")
+    print("  commit          - Commits the changes to github and auto generate the message you can use -p to push")
     print()
     print("  search q        - Does a fuzzy search for your query")
     print("  --mode ncs      - Does a neural code search for your query")
@@ -129,9 +130,11 @@ def open_from_command_line():
     print("Opening most recent asset:")
     print()
 
+
 def show_error(error_message,error):
     # Show an error message in red color
     print()
     print(f"\033[31m{error_message}\033[0m")
     print(f"\033[31m{error}\033[0m")
     print()
+    

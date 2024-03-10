@@ -3,18 +3,15 @@ import json
 import websocket
 import threading
 import pieces_os_client
-
+from rich import print as print_rich
+from rich.markdown import Markdown
 
 WEBSOCKET_URL = "ws://localhost:1000/qgpt/stream"
 TIMEOUT = 20  # seconds
 
 
-
-
 class WebSocketManager:
     def __init__(self):
-        from .config import run_in_loop
-        self.run_in_loop = run_in_loop
         self.ws = None
         self.is_connected = False
         self.model_id = ""
@@ -38,10 +35,11 @@ class WebSocketManager:
             if response.question:
                 answers = response.question.answers.iterable
                 for answer in answers:
-                    text = answer.text
+                    text = answer.text # changing the markdown to text
                     self.final_answer += text
                     if text and self.verbose:
-                        print(text, end='')
+                        text = Markdown(text)
+                        print_rich(text, end='')
 
             if response.status == 'COMPLETED':
                 print("\n")
@@ -114,6 +112,8 @@ class WebSocketManager:
 
     def ask_question(self, model_id, query,verbose = True):
         """Ask a question using the websocket."""
+        from .config import run_in_loop
+        self.run_in_loop = run_in_loop
         self.final_answer = ""
         self.model_id = model_id
         self.query = query
