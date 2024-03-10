@@ -289,20 +289,6 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
-name = "prompt-toolkit"
-version = "3.0.43"
-description = "Library for building powerful interactive command lines in Python"
-optional = false
-python-versions = ">=3.7.0"
-files = [
-    {file = "prompt_toolkit-3.0.43-py3-none-any.whl", hash = "sha256:a11a29cb3bf0a28a387fe5122cdb649816a957cd9261dcedf8c9f1fef33eacf6"},
-    {file = "prompt_toolkit-3.0.43.tar.gz", hash = "sha256:3527b7af26106cbc65a040bcc84839a3566ec1b051bb0bfe953631e704b0ff7d"},
-]
-
-[package.dependencies]
-wcwidth = "*"
-
-[[package]]
 name = "pydantic"
 version = "1.10.13"
 description = "Data validation and settings management using python type hints"
@@ -545,13 +531,13 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.2.1"
+version = "2.2.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "urllib3-2.2.1-py3-none-any.whl", hash = "sha256:450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d"},
-    {file = "urllib3-2.2.1.tar.gz", hash = "sha256:d0570876c61ab9e520d776c38acbbb5b05a776d3f9ff98a5c8fd5162a444cf19"},
+    {file = "urllib3-2.2.0-py3-none-any.whl", hash = "sha256:ce3711610ddce217e6d113a2732fafad960a03fd0318c91faa79481e35c11224"},
+    {file = "urllib3-2.2.0.tar.gz", hash = "sha256:051d961ad0c62a94e50ecf1af379c3aba230c66c710493493560c0c223c49f20"},
 ]
 
 [package.extras]
@@ -559,17 +545,6 @@ brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
 h2 = ["h2 (>=4,<5)"]
 socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
-
-[[package]]
-name = "wcwidth"
-version = "0.2.13"
-description = "Measures the displayed width of unicode strings in a terminal"
-optional = false
-python-versions = "*"
-files = [
-    {file = "wcwidth-0.2.13-py2.py3-none-any.whl", hash = "sha256:3da69048e4540d84af32131829ff948f1e022c1c6bdb8d6102117aac784f6859"},
-    {file = "wcwidth-0.2.13.tar.gz", hash = "sha256:72ea0c06399eb286d978fdedb6923a9eb47e1c486ce63e9b4e64fc18303972b5"},
-]
 
 [[package]]
 name = "websocket-client"
