@@ -4,10 +4,13 @@ import websocket
 import threading
 import pieces_os_client
 from rich import print as print_rich
+from rich.live import Live
 from rich.markdown import Markdown
 
 WEBSOCKET_URL = "ws://localhost:1000/qgpt/stream"
 TIMEOUT = 20  # seconds
+
+
 
 
 class WebSocketManager:
@@ -19,6 +22,7 @@ class WebSocketManager:
         self.final_answer = ""
         self.conversation = None
         self.verbose = True
+        self.live = None
         self.message_compeleted = threading.Event()
     
     def open_websocket(self):
@@ -34,15 +38,24 @@ class WebSocketManager:
             response = pieces_os_client.QGPTStreamOutput.from_json(message)
             if response.question:
                 answers = response.question.answers.iterable
+                if not self.live:  # Create live instance if it doesn't exist
+                    self.live = Live()
+                    self.live.__enter__()  # Enter the context manually
                 for answer in answers:
                     text = answer.text
                     self.final_answer += text
-                        
+                    if self.verbose and text:
+                        self.live.update(Markdown(self.final_answer))
+
                         
 
             if response.status == 'COMPLETED':
-                final_text = Markdown(self.final_answer)
-                print_rich(final_text)
+                if self.verbose:
+                    self.live.update(Markdown(self.final_answer),refresh=True)
+                    self.live.__exit__(None,None,None)
+                    self.live = None
+                    print("\n")
+                
 
                 self.conversation = response.conversation
 
