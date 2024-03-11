@@ -3,7 +3,6 @@ import json
 import websocket
 import threading
 import pieces_os_client
-from rich import print as print_rich
 from rich.live import Live
 from rich.markdown import Markdown
 
@@ -52,7 +51,7 @@ class WebSocketManager:
             if response.status == 'COMPLETED':
                 if self.verbose:
                     self.live.update(Markdown(self.final_answer),refresh=True)
-                    self.live.__exit__(None,None,None)
+                    self.live.stop()
                     self.live = None
                     print("\n")
                 
