@@ -35,14 +35,15 @@ class WebSocketManager:
             if response.question:
                 answers = response.question.answers.iterable
                 for answer in answers:
-                    text = answer.text # changing the markdown to text
+                    text = answer.text
                     self.final_answer += text
-                    if text and self.verbose:
-                        text = Markdown(text)
-                        print_rich(text, end='')
+                        
+                        
 
             if response.status == 'COMPLETED':
-                print("\n")
+                final_text = Markdown(self.final_answer)
+                print_rich(final_text)
+
                 self.conversation = response.conversation
 
                 self.message_compeleted.set()
