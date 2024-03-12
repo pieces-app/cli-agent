@@ -157,14 +157,8 @@ Uses machine learning, deep neural networks, and natural language processing. It
 pieces search query --mode fts
 ```
 
-Examines all words in a document to find matches to search criteria
-##### change the llm model you are using:
+Examines all words in a document to find matches to search criteria.
 
-Lists all the avaiable models on your machine with their indices to choose from .
-
-```bash
-pieces change_model 
-```
 ##### change the llm model you are using:
 
 Change the model in the ask command.

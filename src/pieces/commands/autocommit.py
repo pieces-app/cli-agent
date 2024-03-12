@@ -17,7 +17,10 @@ def get_current_working_changes(word_limit:int=2000) -> str:
     """
     
     result = subprocess.run(["git", "diff"], capture_output=True, text=True)
+    if not result.stdout.strip():
+        raise ValueError("No changes to commit or there is no .git file initialized in the current directory")
     detailed_diff = result.stdout.strip()
+
     
     summary = ""
     for line in detailed_diff.split('\n'):
@@ -78,3 +81,39 @@ def git_commit(**kwargs):
             subprocess.run(["git", "push"], check=True)
     else:
         print("Committing changes cancelled")
+
+
+# TODO use the GPT API instead of the stream
+# from pieces_os_client import *
+# # Usage
+# output = QGPTApi.question(
+#     QGPTQuestionInput(
+#         query="Hi",
+#         relevant=RelevantQGPTSeeds(
+#             iterable=[
+#                 RelevantQGPTSeed(
+#                     seed=Seed(
+#                         type="SEEDED_ASSET",
+#                         asset=SeededAsset(
+#                             application=Application(
+#                                 id = "id",
+#                                 name= ApplicationNameEnum.UNKNOWN,
+#                                 version = '0.0.1',
+#                                 platform = PlatformEnum.WINDOWS,
+#                                 onboarded =True,
+#                                 privacy = PrivacyEnum.ANONYMOUS,
+#                             ),
+#                             format=SeededFormat(
+#                                 fragment=SeededFragment(
+#                                     string=TransferableString(
+#                                         raw='console.log',
+#                                     ),
+#                                 ),
+#                             ),
+#                         ),
+#                     ),
+#                 )
+#             ],
+#         ),
+#         model=model_id,
+#     ),

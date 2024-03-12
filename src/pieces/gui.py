@@ -89,7 +89,6 @@ def print_help():
     print("  delete          - Deletes the current or most recent asset.")
     print("  create          - Creates a new asset based on what you've copied to your clipboard")
     print()
-    print("  change_model    - Lists all the avaiable models that are on your machine")
     print("  change_model x  - Change the model that is used in the ask command defaults to chatGPT 3.5 similar to list models")
     print("  ask \"ask\"       - Asks a single question to the model selected in change model. Default timeout set to 10 seconds")
     print("  commit          - Commits the changes to github and auto generate the message you can use -p to push")

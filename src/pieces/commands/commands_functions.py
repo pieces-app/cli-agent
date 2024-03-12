@@ -102,7 +102,9 @@ def list_assets(list_type_or_max='assets', **kwargs):
         list_apps = True
 
     if list_type_or_max == 'models':
-        return change_model()  # Call the function to list all models
+        for idx,model_name in enumerate(models,start=1):
+            print(f"{idx}: {model_name}")
+        print(f"Currently using: {get_current_model_name()} with uuid {model_id}")
 
     if list_apps:
         # Logic for listing applications
@@ -151,16 +153,17 @@ def list_assets(list_type_or_max='assets', **kwargs):
 def change_model(**kwargs): # Change the model used in the ask command
     global model_id,word_limit
     model_index = kwargs.get('MODEL_INDEX')
-    if model_index:
-        model_name = list(models.keys())[model_index-1] # because we begin from 1
-        word_limit = models[model_name].get("word_limit")
-        model_id  = models[model_name].get("uuid")
-        dump_pickle(file = models_file,model_id = model_id,word_limit = word_limit)
-        print(f"Switched to {model_name} with uuid {model_id}")
-    else:
-        for idx,model_name in enumerate(models,start=1):
-            print(f"{idx}: {model_name}")
-        print(f"Currently using: {get_current_model_name()} with uuid {model_id}")
+    try:
+        if model_index:
+            model_name = list(models.keys())[model_index-1] # because we begin from 1
+            word_limit = models[model_name].get("word_limit")
+            model_id  = models[model_name].get("uuid")
+            dump_pickle(file = models_file,model_id = model_id,word_limit = word_limit)
+            print(f"Switched to {model_name} with uuid {model_id}")
+    except:
+        print("Invalid model index or model index not provided.")
+        print("Please choose from the list or use 'pieces list models'")
+        
 
 
 
