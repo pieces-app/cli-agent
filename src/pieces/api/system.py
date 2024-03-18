@@ -1,11 +1,11 @@
 ## WELLNESS AND SYSTEM 
 import platform
-from pieces.gui import show_error
-from pieces_os_client.models.application import Application
 from pieces.store import *
 from .config import *
 import time
 import subprocess
+from pieces import __version__
+from typing import Optional 
 def categorize_os():
     # Get detailed platform information
     platform_info = platform.platform()
@@ -21,12 +21,19 @@ def categorize_os():
         os_info = 'WEB'  # Default to WEB if the OS doesn't match others
 
     return os_info
-
-
-def open_pieces_os():
+def get_version() -> Optional[str]:
+    """Get pieces os version return None if there is a problem"""
     try:
-        pos_client.WellKnownApi(api_client).get_well_known_health()
-    except: 
+        version = pos_client.WellKnownApi(api_client).get_well_known_health()
+        return version
+    except: # There is a problem in the startup
+        return None
+def open_pieces_os() -> Optional[str]:
+    """Open pieces os and return its version"""
+    version = get_version()
+    if version:
+        return version
+    else:
         pl = categorize_os()
         if pl == "WINDOWS":
             subprocess.Popen(["start", "os_server"], shell=True)
@@ -34,74 +41,29 @@ def open_pieces_os():
             subprocess.Popen(["os_server"])
         elif pl == "MACOS":
             subprocess.Popen(["open", "os_server"])
-        else:
-            return False
-        time.sleep(1) # wait for the server to open
-    return True
+        time.sleep(2) # wait for the server to open
+        
+        return get_version() # pieces os version
 
-def check_api(**kwargs):
-    # Create an instance of the API class
-    well_known_instance = pos_client.WellKnownApi(api_client)
+def connect_api() -> pos_client.Application:
+    # Decide if it's Windows, Mac, Linux or Web
+    local_os = categorize_os()
 
-    try:        
-        # Make Sure Server is Running and Get Version
-        version = well_known_instance.get_well_known_version()
 
-        # Check if version is None or empty
-        if not version:
-            return False, "Server is not running", None
-
-        # Decide if it's Windows, Mac, Linux or Web
-        local_os = categorize_os()
-
-        # Establish a local database connection
-        conn = create_connection(applications_db_path)
-
-        # Create the table if it does not exist
-        create_table(conn)
-        # create_tables(conn)
-
-        # Check the database for an existing application
-        application_id = "DEFAULT"  # Replace with a default application ID
-        application = get_application(conn, application_id)
-        # application =  get_application_with_versions(conn, application_id)
-
-        # If no application is found in the database, create and store a new one
-        if application is None:
-            
-            application = Application(id=application_id, name="OPEN_SOURCE", version=version, platform=local_os, onboarded=False, privacy="OPEN")
-            insert_application(conn, application)
-
-        # Register the application
-        registered_application = register_application(application)
-
-        # Close the database connection
-        conn.close()
-
-        return True, version, registered_application
-
-    except Exception as e:
-        # Close the database connection in case of an exception
-        if 'conn' in locals():
-            conn.close()
-        return False, "Exception when calling WellKnownApi->get_well_known_version: %s\n" % e
+    api_instance = pos_client.ConnectorApi(api_client)
+    seeded_connector_connection = pos_client.SeededConnectorConnection(
+        application=pos_client.SeededTrackedApplication(
+            name = pos_client.ApplicationNameEnum.OPEN_SOURCE,
+            platform = local_os,
+            version = __version__))
+    api_response = api_instance.connect(seeded_connector_connection=seeded_connector_connection)
+    insert_application(api_response.application) 
+    return api_response.application
     
+
 def list_applications():
     applications_api = pos_client.ApplicationsApi(api_client)
 
     apps_raw = applications_api.applications_snapshot()
     
     return apps_raw
-
-def register_application(existing_application=None):
-    # Application
-    applications_api = pos_client.ApplicationsApi(api_client)
-    # application = Application(id="test", name="VS_CODE", version="1.9.1", platform="WINDOWS", onboarded=False, privacy="OPEN")
-    application = existing_application
-
-    try:
-        api_response = applications_api.applications_register(application=application)
-        
-        return api_response
-    except Exception as e:
-        show_error("Exception when calling ApplicationsApi->applications_register:" , e)

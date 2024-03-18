@@ -6,12 +6,10 @@ import sys
 import shlex
 from prompt_toolkit import PromptSession
 from pieces.api import config
-from .commands_functions import (check, print_instructions,
-                                 print_response, welcome,
-                                 set_pieces_os_version,
-                                 set_application,startup,
-                                 ws_manager,
-                                 cli_version)
+from .commands_functions import (print_instructions,
+                                 print_response, welcome,startup,
+                                 ws_manager,get_version)
+from pieces import __version__
 
 def levenshtein_distance(s1, s2):
     # If s1 is shorter than s2, swap them to minimize the number of operations
@@ -49,34 +47,19 @@ def find_most_similar_command(valid_commands, user_input):
     return most_similar_command
 
 def loop(**kwargs):
-    from .commands_functions import parser # it should be here to make sure that the parser is setted correctly
-    global cli_version
+    
     config.run_in_loop = True
 
     startup()
+    from .commands_functions import parser,application,pieces_os_version # it should be here to make sure that the parser is setted correctly
     # Initial setup
     os_info = platform.platform()
     python_version = sys.version.split()[0] 
-
-    try:
-        os_running, os_version, application = check()
-        if not os_running:
-            raise RuntimeError("Server not running")
-    except Exception as e:
-        # print(f"Error during startup: {e}")
-        sys.exit(1)  # Exit the program
-
     welcome()
 
-
-    
-
-    set_pieces_os_version(os_version)
-    set_application(application)
-
     print_response(f"Operating System: {os_info}", f"Python Version: {python_version}",
-                   f"Pieces OS Version: {os_version}",
-                   f"Pieces CLI Version: {cli_version}",
+                   f"Pieces OS Version: {pieces_os_version}",
+                   f"Pieces CLI Version: {__version__}",
                    f"Application: {application.name.name if application else 'Unknown'}")
     print_instructions()
 
@@ -85,13 +68,7 @@ def loop(**kwargs):
 
     # Start the loop
     while config.run_in_loop:
-        try:
-            is_running, _ , _ = check()
-            if not is_running:
-                raise RuntimeError("Server no longer available")
-        except Exception as e:
-            show_error(f"Error in loop:", {e})
-            break
+        is_running = get_version()
 
         if not is_running:
             double_line("Server no longer available. Exiting loop.")

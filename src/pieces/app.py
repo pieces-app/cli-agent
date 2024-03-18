@@ -101,25 +101,13 @@ def main():
         args.func(**vars(args))
     else:
         startup()
-        # Call check_api and store its return value
-        api_response = check_api()
+        
 
-        # Check the length of the response and if the server is running with an application
-        if len(api_response) == 3 and api_response[0] and api_response[2]:
-            is_running, message, application = api_response
-
-            # Update the version_message in commands.py
-            set_pieces_os_version(message)
-            set_application(application)
-
-            # Parse the arguments if provided
-            if len(sys.argv) > 1:
-                args = parser.parse_args()
-                # Execute the corresponding function with the parsed arguments
-                args.func(**vars(args))
-        else:
-            # Display the message if the server is not running or application is not present
-            double_line("Please start your Pieces OS Server")
+        # Parse the arguments if provided
+        if len(sys.argv) > 1:
+            args = parser.parse_args()
+            # Execute the corresponding function with the parsed arguments
+            args.func(**vars(args))
 
 if __name__ == '__main__':
     main()

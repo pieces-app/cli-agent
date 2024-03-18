@@ -14,23 +14,29 @@ from pieces.api.system import *
 from pieces.api.assets import *
 from pieces.api.config import *
 import pickle
+from pieces import __version__
 
 # Globals for CLI Memory.
 ws_manager = WebSocketManager()
-pieces_os_version = None
 asset_ids = {} # Asset ids for any list or search
 assets_are_models = False
 current_asset = {}
 parser = None
 application = None
-cli_version = "0.0.13"
 ###############################################################################
 ############################## MAIN FUNCTIONS #################################
 ###############################################################################
 
 def startup(): # startup function to run before the cli begin
-    global models,model_id,word_limit
-    if open_pieces_os():
+    global models,model_id,word_limit,application,pieces_os_version
+    pieces_os_version = open_pieces_os()
+    if pieces_os_version:
+
+        # Call the connect api
+        application = connect_api()
+
+
+        # MODELS
         models = get_models_ids()
         # Check if the models file exists
         if not models_file.is_file():
@@ -43,6 +49,9 @@ def startup(): # startup function to run before the cli begin
                 model_data = pickle.load(f)
             model_id = model_data["model_id"]
             word_limit = model_data["word_limit"]
+    else:
+        server_startup_failed()
+        
 
 def ask(query, **kwargs):
     global model_id, ws_manager
@@ -160,6 +169,8 @@ def change_model(**kwargs): # Change the model used in the ask command
             model_id  = models[model_name].get("uuid")
             dump_pickle(file = models_file,model_id = model_id,word_limit = word_limit)
             print(f"Switched to {model_name} with uuid {model_id}")
+        else:
+            raise Exception("Invalid model index or model index not provided.")
     except:
         print("Invalid model index or model index not provided.")
         print("Please choose from the list or use 'pieces list models'")
@@ -353,21 +364,7 @@ def create_asset(**kwargs):
 
     except pyperclip.PyperclipException as e:
         show_error("Error accessing clipboard:", str(e))
-    
-def check():
-    try:
-        # Check if Pieces is Running
-        is_running, message, application = check_api()
-    except ValueError:
-        # Handle the case where check_api() returns only 'False' for os_running
-        server_startup_failed()
-        return False
-    else:
-        if is_running:
-            return is_running, message, application
-        else:
-            server_startup_failed()
-    return is_running
+
 
 
 ###############################################################################
@@ -387,21 +384,13 @@ def get_asset_name_by_id(asset_id):
     asset = get_asset_by_id(asset_id)  # Assuming this function returns the asset details
     return asset.get('name') if asset else "Unknown"
 
-def set_application(app):
-    global application
-    application = app
-
 def set_parser(p):
     global parser
     parser = p
 
 def help_command(**kwargs):
     print_help()
-    pass
 
-def set_pieces_os_version(version):
-    global pieces_os_version
-    pieces_os_version = version
 
 # Used to create a valid file name when opening to "Opened Snippets"
 def sanitize_filename(name):
@@ -452,13 +441,10 @@ def get_file_extension(language):
     return extension_mapping.get(language, '.txt')
 
 def version(**kwargs):
-    ### INCOMPLETE ###
-    global pieces_os_version
-    global cli_version
 
     if pieces_os_version:
         print(f"Pieces Version: {pieces_os_version}")
-        print(f"Cli Version: {cli_version}")
+        print(f"Cli Version: {__version__}")
     else:
         ### LOGIC TO look up cache from SQLite3 to get the cli and pieces os version
 
