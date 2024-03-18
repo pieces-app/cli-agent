@@ -1,6 +1,6 @@
 [tool.poetry]
   name = "pieces"
-  version = "0.0.13"
+  version = "0.0.14"
   description = ""  # Add your description here
   authors = ["Pieces <development@pieces.app>"]  # Add your name and email
 
@@ -17,6 +17,8 @@
   urllib3 =  ">=2.2.0,<3.0.0"
   websocket-client = "1.7.0"
   pieces_os_client = "1.2.7"
+  prompt-toolkit = "^3.0.43"
+  rich = "^13.7.1"
 
 [tool.poetry.group.dev.dependencies]
   pytest = "^8.0.0"

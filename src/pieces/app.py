@@ -1,9 +1,30 @@
 import argparse
 from pieces.commands import *
+import sys
+from pieces.gui import show_error,double_line
+
+class PiecesCli(argparse.ArgumentParser): # subclassing the ArgumentParser class to modify the error messages
+    def error(self, message):
+        if 'invalid choice' in message:
+            try:
+                invalid_command = message.split("'")[1]
+                suggestion_text = f"Did you mean '{find_most_similar_command(list(self._subparsers._group_actions[0].choices.keys()),invalid_command)}'?"
+            except IndexError:
+                suggestion_text = ""
+                invalid_command = "Unknown"
+            
+            # Custom error message for invalid command choices
+            print(f"Invalid command '{invalid_command}'\n{suggestion_text}")
+        else:
+            # Default error message for other types of errors
+            show_error("Error occured",message)
+        sys.exit(2)
+
+
 
 def main():
     # Create the top-level parser
-    parser = argparse.ArgumentParser(description='Pieces CLI Tool')
+    parser = PiecesCli(description='Pieces CLI Tool')
     subparsers = parser.add_subparsers(dest='command', required=True)
 
     # Passes the Parser to commands.py
@@ -51,41 +72,42 @@ def main():
     # Subparser for Search
     search_parser = subparsers.add_parser('search', help='Search with a query string')
     search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
-    search_parser.add_argument('--mode', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search (assets, ncs, fts)')
+    search_parser.add_argument('--mode', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search')
     search_parser.set_defaults(func=search)
 
-    # TEMP Subparser for listing models
-    models_parser = subparsers.add_parser('list_models', help='List available models')
-    models_parser.set_defaults(func=list_all_models)
 
     # Subparser for the 'help' command
     help_parser = subparsers.add_parser('help', help='Prints a list of available commands')
-    help_parser.set_defaults(func=help)
+    help_parser.set_defaults(func=help_command)
+
+
+
+    # Subparser for the 'change_model' command
+    change_model_parser = subparsers.add_parser('change_model', help='Change the model that you are using in the ask')
+    change_model_parser.add_argument('MODEL_INDEX', type=int, nargs='?', default=None, help='Index of the model to use (optional)')
+    change_model_parser.set_defaults(func=change_model)
+
+
+
+    # Subparser for the 'commit' command
+    commit_parser = subparsers.add_parser('commit', help='Auto generate a github commit messaage and commit changes')
+    commit_parser.add_argument("-p","--push",action="store_true", help="push the code to github")
+    commit_parser.set_defaults(func=git_commit)
+
 
     # Check if the 'run' command is explicitly provided
     if len(sys.argv) > 1 and sys.argv[1] in ['help', 'run']:
         args = parser.parse_args()
         args.func(**vars(args))
     else:
-        # Call check_api and store its return value
-        api_response = check_api()
+        startup()
+        
 
-        # Check the length of the response and if the server is running with an application
-        if len(api_response) == 3 and api_response[0] and api_response[2]:
-            is_running, message, application = api_response
-
-            # Update the version_message in commands.py
-            set_pieces_os_version(message)
-            set_application(application)
-
-            # Parse the arguments if provided
-            if len(sys.argv) > 1:
-                args = parser.parse_args()
-                # Execute the corresponding function with the parsed arguments
-                args.func(**vars(args))
-        else:
-            # Display the message if the server is not running or application is not present
-            double_line("Please start your Pieces OS Server")
+        # Parse the arguments if provided
+        if len(sys.argv) > 1:
+            args = parser.parse_args()
+            # Execute the corresponding function with the parsed arguments
+            args.func(**vars(args))
 
 if __name__ == '__main__':
     main()
