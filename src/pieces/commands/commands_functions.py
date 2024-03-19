@@ -121,6 +121,7 @@ def list_assets(list_type_or_max='assets', **kwargs):
         for idx,model_name in enumerate(models,start=1):
             print(f"{idx}: {model_name}")
         print(f"Currently using: {get_current_model_name()} with uuid {model_id}")
+        return
 
     if list_apps:
         # Logic for listing applications
