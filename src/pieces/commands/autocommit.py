@@ -1,8 +1,9 @@
 import subprocess
 import re
 from pieces.gui import show_error
-from pieces.api.config import pos_client,api_client
+from pieces.api import config
 import re
+import pieces_os_client as pos_client
 
 def get_current_working_changes(word_limit:int=2000) -> str:
     """
@@ -63,7 +64,7 @@ def git_commit(**kwargs):
 
         # Remove leading and trailing whitespace
         commit_message = commit_message.strip()
-        pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation(conversation=ws_manager.conversation)
+        pos_client.ConversationsApi(config.api_client).conversations_delete_specific_conversation(conversation=ws_manager.conversation)
         ws_manager.conversation = None
     except Exception as e:
         show_error("Error in getting the commit message",e)

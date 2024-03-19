@@ -9,6 +9,7 @@ from pieces.api import config
 from .commands_functions import (print_instructions,
                                  print_response, welcome,startup,
                                  ws_manager,get_version)
+from . import commands_functions
 from pieces import __version__
 
 def levenshtein_distance(s1, s2):
@@ -51,16 +52,16 @@ def loop(**kwargs):
     config.run_in_loop = True
 
     startup()
-    from .commands_functions import parser,application,pieces_os_version # it should be here to make sure that the parser is setted correctly
+
     # Initial setup
     os_info = platform.platform()
     python_version = sys.version.split()[0] 
     welcome()
 
     print_response(f"Operating System: {os_info}", f"Python Version: {python_version}",
-                   f"Pieces OS Version: {pieces_os_version}",
+                   f"Pieces OS Version: {commands_functions.pieces_os_version}",
                    f"Pieces CLI Version: {__version__}",
-                   f"Application: {application.name.name if application else 'Unknown'}")
+                   f"Application: {commands_functions.application.name.name if commands_functions.application else 'Unknown'}")
     print_instructions()
 
     # Create a prompt session, which will maintain the history of inputs
@@ -103,8 +104,8 @@ def loop(**kwargs):
 
             command_name = command_name.lower()
 
-            if command_name in parser._subparsers._group_actions[0].choices:
-                subparser = parser._subparsers._group_actions[0].choices[command_name]
+            if command_name in commands_functions.parser._subparsers._group_actions[0].choices:
+                subparser = commands_functions.parser._subparsers._group_actions[0].choices[command_name]
                 command_func = subparser.get_default('func')  # Get the function associated with the command
 
                 if command_func:
@@ -119,7 +120,7 @@ def loop(**kwargs):
                     print(f"No function associated with command: {command_name}")
             else:
                 print(f"Unknown command: {command_name}")
-                commands = list(parser._subparsers._group_actions[0].choices.keys())
+                commands = list(commands_functions.parser._subparsers._group_actions[0].choices.keys())
                 commands.append("exit")
                 most_similar_command = find_most_similar_command(commands, user_input)
                 print(f"Did you mean {most_similar_command}")

@@ -5,6 +5,7 @@ import threading
 import pieces_os_client
 from rich.live import Live
 from rich.markdown import Markdown
+from . import config
 
 WEBSOCKET_URL = "ws://localhost:1000/qgpt/stream"
 TIMEOUT = 20  # seconds
@@ -125,8 +126,6 @@ class WebSocketManager:
 
     def ask_question(self, model_id, query,verbose = True):
         """Ask a question using the websocket."""
-        from .config import run_in_loop
-        self.run_in_loop = run_in_loop
         self.final_answer = ""
         self.model_id = model_id
         self.query = query
@@ -134,7 +133,7 @@ class WebSocketManager:
         self.send_message()
         finishes = self.message_compeleted.wait(TIMEOUT)
         self.message_compeleted.clear()
-        if not self.run_in_loop and self.is_connected:
+        if not config.run_in_loop and self.is_connected:
             self.close_websocket_connection()
         if not finishes:
             self.verbose = True

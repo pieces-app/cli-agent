@@ -96,18 +96,12 @@ def main():
 
 
     # Check if the 'run' command is explicitly provided
-    if len(sys.argv) > 1 and sys.argv[1] in ['help', 'run']:
-        args = parser.parse_args()
-        args.func(**vars(args))
-    else:
+    if not len(sys.argv) > 1 and not sys.argv[1] in ['help', 'run']:
         startup()
-        
 
-        # Parse the arguments if provided
-        if len(sys.argv) > 1:
-            args = parser.parse_args()
-            # Execute the corresponding function with the parsed arguments
-            args.func(**vars(args))
+    args = parser.parse_args()
+    args.func(**vars(args))
+
 
 if __name__ == '__main__':
     main()
