@@ -95,8 +95,8 @@ def main():
     commit_parser.set_defaults(func=git_commit)
 
 
-    # Check if the 'run' command is explicitly provided
-    if not len(sys.argv) > 1 and not sys.argv[1] in ['help', 'run']:
+    # Check if the 'run' or 'help' command is explicitly provided
+    if not sys.argv[1] in ['help', 'run']:
         startup()
 
     args = parser.parse_args()
