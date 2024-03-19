@@ -1,5 +1,4 @@
 import pieces_os_client as pos_client
-import importlib.resources
 from pathlib import Path
 import platform
 import os
@@ -7,10 +6,12 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # same as used in django!
 
+# Define the directory path
+pieces_data_dir = Path.home() / 'Documents' / 'com.pieces.os'/ 'cli-agent'
 
-pieces_data_dir = importlib.resources.files(
-    "pieces.data"
-)  # our static packaged data files directory
+# Check if the directory exists, if not, create it
+pieces_data_dir.mkdir(parents=True, exist_ok=True)
+
 
 applications_db_path = Path(
     pieces_data_dir,"applications.db"
