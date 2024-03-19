@@ -24,7 +24,7 @@ def categorize_os():
 def get_version() -> Optional[str]:
     """Get pieces os version return None if there is a problem"""
     try:
-        version = pos_client.WellKnownApi(api_client).get_well_known_health()
+        version = pos_client.WellKnownApi(api_client).get_well_known_version()
         return version
     except: # There is a problem in the startup
         return None

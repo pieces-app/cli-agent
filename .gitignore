@@ -167,10 +167,3 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-
-# Data dir
-# Ignore everything in the 'src/pieces/data/' directory
-src/pieces/data/*
-
-# Except for the 'init' file
-!src/pieces/data/init
