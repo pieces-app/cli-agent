@@ -37,7 +37,7 @@ def startup(): # startup function to run before the cli begin
 
         # MODELS
         models = get_models_ids()
-        create_pickle = True
+        create_file = True
         # Check if the models file exists
         if models_file.is_file():
             with open(models_file, 'rb') as f:
@@ -46,11 +46,11 @@ def startup(): # startup function to run before the cli begin
             word_limit = model_data["word_limit"]
             try: # Checks if the current model is valid
                 get_current_model_name()
-                create_pickle = False
+                create_file = False
             except:
                 pass
             
-        if create_pickle:
+        if create_file:
             default_model_name = "GPT-3.5-turbo Chat Model"
             model_id = models[default_model_name]["uuid"] # default model id
             word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
