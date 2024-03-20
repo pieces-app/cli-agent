@@ -255,8 +255,11 @@ cd dist
 
 10. Install the WHL file
 ```shell
-pip install pieces-0.0.14-py3-none-any.whl
-``` 
+pip install pieces-{VERSION}-py3-none-any.whl 
+```
+replace the VERSION with the version you downloaded
+Note: Ensure you get latest from the [releases](https://github.com/pieces-app/cli-agent/releases) of the cli-agent
+
 
 11. To view all the CLI Commands
 ```shell 
