@@ -121,6 +121,7 @@ def list_assets(list_type_or_max='assets', **kwargs):
         for idx,model_name in enumerate(models,start=1):
             print(f"{idx}: {model_name}")
         print(f"Currently using: {get_current_model_name()} with uuid {model_id}")
+        return
 
     if list_apps:
         # Logic for listing applications
@@ -381,12 +382,16 @@ def dump_pickle(file,**data):
     """Store data in a pickle file."""
     with open(file, 'wb') as f:
         pickle.dump(data, f)
+
+
 def get_current_model_name() -> str:
     with open(models_file, 'rb') as f:
         model_data = pickle.load(f)
     model_id = model_data["model_id"]
     models_reverse = {v.get("uuid"):k for k,v in models.items()}
     return models_reverse[model_id]
+
+
 def get_asset_name_by_id(asset_id):
     asset = get_asset_by_id(asset_id)  # Assuming this function returns the asset details
     return asset.get('name') if asset else "Unknown"
@@ -394,9 +399,6 @@ def get_asset_name_by_id(asset_id):
 def set_parser(p):
     global parser
     parser = p
-
-def help_command(**kwargs):
-    print_help()
 
 
 # Used to create a valid file name when opening to "Opened Snippets"

@@ -36,5 +36,6 @@ def get_models_ids() -> Dict[str, Dict[str, Union[str, int]]]:
     # call the api until the sdks updated
     response = urllib.request.urlopen('http://localhost:1000/models').read()
     response = json.loads(response)["iterable"]
-    models = {model["name"]:{"uuid":model["id"] ,"word_limit" :model["maxTokens"]["input"]} for model in response if model["cloud"] or model["downloading"]}
+    models = {model["name"]:{"uuid":model["id"] ,"word_limit" :model["maxTokens"]["input"]} for model in response if model["cloud"] or model.get("downloaded",False)}
     return models
+
