@@ -10,7 +10,6 @@ from .commands_functions import (version,
                                  search,
                                  delete_asset,
                                  change_model,
-                                 help_command,
                                  set_parser,startup)
 __all__ = ['loop', 
            'find_most_similar_command',
@@ -26,6 +25,5 @@ __all__ = ['loop',
            'search',
            'delete_asset',
            'change_model',
-           "help_command",
            "startup"]
 

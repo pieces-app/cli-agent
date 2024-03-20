@@ -1,7 +1,7 @@
 import argparse
 from pieces.commands import *
 import sys
-from pieces.gui import show_error,double_line
+from pieces.gui import show_error,print_help
 
 class PiecesCli(argparse.ArgumentParser): # subclassing the ArgumentParser class to modify the error messages
     def error(self, message):
@@ -78,8 +78,7 @@ def main():
 
     # Subparser for the 'help' command
     help_parser = subparsers.add_parser('help', help='Prints a list of available commands')
-    help_parser.set_defaults(func=help_command)
-
+    help_parser.set_defaults(func=lambda **kwargs: print_help())
 
 
     # Subparser for the 'change_model' command
