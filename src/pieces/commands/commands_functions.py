@@ -124,8 +124,6 @@ def list_assets(list_type_or_max='assets', **kwargs):
         return
 
     if list_apps:
-        # Logic for listing applications
-        double_space("Listing applications...")
         application_list = list_applications()
 
         if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
@@ -138,7 +136,6 @@ def list_assets(list_type_or_max='assets', **kwargs):
         else:
             print("Error: The 'Applications' object does not contain an iterable list of applications.")
 
-        print()
         return  
 
     # Existing logic for listing assets
