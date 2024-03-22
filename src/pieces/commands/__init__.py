@@ -10,7 +10,7 @@ from .commands_functions import (version,
                                  search,
                                  delete_asset,
                                  change_model,
-                                 set_parser,startup)
+                                 set_parser,startup,list_models,list_apps)
 __all__ = ['loop', 
            'find_most_similar_command',
            'git_commit',
@@ -25,5 +25,7 @@ __all__ = ['loop',
            'search',
            'delete_asset',
            'change_model',
-           "startup"]
+           "startup",
+           "list_models",
+           "list_apps"]
 

@@ -4,6 +4,7 @@ from pieces.gui import show_error
 from pydantic import ValidationError
 from pieces_os_client.models.classification import Classification
 from pieces_os_client.rest import ApiException
+from typing import Dict,List
 def create_new_asset(application, raw_string, metadata=None):
     assets_api = pos_client.AssetsApi(api_client)
 
@@ -53,10 +54,16 @@ def get_asset_ids(max=None, **kwargs):
         show_error("Exception when calling AssetsApi->assets_identifiers_snapshot:" ,e)
         return None
     
-def get_asset_names(ids):
-    names = []
+def get_asset_info_list() -> List[Dict[str,str]]:
+    """
+    Returns a list of dictionaries containing the name and id of each asset
+    """
+
+    assets = []
     asset_api = pos_client.AssetApi(api_client)
 
+
+    ids = get_asset_ids()
     for id in ids:
         try:
             # Use the OpenAPI client to get asset snapshot
@@ -67,12 +74,19 @@ def get_asset_names(ids):
 
             # Extract the 'name' field and add it to the names list
             name = data.get('name')
-            if name:
-                names.append(name)
+
+            # Add the name to the dictionary
+            asset = {}
+            asset["name"] = name
+
+            asset["id"] = id
+
+            assets.append(asset)
+            
         except ApiException as e:
             show_error(f"Error occurred for ID {id}:", str(e))
-
-    return names
+            
+    return assets
 
 
 def get_single_asset_name(id):

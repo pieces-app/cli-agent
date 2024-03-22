@@ -18,7 +18,6 @@ from pieces import __version__
 
 # Globals for CLI Memory.
 ws_manager = WebSocketManager()
-asset_ids = {} # Asset ids for any list or search
 assets_are_models = False
 current_asset = {}
 parser = None
@@ -106,63 +105,44 @@ def search(query, **kwargs):
     else:
         print("No results found.")
 
-def list_assets(list_type_or_max='assets', **kwargs):
-    max_results = None
-    list_apps = False
-    global assets_are_models
 
-    # Check if the argument is a digit (for max_results value) or 'apps'
-    if list_type_or_max.isdigit():
-        max_results = int(list_type_or_max)
-    elif list_type_or_max == 'apps':
-        list_apps = True
 
-    if list_type_or_max == 'models':
-        for idx,model_name in enumerate(models,start=1):
-            print(f"{idx}: {model_name}")
-        print(f"Currently using: {get_current_model_name()} with uuid {model_id}")
-        return
+def list_models(**kwargs):
+    for idx,model_name in enumerate(models,start=1):
+        print(f"{idx}: {model_name}")
+    print(f"Currently using: {get_current_model_name()} with uuid {model_id}")
 
-    if list_apps:
-        application_list = list_applications()
 
-        if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
-            for i, app in enumerate(application_list.iterable, start=1):
-                app_name = getattr(app, 'name', 'Unknown').value if hasattr(app, 'name') and hasattr(app.name, 'value') else 'Unknown'
-                app_version = getattr(app, 'version', 'Unknown')
-                app_platform = getattr(app, 'platform', 'Unknown').value if hasattr(app, 'platform') and hasattr(app.platform, 'value') else 'Unknown'
+def list_apps(**kwargs):
+    # Get the list of applications
+    application_list = list_applications()
 
-                print(f"{i}: {app_name}, {app_version}, {app_platform}")
-        else:
-            print("Error: The 'Applications' object does not contain an iterable list of applications.")
-
-        return  
-
-    # Existing logic for listing assets
-    global run_in_loop, asset_ids
-    
-    default_max_results = 10
-    
-    if max_results is None:
-        max_results = default_max_results
-
-    assets_are_models = False
-
-    ids = get_asset_ids(max=max_results)
-    names = get_asset_names(ids)
-    
-    for i, name in enumerate(names, start=1):
-        print(f"{i}: {name}")
-        if i >= max_results:
-            break
-
-    if run_in_loop:
-        asset_ids = {i: id for i, id in enumerate(ids, start=1)}
-        first_id = ids[0]
-        return first_id
+    # Check if the application_list object has an iterable attribute and if it is an instance of Iterable
+    if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
+        # Iterate over the applications in the list
+        for i, app in enumerate(application_list.iterable, start=1):
+            # Get the name of the application, default to 'Unknown' if not available
+            app_name = getattr(app, 'name', 'Unknown').value if hasattr(app, 'name') and hasattr(app.name, 'value') else 'Unknown'
+            # Get the version of the application, default to 'Unknown' if not available
+            app_version = getattr(app, 'version', 'Unknown')
+            # Get the platform of the application, default to 'Unknown' if not available
+            app_platform = getattr(app, 'platform', 'Unknown').value if hasattr(app, 'platform') and hasattr(app.platform, 'value') else 'Unknown'
+                
+            # Print the application details
+            print(f"{i}: {app_name}, {app_version}, {app_platform}")
     else:
-        first_id = ids[0]
-        return first_id
+        # Print an error message if the 'Applications' object does not contain an iterable list of applications
+        print("Error: The 'Applications' object does not contain an iterable list of applications.")
+
+
+def list_assets(max_assets, **kwargs):
+
+    asset_list = get_asset_info_list()
+    
+    for i, name in enumerate(asset_list, start=1):
+        print(f"{i}: {name.get("name")}")
+        if i >= max_assets:
+            break
 
 def change_model(**kwargs): # Change the model used in the ask command
     global model_id,word_limit
@@ -184,23 +164,14 @@ def change_model(**kwargs): # Change the model used in the ask command
 
 
 def open_asset(**kwargs):
-    global asset_ids
     global current_asset
-    global assets_are_models
 
     item_index = kwargs.get('ITEM_INDEX')
 
-    if assets_are_models:
-        if item_index is not None and item_index in asset_ids:
-            print(f"Model ID: {asset_ids[item_index]}")
-        else:
-            print("Invalid model index or model index not provided.")
-        return
-    
-    opened_asset = None
+    asset_ids = get_asset_info_list()
 
     if item_index is not None:
-        asset_id = asset_ids.get(item_index)        
+        asset_id = asset_ids[item_index].get('id')
         
         if asset_id:
             opened_asset = get_asset_by_id(asset_id)
