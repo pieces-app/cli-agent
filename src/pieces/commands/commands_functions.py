@@ -171,20 +171,14 @@ def open_asset(**kwargs):
     asset_ids = get_asset_info_list()
 
     if item_index is not None:
-        asset_id = asset_ids[item_index].get('id')
-        
-        if asset_id:
-            opened_asset = get_asset_by_id(asset_id)
-        else:
-            asset_id = list_assets(max_results=1)
-            print()
-            opened_asset = get_asset_by_id(asset_id)
+        try:
+            asset_id = asset_ids[item_index+1].get('id') # because we begin from 1
+        except IndexError:
+            show_error("Invalid asset index or asset not found.")
             return
     else:
-        asset_id = list_assets(max_results=1)
-        print()
-        opened_asset = get_asset_by_id(asset_id)
-        
+        asset_id = asset_ids[0].get('id')
+    opened_asset = get_asset_by_id(asset_id)    
     current_asset = {asset_id}
     name = opened_asset.get('name', 'Unknown')
     created_readable = opened_asset.get('created', {}).get('readable', 'Unknown')
