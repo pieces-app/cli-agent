@@ -185,7 +185,7 @@ pieces commit -p
 ```
 
 #### Login and logout 
-#### Login
+##### Login
 
 Login to pieces 
 
@@ -193,21 +193,12 @@ Login to pieces
 pieces login
 ```
 
-#### Logout
+##### Logout
 
 Logout from pieces 
 
 ```bash
 pieces logout
-```
-
-
-##### change the llm model you are using:
-
-Change the model in the ask command.
-
-```bash
-pieces change_model [MODEL_INDEX]
 ```
 
 #### Additional Commands
