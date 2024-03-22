@@ -89,12 +89,12 @@ def main():
     change_model_parser.set_defaults(func=change_model)
 
     # Subparser for the 'login' command
-    change_model_parser = subparsers.add_parser('login', help='Login to pieces os')
-    change_model_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {pos_client.OSApi(api_client).sign_into_os().name}'))
+    login_parser = subparsers.add_parser('login', help='Login to pieces os')
+    login_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {pos_client.OSApi(api_client).sign_into_os().name}'))
 
     # Subparser for the 'logout' command
-    change_model_parser = subparsers.add_parser('logout', help='Logout from pieces os')
-    change_model_parser.set_defaults(func=lambda **kwargs:print("Logged out successfully") if sign_out() else print('Failed to logout out'))
+    logout_parser = subparsers.add_parser('logout', help='Logout from pieces os')
+    logout_parser.set_defaults(func=lambda **kwargs:print("Logged out successfully") if sign_out() else print('Failed to logout out'))
 
 
 

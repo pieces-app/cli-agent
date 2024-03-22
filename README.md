@@ -184,6 +184,32 @@ Auto commit the code to github and generate a commit message you can use the `-p
 pieces commit -p
 ```
 
+#### Login and logout 
+#### Login
+
+Login to pieces 
+
+```bash
+pieces login
+```
+
+#### Logout
+
+Logout from pieces 
+
+```bash
+pieces logout
+```
+
+
+##### change the llm model you are using:
+
+Change the model in the ask command.
+
+```bash
+pieces change_model [MODEL_INDEX]
+```
+
 #### Additional Commands
 ##### Retrieve the version of Pieces OS and the CLI:
 
