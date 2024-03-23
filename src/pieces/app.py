@@ -32,7 +32,7 @@ def main():
 
     # Subparser for the 'list' command
     list_parser = subparsers.add_parser('list', help='List assets or applications')
-    list_parser.add_argument('list_type_or_max', nargs='?', default='assets', help='Specify "apps" to list applications or a number for maximum assets to list, defaults to listing assets')
+    list_parser.add_argument('list_type_or_max', nargs='?', default='assets', help='Specify "apps" to list applications or a number for maximum assets to list, defaults to listing max 10 assets')
     list_parser.set_defaults(func=list_assets)
     
     # Subparser for the 'open' command
