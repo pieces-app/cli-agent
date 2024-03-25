@@ -2,7 +2,7 @@ from . import commands_functions
 import pyperclip
 from collections.abc import Iterable
 from pieces.api.config import run_in_loop
-from pieces.api.assets import (get_asset_info_list,get_asset_by_id,
+from pieces.api.assets import (get_assets_info_list,get_asset_by_id,
                                delete_asset_by_id,update_asset,
                                edit_asset_name,create_new_asset)
 from pieces.gui import show_error,print_model_details,space_below,double_line,delete_most_recent
@@ -37,7 +37,7 @@ def list_apps(**kwargs):
 
 def list_assets(max_assets:int=10, **kwargs):
 
-    asset_list = get_asset_info_list()
+    asset_list = get_assets_info_list()
     
     for i, name in enumerate(asset_list, start=1):
         print(f"{i}: {name.get("name")}")
@@ -49,7 +49,7 @@ def open_asset(**kwargs):
 
     item_index = kwargs.get('ITEM_INDEX')
 
-    asset_ids = get_asset_info_list()
+    asset_ids = get_assets_info_list()
 
     if item_index is not None:
         try:
@@ -59,38 +59,15 @@ def open_asset(**kwargs):
             return
     else:
         asset_id = asset_ids[0].get('id')
-    opened_asset = get_asset_by_id(asset_id)    
-    commands_functions.current_asset = {asset_id}
-    name = opened_asset.get('name', 'Unknown')
-    created_readable = opened_asset.get('created', {}).get('readable', 'Unknown')
-    updated_readable = opened_asset.get('updated', {}).get('readable', 'Unknown')
-    type = "No Type"
-    language = "No Language"
-    code_snippet = "No Code Available"
-    formats = opened_asset.get('formats', {})
+    
+    commands_functions.current_asset = {asset_id}    
+    open_asset = get_asset_by_id(asset_id)
+    asset_dict = extract_asset_info(open_asset)
+    
 
-    if formats:
-        iterable = formats.get('iterable', [])
-        if iterable:
-            first_item = iterable[0] if len(iterable) > 0 else None
-            if first_item:
-                classification_str = first_item.get('classification', {}).get('generic')
-                if classification_str:
-                # Extract the last part after the dot
-                    type = classification_str.split('.')[-1]
+    filepath = commands_functions.extract_code_from_markdown(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
 
-                language_str = first_item.get('classification', {}).get('specific')
-                if language_str:
-                    # Extract the last part after the dot
-                    language = language_str.split('.')[-1]
-                
-                fragment_string = first_item.get('fragment', {}).get('string').get('raw')
-                if fragment_string:
-                    raw = fragment_string
-                    code_snippet = commands_functions.extract_code_from_markdown(raw, name, language)
-
-    # Printing the asset details
-    print_model_details(name, created_readable, updated_readable, type, language, code_snippet)
+    print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
 
 def save_asset(**kwargs):
     ### THIS DOES NOT CURRENTLY WORK ###
@@ -166,6 +143,9 @@ def delete_asset(**kwargs):
         # Ask the user for confirmation before deleting
         # print()
         # open_asset()
+        asset_dict = extract_asset_info(get_asset_by_id(asset_to_delete))
+        print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
+
         confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
         if confirm == 'y':
             print("Deleting asset...")
@@ -207,3 +187,48 @@ def create_asset(**kwargs):
 
     except pyperclip.PyperclipException as e:
         show_error("Error accessing clipboard:", str(e))
+
+
+
+
+def extract_asset_info(data:dict) -> dict:
+    """
+    Return some info about the asset
+    :param data: The data containing information about the asset
+    :return: A dictionary containing the asset's name, date created, date updated, type, language, and raw code snippet
+    """
+
+    name = data.get('name', 'Unknown')
+    created_readable = data.get('created', {}).get('readable', 'Unknown')
+    updated_readable = data.get('updated', {}).get('readable', 'Unknown')
+    type = "No Type"
+    language = "No Language"
+    raw = None  # Initialize raw code snippet as None
+    formats = data.get('formats', {})
+
+    if formats:
+        iterable = formats.get('iterable', [])
+        if iterable:
+            first_item = iterable[0] if len(iterable) > 0 else None
+            if first_item:
+                classification_str = first_item.get('classification', {}).get('generic')
+                if classification_str:
+                    # Extract the last part after the dot
+                    type = classification_str.split('.')[-1]
+
+                language_str = first_item.get('classification', {}).get('specific')
+                if language_str:
+                    # Extract the last part after the dot
+                    language = language_str.split('.')[-1]
+
+                fragment_string = first_item.get('fragment', {}).get('string').get('raw')
+                if fragment_string:
+                    raw = fragment_string
+
+    return {"name":name,
+             "created_at":created_readable,
+             'updated_at': updated_readable,
+             "type" :type,
+             "language": language,
+             "raw": raw}
+             

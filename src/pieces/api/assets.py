@@ -54,7 +54,7 @@ def get_asset_ids(max=None, **kwargs):
         show_error("Exception when calling AssetsApi->assets_identifiers_snapshot:" ,e)
         return None
     
-def get_asset_info_list() -> List[Dict[str,str]]:
+def get_assets_info_list() -> List[Dict[str,str]]:
     """
     Returns a list of dictionaries containing the name and id of each asset
     """

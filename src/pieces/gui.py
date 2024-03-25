@@ -105,13 +105,13 @@ def print_help():
     print("  help            - Show this help message")
     print()
 
-def print_model_details(name, created_readable, updated_readable, type, language, code_snippet):
+def print_model_details(name, created_readable, updated_readable, type, language, code_snippet=None):
     print(f"Name: {name}")
     print(f"Created: {created_readable}")
     print(f"Updated: {updated_readable}")
     print(f"Type: {type}")
     print(f"Language: {language}")
-    print(f"Code: {code_snippet}")
+    if code_snippet: print(f"Code: {code_snippet}")
     print()
 
 def delete_most_recent():
