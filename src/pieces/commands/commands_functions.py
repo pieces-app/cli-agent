@@ -135,7 +135,7 @@ def list_apps(**kwargs):
         print("Error: The 'Applications' object does not contain an iterable list of applications.")
 
 
-def list_assets(max_assets, **kwargs):
+def list_assets(max_assets:int=10, **kwargs):
 
     asset_list = get_asset_info_list()
     
@@ -172,9 +172,9 @@ def open_asset(**kwargs):
 
     if item_index is not None:
         try:
-            asset_id = asset_ids[item_index+1].get('id') # because we begin from 1
+            asset_id = asset_ids[item_index-1].get('id') # because we begin from 1
         except IndexError:
-            show_error("Invalid asset index or asset not found.")
+            show_error("Invalid asset index or asset not found.","Please choose from the list or use 'pieces list_assets'")
             return
     else:
         asset_id = asset_ids[0].get('id')
@@ -384,9 +384,7 @@ def extract_code_from_markdown(markdown, name, language):
     # Minimize multiple consecutive newlines to a single newline
     extracted_code = re.sub(r'\n\s*\n', '\n', extracted_code)
 
-    # Define the directory path relative to the current script
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    directory = os.path.join(script_dir, 'opened_snippets')
+    directory = os.path.join(os.getcwd(),'opened_snippets')  # Change the dir to the same dir that the user writing the command in
 
     # Ensure the directory exists, create it if not
     if not os.path.exists(directory):
