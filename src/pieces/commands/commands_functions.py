@@ -119,7 +119,7 @@ def change_model(**kwargs): # Change the model used in the ask command
             raise Exception("Invalid model index or model index not provided.")
     except:
         print("Invalid model index or model index not provided.")
-        print("Please choose from the list or use 'pieces list models'")
+        print("Please choose from the list or use 'pieces list_models'")
         
 
 

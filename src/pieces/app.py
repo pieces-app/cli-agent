@@ -30,17 +30,17 @@ def main():
     # Passes the Parser to commands.py
     set_parser(parser)
 
-    # Subparser for the 'list' command
-    list_parser = subparsers.add_parser('list_assets', help='List assets or applications')
-    list_parser.add_argument('max_assets', nargs='?', type=int ,default=10, help='Specify "apps" to list applications or a number for maximum assets to list, defaults to listing assets')
+    # Subparser for the 'list_assets' command
+    list_parser = subparsers.add_parser('list_assets', help='List assets')
+    list_parser.add_argument('max_assets', nargs='?', type=int ,default=10, help='Max number of assets')
     list_parser.set_defaults(func=list_assets)
         
     # Subparser for the 'list_models' command
-    list_parser = subparsers.add_parser('list_models', help='List assets or applications')
+    list_parser = subparsers.add_parser('list_models', help='List models')
     list_parser.set_defaults(func=list_models)
 
     # Subparser for the 'list_apps' command
-    list_parser = subparsers.add_parser('list_apps', help='List assets or applications')
+    list_parser = subparsers.add_parser('list_apps', help='List applications')
     list_parser.set_defaults(func=list_apps)
     
     # Subparser for the 'open' command
