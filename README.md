@@ -184,6 +184,23 @@ Auto commit the code to github and generate a commit message you can use the `-p
 pieces commit -p
 ```
 
+#### Login and logout 
+##### Login
+
+Login to pieces 
+
+```bash
+pieces login
+```
+
+##### Logout
+
+Logout from pieces 
+
+```bash
+pieces logout
+```
+
 #### Additional Commands
 ##### Retrieve the version of Pieces OS and the CLI:
 
