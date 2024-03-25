@@ -39,3 +39,10 @@ def get_models_ids() -> Dict[str, Dict[str, Union[str, int]]]:
     models = {model["name"]:{"uuid":model["id"] ,"word_limit" :model["maxTokens"]["input"]} for model in response if model["cloud"] or model.get("downloaded",False)}
     return models
 
+
+def sign_out():
+    try:
+        pos_client.OSApi(api_client).sign_out_of_os()
+        return True
+    except:
+        return False

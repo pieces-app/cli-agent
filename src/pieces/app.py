@@ -2,6 +2,8 @@ import argparse
 from pieces.commands import *
 import sys
 from pieces.gui import show_error,print_help
+from pieces.api.config import pos_client, api_client
+from pieces.api.api_functions import sign_out
 
 class PiecesCli(argparse.ArgumentParser): # subclassing the ArgumentParser class to modify the error messages
     def error(self, message):
@@ -85,6 +87,14 @@ def main():
     change_model_parser = subparsers.add_parser('change_model', help='Change the model that you are using in the ask')
     change_model_parser.add_argument('MODEL_INDEX', type=int, nargs='?', default=None, help='Index of the model to use (optional)')
     change_model_parser.set_defaults(func=change_model)
+
+    # Subparser for the 'login' command
+    login_parser = subparsers.add_parser('login', help='Login to pieces os')
+    login_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {pos_client.OSApi(api_client).sign_into_os().name}'))
+
+    # Subparser for the 'logout' command
+    logout_parser = subparsers.add_parser('logout', help='Logout from pieces os')
+    logout_parser.set_defaults(func=lambda **kwargs:print("Logged out successfully") if sign_out() else print('Failed to logout out'))
 
 
 
