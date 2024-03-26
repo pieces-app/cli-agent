@@ -223,6 +223,8 @@ It is advised to keep the CLI tool updated to the latest version to ensure compa
 
 ## Contributing
 
+
+### Installation
 To run this project locally, follow these steps:
 
 1. Fork this project via GitHub. 
@@ -280,7 +282,24 @@ Note: Ensure you get latest from the [releases](https://github.com/pieces-app/cl
 
 11. To view all the CLI Commands
 ```shell 
-Pieces help 
+pieces help 
 ``` 
 
 these can be local/github/pypi etc.
+
+
+### Updating
+To update the project, run the following command:
+
+```shell
+pip install pieces --upgrade
+```
+
+### Uninstallation
+To uninstall the project, run the following command:
+
+```shell
+pip uninstall pieces
+```
+and don't forget to remove the virtual environment and dist folder
+
