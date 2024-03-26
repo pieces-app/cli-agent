@@ -7,13 +7,24 @@ from pieces.api.assets import (get_assets_info_list,get_asset_by_id,
                                edit_asset_name,create_new_asset)
 from pieces.gui import show_error,print_model_details,space_below,double_line,delete_most_recent
 
-def list_models(**kwargs):
+
+def list_command(**kwargs):
+    type = kwargs.get("type","assets")
+    max_assets = kwargs.get("max_assets",10)
+    if type == "assets":
+        list_assets(max_assets)
+    elif type == "apps":
+        list_apps()
+    elif type == "models":
+        list_models()
+
+def list_models():
     for idx,model_name in enumerate(commands_functions.models,start=1):
         print(f"{idx}: {model_name}")
     print(f"Currently using: {commands_functions.get_current_model_name()} with uuid {commands_functions.model_id}")
 
 
-def list_apps(**kwargs):
+def list_apps():
     # Get the list of applications
     application_list = commands_functions.list_applications()
 
@@ -35,7 +46,7 @@ def list_apps(**kwargs):
         print("Error: The 'Applications' object does not contain an iterable list of applications.")
 
 
-def list_assets(max_assets:int=10, **kwargs):
+def list_assets(max_assets:int=10):
 
     asset_list = get_assets_info_list()
     
@@ -55,7 +66,7 @@ def open_asset(**kwargs):
         try:
             asset_id = asset_ids[item_index-1].get('id') # because we begin from 1
         except IndexError:
-            show_error("Invalid asset index or asset not found.","Please choose from the list or use 'pieces list_assets'")
+            show_error("Invalid asset index or asset not found.","Please choose from the list or use 'pieces list assets'")
             return
     else:
         asset_id = asset_ids[0].get('id')

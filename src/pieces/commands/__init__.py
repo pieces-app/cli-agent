@@ -12,7 +12,8 @@ from .assets import (save_asset,
                     create_asset,
                     delete_asset,
                     list_models,
-                    list_apps)
+                    list_apps,
+                    list_command)
 __all__ = ['loop', 
            'find_most_similar_command',
            'git_commit',
@@ -29,5 +30,5 @@ __all__ = ['loop',
            'change_model',
            "startup",
            "list_models",
-           "list_apps"]
+           "list_apps","list_command"]
 
