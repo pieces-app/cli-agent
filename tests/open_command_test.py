@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from pieces.commands.commands_functions import startup,open_asset,list_assets
+from pieces.commands import startup,open_asset,list_assets
 import sys
 from io import StringIO
 import random,os
@@ -8,7 +8,7 @@ import json
 from pieces.commands.commands_functions import sanitize_filename
 
 class TestAskCommand(unittest.TestCase):
-    @patch('pieces.commands.commands_functions.open_asset')
+    @patch('pieces.commands.open_asset')
     def test_open_command(self, mock_open_question):
         # get all the list assets 
         startup()

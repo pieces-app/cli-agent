@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock,Mock
-from pieces.commands.commands_functions import list_assets,startup
+from pieces.commands import list_command,startup
 from pieces.commands import commands_functions
 from io import StringIO
 import sys
@@ -14,7 +14,7 @@ class TestListCommand(unittest.TestCase):
             sys.stdout = StringIO()
 
             # Call the function that prints to stdout
-            list_assets(i)
+            list_command(type = i)
 
             # Get the output and restore stdout
             assets = sys.stdout.getvalue()
