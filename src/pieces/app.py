@@ -11,12 +11,17 @@ class PiecesCli(argparse.ArgumentParser): # subclassing the ArgumentParser class
             try:
                 invalid_command = message.split("'")[1]
                 suggestion_text = f"Did you mean '{find_most_similar_command(list(self._subparsers._group_actions[0].choices.keys()),invalid_command)}'?"
+                # Custom error message for invalid command choices
+                print(f"Invalid command '{invalid_command}'\n{suggestion_text}")
             except IndexError:
                 suggestion_text = ""
                 invalid_command = "Unknown"
+                # Custom error message for invalid command choices
+                print(f"Invalid command '{invalid_command}'\n{suggestion_text}")
+            except AttributeError:
+                show_error("Error occured",message)
             
-            # Custom error message for invalid command choices
-            print(f"Invalid command '{invalid_command}'\n{suggestion_text}")
+            
         else:
             # Default error message for other types of errors
             show_error("Error occured",message)
@@ -32,11 +37,13 @@ def main():
     # Passes the Parser to commands.py
     set_parser(parser)
 
-    # Subparser for the 'list' command
-    list_parser = subparsers.add_parser('list', help='List assets or applications')
-    list_parser.add_argument('list_type_or_max', nargs='?', default='assets', help='Specify "apps" to list applications or a number for maximum assets to list, defaults to listing assets')
-    list_parser.set_defaults(func=list_assets)
-    
+    # Subparser for the 'lists' command
+    list_parser = subparsers.add_parser('list', help='List the assets or apps or models')
+    list_parser.add_argument('type', nargs='?', type=str ,default="assets", help='type of the list',choices=["assets","apps","models"])
+    list_parser.add_argument('max_assets', nargs='?', type=int ,default=10, help='Max number of assets')
+    list_parser.set_defaults(func=list_command)
+
+
     # Subparser for the 'open' command
     open_parser = subparsers.add_parser('open', help='Open an asset')
     open_parser.add_argument('ITEM_INDEX', type=int, nargs='?', default=None, help='Index of the item to open (optional)')
@@ -104,8 +111,14 @@ def main():
     commit_parser.set_defaults(func=git_commit)
 
 
+    try:
+        arg = sys.argv[1]
+    except IndexError: # No command provided
+        print_help()
+        return
+
     # Check if the 'run' or 'help' command is explicitly provided
-    if not sys.argv[1] in ['help', 'run']:
+    if not arg in ['help', 'run']:
         startup()
 
     args = parser.parse_args()

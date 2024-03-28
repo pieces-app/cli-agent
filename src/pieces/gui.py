@@ -78,8 +78,8 @@ def print_help():
     print("Available Commands:")
     print("  run             - Starts a looped version of the CLI that only requires you to type the flag")
     print()
-    print("  list            - List all assets")
-    print("  list x          - Lists maximum of x number of assets")
+    print("  list            - List all assets defaults to 10 assets")
+    print("  list assets x   - Lists maximum of x number of assets")
     print("  list apps       - List all registered applications")
     print("  list models     - List all registered AI models")
     print()
@@ -105,13 +105,13 @@ def print_help():
     print("  help            - Show this help message")
     print()
 
-def print_model_details(name, created_readable, updated_readable, type, language, code_snippet):
+def print_model_details(name, created_readable, updated_readable, type, language, code_snippet=None):
     print(f"Name: {name}")
     print(f"Created: {created_readable}")
     print(f"Updated: {updated_readable}")
     print(f"Type: {type}")
     print(f"Language: {language}")
-    print(f"Code: {code_snippet}")
+    if code_snippet: print(f"Code: {code_snippet}")
     print()
 
 def delete_most_recent():

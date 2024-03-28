@@ -6,8 +6,6 @@ import json
 from bs4 import BeautifulSoup
 import os
 import re
-import pyperclip
-from collections.abc import Iterable
 from pieces.api.pieces_websocket import WebSocketManager
 from pieces.api.api_functions import *
 from pieces.api.system import *
@@ -18,7 +16,6 @@ from pieces import __version__
 
 # Globals for CLI Memory.
 ws_manager = WebSocketManager()
-asset_ids = {} # Asset ids for any list or search
 assets_are_models = False
 current_asset = {}
 parser = None
@@ -106,63 +103,7 @@ def search(query, **kwargs):
     else:
         print("No results found.")
 
-def list_assets(list_type_or_max='assets', **kwargs):
-    max_results = None
-    list_apps = False
-    global assets_are_models
 
-    # Check if the argument is a digit (for max_results value) or 'apps'
-    if list_type_or_max.isdigit():
-        max_results = int(list_type_or_max)
-    elif list_type_or_max == 'apps':
-        list_apps = True
-
-    if list_type_or_max == 'models':
-        for idx,model_name in enumerate(models,start=1):
-            print(f"{idx}: {model_name}")
-        print(f"Currently using: {get_current_model_name()} with uuid {model_id}")
-        return
-
-    if list_apps:
-        application_list = list_applications()
-
-        if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
-            for i, app in enumerate(application_list.iterable, start=1):
-                app_name = getattr(app, 'name', 'Unknown').value if hasattr(app, 'name') and hasattr(app.name, 'value') else 'Unknown'
-                app_version = getattr(app, 'version', 'Unknown')
-                app_platform = getattr(app, 'platform', 'Unknown').value if hasattr(app, 'platform') and hasattr(app.platform, 'value') else 'Unknown'
-
-                print(f"{i}: {app_name}, {app_version}, {app_platform}")
-        else:
-            print("Error: The 'Applications' object does not contain an iterable list of applications.")
-
-        return  
-
-    # Existing logic for listing assets
-    global run_in_loop, asset_ids
-    
-    default_max_results = 10
-    
-    if max_results is None:
-        max_results = default_max_results
-
-    assets_are_models = False
-
-    ids = get_asset_ids(max=max_results)
-    names = get_asset_names(ids)
-    
-    for i, name in enumerate(names, start=1):
-        print(f"{i}: {name}")
-        if i >= max_results:
-            break
-
-    if run_in_loop:
-        asset_ids = {i: id for i, id in enumerate(ids, start=1)}
-        first_id = ids[0]
-        return first_id
-    else:
-        first_id = ids[0]
-        return first_id
 
 def change_model(**kwargs): # Change the model used in the ask command
     global model_id,word_limit
@@ -180,195 +121,6 @@ def change_model(**kwargs): # Change the model used in the ask command
         print("Invalid model index or model index not provided.")
         print("Please choose from the list or use 'pieces list models'")
         
-
-
-
-def open_asset(**kwargs):
-    global asset_ids
-    global current_asset
-    global assets_are_models
-
-    item_index = kwargs.get('ITEM_INDEX')
-
-    if assets_are_models:
-        if item_index is not None and item_index in asset_ids:
-            print(f"Model ID: {asset_ids[item_index]}")
-        else:
-            print("Invalid model index or model index not provided.")
-        return
-    
-    opened_asset = None
-
-    if item_index is not None:
-        asset_id = asset_ids.get(item_index)        
-        
-        if asset_id:
-            opened_asset = get_asset_by_id(asset_id)
-        else:
-            asset_id = list_assets(max_results=1)
-            print()
-            opened_asset = get_asset_by_id(asset_id)
-            return
-    else:
-        asset_id = list_assets(max_results=1)
-        print()
-        opened_asset = get_asset_by_id(asset_id)
-        
-    current_asset = {asset_id}
-    name = opened_asset.get('name', 'Unknown')
-    created_readable = opened_asset.get('created', {}).get('readable', 'Unknown')
-    updated_readable = opened_asset.get('updated', {}).get('readable', 'Unknown')
-    type = "No Type"
-    language = "No Language"
-    code_snippet = "No Code Available"
-    formats = opened_asset.get('formats', {})
-
-    if formats:
-        iterable = formats.get('iterable', [])
-        if iterable:
-            first_item = iterable[0] if len(iterable) > 0 else None
-            if first_item:
-                classification_str = first_item.get('classification', {}).get('generic')
-                if classification_str:
-                # Extract the last part after the dot
-                    type = classification_str.split('.')[-1]
-
-                language_str = first_item.get('classification', {}).get('specific')
-                if language_str:
-                    # Extract the last part after the dot
-                    language = language_str.split('.')[-1]
-                
-                fragment_string = first_item.get('fragment', {}).get('string').get('raw')
-                if fragment_string:
-                    raw = fragment_string
-                    code_snippet = extract_code_from_markdown(raw, name, language)
-
-    # Printing the asset details
-    print_model_details(name, created_readable, updated_readable, type, language, code_snippet)
-
-def save_asset(**kwargs):
-    ### THIS DOES NOT CURRENTLY WORK ###
-    global application
-    global current_asset
-    print("Not Currently Working")
-
-    if not current_asset:
-        open_asset()
-    else:
-        asset_to_update = current_asset.get('id')
-        # Pass asset and file name
-        update_asset(asset_to_update, application)
-
-# Probably needs renamed. This only currently edits the Asset's name
-def edit_asset(**kwargs):
-    global application
-    global current_asset
-
-    if not current_asset:
-        open_asset()
-        asset_to_update = current_asset.get('id')
-
-        # Ask the user for a new name
-        new_name = input("Enter the new name for the asset: ")
-
-        # Check if the user actually entered a name
-        if new_name.strip():
-            # Pass asset and new name to the edit_asset_name function
-            edit_asset_name(asset_to_update, new_name)
-        else:
-            print("No new name provided. Asset name not updated.")
-    else:
-        asset_to_update = current_asset.get('id')
-        if asset_to_update is None:
-            print("No asset to update.")
-            return
-
-        # Ask the user for a new name
-        new_name = input("Enter the new name for the asset: ")
-
-        # Check if the user actually entered a name
-        if new_name.strip():
-            # Pass asset and new name to the edit_asset_name function
-            edit_asset_name(asset_to_update, new_name)
-        else:
-            print("No new name provided. Asset name not updated.")
-
-def delete_asset(**kwargs):
-    global application
-    global current_asset
-
-    if not current_asset:
-        # Open the most recent asset
-        if run_in_loop:
-            open_asset()
-            delete_most_recent()
-        else:
-            print()
-            asset_to_delete = list_assets(max_results=1)
-            open_asset()
-            print()
-            confirm = input("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone. (y/n): ").strip().lower()
-            if confirm == 'y':
-                print("Deleting asset...")
-                # print(asset_to_delete)
-                delete_result = delete_asset_by_id(asset_to_delete)
-                print(delete_result)
-                current_asset = None
-                space_below("Asset Deleted")
-                list_assets()
-            elif confirm == 'n':
-                space_below("Deletion cancelled")
-            else:
-                space_below("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
-    else:
-        asset_to_delete = list(current_asset)[0]
-
-        # Ask the user for confirmation before deleting
-        # print()
-        # open_asset()
-        confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
-        if confirm == 'y':
-            print("Deleting asset...")
-            delete_asset_by_id(asset_to_delete)
-            current_asset = None
-            space_below("Asset Deleted")
-            list_assets()
-        elif confirm == 'n':
-            print("Deletion cancelled.")
-        else:
-            print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
-    
-def create_asset(**kwargs):
-    global application
-    global current_asset
-    
-    # TODO add more ways to create an asset such as an entire file
-
-    # Save text copied to the clipboard as an asset
-    try:
-        text = pyperclip.paste()
-        double_line("Content to save: ")
-        space_below(text)
-
-        # Ask the user for confirmation to save
-        user_input = input("Do you want to save this content? (y/n): ").strip().lower()
-        if user_input == 'y':
-            space_below("Saving Content...")
-            new_asset = create_new_asset(application, raw_string=text, metadata=None)
-    
-            current_asset = {new_asset.id}
-            # print(current_asset)
-            print(f"Asset Created use 'open' to view")
-
-            return new_asset
-            # Add your saving logic here
-        elif user_input == 'n':
-            space_below("Save Cancelled")
-        else:
-            print("Invalid input. Please type 'y' to save or 'n' to cancel.")
-
-    except pyperclip.PyperclipException as e:
-        show_error("Error accessing clipboard:", str(e))
 
 
 
@@ -419,9 +171,7 @@ def extract_code_from_markdown(markdown, name, language):
     # Minimize multiple consecutive newlines to a single newline
     extracted_code = re.sub(r'\n\s*\n', '\n', extracted_code)
 
-    # Define the directory path relative to the current script
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    directory = os.path.join(script_dir, 'opened_snippets')
+    directory = os.path.join(os.getcwd(),'opened_snippets')  # Change the dir to the same dir that the user writing the command in
 
     # Ensure the directory exists, create it if not
     if not os.path.exists(directory):
