@@ -5,6 +5,8 @@ from pydantic import ValidationError
 from pieces_os_client.models.classification import Classification
 from pieces_os_client.rest import ApiException
 from typing import Dict,List
+import json
+
 def create_new_asset(application, raw_string, metadata=None):
     assets_api = pos_client.AssetsApi(api_client)
 
@@ -156,6 +158,12 @@ def delete_asset_by_id(asset_id):
 
 def reclassify_asset(asset_id, classification):
     asset_api = pos_client.AssetApi(api_client)
+    with open(f'{BASE_DIR}/commands/extensions.json') as f:
+        extension_mapping = json.load(f)
+        if classification not in extension_mapping:
+            show_error(f"Invalid classification: {classification}","Please choose from the following: "+", ".join(extension_mapping.keys()))
+            return
+        
     try:
         response = asset_api.asset_reclassify(asset_reclassification=
                                               pos_client.AssetReclassification(ext=classification,asset=asset_api.asset_snapshot(asset_id)))
