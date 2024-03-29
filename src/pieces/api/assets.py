@@ -137,9 +137,6 @@ def edit_asset_name(asset_id, new_name):
         print(existing_name)
         return
 
-    # Print the entire asset with updates
-    print("Asset with updates, ready to send to API:\n", asset)
-
     # Update the asset using the API
     try:
         response = asset_api.asset_update(asset=asset, transferables=False)
