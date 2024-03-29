@@ -17,9 +17,12 @@
 - [Getting Started](#getting-started)
 - [Usage](#usage)
   - [Run](#run)
-  - [List Assets](#list-assets)
-  - [Open, Save, Create, Edit, and Delete Assets](#open-save-create-edit-delete-assets)
+  - [List](#list-command)
+  - [Open, Save, Create, Edit, and Delete Assets](#open)
   - [Search and Query](#search-and-query)
+  - [Change Model](#change-model)
+  - [Ask a Question](#Ask-a-question-to-a-model:)
+  - [login and logout](#login-and-logout)
   - [Additional Commands](#additional-commands)
 - [Supported Versions](#supported-versions)
 
@@ -71,8 +74,8 @@ If you have a numbered list or search open you can just type the number and it w
   pieces run
   ```
 
-#### List Assets
-To list assets or applications, use the command:
+#### List command
+To list assets applications or models, use the command:
 
 ##### Default of 10
   ```bash
@@ -94,7 +97,6 @@ To list assets or applications, use the command:
   pieces list models
   ```
 
-##### Open, Save, Create, Edit, and Delete Assets
 
 ##### Open an asset:
 
@@ -103,6 +105,10 @@ Opens an asset from a list or search. If only "open" is used then it will open y
 ```bash
 pieces open [ITEM_INDEX]
 ```
+##### Save, Create, Edit, and Delete Assets
+
+The save create edit and delete commands currrently work on the current asset which is by defualt set to the most recent one and you can change the current asset to anything using the open command above.
+
 
 ##### Save the current asset:
 
@@ -185,15 +191,11 @@ pieces commit -p
 ```
 
 #### Login and logout 
-##### Login
-
 Login to pieces 
 
 ```bash
 pieces login
 ```
-
-##### Logout
 
 Logout from pieces 
 
