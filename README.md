@@ -128,11 +128,26 @@ pieces create
 
 ##### Edit an existing asset:
 
-This currently only works for an assets's name
+This will edit the name and reclassify the current asset.
 
 ```bash
 pieces edit
 ```
+This is used to edit both the classification and name of an asset.
+
+
+```bash
+pieces edit --name "new name"
+```
+to edit the name
+
+```bash
+pieces edit --classification python
+```
+to edit the classification
+
+
+You can you -n or -c to change the name and classification respectively with the edit command.
 
 ##### Delete an asset:
 

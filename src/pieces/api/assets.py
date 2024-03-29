@@ -153,6 +153,16 @@ def delete_asset_by_id(asset_id):
     except Exception as e:
         return f"Failed to delete {asset_id}"
 
+
+def reclassify_asset(asset_id, classification):
+    asset_api = pos_client.AssetApi(api_client)
+    try:
+        response = asset_api.asset_reclassify(asset_reclassification=
+                                              pos_client.AssetReclassification(ext=classification,asset=asset_api.asset_snapshot(asset_id)))
+    except Exception as e:
+        show_error("Error reclassifying asset: ",{e})
+
+
 def update_asset(asset_id, application):
     ## NOT CURRENTLY WORKING ##
 

@@ -3,7 +3,7 @@ import pyperclip
 from collections.abc import Iterable
 from pieces.api.assets import (get_assets_info_list,get_asset_by_id,
                                delete_asset_by_id,update_asset,
-                               edit_asset_name,create_new_asset,get_asset_ids)
+                               edit_asset_name,create_new_asset,get_asset_ids,reclassify_asset)
 from pieces.gui import show_error,print_model_details,space_below,double_line
 
 current_asset = get_asset_ids(1)[0] # default current asset to the most recent
@@ -92,16 +92,20 @@ def save_asset(**kwargs):
 def edit_asset(**kwargs):
     asset_dict = extract_asset_info(get_asset_by_id(current_asset))
     print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
+    
+    name = kwargs.get('name', '')
+    classification = kwargs.get('classification', '')
 
-    # Ask the user for a new name
-    new_name = input("Enter the new name for the asset: ")
+    if not name and not classification: # If no name or no classification is provided
+        # Ask the user for a new name
+        name = input("Enter the new name for the asset: ").strip()
+        classification = input("Enter the classification for the asset: ").strip()
 
     # Check if the user actually entered a name
-    if new_name.strip():
-        # Pass asset and new name to the edit_asset_name function
-        edit_asset_name(current_asset, new_name)
-    else:
-        print("No new name provided. Asset name not updated.")
+    if name:
+        edit_asset_name(current_asset, name)
+    if classification:
+        reclassify_asset(current_asset, classification)
 
 def delete_asset(**kwargs):
     

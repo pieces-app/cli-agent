@@ -67,6 +67,8 @@ def main():
 
     # Subparser for the 'edit' command
     edit_parser = subparsers.add_parser('edit', help='Edit an existing asset')
+    edit_parser.add_argument('--name',"-n",dest='name', help='New name for the asset', required=False)
+    edit_parser.add_argument('--classification',"-c",dest='classification', help='reclassify the asset', required=False)
     edit_parser.set_defaults(func=edit_asset)
 
     # Subparser for the 'ask' command
