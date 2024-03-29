@@ -1,6 +1,6 @@
 ## ASSET CALLS 
 from .config import *
-from pieces.gui import show_error
+from ..gui import show_error
 from pydantic import ValidationError
 from pieces_os_client.models.classification import Classification
 from pieces_os_client.rest import ApiException

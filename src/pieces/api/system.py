@@ -1,10 +1,10 @@
 ## WELLNESS AND SYSTEM 
 import platform
-from pieces.store import *
+from ..store import *
 from .config import *
 import time
 import subprocess
-from pieces import __version__
+from .. import __version__
 from typing import Optional 
 def categorize_os():
     # Get detailed platform information
