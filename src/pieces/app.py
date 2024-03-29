@@ -1,9 +1,9 @@
 import argparse
-from .commands import *
+from pieces.commands import *
 import sys
-from .gui import show_error,print_help
-from .api.config import pos_client, api_client
-from .api.api_functions import sign_out
+from pieces.gui import show_error,print_help
+from pieces.api.config import pos_client, api_client
+from pieces.api.api_functions import sign_out
 
 class PiecesCli(argparse.ArgumentParser): # subclassing the ArgumentParser class to modify the error messages
     def error(self, message):

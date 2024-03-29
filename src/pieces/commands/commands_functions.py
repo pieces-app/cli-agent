@@ -1,18 +1,18 @@
 ## MAIN FUNCTIONS | Line ~33
 ## HELPER FUNCTIONS | Line ~381
 
-from ..gui import *
+from pieces.gui import *
 import json
 from bs4 import BeautifulSoup
 import os
 import re
-from ..api.pieces_websocket import WebSocketManager
-from ..api.api_functions import *
-from ..api.system import *
-from ..api.assets import *
-from ..api.config import *
+from pieces.api.pieces_websocket import WebSocketManager
+from pieces.api.api_functions import *
+from pieces.api.system import *
+from pieces.api.assets import *
+from pieces.api.config import *
 import pickle
-from .. import __version__
+from pieces import __version__
 
 # Globals for CLI Memory.
 ws_manager = WebSocketManager()

@@ -1,16 +1,16 @@
 import sys
 import platform
-from ..gui import *
+from pieces.gui import *
 import platform
 import sys
 import shlex
 from prompt_toolkit import PromptSession
-from ..api import config
+from pieces.api import config
 from .commands_functions import (print_instructions,
                                  print_response, welcome,startup,
                                  ws_manager,get_version)
 from . import commands_functions
-from .. import __version__
+from pieces import __version__
 
 def levenshtein_distance(s1, s2):
     # If s1 is shorter than s2, swap them to minimize the number of operations

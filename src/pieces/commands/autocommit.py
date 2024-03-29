@@ -1,7 +1,7 @@
 import subprocess
 import re
-from ..gui import show_error
-from ..api import config
+from pieces.gui import show_error
+from pieces.api import config
 import re
 import pieces_os_client as pos_client
 

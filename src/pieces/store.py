@@ -1,7 +1,7 @@
 ### TODO need to implement caching for the cli version and more advanced caching strategies ###
 
 import sqlite3
-from .api.config import applications_db_path
+from pieces.api.config import applications_db_path
 
 def create_table():
     with sqlite3.connect(applications_db_path) as conn:

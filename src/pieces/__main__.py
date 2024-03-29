@@ -1,5 +1,5 @@
 # To be able to use 
 # python src/pieces [command] [args]
-from .app import main
+from pieces.app import main
 
 main()
