@@ -161,12 +161,13 @@ def reclassify_asset(asset_id, classification):
     with open(f'{BASE_DIR}/commands/extensions.json') as f:
         extension_mapping = json.load(f)
         if classification not in extension_mapping:
-            show_error(f"Invalid classification: {classification}","Please choose from the following: "+", ".join(extension_mapping.keys()))
+            show_error(f"Invalid classification: {classification}","Please choose from the following: \n "+", ".join(extension_mapping.keys()))
             return
         
     try:
         response = asset_api.asset_reclassify(asset_reclassification=
                                               pos_client.AssetReclassification(ext=classification,asset=asset_api.asset_snapshot(asset_id)))
+        print(f"reclassify the asset to {classification} successfully")
     except Exception as e:
         show_error("Error reclassifying asset: ",{e})
 

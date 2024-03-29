@@ -1,10 +1,10 @@
 from . import commands_functions
 import pyperclip
 from collections.abc import Iterable
-from ..api.assets import (get_assets_info_list,get_asset_by_id,
+from pieces.api.assets import (get_assets_info_list,get_asset_by_id,
                                delete_asset_by_id,update_asset,
                                edit_asset_name,create_new_asset,get_asset_ids,reclassify_asset)
-from ..gui import show_error,print_model_details,space_below,double_line
+from pieces.gui import show_error,print_model_details,space_below,double_line
 
 current_asset = get_asset_ids(1)[0] # default current asset to the most recent
 
@@ -64,6 +64,7 @@ def open_asset(**kwargs):
     global current_asset
 
     item_index = kwargs.get('ITEM_INDEX',1)
+    if not item_index: item_index = 1
 
     asset_ids = get_assets_info_list()
     try:
