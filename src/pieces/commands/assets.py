@@ -1,10 +1,10 @@
 from . import commands_functions
 import pyperclip
 from collections.abc import Iterable
-from pieces.api.assets import (get_assets_info_list,get_asset_by_id,
+from ..api.assets import (get_assets_info_list,get_asset_by_id,
                                delete_asset_by_id,update_asset,
                                edit_asset_name,create_new_asset,get_asset_ids,reclassify_asset)
-from pieces.gui import show_error,print_model_details,space_below,double_line
+from ..gui import show_error,print_model_details,space_below,double_line
 
 current_asset = get_asset_ids(1)[0] # default current asset to the most recent
 
@@ -63,7 +63,7 @@ def list_assets(max_assets:int=10):
 def open_asset(**kwargs):
     global current_asset
 
-    item_index = kwargs.get('ITEM_INDEX')
+    item_index = kwargs.get('ITEM_INDEX',1)
 
     asset_ids = get_assets_info_list()
     try:
@@ -98,8 +98,8 @@ def edit_asset(**kwargs):
 
     if not name and not classification: # If no name or no classification is provided
         # Ask the user for a new name
-        name = input("Enter the new name for the asset: ").strip()
-        classification = input("Enter the classification for the asset: ").strip()
+        name = input("Enter the new name for the asset[leave blank to keep the same]: ").strip()
+        classification = input("Enter the classification for the asset[leave blank to keep the same]: ").strip()
 
     # Check if the user actually entered a name
     if name:
