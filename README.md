@@ -112,7 +112,7 @@ The save create edit and delete commands currrently work on the current asset wh
 
 ##### Save the current asset:
 
-You need to use the open command to open a code snippet edit it and save it to pieces os it saves the changes to pieces os.
+You need to edit the snippet code that was opened via the open command `pieces open` then save the changes to using the save command
 
 ```bash
 pieces save
