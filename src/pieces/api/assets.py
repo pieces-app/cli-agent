@@ -158,7 +158,7 @@ def delete_asset_by_id(asset_id):
 
 def reclassify_asset(asset_id, classification):
     asset_api = pos_client.AssetApi(api_client)
-    with open(f'{BASE_DIR}/commands/extensions.json') as f:
+    with open(extensions_dir) as f:
         extension_mapping = json.load(f)
         if classification not in extension_mapping:
             show_error(f"Invalid classification: {classification}","Please choose from the following: \n "+", ".join(extension_mapping.keys()))
@@ -172,17 +172,12 @@ def reclassify_asset(asset_id, classification):
         show_error("Error reclassifying asset: ",{e})
 
 
-def update_asset(asset_id, application):
+def update_asset(file_path,asset_id, application):
     ## NOT CURRENTLY WORKING ##
 
     asset_api = pos_client.AssetApi(api_client)
 
     working_asset = get_asset_by_id(asset_id)
-    # file_name = working_asset.get('name')
-    file_name = "Pieces_is_the_Best.tex" ################ TEST
-
-    # Define the path to the file
-    file_path = f"opened_snippets/{file_name}"
 
     # Open and read the file content
     try:

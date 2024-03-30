@@ -171,14 +171,12 @@ def extract_code_from_markdown(markdown, name, language):
     # Minimize multiple consecutive newlines to a single newline
     extracted_code = re.sub(r'\n\s*\n', '\n', extracted_code)
 
-    directory = os.path.join(os.getcwd(),'opened_snippets')  # Change the dir to the same dir that the user writing the command in
-
     # Ensure the directory exists, create it if not
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    if not os.path.exists(open_snippet_dir):
+        os.makedirs(open_snippet_dir)
 
     # Path to save the extracted code
-    file_path = os.path.join(directory, f'{filename}{file_extension}')
+    file_path = os.path.join(open_snippet_dir, f'{filename}{file_extension}')
 
     # Writing the extracted code to a new file
     with open(file_path, 'w') as file:
@@ -187,7 +185,7 @@ def extract_code_from_markdown(markdown, name, language):
     return file_path
 
 def get_file_extension(language):
-    with open(f'{BASE_DIR}/commands/extensions.json') as f:
+    with open(extensions_dir) as f:
         extension_mapping = json.load(f)
 
     # Lowercase the language for case-insensitive matching
