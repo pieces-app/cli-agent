@@ -6,6 +6,7 @@ import pieces_os_client
 from rich.live import Live
 from rich.markdown import Markdown
 from . import config
+import pieces_os_client as pos_client
 
 WEBSOCKET_URL = "ws://localhost:1000/qgpt/stream"
 TIMEOUT = 20  # seconds
@@ -38,7 +39,7 @@ class WebSocketManager:
             response = pieces_os_client.QGPTStreamOutput.from_json(message)
             if response.question:
                 answers = response.question.answers.iterable
-                if not self.live:  # Create live instance if it doesn't exist
+                if not self.live and self.verbose:  # Create live instance if it doesn't exist
                     self.live = Live()
                     self.live.__enter__()  # Enter the context manually
                 for answer in answers:
@@ -95,28 +96,48 @@ class WebSocketManager:
         ws.run_forever()
         
 
-    def send_message(self):
+    def send_message(self,model_id,query,application,raw):
         """Send a message over the websocket."""
-        message = {
-            "question": {
-                "query": self.query,
-                "relevant": {"iterable": []},
-                "model": self.model_id
-            },
-            "conversation": self.conversation
-        }
-        json_message = json.dumps(message)
-
+        if raw:
+            message = pos_client.QGPTStreamInput(
+                question = pos_client.QGPTQuestionInput(
+                    query=query,
+                    model=model_id,
+                    relevant = pos_client.RelevantQGPTSeeds(
+                    iterable=[pos_client.RelevantQGPTSeed(
+                                seed = pos_client.Seed(
+                                    type="SEEDED_ASSET",
+                                    asset=pos_client.SeededAsset(
+                                        application=application,
+                                        format=pos_client.SeededFormat(
+                                            fragment = pos_client.SeededFragment(
+                                                string = pos_client.TransferableString(raw = raw)
+                                            ),
+                                        ),
+                                    ), 
+                                ),
+                            )]
+                    ),
+                )).to_json()
+        else:
+            message=json.dumps({
+                "question": {
+                    "query": query,
+                    "relevant": {"iterable": []},
+                    "model": model_id
+                },
+                "conversation": self.conversation})
+        print(message)
         if self.is_connected:
             try:
-                self.ws.send(json_message)
+                self.ws.send(message)
                 if self.verbose:
                     print("Response: ")
             except websocket.WebSocketException as e:
                 print(f"Error sending message: {e}")
         else:
             self.open_websocket()
-            self.send_message()
+            self.send_message(model_id,query,application,raw)
 
     def close_websocket_connection(self):
         """Close the websocket connection."""
@@ -124,19 +145,16 @@ class WebSocketManager:
             self.ws.close()
             self.is_connected = False
 
-    def ask_question(self, model_id, query,verbose = True):
+    def ask_question(self, model_id,query,application = None,raw=None,verbose = True):
         """Ask a question using the websocket."""
         self.final_answer = ""
-        self.model_id = model_id
-        self.query = query
         self.verbose = verbose
-        self.send_message()
+        self.send_message(model_id,query,application,raw)
         finishes = self.message_compeleted.wait(TIMEOUT)
         self.message_compeleted.clear()
         if not config.run_in_loop and self.is_connected:
             self.close_websocket_connection()
-        if not finishes:
-            self.verbose = True
-            raise ConnectionError("Failed to get the reponse back")
         self.verbose = True
+        if not finishes:
+            raise ConnectionError("Failed to get the reponse back")
         return self.final_answer

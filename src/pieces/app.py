@@ -107,7 +107,7 @@ def main():
 
     # Subparser for the 'commit' command
     commit_parser = subparsers.add_parser('commit', help='Auto generate a github commit messaage and commit changes')
-    commit_parser.add_argument("-p","--push",action="store_true", help="push the code to github")
+    commit_parser.add_argument("-p","--push",dest="push",action="store_true", help="push the code to github")
     commit_parser.set_defaults(func=git_commit)
 
 
