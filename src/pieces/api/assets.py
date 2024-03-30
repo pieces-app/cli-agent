@@ -172,51 +172,31 @@ def reclassify_asset(asset_id, classification):
         show_error("Error reclassifying asset: ",{e})
 
 
-def update_asset(file_path,asset_id, application):
-    ## NOT CURRENTLY WORKING ##
-
-    asset_api = pos_client.AssetApi(api_client)
-
-    working_asset = get_asset_by_id(asset_id)
-
-    # Open and read the file content
+def update_asset(file_path,asset_id):
     try:
-        with open(file_path, 'r') as file:
-            new_content = file.read()
+        with open(file_path,"r") as f:
+            data = f.read()
     except FileNotFoundError:
-        print(f"File not found: {file_path}")
+        show_error("Error in update asset","File not found")
         return
-    except Exception as e:
-        show_error("Error reading file: ",{e})
+    asset_api = pos_client.AssetApi(api_client)
+    format_api = pos_client.FormatApi(api_client)
+
+    # get asset
+    created = asset_api.asset_snapshot(asset_id, transferables=False)
+
+    # update the original format's value
+    original = format_api.format_snapshot(created.original.id, transferable=True)
+    original_value = original.fragment.string.raw if original.fragment and original.fragment.string else None
+
+    # check if the string value is not empty
+    if original_value is None:
+        show_error("Error in update asset","Original value is empty")
         return
 
-    def update_string(obj):
-        if isinstance(obj, dict):
-            for key, value in obj.items():
-                if isinstance(value, dict):
-                    update_string(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        update_string(item)
-                elif key == 'raw' and isinstance(value, str):
-                    obj[key] = new_content
+    # call our endpoint to update our value. && update our value.
+    original.fragment.string.raw = data
+    original = format_api.format_update_value(transferable=True, format=original)
 
-    # print(working_asset)
-    # exported_asset = ExportedAsset(name="This is a test", description="Testing description", raw=FileFormat(string={"string": "This, This is me testing export asset"}), created=GroupedTimestamp(value=datetime.now()))
+    return original
 
-    # print(exported_asset)
-    format_api_instance = pos_client.FormatApi(api_client)
-    format = (
-        pos_client.Format(
-            asset=working_asset,
-            id=asset_id,
-            creator="ea47fe2f-a503-4edb-861a-7c55ca446859",
-            classification=Classification(generic="CODE", specific="tex"),
-            role="BOTH",
-            application=application,
-        ),
-    )
-    api_response = format_api_instance.format_update_value(
-        transferable=False, format=format
-    )
-    print(api_response)
