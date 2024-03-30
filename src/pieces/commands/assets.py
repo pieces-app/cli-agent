@@ -83,10 +83,11 @@ def open_asset(**kwargs):
 def save_asset(**kwargs):
     asset = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
     file_path = os.path.join(open_snippet_dir , f"{commands_functions.sanitize_filename(asset["name"])}{commands_functions.get_file_extension(asset["language"])}")
-    print(f"Saving {file_path} to {asset['name']}")
+    print(f"Saving {file_path} to {asset['name']} snippet with uuid {commands_functions.current_asset}")
     
     # Pass asset and file name
     update_asset(file_path, commands_functions.current_asset)
+    print("saved successfully")
 
 # Probably needs renamed. This only currently edits the Asset's name
 def edit_asset(**kwargs):
