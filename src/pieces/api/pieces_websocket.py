@@ -127,7 +127,6 @@ class WebSocketManager:
                     "model": model_id
                 },
                 "conversation": self.conversation})
-        print(message)
         if self.is_connected:
             try:
                 self.ws.send(message)
