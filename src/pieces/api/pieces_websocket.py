@@ -96,37 +96,15 @@ class WebSocketManager:
         ws.run_forever()
         
 
-    def send_message(self,model_id,query,application,raw):
+    def send_message(self,model_id,query,relevant):
         """Send a message over the websocket."""
-        if raw:
-            message = pos_client.QGPTStreamInput(
-                question = pos_client.QGPTQuestionInput(
-                    query=query,
-                    model=model_id,
-                    relevant = pos_client.RelevantQGPTSeeds(
-                    iterable=[pos_client.RelevantQGPTSeed(
-                                seed = pos_client.Seed(
-                                    type="SEEDED_ASSET",
-                                    asset=pos_client.SeededAsset(
-                                        application=application,
-                                        format=pos_client.SeededFormat(
-                                            fragment = pos_client.SeededFragment(
-                                                string = pos_client.TransferableString(raw = raw)
-                                            ),
-                                        ),
-                                    ), 
-                                ),
-                            )]
-                    ),
-                )).to_json()
-        else:
-            message=json.dumps({
-                "question": {
-                    "query": query,
-                    "relevant": {"iterable": []},
-                    "model": model_id
-                },
-                "conversation": self.conversation})
+        message=json.dumps({
+            "question": {
+                "query": query,
+                "relevant": relevant,
+                "model": model_id
+            },
+            "conversation": self.conversation})
         if self.is_connected:
             try:
                 self.ws.send(message)
@@ -136,7 +114,7 @@ class WebSocketManager:
                 print(f"Error sending message: {e}")
         else:
             self.open_websocket()
-            self.send_message(model_id,query,application,raw)
+            self.send_message(model_id,query,relevant)
 
     def close_websocket_connection(self):
         """Close the websocket connection."""
@@ -144,11 +122,11 @@ class WebSocketManager:
             self.ws.close()
             self.is_connected = False
 
-    def ask_question(self, model_id,query,application = None,raw=None,verbose = True):
+    def ask_question(self, model_id,query,relevant={"iterable": []},verbose = True):
         """Ask a question using the websocket."""
         self.final_answer = ""
         self.verbose = verbose
-        self.send_message(model_id,query,application,raw)
+        self.send_message(model_id,query,relevant)
         finishes = self.message_compeleted.wait(TIMEOUT)
         self.message_compeleted.clear()
         if not config.run_in_loop and self.is_connected:

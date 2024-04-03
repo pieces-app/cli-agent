@@ -5,6 +5,7 @@ from typing import Optional,Tuple
 from pieces.api.config import api_client,pos_client
 from pieces.commands import commands_functions
 from pieces.gui import show_error
+import os
 
 def get_git_repo_name() -> Optional[Tuple[str]]:
     """
@@ -30,8 +31,6 @@ def get_git_repo_name() -> Optional[Tuple[str]]:
         return username, repo_name
     except:
         return None
-
-
 
 def get_current_working_changes() -> str:
     """
@@ -83,25 +82,32 @@ def get_current_working_changes() -> str:
 
 
 def git_commit(**kwargs):
+    model = commands_functions.model_id
     changes_summary = get_current_working_changes()
-    message_prompt = f"""Generate a concise git commit message **using best git commit message practices** to follow these specifications:
+    message_prompt = f"""Act as a git expert developer to generate a concise git commit message **using best git commit message practices** to follow these specifications:
                 `Message language: English`,
-                `Message length: 50 words or less`,
                 `Format of the message: "(task done): small description"`,
                 `task done can be one from: "feat,fix,chore,refactor,docs,style,test,perf,ci,build,revert"`,
                 `Example of the message: "docs: add new guide on python"`,
-                `Output format WITHOUT ADDING ANYTHING ELSE: "message is **YOUR COMMIT MESSAGE HERE**`,
-                `Note: Don't generate a general commiting message make it more relevant to the changes`."""
+                `Output format WITHOUT ADDING ANYTHING ELSE: message is **YOUR COMMIT MESSAGE HERE**`",
+                `Note: Don't generate a general commiting message make it more relevant to the changes`.
+                `Here are the changes summary:`\n{changes_summary}"""
 
-    issue_prompt = """Please provide the issue number if any, if not write 'None'.
+    issue_prompt = """Please provide the issue number that is related to the changes, If nothing related write 'None'.
                     `Output format WITHOUT ADDING ANYTHING ELSE: "Issue: **ISSUE NUMBER OR NONE HERE**`,
                     `Example: 'Issue: 12', 'Issue: None'`,
                     `Note: Don't provide any other information`
-                    `Issues: {issues}`"""
+                    `Here are the issues:`\n{issues}"""
     try:
-        # Commiting message
-        commit_message = commands_functions.ws_manager.ask_question(commands_functions.model_id,message_prompt,commands_functions.application,changes_summary,verbose=False)
-
+        commit_message = pos_client.QGPTApi(api_client).relevance(
+            pos_client.QGPTRelevanceInput(
+                query=message_prompt,
+                paths=[os.getcwd()],
+                application=commands_functions.application.id,
+                model=model,
+                options=pos_client.QGPTRelevanceInputOptions(question=True)
+            )).answer.answers.iterable[0].text
+        
         # Remove extras from the commit message
         commit_message = commit_message.replace("message is","",1) # Remove the "message is" part as mentioned in the prompt
         commit_message = commit_message.replace('*', '') # Remove the bold and italic characters
@@ -119,16 +125,20 @@ def git_commit(**kwargs):
                 f"- `Issue_number: {issue['number']}`\n- `Title: {issue['title']}`\n- `Body: {issue['body']}`"
                 for issue in issues
             ]
-            issue_prompt_text = "\n".join(issue_list) # To string
+            issue_list = "\n".join(issue_list) # To string
             
-            
-
-            try: 
-                issue_number = commands_functions.ws_manager.ask_question(
-                    commands_functions.model_id, 
-                    issue_prompt.format(issues=issue_prompt_text),
-                    commands_functions.application, 
-                    changes_summary,verbose=False)
+            try:
+                
+                issue_number = commit_message = pos_client.QGPTApi(api_client).relevance(
+                        pos_client.QGPTRelevanceInput(
+                            query=issue_prompt.format(issues=issue_list),
+                            paths=[os.getcwd()],
+                            application=commands_functions.application.id,
+                            model=model,
+                            options=pos_client.QGPTRelevanceInputOptions(question=True)
+                        )).answer.answers.iterable[0].text
+        
+                
                 # Extract the issue part
                 issue_number = issue_number.replace("Issue: ", "") 
                 # If the issue is a number 
@@ -139,11 +149,6 @@ def git_commit(**kwargs):
                 issue_number = None
         else:
             issue_number = None
-
-
-        # Delete the converstation
-        pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation(conversation=commands_functions.ws_manager.conversation)
-    
     except Exception as e:
         print("Error in getting the commit message",e)
         return
@@ -151,7 +156,6 @@ def git_commit(**kwargs):
 
     # Check if the user wants to commit the changes or change the commit message
     r_message = input(f"The generated commit message is:\n\n {commit_message}\n\nAre you sure you want to commit these changes?\n\n- y: Yes\n- n: No\n- c: Change the commit message\n\nPlease enter your choice (y/n/c): ")
-    
     
     if r_message.lower() == "y" or r_message.lower() == "c":
 
@@ -176,6 +180,4 @@ def git_commit(**kwargs):
             print("Failed to commit changes:", e)
     else:
         print("Committing changes cancelled")
-    push = kwargs.get("push",False)
-    if push:
-        subprocess.run(["git","push"])
+
