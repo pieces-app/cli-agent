@@ -93,7 +93,10 @@ def get_current_working_changes() -> Tuple[str,list]:
 
 def git_commit(**kwargs):
     model = commands_functions.model_id
-    changes_summary,paths = get_current_working_changes()
+    try:
+        changes_summary,paths = get_current_working_changes()
+    except:
+        return
     message_prompt = f"""Act as a git expert developer to generate a concise git commit message **using best git commit message practices** to follow these specifications:
                 `Message language: English`,
                 `Format of the message: "(task done): small description"`,
@@ -187,11 +190,18 @@ def git_commit(**kwargs):
             console = Console()
             md = Markdown(issue_list)
             console.print(md)
-            try:
-                issue_number = int(input("Issue number? Don't include the '#'\nLeave blanck if none: "))
+            validate_issue = True
+            while validate_issue:
+                issue_number = input("Issue number?\nLeave blanck if none: ").strip()
+                if issue_number.startswith("#") and issue_number[1:].isdigit():
+                    issue_number = issue_number[1:]
+                    validate_issue = False
+                elif issue_number.isdigit():
+                    validate_issue = False
+                elif issue_number == None or issue_number == "":
+                    break    
+            if not validate_issue:
                 commit_message += f" (issue: #{issue_number})"
-            except:
-                pass
 
         try:
             subprocess.run(["git", "commit", "-m", commit_message], check=True)
