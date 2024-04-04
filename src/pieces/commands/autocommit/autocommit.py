@@ -186,7 +186,7 @@ def git_commit(**kwargs):
                 commit_message += f" (issue: #{issue_number})"
             else:
                 issue_number = None
-        if issue_number == None:
+        if issue_number == None and issues:
             console = Console()
             md = Markdown(issue_list)
             console.print(md)
@@ -210,4 +210,3 @@ def git_commit(**kwargs):
             print("Failed to commit changes:", e)
     else:
         print("Committing changes cancelled")
-
