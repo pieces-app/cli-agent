@@ -6,6 +6,10 @@ from pieces.api.config import api_client,pos_client
 from pieces.commands import commands_functions
 from pieces.gui import show_error
 import os
+from rich.console import Console
+from rich.markdown import Markdown
+
+
 
 def get_git_repo_name() -> Optional[Tuple[str]]:
     """
@@ -32,24 +36,28 @@ def get_git_repo_name() -> Optional[Tuple[str]]:
     except:
         return None
 
-def get_current_working_changes() -> str:
+def get_current_working_changes() -> Tuple[str,list]:
     """
     Fetches the detailed changes in the files you are currently working on, limited to a specific word count.
     
     Returns:
-        A string summarizing the detailed changes in a format suitable for generating commit messages.
+        Tuple of
+            A string summarizing the detailed changes in a format suitable for generating commit messages.
+            List of the files path changed and created
+
     """
     
     result = subprocess.run(["git", "diff","--staged"], capture_output=True, text=True)
     if not result.stdout.strip():
         print()
-        raise show_error("No changes found","Please make sure you have added some files to your staging area")
+        return show_error("No changes found","Please make sure you have added some files to your staging area")
     detailed_diff = result.stdout.strip()
     
     # Create a summary of the changes
     summary = ""
 
     lines_diff = detailed_diff.split("\n")
+    paths=[]
 
     add_changes_statment = False
     changes_statment = "Here are the following additions and deletions to {file_name}:\n"
@@ -62,8 +70,10 @@ def get_current_working_changes() -> str:
                 file_name = file_changed.group(1)
                 if lines_diff[idx+1] == "new file mode 100644":
                     summary += f"File created: **{file_name}**\n"
+                    paths.append(os.getcwd() + file_name)
                 elif lines_diff[idx+1] == "deleted file mode 100644":
                     summary += f"File deleted: **{file_name}**\n"
+                    paths.append(os.getcwd() + file_name)
                 else:
                     summary += f"File modified: **{file_name}**\n"
                 add_changes_statment = True
@@ -78,19 +88,18 @@ def get_current_working_changes() -> str:
                 add_changes_statment = False
             summary += "Deletion: " + line[1:].strip() + "\n"
     
-    return summary
+    return (summary,paths)
 
 
 def git_commit(**kwargs):
     model = commands_functions.model_id
-    changes_summary = get_current_working_changes()
+    changes_summary,paths = get_current_working_changes()
     message_prompt = f"""Act as a git expert developer to generate a concise git commit message **using best git commit message practices** to follow these specifications:
                 `Message language: English`,
                 `Format of the message: "(task done): small description"`,
                 `task done can be one from: "feat,fix,chore,refactor,docs,style,test,perf,ci,build,revert"`,
                 `Example of the message: "docs: add new guide on python"`,
-                `Output format WITHOUT ADDING ANYTHING ELSE: message is **YOUR COMMIT MESSAGE HERE**`",
-                `Note: Don't generate a general commiting message make it more relevant to the changes`.
+                Your response should be: `__'The message is: **YOUR COMMIT MESSAGE HERE**'__` WITHOUT ADDING ANYTHING ELSE",
                 `Here are the changes summary:`\n{changes_summary}"""
 
     issue_prompt = """Please provide the issue number that is related to the changes, If nothing related write 'None'.
@@ -102,14 +111,14 @@ def git_commit(**kwargs):
         commit_message = pos_client.QGPTApi(api_client).relevance(
             pos_client.QGPTRelevanceInput(
                 query=message_prompt,
-                paths=[os.getcwd()],
+                paths=paths,
                 application=commands_functions.application.id,
                 model=model,
                 options=pos_client.QGPTRelevanceInputOptions(question=True)
-            )).answer.answers.iterable[0].text
+            )).answer.answers.iterable[0].text 
         
         # Remove extras from the commit message
-        commit_message = commit_message.replace("message is","",1) # Remove the "message is" part as mentioned in the prompt
+        commit_message = commit_message.replace("The message is:","",1) # Remove the "message is" part as mentioned in the prompt
         commit_message = commit_message.replace('*', '') # Remove the bold and italic characters
         # Remove leading and trailing whitespace
         commit_message = commit_message.strip()
@@ -129,10 +138,10 @@ def git_commit(**kwargs):
             
             try:
                 
-                issue_number = commit_message = pos_client.QGPTApi(api_client).relevance(
+                issue_number = pos_client.QGPTApi(api_client).relevance(
                         pos_client.QGPTRelevanceInput(
                             query=issue_prompt.format(issues=issue_list),
-                            paths=[os.getcwd()],
+                            paths=paths,
                             application=commands_functions.application.id,
                             model=model,
                             options=pos_client.QGPTRelevanceInputOptions(question=True)
@@ -145,7 +154,6 @@ def git_commit(**kwargs):
                 issue_number = int(issue_number)
                 issue_title = next((issue["title"] for issue in issues if issue["number"] == issue_number), None)
             except: 
-                # If the issue is None 
                 issue_number = None
         else:
             issue_number = None
@@ -173,6 +181,18 @@ def git_commit(**kwargs):
             r_issue = input("Is this issue related to the commit? (y/n): ")
             if r_issue.lower() == "y":
                 commit_message += f" (issue: #{issue_number})"
+            else:
+                issue_number = None
+        if issue_number == None:
+            console = Console()
+            md = Markdown(issue_list)
+            console.print(md)
+            try:
+                issue_number = int(input("Issue number? Don't include the '#'\nLeave blanck if none: "))
+                commit_message += f" (issue: #{issue_number})"
+            except:
+                pass
+
         try:
             subprocess.run(["git", "commit", "-m", commit_message], check=True)
             print("Successfully committed with message:", commit_message)
