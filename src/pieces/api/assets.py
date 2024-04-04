@@ -75,7 +75,7 @@ def get_assets_info_list() -> List[Dict[str,str]]:
             data = api_response.to_dict()
 
             # Extract the 'name' field and add it to the names list
-            name = data.get('name')
+            name = data.get('name',"New asset")
 
             # Add the name to the dictionary
             asset = {}
