@@ -17,7 +17,7 @@
 - [Getting Started](#getting-started)
 - [Usage](#usage)
   - [Run](#run)
-  - [List](#list-command)
+  - [List (assets,apps,models)](#list-command)
   - [Open, Save, Create, Edit, and Delete Assets](#open)
   - [Search and Query](#search-and-query)
   - [Change Model](#change-model)
@@ -77,14 +77,14 @@ If you have a numbered list or search open you can just type the number and it w
 #### List command
 To list assets applications or models, use the command:
 
-##### Default of 10
+##### Default of 10 assets
   ```bash
   pieces list
   ```
 
 ##### Lists your x most recent assets
   ```bash
-  pieces list x
+  pieces list assets x
   ```
 
 ##### Lists all registered applications
