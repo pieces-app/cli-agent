@@ -51,7 +51,7 @@ def main():
 
     # Subparser for the 'save' command
     save_parser = subparsers.add_parser('save', help='Updates the current asset')
-    save_parser.set_defaults(func=save_asset)
+    save_parser.set_defaults(func=update_asset_value)
 
     # Subparser for the 'delete' command
     delete_parser = subparsers.add_parser('delete', help='Delete the current asset')

@@ -172,7 +172,7 @@ def reclassify_asset(asset_id, classification):
         show_error("Error reclassifying asset: ",{e})
 
 
-def update_asset(file_path,asset_id):
+def update_asset_value(file_path,asset_id):
     try:
         with open(file_path,"r") as f:
             data = f.read()
@@ -187,6 +187,9 @@ def update_asset(file_path,asset_id):
 
     # update the original format's value
     original = format_api.format_snapshot(created.original.id, transferable=True)
+    if original.classification.generic != pos_client.ClassificationGenericEnum.TEXT:
+        show_error("Error in update asset","Original format is not supported")
+        return
     original_value = original.fragment.string.raw if original.fragment and original.fragment.string else None
 
     # check if the string value is not empty
@@ -196,7 +199,6 @@ def update_asset(file_path,asset_id):
 
     # call our endpoint to update our value. && update our value.
     original.fragment.string.raw = data
-    original = format_api.format_update_value(transferable=True, format=original)
+    format_api.format_update_value(transferable=False, format=original)
 
-    return original
 

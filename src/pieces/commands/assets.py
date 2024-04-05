@@ -2,7 +2,7 @@ from . import commands_functions
 import pyperclip
 from collections.abc import Iterable
 from pieces.api.assets import (get_assets_info_list,get_asset_by_id,
-                               delete_asset_by_id,update_asset,
+                               delete_asset_by_id,update_asset_value,
                                edit_asset_name,create_new_asset,get_asset_ids,reclassify_asset)
 from pieces.gui import show_error,print_model_details,space_below,double_line
 from pieces.api.config import open_snippet_dir
@@ -80,16 +80,14 @@ def open_asset(**kwargs):
 
     print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
 
-def save_asset(**kwargs):
+def update_asset(**kwargs):
     asset = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
     file_path = os.path.join(open_snippet_dir , f"{commands_functions.sanitize_filename(asset["name"])}{commands_functions.get_file_extension(asset["language"])}")
     print(f"Saving {file_path} to {asset['name']} snippet with uuid {commands_functions.current_asset}")
     
     # Pass asset and file name
-    update_asset(file_path, commands_functions.current_asset)
-    print("saved successfully")
+    update_asset_value(file_path, commands_functions.current_asset)
 
-# Probably needs renamed. This only currently edits the Asset's name
 def edit_asset(**kwargs):
     asset_dict = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
     print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
