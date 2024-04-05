@@ -102,7 +102,7 @@ def git_commit(**kwargs):
                 `Format of the message: "(task done): small description"`,
                 `task done can be one from: "feat,fix,chore,refactor,docs,style,test,perf,ci,build,revert"`,
                 `Example of the message: "docs: add new guide on python"`,
-                Your response should be: `__'The message is: **YOUR COMMIT MESSAGE HERE**'__` WITHOUT ADDING ANYTHING ELSE",
+                Your response should be: `__The message is: **YOUR COMMIT MESSAGE HERE**__` WITHOUT ADDING ANYTHING ELSE",
                 `Here are the changes summary:`\n{changes_summary}"""
 
     issue_prompt = """Please provide the issue number that is related to the changes, If nothing related write 'None'.
