@@ -165,9 +165,13 @@ def reclassify_asset(asset_id, classification):
             return
         
     try:
-        response = asset_api.asset_reclassify(asset_reclassification=
-                                              pos_client.AssetReclassification(ext=classification,asset=asset_api.asset_snapshot(asset_id)))
-        print(f"reclassify the asset to {classification} successfully")
+        asset = asset_api.asset_snapshot(asset_id)
+        if asset.original.reference.classification.generic != pos_client.ClassificationGenericEnum.IMAGE:
+            show_error("Error in reclassify asset","Original format is not supported")
+            return
+        asset_api.asset_reclassify(asset_reclassification=pos_client.AssetReclassification(ext=classification,asset=asset),
+                                              transferables=False)
+        print(f"reclassify {asset.name} the asset to {classification} successfully")
     except Exception as e:
         show_error("Error reclassifying asset: ",{e})
 
@@ -187,7 +191,7 @@ def update_asset_value(file_path,asset_id):
 
     # update the original format's value
     original = format_api.format_snapshot(created.original.id, transferable=True)
-    if original.classification.generic != pos_client.ClassificationGenericEnum.TEXT:
+    if original.classification.generic != pos_client.ClassificationGenericEnum.IMAGE:
         show_error("Error in update asset","Original format is not supported")
         return
     original_value = original.fragment.string.raw if original.fragment and original.fragment.string else None
