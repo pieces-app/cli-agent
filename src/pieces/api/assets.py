@@ -205,4 +205,6 @@ def update_asset_value(file_path,asset_id):
 
     format_api.format_update_value(transferable=False, format=original)
 
+    print(f"{created.name} updated successfully.")
+
 
