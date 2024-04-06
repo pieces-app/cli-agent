@@ -10,7 +10,7 @@ from .commands_functions import (print_instructions,
                                  print_response, welcome,startup,
                                  get_version)
 from . import commands_functions
-from .copilot import ws_manager
+from .copilot.ask_command import ws_manager
 from pieces import __version__
 
 def levenshtein_distance(s1, s2):

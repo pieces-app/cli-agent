@@ -104,8 +104,15 @@ def main():
     logout_parser.set_defaults(func=lambda **kwargs:print("Logged out successfully") if sign_out() else print('Failed to logout out'))
 
 
-    # Subparser for the 'logout' command
+    # Subparser for the 'conversations' command
+    conversations_parser = subparsers.add_parser('conversations', help='print all conversations')
+    conversations_parser.set_defaults(func=get_conversations)
+    
+
+    # Subparser for the 'conversation' command
     conversation_parser = subparsers.add_parser('conversation', help='print all conversations')
+    conversation_parser.add_argument('CONVERSATION_INDEX', type=int, nargs='?', default=None, help='Index of the conversation if None it will get the current conversation.')
+    conversation_parser.add_argument("-n","--new",action="store_true",dest="new", help="Create a new conversation")
     conversation_parser.set_defaults(func=conversation_handler)
 
 
