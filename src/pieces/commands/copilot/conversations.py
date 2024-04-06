@@ -45,7 +45,7 @@ def get_conversations(**kwargs):
     for idx,conversation in enumerate(sorted_conversations,1):
         if conversation.updated.readable != readable: # if new date print it to group them
             readable = conversation.updated.readable
-            output += f"__________________________________________________\n\n            {readable}\n"
+            output += f"___________________________________________\n\n            {readable}\n"
         
         if not conversation.name:
             conversation.name = "New conversation"
@@ -90,11 +90,11 @@ def get_conversation_messages(idx:int=None,conversation_id=None):
         if val == -1: # message is deleted
             continue
         message = message_api.message_specific_message_snapshot(message=key)
-        console.print(message.role+"\n", justify = "center", style="b") # underline and make it bold the role
+        console.print(message.role+"\n", justify = "center", style="bold italic") # make the role bold and italic 
         if message.fragment.string:
             md = Markdown(message.fragment.string.raw)
             console.print(md)
         
-        console.print("_",justify="right",style="u") # print Line filling the page width
+        console.print("_",justify="right",style="u") # print a Line filling the page width
         
 
