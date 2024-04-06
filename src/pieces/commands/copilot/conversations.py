@@ -24,7 +24,7 @@ def conversation_handler(**kwargs):
             get_conversation_messages(conversation_id = ws_manager.conversation)
         else:
             # Show error if no conversation in the ask show error
-            show_error("The conversation is empty","Please enter a conversation index.")
+            show_error("The conversation is empty","Please enter a conversation index, or use the ask command to ask a question.")
     else:
         get_conversation_messages(idx)
 
@@ -37,6 +37,8 @@ def get_conversations(**kwargs):
 
     # Sort the dictionary by the "updated" timestamp
     sorted_conversations = sorted(api_response.iterable, key=lambda x: x.updated.value, reverse=True)
+    
+    conversation_map = {idx: conversation.id for idx,conversation in enumerate(sorted_conversations,start=1)}
 
     readable = sorted_conversations[0].updated.readable
     output = f"            {readable}\n"
@@ -48,10 +50,10 @@ def get_conversations(**kwargs):
         if not conversation.name:
             conversation.name = "New conversation"
 
-        conversation_str = f"{idx}. {conversation.name}"
+        conversation_str = f"{idx}. {conversation.name} \n"
         # Check if we are using this conversation
         if ws_manager.conversation == conversation.id:
-            output += f"\033[92m  *{conversation_str} \n \033[0m"
+            output += f"\033[92m  * {conversation_str} \033[0m"
         else:
             output += conversation_str
     
@@ -88,11 +90,11 @@ def get_conversation_messages(idx:int=None,conversation_id=None):
         if val == -1: # message is deleted
             continue
         message = message_api.message_specific_message_snapshot(message=key)
-        console.print(message.role+"\n\n", style="u b") # underline and make it bold the role
+        console.print(message.role+"\n", justify = "center", style="b") # underline and make it bold the role
         if message.fragment.string:
             md = Markdown(message.fragment.string.raw)
             console.print(md)
         
-        console.print("__________________________________________________")
+        console.print("_",justify="right",style="u") # print Line filling the page width
         
 
