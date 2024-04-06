@@ -104,6 +104,10 @@ def main():
     logout_parser.set_defaults(func=lambda **kwargs:print("Logged out successfully") if sign_out() else print('Failed to logout out'))
 
 
+    # Subparser for the 'logout' command
+    conversation_parser = subparsers.add_parser('conversation', help='print all conversations')
+    conversation_parser.set_defaults(func=get_conversations)
+
 
     # Subparser for the 'commit' command
     commit_parser = subparsers.add_parser('commit', help='Auto generate a github commit messaage and commit changes')

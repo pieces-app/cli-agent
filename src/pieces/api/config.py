@@ -29,6 +29,10 @@ else:
 configuration = pos_client.Configuration(host=f"http://localhost:{port}")
 
 
+# Websocket config
+WEBSOCKET_URL = "ws://localhost:1000/qgpt/stream"
+TIMEOUT = 20  # seconds
+
 run_in_loop = False # is CLI looping?
 
 
