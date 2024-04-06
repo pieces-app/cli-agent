@@ -115,7 +115,7 @@ class WebSocketManager:
             self.ws.close()
             self.is_connected = False
 
-    def ask_question(self, model_id, query,relevant,verbose = True):
+    def ask_question(self, model_id, query,relevant={"iterable":[]},verbose = True):
         """Ask a question using the websocket."""
         self.final_answer = ""
         self.verbose = verbose
