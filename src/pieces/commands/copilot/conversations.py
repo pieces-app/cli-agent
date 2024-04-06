@@ -29,3 +29,10 @@ def get_conversations():
     pydoc.pager(conversations_str)
 
 
+
+def get_conversation_messages(conversation_id, **kwargs):
+    api_instance = pos_client.ConversationApi(api_client)
+    api_response = api_instance.conversation_get_specific_conversation(conversation_id=conversation_id)
+    for conversation in api_response.iterable:
+        if conversation.id == conversation_id:
+            return conversation

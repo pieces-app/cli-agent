@@ -14,11 +14,11 @@ from .assets import (save_asset,
                     list_apps,
                     list_command)
 
-from .copilot import ask,get_conversations
+from .copilot import ask,conversation_handler
 
 __all__ = ['loop', 
            'find_most_similar_command',
-           'get_conversations',
+           'conversation_handler',
            'git_commit',
            'set_parser',
            'version',

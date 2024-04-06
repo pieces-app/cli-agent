@@ -106,7 +106,7 @@ def main():
 
     # Subparser for the 'logout' command
     conversation_parser = subparsers.add_parser('conversation', help='print all conversations')
-    conversation_parser.set_defaults(func=get_conversations)
+    conversation_parser.set_defaults(func=conversation_handler)
 
 
     # Subparser for the 'commit' command

@@ -6,7 +6,6 @@ import json
 from bs4 import BeautifulSoup
 import os
 import re
-from pieces.api.pieces_websocket import WebSocketManager
 from pieces.api.api_functions import *
 from pieces.api.system import *
 from pieces.api.assets import *
@@ -15,7 +14,6 @@ import pickle
 from pieces import __version__
 
 # Globals for CLI Memory.
-ws_manager = WebSocketManager()
 assets_are_models = False
 current_asset = {}
 parser = None
