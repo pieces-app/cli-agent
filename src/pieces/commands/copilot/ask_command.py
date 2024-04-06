@@ -3,14 +3,17 @@ from pieces.api.pieces_websocket import WebSocketManager
 from pieces_os_client import *
 from pieces.api.config import api_client
 import os
+from pieces.gui import show_error
 
 ws_manager = WebSocketManager()
 def ask(query, **kwargs):
     relevant = {"iterable":[]}
     file = kwargs.get("file")
     if file:
-        if not os.path.isabs(file):
-            file = os.path.abspath(file)
+        if os.path.exists(file): # check if file exists
+            show_error("File not found","Please enter a valid file path")
+            return
+        file = os.path.abspath(file)
         relevant = QGPTApi(api_client).relevance(
             QGPTRelevanceInput(
                             query=query,
