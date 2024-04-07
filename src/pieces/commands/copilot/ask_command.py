@@ -38,7 +38,7 @@ def ask(query, **kwargs):
         relevant = QGPTApi(api_client).relevance(
             QGPTRelevanceInput(
                             query=query,
-                            paths=file,
+                            paths=files,
                             assets=flattened_assets,
                             application=commands_functions.application.id,
                             model=commands_functions.model_id
