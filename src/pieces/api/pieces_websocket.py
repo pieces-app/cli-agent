@@ -71,21 +71,21 @@ class WebSocketManager:
 
     def on_close(self, ws, close_status_code, close_msg):
         """Handle websocket closure."""
-        if self.verbose:
-            print("WebSocket closed")
+        # if self.verbose:
+        #     print("WebSocket closed")
         self.is_connected = False
 
     def on_open(self, ws):
         """Handle websocket opening."""
-        if self.verbose:
-            print("WebSocket connection opened.")
+        # if self.verbose:
+        #     print("WebSocket connection opened.")
         self.is_connected = True
         self.open_event.set()
 
     def _start_ws(self):
         """Start a new websocket connection."""
-        if self.verbose:
-            print("Starting WebSocket connection...")
+        # if self.verbose:
+        #     print("Starting WebSocket connection...")
         ws =  websocket.WebSocketApp(WEBSOCKET_URL,
                                          on_open=self.on_open,
                                          on_message=self.on_message,
