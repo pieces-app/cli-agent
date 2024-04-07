@@ -18,7 +18,7 @@ def conversation_handler(**kwargs):
 
     # Check if the conversation is not empty 
     if not ws_manager.conversation and (rename or delete) and not idx:
-        show_error("You can rename/delete an empty conversation")
+        show_error("Error in rename/delete","You can rename/delete an empty conversation")
         return 
     else:
         if idx:
@@ -30,9 +30,11 @@ def conversation_handler(**kwargs):
 
     # Rename the conversation
     if rename:
-        pos_client.ConversationApi(api_client).conversation_specific_conversation_rename(conversation=conversation_id,transferables=False)
-        print("Renamed the conversation successfully")
+        print("Not working currently")
         return
+        # pos_client.ConversationApi(api_client).conversation_specific_conversation_rename(conversation=conversation_id,transferables=False)
+        # print("Renamed the conversation successfully")
+        # return
 
 
 
@@ -40,7 +42,7 @@ def conversation_handler(**kwargs):
     if delete:
         r = input("Are you sure you want to delete the conversation? (y/n) : ")
         if r == "y":
-            pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation(conversation=conversation_id,transferables=False)
+            pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation(conversation=conversation_id)
             print("Conversation deleted successfully")
         return
 
