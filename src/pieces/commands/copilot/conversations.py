@@ -17,7 +17,7 @@ def conversation_handler(**kwargs):
 
 
     # Check if the conversation is not empty 
-    if not ws_manager.conversation and (rename or delete):
+    if not ws_manager.conversation and (rename or delete) and not idx:
         show_error("You can rename/delete an empty conversation")
         return 
     else:
