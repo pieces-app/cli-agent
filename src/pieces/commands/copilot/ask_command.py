@@ -4,23 +4,35 @@ from pieces_os_client import *
 from pieces.api.config import api_client
 import os
 from pieces.gui import show_error
+from pieces.api.assets import get_assets_info_list
 
 ws_manager = WebSocketManager()
 def ask(query, **kwargs):
     relevant = {"iterable":[]}
-    file = kwargs.get("file")
-    if file:
-        if os.path.exists(file): # check if file exists
-            show_error("File not found","Please enter a valid file path")
-            return
-        file = os.path.abspath(file)
-        relevant = QGPTApi(api_client).relevance(
-            QGPTRelevanceInput(
-                            query=query,
-                            paths=file,
-                            application=commands_functions.application.id,
-                            model=commands_functions.model_id
-                        ))
+    files = kwargs.get("file",None)
+    snippets = kwargs.get("snippet",None)
+    assets = []
+    if files:
+        for idx,file in enumerate(files):
+            if os.path.exists(file): # check if file exists
+                show_error(f"{file} is not found","Please enter a valid file path")
+                return
+            files[idx] = os.path.abspath(file) # Return the abs path
+    if snippets:
+        asset_ids = get_assets_info_list()
+        for idx,snippet in enumerate(snippets):
+            try: asset_id = asset_ids[snippet-1].get('id')  # we began enumerating from 1
+            except: return show_error("Asset not found","Enter a vaild asset index")
+            assets.append(ReferencedAsset(id=asset_id))
+    flattened_assets = FlattenedAssets(iterable=assets) if assets else []
+    relevant = QGPTApi(api_client).relevance(
+        QGPTRelevanceInput(
+                        query=query,
+                        paths=file,
+                        assets=flattened_assets,
+                        application=commands_functions.application.id,
+                        model=commands_functions.model_id
+                    ))
         
     ws_manager.ask_question(commands_functions.model_id, query,relevant=relevant)
 
