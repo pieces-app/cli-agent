@@ -115,6 +115,8 @@ def main():
     conversation_parser = subparsers.add_parser('conversation', help='print all conversations')
     conversation_parser.add_argument('CONVERSATION_INDEX', type=int, nargs='?', default=None, help='Index of the conversation if None it will get the current conversation.')
     conversation_parser.add_argument("-n","--new",action="store_true",dest="new", help="Create a new conversation")
+    conversation_parser.add_argument("-r","--rename",dest="rename",default=None,help="Rename the conversation that you are currently using in the ask command")
+    conversation_parser.add_argument("-d","--delete",action="store_true", dest="delete", help="Delete the conversation that you are currently using in the ask command")
     conversation_parser.set_defaults(func=conversation_handler)
 
 

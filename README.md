@@ -61,6 +61,7 @@ After installing the CLI tool, you can access its functionalities through the te
 
 - `x` -> The index
 - `current asset` -> The asset that you are currently using can be changed by the open command 
+- `current conversation` -> The conversation that you currently in which you will use in the ask command
 
 
 ### Usage
@@ -199,6 +200,19 @@ You can create a new conversation that will be used in the ask command.
 ```bash
 pieces conversation -n
 ```
+
+Rename a conversation
+
+```bash
+pieces conversation -r "My awsome name"
+```
+
+Delete a conversation
+
+```bash
+pieces conversation -d
+```
+
 
 
 You can switch the conversation and list its messages. Check the conversations command to get the index

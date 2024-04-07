@@ -98,6 +98,8 @@ def print_help():
     print("  conversation    - Show the messages of the currently using conversation in the ask command")
     print("  conversation x  - List all the messages in a certain conversation and switch to it in the ask command")
     print("  -n,--new        - To create a new conversation in the ask command")
+    print("  -d,--delete     - Deletes the current conversation")
+    print("  -r,--rename     - Rename the current conversation")
     print()
     print("  commit          - Commits the changes to github and auto generate the message, you can use -p or --push to push")
     print()

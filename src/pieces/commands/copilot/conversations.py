@@ -12,11 +12,45 @@ def conversation_handler(**kwargs):
     """Handle the conversation command"""
     
     idx = kwargs.get("CONVERSATION_INDEX",None) 
+    rename = kwargs.get("rename",False)
+    delete = kwargs.get("delete",False)
+
+
+    # Check if the conversation is not empty 
+    if not ws_manager.conversation and (rename or delete):
+        show_error("You can rename/delete an empty conversation")
+        return 
+    else:
+        if idx:
+            conversation_id = get_conversation_id(idx)  
+        else:
+            conversation_id = ws_manager.conversation
+
+
+
+    # Rename the conversation
+    if rename:
+        pos_client.ConversationApi(api_client).conversation_specific_conversation_rename(conversation=conversation_id,transferables=False)
+        print("Renamed the conversation successfully")
+        return
+
+
+
+    # Delete the conversation
+    if delete:
+        r = input("Are you sure you want to delete the conversation? (y/n) : ")
+        if r == "y":
+            pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation(conversation=conversation_id,transferables=False)
+            print("Conversation deleted successfully")
+        return
+
 
     # Check if we want to create a new conversatiaon
     if kwargs.get("new",False):
         ws_manager.conversation = None
-        return
+        print("New conversation created successfully")
+    
+    
     
     # If the index is not given we get the conversation that we are using in the ask websocket.
     if not idx:
@@ -64,24 +98,15 @@ def get_conversations(**kwargs):
 
 def get_conversation_messages(idx:int=None,conversation_id=None):
     """Print a conversation messages. you need to pass the index of the conversation or the conversation id"""
-    global conversation_map
+
     conversation_api = pos_client.ConversationApi(api_client)
     message_api = pos_client.ConversationMessageApi(api_client)
+    
     if not conversation_id:
-        
-        if not conversation_map:
-            conversations_api = pos_client.ConversationsApi(api_client)
-            api_response = conversations_api.conversations_snapshot()
-            # Sort the dictionary by the "updated" timestamp
-            sorted_conversations = sorted(api_response.iterable, key=lambda x: x.updated.value, reverse=True)
+        conversation_id = get_conversation_id(idx)
 
-            conversation_map = {idx: conversation.id for idx,conversation in enumerate(sorted_conversations,start=1)}
-
-        conversation_id = conversation_map[idx]
-    
     conversation:pos_client.Conversation = conversation_api.conversation_get_specific_conversation(conversation=conversation_id)
-    
-    
+
     ws_manager.conversation = conversation.id # change the conversation that the ask is using
     
     
@@ -97,4 +122,17 @@ def get_conversation_messages(idx:int=None,conversation_id=None):
         
         console.print("_",justify="right",style="u") # print a Line filling the page width
         
+
+
+def get_conversation_id(idx):
+    global conversation_map
+    if not conversation_map:
+        conversations_api = pos_client.ConversationsApi(api_client)
+        api_response = conversations_api.conversations_snapshot()
+        # Sort the dictionary by the "updated" timestamp
+        sorted_conversations = sorted(api_response.iterable, key=lambda x: x.updated.value, reverse=True)
+
+        conversation_map = {idx: conversation.id for idx,conversation in enumerate(sorted_conversations,start=1)}
+
+    return conversation_map[idx]
 
