@@ -178,10 +178,16 @@ pieces ask "your question"
 
 ##### Commiting to github
 
-Auto commit the code to github and generate a commit message you can use the `-p` or `--push` flags to push the code to the repo too
+Auto commit the code to github and generate a commit message you can use the `-p` or `--push` flags to push the code to the repo too.
 
 ```bash
 pieces commit -p
+```
+
+You can also add the `-i` or `--issues` flags so the commit message will include the issue numbers in the commit if found one else it will list all the issues to choose from.
+
+```bash
+pieces commit -i
 ```
 
 #### Login and logout 
