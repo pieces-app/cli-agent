@@ -1,4 +1,8 @@
 import importlib.metadata
 
-__version__ = importlib.metadata.version("pieces") # This gets the current version which is set in pyproject.toml
+try:
+    __version__ = importlib.metadata.version("pieces")
+except importlib.metadata.PackageNotFoundError:
+    print("Could not find the 'pieces' package in the Python environment. Is it installed?")
+    __version__ = "unknown"
 
