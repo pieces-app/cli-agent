@@ -1,16 +1,20 @@
 from . import commands_functions
 import pyperclip
 from collections.abc import Iterable
-from pieces.api.config import run_in_loop
 from pieces.api.assets import (get_assets_info_list,get_asset_by_id,
-                               delete_asset_by_id,update_asset,
-                               edit_asset_name,create_new_asset)
-from pieces.gui import show_error,print_model_details,space_below,double_line,delete_most_recent
-
+                               delete_asset_by_id,update_asset_value,
+                               edit_asset_name,create_new_asset,get_asset_ids,reclassify_asset)
+from pieces.gui import show_error,print_model_details,space_below,double_line
+from pieces.api.config import open_snippet_dir
+import os
 
 def list_command(**kwargs):
     type = kwargs.get("type","assets")
     max_assets = kwargs.get("max_assets",10)
+    if max_assets < 1:
+        print("Max assets must be greater than 0")
+        max_assets = 10
+    
     if type == "assets":
         list_assets(max_assets)
     elif type == "apps":
@@ -57,21 +61,17 @@ def list_assets(max_assets:int=10):
 
 
 def open_asset(**kwargs):
-
-    item_index = kwargs.get('ITEM_INDEX')
+    item_index = kwargs.get('ITEM_INDEX',1)
+    if not item_index: item_index = 1
 
     asset_ids = get_assets_info_list()
-
-    if item_index is not None:
-        try:
-            asset_id = asset_ids[item_index-1].get('id') # because we begin from 1
-        except IndexError:
-            show_error("Invalid asset index or asset not found.","Please choose from the list or use 'pieces list assets'")
-            return
-    else:
-        asset_id = asset_ids[0].get('id')
+    try:
+        asset_id = asset_ids[item_index-1].get('id') # because we begin from 1
+    except IndexError:
+        show_error("Invalid asset index or asset not found.","Please choose from the list or use 'pieces list assets'")
+        return
     
-    commands_functions.current_asset = {asset_id}    
+    commands_functions.current_asset = asset_id  
     open_asset = get_asset_by_id(asset_id)
     asset_dict = extract_asset_info(open_asset)
     
@@ -80,97 +80,51 @@ def open_asset(**kwargs):
 
     print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
 
-def save_asset(**kwargs):
-    ### THIS DOES NOT CURRENTLY WORK ###
-    print("Not Currently Working")
+def update_asset(**kwargs):
+    asset = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
+    file_path = os.path.join(open_snippet_dir , f"{commands_functions.sanitize_filename(asset["name"])}{commands_functions.get_file_extension(asset["language"])}")
+    print(f"Saving {file_path} to {asset['name']} snippet with uuid {commands_functions.current_asset}")
+    
+    # Pass asset and file name
+    update_asset_value(file_path, commands_functions.current_asset)
 
-    if not commands_functions.current_asset:
-        open_asset()
-    else:
-        asset_to_update = commands_functions.current_asset.get('id')
-        # Pass asset and file name
-        update_asset(asset_to_update, commands_functions.application)
-
-# Probably needs renamed. This only currently edits the Asset's name
 def edit_asset(**kwargs):
+    asset_dict = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
+    print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
+    
+    name = kwargs.get('name', '')
+    classification = kwargs.get('classification', '')
 
-    if not commands_functions.current_asset:
-        open_asset()
-        asset_to_update = commands_functions.current_asset.get('id')
-
+    if not name and not classification: # If no name or no classification is provided
         # Ask the user for a new name
-        new_name = input("Enter the new name for the asset: ")
+        name = input("Enter the new name for the asset[leave blank to keep the same]: ").strip()
+        classification = input("Enter the classification for the asset[leave blank to keep the same]: ").strip()
 
-        # Check if the user actually entered a name
-        if new_name.strip():
-            # Pass asset and new name to the edit_asset_name function
-            edit_asset_name(asset_to_update, new_name)
-        else:
-            print("No new name provided. Asset name not updated.")
-    else:
-        asset_to_update = commands_functions.current_asset.get('id')
-        if asset_to_update is None:
-            print("No asset to update.")
-            return
-
-        # Ask the user for a new name
-        new_name = input("Enter the new name for the asset: ")
-
-        # Check if the user actually entered a name
-        if new_name.strip():
-            # Pass asset and new name to the edit_asset_name function
-            edit_asset_name(asset_to_update, new_name)
-        else:
-            print("No new name provided. Asset name not updated.")
+    # Check if the user actually entered a name
+    if name:
+        edit_asset_name(commands_functions.current_asset, name)
+    if classification:
+        reclassify_asset(commands_functions.current_asset, classification)
 
 def delete_asset(**kwargs):
+    # Ask the user for confirmation before deleting
+    # print()
+    # open_asset()
+    asset_dict = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
+    print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
 
-    if not commands_functions.current_asset:
-        # Open the most recent asset
-        if run_in_loop:
-            open_asset()
-            delete_most_recent()
-        else:
-            print()
-            asset_to_delete = list_assets(max_results=1)
-            open_asset()
-            print()
-            confirm = input("This is your most recent asset. Are you sure you want to delete it? This action cannot be undone. (y/n): ").strip().lower()
-            if confirm == 'y':
-                print("Deleting asset...")
-                # print(asset_to_delete)
-                delete_result = delete_asset_by_id(asset_to_delete)
-                print(delete_result)
-                commands_functions.current_asset = None
-                space_below("Asset Deleted")
-                list_assets()
-            elif confirm == 'n':
-                space_below("Deletion cancelled")
-            else:
-                space_below("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
+    confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
+    if confirm == 'y':
+        print("Deleting asset...")
+        delete_asset_by_id(commands_functions.current_asset)
+        commands_functions.current_asset = get_asset_ids()[0]
+        space_below("Asset Deleted")
+    elif confirm == 'n':
+        print("Deletion cancelled.")
     else:
-        asset_to_delete = list(commands_functions.current_asset)[0]
-
-        # Ask the user for confirmation before deleting
-        # print()
-        # open_asset()
-        asset_dict = extract_asset_info(get_asset_by_id(asset_to_delete))
-        print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
-
-        confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
-        if confirm == 'y':
-            print("Deleting asset...")
-            delete_asset_by_id(asset_to_delete)
-            commands_functions.current_asset = None
-            space_below("Asset Deleted")
-            list_assets()
-        elif confirm == 'n':
-            print("Deletion cancelled.")
-        else:
-            print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
+        print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
     
 def create_asset(**kwargs):
-    
     # TODO add more ways to create an asset such as an entire file
 
     # Save text copied to the clipboard as an asset
@@ -185,8 +139,7 @@ def create_asset(**kwargs):
             space_below("Saving Content...")
             new_asset = create_new_asset(commands_functions.application, raw_string=text, metadata=None)
     
-            commands_functions.current_asset = {new_asset.id}
-            # print(current_asset)
+            commands_functions.current_asset = new_asset.id
             print(f"Asset Created use 'open' to view")
 
             return new_asset

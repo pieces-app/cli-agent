@@ -36,5 +36,11 @@ run_in_loop = False # is CLI looping?
 api_client = pos_client.ApiClient(configuration)
 
 
+# some useful directories 
+# extensions_dir
+extensions_dir = f'{BASE_DIR}/commands/extensions.json'
 
+
+# open snippet directory
+open_snippet_dir = os.path.join(os.getcwd(),'opened_snippets')
 

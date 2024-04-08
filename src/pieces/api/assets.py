@@ -5,6 +5,8 @@ from pydantic import ValidationError
 from pieces_os_client.models.classification import Classification
 from pieces_os_client.rest import ApiException
 from typing import Dict,List
+import json
+
 def create_new_asset(application, raw_string, metadata=None):
     assets_api = pos_client.AssetsApi(api_client)
 
@@ -73,7 +75,7 @@ def get_assets_info_list() -> List[Dict[str,str]]:
             data = api_response.to_dict()
 
             # Extract the 'name' field and add it to the names list
-            name = data.get('name')
+            name = data.get('name',"New asset")
 
             # Add the name to the dictionary
             asset = {}
@@ -137,9 +139,6 @@ def edit_asset_name(asset_id, new_name):
         print(existing_name)
         return
 
-    # Print the entire asset with updates
-    print("Asset with updates, ready to send to API:\n", asset)
-
     # Update the asset using the API
     try:
         response = asset_api.asset_update(asset=asset, transferables=False)
@@ -156,56 +155,56 @@ def delete_asset_by_id(asset_id):
     except Exception as e:
         return f"Failed to delete {asset_id}"
 
-def update_asset(asset_id, application):
-    ## NOT CURRENTLY WORKING ##
 
+def reclassify_asset(asset_id, classification):
     asset_api = pos_client.AssetApi(api_client)
-
-    working_asset = get_asset_by_id(asset_id)
-    # file_name = working_asset.get('name')
-    file_name = "Pieces_is_the_Best.tex" ################ TEST
-
-    # Define the path to the file
-    file_path = f"opened_snippets/{file_name}"
-
-    # Open and read the file content
+    with open(extensions_dir) as f:
+        extension_mapping = json.load(f)
+        if classification not in extension_mapping:
+            show_error(f"Invalid classification: {classification}","Please choose from the following: \n "+", ".join(extension_mapping.keys()))
+            return
+        
     try:
-        with open(file_path, 'r') as file:
-            new_content = file.read()
-    except FileNotFoundError:
-        print(f"File not found: {file_path}")
-        return
+        asset = asset_api.asset_snapshot(asset_id)
+        if asset.original.reference.classification.generic == pos_client.ClassificationGenericEnum.IMAGE:
+            show_error("Error in reclassify asset","Original format is not supported")
+            return
+        asset_api.asset_reclassify(asset_reclassification=pos_client.AssetReclassification(ext=classification,asset=asset),
+                                              transferables=False)
+        print(f"reclassify {asset.name} the asset to {classification} successfully")
     except Exception as e:
-        show_error("Error reading file: ",{e})
+        show_error("Error reclassifying asset: ",{e})
+
+
+def update_asset_value(file_path,asset_id):
+    try:
+        with open(file_path,"r") as f:
+            data = f.read()
+    except FileNotFoundError:
+        show_error("Error in update asset","File not found")
+        return
+    asset_api = pos_client.AssetApi(api_client)
+    format_api = pos_client.FormatApi(api_client)
+
+    # get asset
+    created = asset_api.asset_snapshot(asset_id, transferables=False)
+
+    # update the original format's value
+    original = format_api.format_snapshot(created.original.id, transferable=True)
+    if original.classification.generic == pos_client.ClassificationGenericEnum.IMAGE:
+        show_error("Error in update asset","Original format is not supported")
+        return
+    if original.fragment.string.raw:
+        original.fragment.string.raw = data
+    elif original.file.string.raw:
+        original.file.string.raw = data
+    # check if the string value is not empty
+    else :
+        show_error("Error in update asset","Original value is empty")
         return
 
-    def update_string(obj):
-        if isinstance(obj, dict):
-            for key, value in obj.items():
-                if isinstance(value, dict):
-                    update_string(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        update_string(item)
-                elif key == 'raw' and isinstance(value, str):
-                    obj[key] = new_content
+    format_api.format_update_value(transferable=False, format=original)
 
-    # print(working_asset)
-    # exported_asset = ExportedAsset(name="This is a test", description="Testing description", raw=FileFormat(string={"string": "This, This is me testing export asset"}), created=GroupedTimestamp(value=datetime.now()))
+    print(f"{created.name} updated successfully.")
 
-    # print(exported_asset)
-    format_api_instance = pos_client.FormatApi(api_client)
-    format = (
-        pos_client.Format(
-            asset=working_asset,
-            id=asset_id,
-            creator="ea47fe2f-a503-4edb-861a-7c55ca446859",
-            classification=Classification(generic="CODE", specific="tex"),
-            role="BOTH",
-            application=application,
-        ),
-    )
-    api_response = format_api_instance.format_update_value(
-        transferable=False, format=format
-    )
-    print(api_response)
+
