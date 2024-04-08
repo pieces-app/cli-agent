@@ -30,13 +30,17 @@ def conversation_handler(**kwargs):
 
     # Rename the conversation
     if rename:
-        print("Not working currently")
+        conversation_api = pos_client.ConversationApi(api_client)
+        if rename == True:
+            con = conversation_api.conversation_specific_conversation_rename(conversation=conversation_id)
+            print(f"Renamed the conversation to {con.name}")
+            
+        else:
+            con = conversation_api.conversation_get_specific_conversation(conversation=conversation_id)
+            con.name = rename
+            conversation_api.conversation_update(transferables = False,conversation=con)
+            print("Renamed the conversation successfully")
         return
-        # pos_client.ConversationApi(api_client).conversation_specific_conversation_rename(conversation=conversation_id,transferables=False)
-        # print("Renamed the conversation successfully")
-        # return
-
-
 
     # Delete the conversation
     if delete:

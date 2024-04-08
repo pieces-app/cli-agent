@@ -207,6 +207,12 @@ Rename a conversation
 pieces conversation -r "My awsome name"
 ```
 
+Or you can make the model rename it for you
+
+```bash
+pieces conversation -r
+```
+
 Delete a conversation
 
 ```bash
@@ -223,7 +229,7 @@ pieces conversation x
 
 
 ##### Ask a question to a model:
-** Requires quotes around question **
+**Requires quotes around question**
 
 Ask the copoilt a question it uses chatGPT3 as a defualt model to ask a question, you can change the model using the change model command. You can add a relevance file or snippet index check the list assets command.
 
