@@ -21,7 +21,6 @@ def ask(query, **kwargs):
                 return
             
             files[idx] = os.path.abspath(file) # Return the abs path
-
     # snippets
     if snippets:
         asset_ids = get_assets_info_list()
@@ -32,7 +31,7 @@ def ask(query, **kwargs):
     
 
     # check for the assets
-    flattened_assets = FlattenedAssets(iterable=assets) if assets else []
+    flattened_assets = FlattenedAssets(iterable=assets) if assets else None
 
     if files or snippets:
         relevant = QGPTApi(api_client).relevance(
@@ -42,9 +41,8 @@ def ask(query, **kwargs):
                             assets=flattened_assets,
                             application=commands_functions.application.id,
                             model=commands_functions.model_id
-                        ))
-
-
-    ws_manager.ask_question(commands_functions.model_id, query,relevant=relevant)
+                        )).to_dict()
+        
+    ws_manager.ask_question(commands_functions.model_id, query,relevant=relevant['relevant'])
 
     
