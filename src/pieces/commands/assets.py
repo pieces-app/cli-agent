@@ -55,7 +55,7 @@ def list_assets(max_assets:int=10):
     asset_list = get_assets_info_list()
     
     for i, name in enumerate(asset_list, start=1):
-        print(f"{i}: {name.get("name")}")
+        print(f"{i}: {name.get('name')}")
         if i >= max_assets:
             break
 
