@@ -232,6 +232,7 @@ pieces conversation x
 **Requires quotes around question**
 
 Ask the copoilt a question it uses chatGPT3 as a defualt model to ask a question, you can change the model using the change model command. You can add a relevance file or snippet index check the list assets command.
+You can use `.` or `/` to refer to the current directory 
 
 ```bash
 pieces ask "your question" -f /file1 /file2 folder -s 1 2 3

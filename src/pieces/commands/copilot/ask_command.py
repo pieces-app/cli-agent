@@ -16,6 +16,9 @@ def ask(query, **kwargs):
     # Files
     if files:
         for idx,file in enumerate(files):
+            if file == "/" or ".":
+                files[idx] = os.getcwd()
+                continue
             if os.path.exists(file): # check if file exists
                 show_error(f"{file} is not found","Please enter a valid file path")
                 return
