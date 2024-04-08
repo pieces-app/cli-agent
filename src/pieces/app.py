@@ -51,7 +51,7 @@ def main():
 
     # Subparser for the 'save' command
     save_parser = subparsers.add_parser('save', help='Updates the current asset')
-    save_parser.set_defaults(func=save_asset)
+    save_parser.set_defaults(func=update_asset_value)
 
     # Subparser for the 'delete' command
     delete_parser = subparsers.add_parser('delete', help='Delete the current asset')
@@ -67,6 +67,8 @@ def main():
 
     # Subparser for the 'edit' command
     edit_parser = subparsers.add_parser('edit', help='Edit an existing asset')
+    edit_parser.add_argument('--name',"-n",dest='name', help='New name for the asset', required=False)
+    edit_parser.add_argument('--classification',"-c",dest='classification', help='reclassify the asset', required=False)
     edit_parser.set_defaults(func=edit_asset)
 
     # Subparser for the 'ask' command
@@ -123,7 +125,7 @@ def main():
 
     # Subparser for the 'commit' command
     commit_parser = subparsers.add_parser('commit', help='Auto generate a github commit messaage and commit changes')
-    commit_parser.add_argument("-p","--push",action="store_true", help="push the code to github")
+    commit_parser.add_argument("-p","--push",dest="push",action="store_true", help="push the code to github")
     commit_parser.set_defaults(func=git_commit)
 
 

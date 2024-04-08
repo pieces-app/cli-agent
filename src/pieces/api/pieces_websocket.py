@@ -6,7 +6,8 @@ import pieces_os_client
 
 from rich.live import Live
 from rich.markdown import Markdown
-
+from . import config
+import pieces_os_client as pos_client
 from . import config
 from .config import WEBSOCKET_URL,TIMEOUT
 
@@ -109,13 +110,15 @@ class WebSocketManager:
         else:
             self.open_websocket()
             self.send_message(model_id,query,relevant)
+
+
     def close_websocket_connection(self):
         """Close the websocket connection."""
         if self.ws and self.is_connected:
             self.ws.close()
             self.is_connected = False
 
-    def ask_question(self, model_id, query,relevant={"iterable":[]},verbose = True):
+    def ask_question(self, model_id,query,relevant={"iterable": []},verbose = True):
         """Ask a question using the websocket."""
         self.final_answer = ""
         self.verbose = verbose
@@ -128,4 +131,3 @@ class WebSocketManager:
         if not finishes:
             raise ConnectionError("Failed to get the reponse back")
         return self.final_answer
-    
