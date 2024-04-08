@@ -197,7 +197,7 @@ def update_asset_value(file_path,asset_id):
     if original.fragment.string.raw:
         original.fragment.string.raw = data
     elif original.file.string.raw:
-        original.fragment.string.raw = data
+        original.file.string.raw = data
     # check if the string value is not empty
     else :
         show_error("Error in update asset","Original value is empty")
