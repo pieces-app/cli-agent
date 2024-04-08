@@ -55,6 +55,7 @@ def conversation_handler(**kwargs):
     if kwargs.get("new",False):
         ws_manager.conversation = None
         print("New conversation created successfully")
+        return
     
     
     

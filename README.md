@@ -204,7 +204,7 @@ pieces conversation -n
 Rename a conversation
 
 ```bash
-pieces conversation -r "My awsome name"
+pieces conversation -r My awsome name
 ```
 
 Or you can make the model rename it for you
