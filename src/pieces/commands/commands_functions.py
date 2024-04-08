@@ -16,8 +16,7 @@ from pieces import __version__
 
 # Globals for CLI Memory.
 ws_manager = WebSocketManager()
-assets_are_models = False
-current_asset = {}
+current_asset = None
 parser = None
 application = None
 ###############################################################################
@@ -52,7 +51,8 @@ def startup(): # startup function to run before the cli begin
             model_id = models[default_model_name]["uuid"] # default model id
             word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
             dump_pickle(file = models_file, model_id=model_id, word_limit=word_limit)
-            
+            global current_asset
+        current_asset = get_asset_ids(1)[0] # default current asset to the most recent
     else:
         server_startup_failed()
         
@@ -171,14 +171,12 @@ def extract_code_from_markdown(markdown, name, language):
     # Minimize multiple consecutive newlines to a single newline
     extracted_code = re.sub(r'\n\s*\n', '\n', extracted_code)
 
-    directory = os.path.join(os.getcwd(),'opened_snippets')  # Change the dir to the same dir that the user writing the command in
-
     # Ensure the directory exists, create it if not
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    if not os.path.exists(open_snippet_dir):
+        os.makedirs(open_snippet_dir)
 
     # Path to save the extracted code
-    file_path = os.path.join(directory, f'{filename}{file_extension}')
+    file_path = os.path.join(open_snippet_dir, f'{filename}{file_extension}')
 
     # Writing the extracted code to a new file
     with open(file_path, 'w') as file:
@@ -187,7 +185,7 @@ def extract_code_from_markdown(markdown, name, language):
     return file_path
 
 def get_file_extension(language):
-    with open(f'{BASE_DIR}/commands/extensions.json') as f:
+    with open(extensions_dir) as f:
         extension_mapping = json.load(f)
 
     # Lowercase the language for case-insensitive matching
