@@ -44,7 +44,8 @@ def conversation_handler(**kwargs):
 
     # Delete the conversation
     if delete:
-        r = input("Are you sure you want to delete the conversation? (y/n) : ")
+        con  = pos_client.ConversationApi(api_client).conversation_get_specific_conversation(conversation=conversation_id)
+        r = input(f"Are you sure you want to delete '{con.name}'? (y/n) : ")
         if r == "y":
             pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation(conversation=conversation_id)
             print("Conversation deleted successfully")
