@@ -63,7 +63,7 @@ After installing the CLI tool, you can access its functionalities through the te
 
 - `x` -> The index
 - `current asset` -> The asset that you are currently using can be changed by the open command 
-- `current conversation` -> The conversation that you currently in which you will use in the ask command
+- `current conversation` -> The conversation that you currently using in the ask command
 
 
 ### Usage
