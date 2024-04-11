@@ -251,7 +251,7 @@ pieces conversation x
 ##### Ask a question to a model:
 **Requires quotes around question**
 
-Ask the copoilt a question it uses chatGPT3.5 as a defualt model to ask a question, you can change the model using the change model command. You can add a relevance file or snippet index check the list assets command.
+Ask the Pieces Copilot a question. You can add a relevant file, you can also add relevant snippets based on their index shown in the assets list command. In order to change models from the default (GPT3.5), use the `change_model` command You can add a relevance file or snippet index check the `list assets` command.
 You can use `.` or `/` to refer to the current directory 
 
 ```bash
