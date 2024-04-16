@@ -3,13 +3,13 @@ import json
 import websocket
 import threading
 import pieces_os_client
+
 from rich.live import Live
 from rich.markdown import Markdown
 from . import config
 import pieces_os_client as pos_client
-
-WEBSOCKET_URL = "ws://localhost:1000/qgpt/stream"
-TIMEOUT = 20  # seconds
+from . import config
+from .config import WEBSOCKET_URL,TIMEOUT
 
 
 
@@ -72,21 +72,21 @@ class WebSocketManager:
 
     def on_close(self, ws, close_status_code, close_msg):
         """Handle websocket closure."""
-        if self.verbose:
-            print("WebSocket closed")
+        # if self.verbose:
+        #     print("WebSocket closed")
         self.is_connected = False
 
     def on_open(self, ws):
         """Handle websocket opening."""
-        if self.verbose:
-            print("WebSocket connection opened.")
+        # if self.verbose:
+        #     print("WebSocket connection opened.")
         self.is_connected = True
         self.open_event.set()
 
     def _start_ws(self):
         """Start a new websocket connection."""
-        if self.verbose:
-            print("Starting WebSocket connection...")
+        # if self.verbose:
+        #     print("Starting WebSocket connection...")
         ws =  websocket.WebSocketApp(WEBSOCKET_URL,
                                          on_open=self.on_open,
                                          on_message=self.on_message,
@@ -106,15 +106,11 @@ class WebSocketManager:
             },
             "conversation": self.conversation})
         if self.is_connected:
-            try:
-                self.ws.send(message)
-                if self.verbose:
-                    print("Response: ")
-            except websocket.WebSocketException as e:
-                print(f"Error sending message: {e}")
+            self.ws.send(message)
         else:
             self.open_websocket()
             self.send_message(model_id,query,relevant)
+
 
     def close_websocket_connection(self):
         """Close the websocket connection."""
