@@ -14,7 +14,9 @@ def check_assets_existence(func):
     """Decorator to ensure user has assets."""
     def wrapper(*args, **kwargs):
         try:
-            get_asset_ids(1) # Check if there is an asset
+            assets = get_asset_ids(1) # Check if there is an asset
+            if not assets:
+                raise Exception("No assets found")
             return func(*args, **kwargs)
         except:
             return show_error("No assets found", "Please create an asset first.")
@@ -29,7 +31,7 @@ def check_asset_selected(func):
     """
     def wrapper(*args, **kwargs):
         if current_asset is None:
-            return show_error("No asset selected.", "Please open an asset first.")
+            return show_error("No asset selected.", "Please open an asset first using pieces open.")
         try: 
             asset_data = get_asset_by_id(current_asset)
             return func(asset_data=asset_data,*args, **kwargs)
