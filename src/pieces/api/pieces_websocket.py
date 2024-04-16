@@ -129,5 +129,7 @@ class WebSocketManager:
             self.close_websocket_connection()
         self.verbose = True
         if not finishes:
+            if self.live():
+                self.live.stop()
             raise ConnectionError("Failed to get the reponse back")
         return self.final_answer
