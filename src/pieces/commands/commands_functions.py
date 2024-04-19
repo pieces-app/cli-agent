@@ -6,7 +6,6 @@ import json
 from bs4 import BeautifulSoup
 import os
 import re
-from pieces.api.pieces_websocket import WebSocketManager
 from pieces.api.api_functions import *
 from pieces.api.system import *
 from pieces.api.assets import *
@@ -15,7 +14,6 @@ import pickle
 from pieces import __version__
 
 # Globals for CLI Memory.
-ws_manager = WebSocketManager()
 current_asset = None
 parser = None
 application = None
@@ -57,12 +55,6 @@ def startup(): # startup function to run before the cli begin
         server_startup_failed()
         
 
-def ask(query, **kwargs):
-    global model_id, ws_manager
-    try:
-        ws_manager.ask_question(model_id, query)
-    except Exception as e:
-        show_error("Error occurred while asking the question:", e)
 
 def search(query, **kwargs):
     global asset_ids 

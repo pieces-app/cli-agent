@@ -195,4 +195,3 @@ def extract_asset_info(data:dict) -> dict:
              "type" :type,
              "language": language,
              "raw": raw}
-             
