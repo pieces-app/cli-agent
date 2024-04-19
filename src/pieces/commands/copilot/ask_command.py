@@ -44,8 +44,8 @@ def ask(query, **kwargs):
                             assets=flattened_assets,
                             application=commands_functions.application.id,
                             model=commands_functions.model_id
-                        )).to_dict()
+                        )).to_dict()['relevant']
         
-    ws_manager.ask_question(commands_functions.model_id, query,relevant=relevant['relevant'])
+    ws_manager.ask_question(commands_functions.model_id, query,relevant=relevant)
 
     
