@@ -82,7 +82,7 @@ def open_asset(**kwargs):
 
 def update_asset(**kwargs):
     asset = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
-    file_path = os.path.join(open_snippet_dir , f"{commands_functions.sanitize_filename(asset["name"])}{commands_functions.get_file_extension(asset["language"])}")
+    file_path = os.path.join(open_snippet_dir , f"{commands_functions.sanitize_filename(asset['name'])}{commands_functions.get_file_extension(asset['language'])}")
     print(f"Saving {file_path} to {asset['name']} snippet with uuid {commands_functions.current_asset}")
     
     # Pass asset and file name
@@ -195,4 +195,3 @@ def extract_asset_info(data:dict) -> dict:
              "type" :type,
              "language": language,
              "raw": raw}
-             

@@ -74,6 +74,8 @@ def main():
     # Subparser for the 'ask' command
     ask_parser = subparsers.add_parser('ask', help='Ask a question to a model')
     ask_parser.add_argument('query', type=str, help='Question to be asked to the model')
+    ask_parser.add_argument('--files','-f', nargs='*', type=str,dest='files', help='Folder or file as a relevance you can enter an absolute or relative path')
+    ask_parser.add_argument('--snippets','-s', nargs='*', type=int,dest='snippets', help='Snippet of the question to be asked to the model check list assets')
     ask_parser.set_defaults(func=ask)
 
     # Subparser for the 'version' command
@@ -105,6 +107,20 @@ def main():
     logout_parser = subparsers.add_parser('logout', help='Logout from pieces os')
     logout_parser.set_defaults(func=lambda **kwargs:print("Logged out successfully") if sign_out() else print('Failed to logout out'))
 
+
+    # Subparser for the 'conversations' command
+    conversations_parser = subparsers.add_parser('conversations', help='print all conversations')
+    conversations_parser.set_defaults(func=get_conversations)
+    
+
+    # Subparser for the 'conversation' command
+    conversation_parser = subparsers.add_parser('conversation', help='print all conversations')
+    conversation_parser.add_argument('CONVERSATION_INDEX', type=int, nargs='?', default=None, help='Index of the conversation if None it will get the current conversation.')
+    conversation_parser.add_argument("-n","--new",action="store_true",dest="new", help="Create a new conversation")
+    conversation_parser.add_argument("-r","--rename",dest="rename",nargs='?', const=True,
+                        help="Rename the conversation that you are currently. If nothing is specified it will rename the current conversation using the llm model")
+    conversation_parser.add_argument("-d","--delete",action="store_true", dest="delete", help="Delete the conversation that you are currently using in the ask command")
+    conversation_parser.set_defaults(func=conversation_handler)
 
 
     # Subparser for the 'commit' command

@@ -15,13 +15,16 @@
 - [Operating System Support](#operating-system-support)
 - [Installing](#installing)
 - [Getting Started](#getting-started)
+- [Terminologies](#some-important-terminologies)
 - [Usage](#usage)
   - [Run](#run)
   - [List (assets,apps,models)](#list-command)
   - [Open, Save, Create, Edit, and Delete Assets](#open)
   - [Search and Query](#search-and-query)
+  - [Change the model](#change-the-llm-model-you-are-using)
+  - [conversations/conversation](#conversations-command)
   - [Change Model](#change-model)
-  - [Ask a Question](#Ask-a-question-to-a-model:)
+  - [Ask a Question](#ask-a-question-to-a-model)
   - [login and logout](#login-and-logout)
   - [Additional Commands](#additional-commands)
 - [Supported Versions](#supported-versions)
@@ -54,6 +57,14 @@ To get started with the Pieces Python CLI Tool, you need to:
 
 #### Getting Started
 After installing the CLI tool, you can access its functionalities through the terminal. The tool is initialized with the command `pieces` followed by various subcommands and options.
+
+
+### Some important terminologies
+
+- `x` -> The index
+- `current asset` -> The asset that you are currently using can be changed by the open command 
+- `current conversation` -> The conversation that you currently using in the ask command
+
 
 ### Usage
 
@@ -187,14 +198,67 @@ Change the model in the ask command.
 ```bash
 pieces change_model [MODEL_INDEX]
 ```
-##### Ask a question to a model:
-** Requires quotes around question **
+##### Conversations command
+###### Coversations
 
-Ask the copoilt a question it uses chatGPT3 as a defualt model to ask a question, you can change the model using the change model command.
+List all conversations that you have. The green conversation is the one that is currently being used in the ask command
 
 ```bash
-pieces ask "your question"
+pieces conversations
 ```
+
+###### Conversation
+
+List the messages in the currently using conversation in the ask command. 
+
+```bash
+pieces conversation
+```
+
+You can create a new conversation that will be used in the ask command.
+
+```bash
+pieces conversation -n
+```
+
+Rename a conversation
+
+```bash
+pieces conversation -r My awsome name
+```
+
+Or you can make the model rename it for you
+
+```bash
+pieces conversation -r
+```
+
+Delete a conversation
+
+```bash
+pieces conversation -d
+```
+
+
+
+You can switch the conversation and list its messages. Check the conversations command to get the index
+
+```bash
+pieces conversation x
+```
+
+
+##### Ask a question to a model:
+**Requires quotes around question**
+
+Ask the Pieces Copilot a question. You can add a relevant file, you can also add relevant snippets based on their index shown in the assets list command. In order to change models from the default (GPT3.5), use the `change_model` command You can add a relevance file or snippet index check the `list assets` command.
+You can use `.` or `/` to refer to the current directory 
+
+```bash
+pieces ask "your question" -f /file1 /file2 folder -s 1 2 3
+```
+
+
 
 
 ##### Commiting to github
@@ -324,5 +388,5 @@ To uninstall the project, run the following command:
 ```shell
 pip uninstall pieces
 ```
-and don't forget to remove the virtual environment and dist folder
+Don't forget to remove the virtual environment and dist folder
 
