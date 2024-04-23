@@ -8,6 +8,43 @@ from pieces.gui import show_error,print_model_details,space_below,double_line
 from pieces.api.config import open_snippet_dir
 import os
 
+current_asset = None
+
+def check_assets_existence(func):
+    """Decorator to ensure user has assets."""
+    def wrapper(*args, **kwargs):
+        try:
+            assets = get_asset_ids(1) # Check if there is an asset
+            if not assets:
+                raise Exception("No assets found")
+            return func(*args, **kwargs)
+        except:
+            return show_error("No assets found", "Please create an asset first.")
+        
+    return wrapper
+
+
+def check_asset_selected(func):
+    """
+    Decorator to check if there is a selected asset or not and if it is valid id.
+    If valid id it returns the asset_data to the called function.
+    """
+    def wrapper(*args, **kwargs):
+        if current_asset is None:
+            return show_error("No asset selected.", "Please open an asset first using pieces open.")
+        try: 
+            asset_data = get_asset_by_id(current_asset)
+            return func(asset_data=asset_data,*args, **kwargs)
+        except:
+            # The selected asset is deleted
+            return show_error("Error occured in the command", "Please make sure the selected asset is valid.")
+            
+            
+    return wrapper
+
+
+
+
 def list_command(**kwargs):
     type = kwargs.get("type","assets")
     max_assets = kwargs.get("max_assets",10)
@@ -49,7 +86,7 @@ def list_apps():
         # Print an error message if the 'Applications' object does not contain an iterable list of applications
         print("Error: The 'Applications' object does not contain an iterable list of applications.")
 
-
+@check_assets_existence
 def list_assets(max_assets:int=10):
 
     asset_list = get_assets_info_list()
@@ -59,8 +96,9 @@ def list_assets(max_assets:int=10):
         if i >= max_assets:
             break
 
-
+@check_assets_existence
 def open_asset(**kwargs):
+    global current_asset
     item_index = kwargs.get('ITEM_INDEX',1)
     if not item_index: item_index = 1
 
@@ -71,7 +109,7 @@ def open_asset(**kwargs):
         show_error("Invalid asset index or asset not found.","Please choose from the list or use 'pieces list assets'")
         return
     
-    commands_functions.current_asset = asset_id  
+    current_asset = asset_id  
     open_asset = get_asset_by_id(asset_id)
     asset_dict = extract_asset_info(open_asset)
     
@@ -80,16 +118,23 @@ def open_asset(**kwargs):
 
     print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
 
-def update_asset(**kwargs):
-    asset = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
-    file_path = os.path.join(open_snippet_dir , f"{commands_functions.sanitize_filename(asset['name'])}{commands_functions.get_file_extension(asset['language'])}")
-    print(f"Saving {file_path} to {asset['name']} snippet with uuid {commands_functions.current_asset}")
+
+
+@check_asset_selected
+def update_asset(asset_data,**kwargs):
+    asset = extract_asset_info(asset_data)
+    file_path = os.path.join(open_snippet_dir , f"{commands_functions.sanitize_filename(asset["name"])}{commands_functions.get_file_extension(asset["language"])}")
+    print(f"Saving {file_path} to {asset['name']} snippet with uuid {current_asset}")
+
     
     # Pass asset and file name
-    update_asset_value(file_path, commands_functions.current_asset)
+    update_asset_value(file_path, current_asset)
 
-def edit_asset(**kwargs):
-    asset_dict = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
+
+@check_asset_selected
+def edit_asset(asset_data,**kwargs):
+    global current_asset
+    asset_dict = extract_asset_info(asset_data)
     print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
     
     name = kwargs.get('name', '')
@@ -102,29 +147,33 @@ def edit_asset(**kwargs):
 
     # Check if the user actually entered a name
     if name:
-        edit_asset_name(commands_functions.current_asset, name)
+        edit_asset_name(current_asset, name)
     if classification:
-        reclassify_asset(commands_functions.current_asset, classification)
+        reclassify_asset(current_asset, classification)
 
-def delete_asset(**kwargs):
+@check_asset_selected
+def delete_asset(asset_data,**kwargs):
+    global current_asset
     # Ask the user for confirmation before deleting
     # print()
     # open_asset()
-    asset_dict = extract_asset_info(get_asset_by_id(commands_functions.current_asset))
+    asset_dict = extract_asset_info(asset_data)
     print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
 
     confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
     if confirm == 'y':
         print("Deleting asset...")
-        delete_asset_by_id(commands_functions.current_asset)
-        commands_functions.current_asset = get_asset_ids()[0]
+        delete_asset_by_id(current_asset)
+        current_asset = None
         space_below("Asset Deleted")
     elif confirm == 'n':
         print("Deletion cancelled.")
     else:
         print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
     
+
 def create_asset(**kwargs):
+    global current_asset
     # TODO add more ways to create an asset such as an entire file
 
     # Save text copied to the clipboard as an asset
@@ -139,7 +188,7 @@ def create_asset(**kwargs):
             space_below("Saving Content...")
             new_asset = create_new_asset(commands_functions.application, raw_string=text, metadata=None)
     
-            commands_functions.current_asset = new_asset.id
+            current_asset = new_asset.id
             print(f"Asset Created use 'open' to view")
 
             return new_asset
@@ -195,3 +244,4 @@ def extract_asset_info(data:dict) -> dict:
              "type" :type,
              "language": language,
              "raw": raw}
+
