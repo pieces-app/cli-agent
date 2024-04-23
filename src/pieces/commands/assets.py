@@ -119,11 +119,13 @@ def open_asset(**kwargs):
     print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
 
 
+
 @check_asset_selected
 def update_asset(asset_data,**kwargs):
     asset = extract_asset_info(asset_data)
     file_path = os.path.join(open_snippet_dir , f"{commands_functions.sanitize_filename(asset["name"])}{commands_functions.get_file_extension(asset["language"])}")
     print(f"Saving {file_path} to {asset['name']} snippet with uuid {current_asset}")
+
     
     # Pass asset and file name
     update_asset_value(file_path, current_asset)
