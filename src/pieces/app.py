@@ -136,7 +136,7 @@ def main():
         return
 
     # Check if the 'run' or 'help' command is explicitly provided
-    if not arg in ['help', 'run']:
+    if arg not in ['help', 'run']:
         startup()
 
     args = parser.parse_args()
@@ -144,4 +144,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    import cProfile
+    cProfile.run('main()', sort='cumtime')
+    #main()

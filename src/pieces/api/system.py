@@ -1,6 +1,5 @@
 ## WELLNESS AND SYSTEM 
 import platform
-from pieces.store import *
 from .config import *
 import time
 import subprocess
@@ -57,7 +56,6 @@ def connect_api() -> pos_client.Application:
             platform = local_os,
             version = __version__))
     api_response = api_instance.connect(seeded_connector_connection=seeded_connector_connection)
-    insert_application(api_response.application) 
     return api_response.application
     
 

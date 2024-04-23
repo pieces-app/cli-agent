@@ -7,8 +7,6 @@ import pieces_os_client
 from rich.live import Live
 from rich.markdown import Markdown
 from . import config
-import pieces_os_client as pos_client
-from . import config
 from .config import WEBSOCKET_URL,TIMEOUT
 
 
