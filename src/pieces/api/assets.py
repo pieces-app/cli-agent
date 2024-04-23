@@ -34,27 +34,21 @@ def create_new_asset(application, raw_string, metadata=None):
 
 def get_asset_ids(max=None, **kwargs):
     assets_api = pos_client.AssetsApi(api_client)
+    # Call the API to get assets identifiers
+    api_response = assets_api.assets_identifiers_snapshot()
 
-    try:
-        # Call the API to get assets identifiers
-        api_response = assets_api.assets_identifiers_snapshot()
+    # Extract data from the response
+    data = api_response.to_dict()  # Convert the response to a dictionary
 
-        # Extract data from the response
-        data = api_response.to_dict()  # Convert the response to a dictionary
+    # Extract the 'id' values from each item in the 'iterable' list
+    ids = [item['id'] for item in data.get('iterable', [])]
 
-        # Extract the 'id' values from each item in the 'iterable' list
-        ids = [item['id'] for item in data.get('iterable', [])]
+    # If max is specified, return only up to max ids
+    if max is not None and max > 0:
+        return ids[:max]
 
-        # If max is specified, return only up to max ids
-        if max is not None and max > 0:
-            return ids[:max]
-
-        # Return the list of ids
-        return ids
-    except ApiException as e:
-        # Handle the API exception
-        show_error("Exception when calling AssetsApi->assets_identifiers_snapshot:" ,e)
-        return None
+    # Return the list of ids
+    return ids
     
 def get_assets_info_list() -> List[Dict[str,str]]:
     """
@@ -109,20 +103,14 @@ def get_single_asset_name(id):
 
 def get_asset_by_id(id):
     asset_api = pos_client.AssetApi(api_client)
+    
+    # Use the OpenAPI client to get asset snapshot
+    api_response = asset_api.asset_snapshot(id)
 
-    try:
-        # Use the OpenAPI client to get asset snapshot
-        api_response = asset_api.asset_snapshot(id)
+    # Convert the response to a dictionary
+    data = api_response.to_dict()
 
-        # Convert the response to a dictionary
-        data = api_response.to_dict()
-
-        return data
-    except ApiException as e:
-        show_error(f"Error occurred for ID {id}:" ,str(e))
-        return None
-    except ValidationError as e:
-        show_error(f"Parsing error in asset with ID {id}:", str(e))
+    return data
 
 def edit_asset_name(asset_id, new_name):
     asset_api = pos_client.AssetApi(api_client)

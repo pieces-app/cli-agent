@@ -13,8 +13,7 @@ from pieces.api.config import *
 import pickle
 from pieces import __version__
 
-# Globals for CLI Memory.
-current_asset = None
+
 parser = None
 application = None
 ###############################################################################
@@ -23,6 +22,7 @@ application = None
 
 def startup(): # startup function to run before the cli begin
     global models,model_id,word_limit,application,pieces_os_version
+
     pieces_os_version = open_pieces_os()
     if pieces_os_version:
 
@@ -43,8 +43,6 @@ def startup(): # startup function to run before the cli begin
             model_id = models[default_model_name]["uuid"] # default model id
             word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
             dump_pickle(file = models_file, model_id=model_id, word_limit=word_limit)
-        global current_asset
-        current_asset = get_asset_ids(1)[0] # default current asset to the most recent
     else:
         server_startup_failed()
         
