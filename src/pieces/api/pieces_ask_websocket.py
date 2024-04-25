@@ -7,12 +7,18 @@ import pieces_os_client
 from rich.live import Live
 from rich.markdown import Markdown
 from . import config
-from .config import WEBSOCKET_URL,TIMEOUT
+from .config import ASK_WEBSOCKET_URL,TIMEOUT
 
 
 
 
 class WebSocketManager:
+
+    def __new__(cls,*args,**kwargs):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(WebSocketManager, cls).__new__(cls)
+        return cls.instance
+    
     def __init__(self):
         self.ws = None
         self.is_connected = False
@@ -85,7 +91,7 @@ class WebSocketManager:
         """Start a new websocket connection."""
         # if self.verbose:
         #     print("Starting WebSocket connection...")
-        ws =  websocket.WebSocketApp(WEBSOCKET_URL,
+        ws =  websocket.WebSocketApp(ASK_WEBSOCKET_URL,
                                          on_open=self.on_open,
                                          on_message=self.on_message,
                                          on_error=self.on_error,

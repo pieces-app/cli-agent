@@ -1,5 +1,5 @@
 from pieces.commands import commands_functions
-from pieces.api.pieces_websocket import WebSocketManager
+from pieces.api.pieces_ask_websocket import WebSocketManager
 from pieces_os_client import *
 from pieces.api.config import api_client
 import os

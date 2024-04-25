@@ -31,7 +31,7 @@ configuration = pos_client.Configuration(host=host)
 
 
 # Websocket config
-WEBSOCKET_URL = f"{host.replace('http', 'ws')}/qgpt/stream"
+ASK_WEBSOCKET_URL = f"{host.replace('http', 'ws')}/qgpt/stream"
 TIMEOUT = 20  # seconds
 
 run_in_loop = False # is CLI looping?

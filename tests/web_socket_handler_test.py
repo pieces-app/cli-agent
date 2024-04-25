@@ -1,7 +1,7 @@
 import json
 from unittest.mock import Mock, patch
 import pytest
-from pieces.api.pieces_websocket import WebSocketManager
+from pieces.api.pieces_ask_websocket import WebSocketManager
 
 class TestWebSocketManager:
 
