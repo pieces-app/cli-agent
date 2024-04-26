@@ -24,14 +24,14 @@ if 'Linux' in platform_info:
     port = 5323
 else:
     port = 1000
-
+host = f"http://localhost:{port}"
 # Defining the host is optional and defaults to http://localhost:1000
 # See configuration.py for a list of all supported configuration parameters.
-configuration = pos_client.Configuration(host=f"http://localhost:{port}")
+configuration = pos_client.Configuration(host=host)
 
 
 # Websocket config
-WEBSOCKET_URL = f"ws://localhost:{port}/qgpt/stream"
+ASK_WEBSOCKET_URL = f"{host.replace('http', 'ws')}/qgpt/stream"
 TIMEOUT = 20  # seconds
 
 run_in_loop = False # is CLI looping?

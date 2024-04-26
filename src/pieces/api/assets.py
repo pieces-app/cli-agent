@@ -50,7 +50,7 @@ def get_asset_ids(max=None, **kwargs):
     # Return the list of ids
     return ids
     
-def get_assets_info_list() -> List[Dict[str,str]]:
+def get_assets_info_list(max_assets=10) -> List[Dict[str,str]]:
     """
     Returns a list of dictionaries containing the name and id of each asset
     """
@@ -60,7 +60,7 @@ def get_assets_info_list() -> List[Dict[str,str]]:
 
 
     ids = get_asset_ids()
-    for id in ids:
+    for id in ids[:max_assets]:
         try:
             # Use the OpenAPI client to get asset snapshot
             api_response = asset_api.asset_snapshot(id)
@@ -129,7 +129,7 @@ def edit_asset_name(asset_id, new_name):
 
     # Update the asset using the API
     try:
-        response = asset_api.asset_update(asset=asset, transferables=False)
+        asset_api.asset_update(asset=asset, transferables=False)
         print("Asset name updated successfully.")
     except Exception as e:
         show_error("Error updating asset: ",{e})

@@ -31,26 +31,18 @@ def startup(): # startup function to run before the cli begin
 
         # MODELS
         models = get_models_ids()
-        create_file = True
         # Check if the models file exists
-        if models_file.is_file():
+        try: 
+            get_current_model_name() # Checks if the current model is valid raise error if not vaild
             with open(models_file, 'rb') as f:
                 model_data = pickle.load(f)
             model_id = model_data["model_id"]
             word_limit = model_data["word_limit"]
-            try: # Checks if the current model is valid
-                get_current_model_name()
-                create_file = False
-            except:
-                pass
-            
-        if create_file:
+        except:
             default_model_name = "GPT-3.5-turbo Chat Model"
             model_id = models[default_model_name]["uuid"] # default model id
             word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
             dump_pickle(file = models_file, model_id=model_id, word_limit=word_limit)
-        
-        
     else:
         server_startup_failed()
         

@@ -125,7 +125,6 @@ def main():
 
     # Subparser for the 'commit' command
     commit_parser = subparsers.add_parser('commit', help='Auto generate a github commit messaage and commit changes')
-    commit_parser.add_argument("-i","--issues",dest="issue_flag",action="store_true", help="There is a related issue to that commit that the model will try to predict")
     commit_parser.add_argument("-p","--push",dest="push",action="store_true", help="push the code to github")
     commit_parser.set_defaults(func=git_commit)
 
@@ -137,7 +136,7 @@ def main():
         return
 
     # Check if the 'run' or 'help' command is explicitly provided
-    if not arg in ['help', 'run']:
+    if arg not in ['help', 'run']:
         startup()
 
     args = parser.parse_args()

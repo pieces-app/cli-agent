@@ -89,7 +89,7 @@ def list_apps():
 @check_assets_existence
 def list_assets(max_assets:int=10):
 
-    asset_list = get_assets_info_list()
+    asset_list = get_assets_info_list(max_assets)
     
     for i, name in enumerate(asset_list, start=1):
         print(f"{i}: {name.get('name')}")
@@ -101,8 +101,7 @@ def open_asset(**kwargs):
     global current_asset
     item_index = kwargs.get('ITEM_INDEX',1)
     if not item_index: item_index = 1
-
-    asset_ids = get_assets_info_list()
+    asset_ids = get_assets_info_list(item_index)
     try:
         asset_id = asset_ids[item_index-1].get('id') # because we begin from 1
     except IndexError:

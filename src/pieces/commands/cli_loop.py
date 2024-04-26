@@ -1,10 +1,9 @@
 import sys
 import platform
-from pieces.gui import *
-import platform
-import sys
 import shlex
 from prompt_toolkit import PromptSession
+
+from pieces.gui import *
 from pieces.api import config
 from .commands_functions import (print_instructions,
                                  print_response, welcome,startup,
