@@ -11,41 +11,7 @@ from .commands_functions import (print_instructions,
 from . import commands_functions
 from .copilot.ask_command import ws_manager
 from pieces import __version__
-
-def levenshtein_distance(s1, s2):
-    # If s1 is shorter than s2, swap them to minimize the number of operations
-    if len(s1) < len(s2):
-        return levenshtein_distance(s2, s1)
-
-    # If one of the strings is empty, the distance is the length of the other string
-    if len(s2) == 0:
-        return len(s1)
-
-    # Initialize the previous row of distances
-    previous_row = range(len(s2) + 1)
-    for i, c1 in enumerate(s1):
-        # Initialize the current row, starting with the deletion distance
-        current_row = [i + 1]
-        for j, c2 in enumerate(s2):
-            # Calculate the cost of insertions, deletions, and substitutions
-            insertions = previous_row[j + 1] + 1
-            deletions = current_row[j] + 1
-            substitutions = previous_row[j] + (c1 != c2)
-            # Append the minimum cost of the operations to the current row
-            current_row.append(min(insertions, deletions, substitutions))
-        # Set the current row as the previous row for the next iteration
-        previous_row = current_row
-    
-    # The last element of the previous row contains the levenshtein distance
-    return previous_row[-1]
-
-
-def find_most_similar_command(valid_commands, user_input):
-    # Calculate the Levenshtein distance between the user input and each valid command
-    distances = {cmd: levenshtein_distance(user_input, cmd) for cmd in valid_commands}
-    # Find the command with the smallest Levenshtein distance to the user input
-    most_similar_command = min(distances, key=distances.get)
-    return most_similar_command
+from pieces.pieces_argparser import PiecesArgparser
 
 def loop(**kwargs):
     
@@ -104,8 +70,8 @@ def loop(**kwargs):
 
             command_name = command_name.lower()
 
-            if command_name in commands_functions.parser._subparsers._group_actions[0].choices:
-                subparser = commands_functions.parser._subparsers._group_actions[0].choices[command_name]
+            if command_name in PiecesArgparser.parser._subparsers._group_actions[0].choices:
+                subparser = PiecesArgparser.parser._subparsers._group_actions[0].choices[command_name]
                 command_func = subparser.get_default('func')  # Get the function associated with the command
 
                 if command_func:
@@ -119,12 +85,8 @@ def loop(**kwargs):
                 else:
                     print(f"No function associated with command: {command_name}")
             else:
-                print(f"Unknown command: {command_name}")
-                commands = list(commands_functions.parser._subparsers._group_actions[0].choices.keys())
-                commands.append("exit")
-                most_similar_command = find_most_similar_command(commands, user_input)
-                print(f"Did you mean {most_similar_command}")
+                raise ValueError(f"invalid choice: '{command_name}'")
         except Exception as e:
-            show_error(f"An error occurred:", {e})
+            show_error(f"An error occurred:", {e})  #TODO: Handle by the argparser not a try/except
 
         print()

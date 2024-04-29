@@ -1,4 +1,4 @@
-from .cli_loop import loop, find_most_similar_command
+from .cli_loop import loop
 from .autocommit import git_commit
 from .commands_functions import (version,
                                  search,
@@ -16,8 +16,7 @@ from .assets import (update_asset_value,
 
 from .copilot import ask,get_conversations,conversation_handler
 
-__all__ = ['loop', 
-           'find_most_similar_command',
+__all__ = ['loop',
            "get_conversations",
            'conversation_handler',
            'git_commit',

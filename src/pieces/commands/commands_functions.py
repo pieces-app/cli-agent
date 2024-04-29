@@ -14,7 +14,6 @@ import pickle
 from pieces import __version__
 
 
-parser = None
 application = None
 ###############################################################################
 ############################## MAIN FUNCTIONS #################################
