@@ -7,45 +7,18 @@ from bs4 import BeautifulSoup
 import os
 import re
 from pieces.api.api_functions import *
-from pieces.api.system import *
 from pieces.api.assets import *
-from pieces.api.config import *
-import pickle
+from pieces.settings import Settings
 from pieces import __version__
 
 
-parser = None
 application = None
 ###############################################################################
 ############################## MAIN FUNCTIONS #################################
 ###############################################################################
 
-def startup(): # startup function to run before the cli begin
-    global models,model_id,word_limit,application,pieces_os_version
 
-    pieces_os_version = open_pieces_os()
-    if pieces_os_version:
 
-        # Call the connect api
-        application = connect_api()
-
-        # MODELS
-        models = get_models_ids()
-        # Check if the models file exists
-        try: 
-            get_current_model_name() # Checks if the current model is valid raise error if not vaild
-            with open(models_file, 'rb') as f:
-                model_data = pickle.load(f)
-            model_id = model_data["model_id"]
-            word_limit = model_data["word_limit"]
-        except:
-            default_model_name = "GPT-3.5-turbo Chat Model"
-            model_id = models[default_model_name]["uuid"] # default model id
-            word_limit = models[default_model_name]["word_limit"] # The word limit of the default model
-            dump_pickle(file = models_file, model_id=model_id, word_limit=word_limit)
-    else:
-        server_startup_failed()
-        
 
 
 def search(query, **kwargs):
@@ -94,10 +67,9 @@ def change_model(**kwargs): # Change the model used in the ask command
     model_index = kwargs.get('MODEL_INDEX')
     try:
         if model_index:
-            model_name = list(models.keys())[model_index-1] # because we begin from 1
-            word_limit = models[model_name].get("word_limit")
-            model_id  = models[model_name].get("uuid")
-            dump_pickle(file = models_file,model_id = model_id,word_limit = word_limit)
+            model_name = list(Settings.models.keys())[model_index-1] # because we begin from 1
+            model_id  = Settings.models[model_name].get("uuid")
+            Settings.dump_pickle(file = Settings.models_file,model_id = model_id)
             print(f"Switched to {model_name} with uuid {model_id}")
         else:
             raise Exception("Invalid model index or model index not provided.")
@@ -111,18 +83,6 @@ def change_model(**kwargs): # Change the model used in the ask command
 ###############################################################################
 ############################## HELPER FUNCTIONS ###############################
 ###############################################################################
-def dump_pickle(file,**data):
-    """Store data in a pickle file."""
-    with open(file, 'wb') as f:
-        pickle.dump(data, f)
-
-
-def get_current_model_name() -> str:
-    with open(models_file, 'rb') as f:
-        model_data = pickle.load(f)
-    model_id = model_data["model_id"]
-    models_reverse = {v.get("uuid"):k for k,v in models.items()}
-    return models_reverse[model_id]
 
 
 def get_asset_name_by_id(asset_id):
@@ -156,11 +116,11 @@ def extract_code_from_markdown(markdown, name, language):
     extracted_code = re.sub(r'\n\s*\n', '\n', extracted_code)
 
     # Ensure the directory exists, create it if not
-    if not os.path.exists(open_snippet_dir):
-        os.makedirs(open_snippet_dir)
+    if not os.path.exists(Settings.open_snippet_dir):
+        os.makedirs(Settings.open_snippet_dir)
 
     # Path to save the extracted code
-    file_path = os.path.join(open_snippet_dir, f'{filename}{file_extension}')
+    file_path = os.path.join(Settings.open_snippet_dir, f'{filename}{file_extension}')
 
     # Writing the extracted code to a new file
     with open(file_path, 'w') as file:
@@ -169,7 +129,7 @@ def extract_code_from_markdown(markdown, name, language):
     return file_path
 
 def get_file_extension(language):
-    with open(extensions_dir) as f:
+    with open(Settings.extensions_dir) as f:
         extension_mapping = json.load(f)
 
     # Lowercase the language for case-insensitive matching
@@ -179,23 +139,8 @@ def get_file_extension(language):
     return extension_mapping.get(language, '.txt')
 
 def version(**kwargs):
-
-    if pieces_os_version:
-        print(f"Pieces Version: {pieces_os_version}")
+    if Settings.pieces_os_version:
+        print(f"Pieces Version: {Settings.pieces_os_version}")
         print(f"Cli Version: {__version__}")
     else:
-        ### LOGIC TO look up cache from SQLite3 to get the cli and pieces os version
-
-        # Get the version from cache
-        # Establish a local database connection
-        # conn = create_connection('applications.db')
-
-        # # Create the table if it does not exist
-        # create_table(conn)
-        # # create_tables(conn)
-
-        # # Check the database for an existing application
-        # application_id = "DEFAULT"  # Replace with a default application ID
-        # application = get_application(conn, application_id)
-        # # application =  get_application_with_versions(conn, application_id)
         pass

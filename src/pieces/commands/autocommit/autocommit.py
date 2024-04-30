@@ -2,13 +2,13 @@ import subprocess
 import re
 from .git_api import get_repo_issues
 from typing import Optional,Tuple
-from pieces.api.config import api_client,pos_client
+import pieces_os_client as pos_client
 from pieces.commands import commands_functions
 from pieces.gui import show_error
 import os
 from rich.console import Console
 from rich.markdown import Markdown
-
+from pieces.settings import Settings
 
 
 def get_git_repo_name() -> Optional[Tuple[str]]:
@@ -107,7 +107,7 @@ def git_commit(**kwargs):
                 `Here are the changes summary:`\n{changes_summary}"""
 
     try:
-        commit_message = pos_client.QGPTApi(api_client).relevance(
+        commit_message = pos_client.QGPTApi(Settings.api_client).relevance(
             pos_client.QGPTRelevanceInput(
                 query=message_prompt,
                 paths=paths,
@@ -144,7 +144,7 @@ def git_commit(**kwargs):
                 
                 try:
                     
-                    issue_number = pos_client.QGPTApi(api_client).relevance(
+                    issue_number = pos_client.QGPTApi(Settings.api_client).relevance(
                             pos_client.QGPTRelevanceInput(
                                 query=issue_prompt.format(issues=issue_list),
                                 paths=paths,

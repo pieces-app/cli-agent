@@ -1,9 +1,9 @@
-from .cli_loop import loop, find_most_similar_command
+from .cli_loop import loop
 from .autocommit import git_commit
 from .commands_functions import (version,
                                  search,
                                  change_model,
-                                 set_parser,startup)
+                                 set_parser)
 from .assets import (update_asset_value,
                     edit_asset,
                     list_assets,
@@ -16,8 +16,7 @@ from .assets import (update_asset_value,
 
 from .copilot import ask,get_conversations,conversation_handler
 
-__all__ = ['loop', 
-           'find_most_similar_command',
+__all__ = ['loop',
            "get_conversations",
            'conversation_handler',
            'git_commit',
@@ -32,7 +31,6 @@ __all__ = ['loop',
            'search',
            'delete_asset',
            'change_model',
-           "startup",
            "list_models",
            "list_apps","list_command"]
 

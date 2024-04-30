@@ -1,14 +1,12 @@
-## ASSET CALLS 
-from .config import *
+from pieces.settings import Settings
 from pieces.gui import show_error
-from pydantic import ValidationError
-from pieces_os_client.models.classification import Classification
 from pieces_os_client.rest import ApiException
 from typing import Dict,List
 import json
+import pieces_os_client as pos_client
 
 def create_new_asset(application, raw_string, metadata=None):
-    assets_api = pos_client.AssetsApi(api_client)
+    assets_api = pos_client.AssetsApi(Settings.api_client)
 
     # Construct a Seed
     seed = pos_client.Seed(
@@ -33,7 +31,7 @@ def create_new_asset(application, raw_string, metadata=None):
         return None
 
 def get_asset_ids(max=None, **kwargs):
-    assets_api = pos_client.AssetsApi(api_client)
+    assets_api = pos_client.AssetsApi(Settings.api_client)
     # Call the API to get assets identifiers
     api_response = assets_api.assets_identifiers_snapshot()
 
@@ -56,7 +54,7 @@ def get_assets_info_list(max_assets=10) -> List[Dict[str,str]]:
     """
 
     assets = []
-    asset_api = pos_client.AssetApi(api_client)
+    asset_api = pos_client.AssetApi(Settings.api_client)
 
 
     ids = get_asset_ids()
@@ -86,7 +84,7 @@ def get_assets_info_list(max_assets=10) -> List[Dict[str,str]]:
 
 
 def get_single_asset_name(id):
-    asset_api = pos_client.AssetApi(api_client)
+    asset_api = pos_client.AssetApi(Settings.api_client)
 
     try:
         # Use the OpenAPI client to get asset snapshot
@@ -102,7 +100,7 @@ def get_single_asset_name(id):
         show_error(f"Error occurred for ID {id}: ",str(e))
 
 def get_asset_by_id(id):
-    asset_api = pos_client.AssetApi(api_client)
+    asset_api = pos_client.AssetApi(Settings.api_client)
     
     # Use the OpenAPI client to get asset snapshot
     api_response = asset_api.asset_snapshot(id)
@@ -113,7 +111,7 @@ def get_asset_by_id(id):
     return data
 
 def edit_asset_name(asset_id, new_name):
-    asset_api = pos_client.AssetApi(api_client)
+    asset_api = pos_client.AssetApi(Settings.api_client)
 
     # Get the asset using the provided asset_id
     asset = get_asset_by_id(asset_id)
@@ -135,7 +133,7 @@ def edit_asset_name(asset_id, new_name):
         show_error("Error updating asset: ",{e})
 
 def delete_asset_by_id(asset_id):
-    delete_instance = pos_client.AssetsApi(api_client)
+    delete_instance = pos_client.AssetsApi(Settings.api_client)
 
     try:
         response = delete_instance.assets_delete_asset(asset_id)
@@ -145,8 +143,8 @@ def delete_asset_by_id(asset_id):
 
 
 def reclassify_asset(asset_id, classification):
-    asset_api = pos_client.AssetApi(api_client)
-    with open(extensions_dir) as f:
+    asset_api = pos_client.AssetApi(Settings.api_client)
+    with open(Settings.extensions_dir) as f:
         extension_mapping = json.load(f)
         if classification not in extension_mapping:
             show_error(f"Invalid classification: {classification}","Please choose from the following: \n "+", ".join(extension_mapping.keys()))
@@ -171,8 +169,8 @@ def update_asset_value(file_path,asset_id):
     except FileNotFoundError:
         show_error("Error in update asset","File not found")
         return
-    asset_api = pos_client.AssetApi(api_client)
-    format_api = pos_client.FormatApi(api_client)
+    asset_api = pos_client.AssetApi(Settings.api_client)
+    format_api = pos_client.FormatApi(Settings.api_client)
 
     # get asset
     created = asset_api.asset_snapshot(asset_id, transferables=False)
