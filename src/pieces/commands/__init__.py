@@ -3,7 +3,7 @@ from .autocommit import git_commit
 from .commands_functions import (version,
                                  search,
                                  change_model,
-                                 set_parser,startup)
+                                 set_parser)
 from .assets import (update_asset_value,
                     edit_asset,
                     list_assets,
@@ -31,7 +31,6 @@ __all__ = ['loop',
            'search',
            'delete_asset',
            'change_model',
-           "startup",
            "list_models",
            "list_apps","list_command"]
 

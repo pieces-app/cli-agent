@@ -5,8 +5,9 @@ from pieces.api.assets import (get_assets_info_list,get_asset_by_id,
                                delete_asset_by_id,update_asset_value,
                                edit_asset_name,create_new_asset,get_asset_ids,reclassify_asset)
 from pieces.gui import show_error,print_model_details,space_below,double_line
-from pieces.api.config import open_snippet_dir
+from pieces.settings import Settings
 import os
+import pieces_os_client as pos_client
 
 current_asset = None
 
@@ -67,8 +68,10 @@ def list_models():
 
 def list_apps():
     # Get the list of applications
-    application_list = commands_functions.list_applications()
+    
+    applications_api = pos_client.ApplicationsApi(Settings.api_client)
 
+    application_list = applications_api.applications_snapshot()
     # Check if the application_list object has an iterable attribute and if it is an instance of Iterable
     if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
         # Iterate over the applications in the list
@@ -122,7 +125,7 @@ def open_asset(**kwargs):
 @check_asset_selected
 def update_asset(asset_data,**kwargs):
     asset = extract_asset_info(asset_data)
-    file_path = os.path.join(open_snippet_dir , f"{commands_functions.sanitize_filename(asset["name"])}{commands_functions.get_file_extension(asset["language"])}")
+    file_path = os.path.join(Settings.open_snippet_dir , f"{commands_functions.sanitize_filename(asset["name"])}{commands_functions.get_file_extension(asset["language"])}")
     print(f"Saving {file_path} to {asset['name']} snippet with uuid {current_asset}")
 
     

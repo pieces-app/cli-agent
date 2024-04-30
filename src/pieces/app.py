@@ -1,8 +1,9 @@
 from pieces.gui import print_help
-from pieces.api.config import pos_client, api_client
+import pieces_os_client as pos_client
 from pieces.api.api_functions import sign_out
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.commands import *
+from pieces.settings import Settings
 import sys
 
 class PiecesCLI:
@@ -78,7 +79,7 @@ class PiecesCLI:
 
         # Subparser for the 'login' command
         login_parser = self.command_parser.add_parser('login', help='Login to pieces os')
-        login_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {pos_client.OSApi(api_client).sign_into_os().name}'))
+        login_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {pos_client.OSApi(Settings.api_client).sign_into_os().name}'))
 
         # Subparser for the 'logout' command
         logout_parser = self.command_parser.add_parser('logout', help='Logout from pieces os')
@@ -113,12 +114,15 @@ class PiecesCLI:
             return
 
         # Check if the 'run' or 'help' command is explicitly provided
-        if arg not in ['help', 'run']:
-            startup()
+        if arg not in ['help']:
+            Settings.startup()
 
         args = self.parser.parse_args()
         args.func(**vars(args))
 
-if __name__ == "__main__":
+def main():
     cli = PiecesCLI()
     cli.run()
+
+if __name__ == "__main__":
+    main()

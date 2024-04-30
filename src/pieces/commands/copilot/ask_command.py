@@ -1,7 +1,7 @@
 from pieces.commands import commands_functions
 from pieces.api.pieces_ask_websocket import WebSocketManager
 from pieces_os_client import *
-from pieces.api.config import api_client
+from pieces.settings import Settings
 import os
 from pieces.gui import show_error
 from pieces.api.assets import get_assets_info_list
@@ -37,7 +37,7 @@ def ask(query, **kwargs):
     flattened_assets = FlattenedAssets(iterable=assets) if assets else None
 
     if files or snippets:
-        relevant = QGPTApi(api_client).relevance(
+        relevant = QGPTApi(Settings.api_client).relevance(
             QGPTRelevanceInput(
                             query=query,
                             paths=files,

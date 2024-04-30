@@ -4,20 +4,16 @@ import shlex
 from prompt_toolkit import PromptSession
 
 from pieces.gui import *
-from pieces.api import config
 from .commands_functions import (print_instructions,
-                                 print_response, welcome,startup,
-                                 get_version)
-from . import commands_functions
+                                 print_response, welcome)
+from pieces.settings import Settings
 from .copilot.ask_command import ws_manager
 from pieces import __version__
 from pieces.pieces_argparser import PiecesArgparser
 
 def loop(**kwargs):
     
-    config.run_in_loop = True
-
-    startup()
+    Settings.run_in_loop = True
 
     # Initial setup
     os_info = platform.platform()
@@ -25,17 +21,17 @@ def loop(**kwargs):
     welcome()
 
     print_response(f"Operating System: {os_info}", f"Python Version: {python_version}",
-                   f"Pieces OS Version: {commands_functions.pieces_os_version}",
+                   f"Pieces OS Version: {Settings.pieces_os_version}",
                    f"Pieces CLI Version: {__version__}",
-                   f"Application: {commands_functions.application.name.name if commands_functions.application else 'Unknown'}")
+                   f"Application: {Settings.application.name.name if Settings.application else 'Unknown'}")
     print_instructions()
 
     # Create a prompt session, which will maintain the history of inputs
     session = PromptSession()
 
     # Start the loop
-    while config.run_in_loop:
-        is_running = get_version()
+    while Settings.run_in_loop:
+        is_running = Settings.get_health()
 
         if not is_running:
             double_line("Server no longer available. Exiting loop.")
@@ -85,7 +81,11 @@ def loop(**kwargs):
                 else:
                     print(f"No function associated with command: {command_name}")
             else:
-                raise ValueError(f"invalid choice: '{command_name}'")
+                print(f"Unknown command: {command_name}")
+                commands = list(PiecesArgparser.parser._subparsers._group_actions[0].choices.keys())
+                commands.append("exit")
+                most_similar_command = PiecesArgparser.find_most_similar_command(commands, user_input)
+                print(f"Did you mean {most_similar_command}")
         except Exception as e:
             show_error(f"An error occurred:", {e})  #TODO: Handle by the argparser not a try/except
 

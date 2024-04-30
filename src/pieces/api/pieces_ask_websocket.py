@@ -6,8 +6,7 @@ import pieces_os_client
 
 from rich.live import Live
 from rich.markdown import Markdown
-from . import config
-from .config import ASK_WEBSOCKET_URL,TIMEOUT
+from ..settings import Settings
 
 
 
@@ -91,7 +90,7 @@ class WebSocketManager:
         """Start a new websocket connection."""
         # if self.verbose:
         #     print("Starting WebSocket connection...")
-        ws =  websocket.WebSocketApp(ASK_WEBSOCKET_URL,
+        ws =  websocket.WebSocketApp(Settings.ASK_WEBSOCKET_URL,
                                          on_open=self.on_open,
                                          on_message=self.on_message,
                                          on_error=self.on_error,
@@ -127,9 +126,9 @@ class WebSocketManager:
         self.final_answer = ""
         self.verbose = verbose
         self.send_message(model_id,query,relevant)
-        finishes = self.message_compeleted.wait(TIMEOUT)
+        finishes = self.message_compeleted.wait(Settings.TIMEOUT)
         self.message_compeleted.clear()
-        if not config.run_in_loop and self.is_connected:
+        if not Settings.run_in_loop and self.is_connected:
             self.close_websocket_connection()
         self.verbose = True
         if not finishes:

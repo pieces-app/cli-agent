@@ -1,6 +1,6 @@
 import pydoc
 import pieces_os_client as pos_client
-from pieces.api.config import api_client
+from pieces.settings import Settings
 from rich.console import Console
 from rich.markdown import Markdown
 from pieces.gui import show_error
@@ -30,7 +30,7 @@ def conversation_handler(**kwargs):
 
     # Rename the conversation
     if rename:
-        conversation_api = pos_client.ConversationApi(api_client)
+        conversation_api = pos_client.ConversationApi(Settings.api_client)
         if rename == True:
             con = conversation_api.conversation_specific_conversation_rename(conversation=conversation_id)
             print(f"Renamed the conversation to {con.name}")
@@ -44,10 +44,10 @@ def conversation_handler(**kwargs):
 
     # Delete the conversation
     if delete:
-        con  = pos_client.ConversationApi(api_client).conversation_get_specific_conversation(conversation=conversation_id)
+        con  = pos_client.ConversationApi(Settings.api_client).conversation_get_specific_conversation(conversation=conversation_id)
         r = input(f"Are you sure you want to delete '{con.name}'? (y/n) : ")
         if r == "y":
-            pos_client.ConversationsApi(api_client).conversations_delete_specific_conversation(conversation=conversation_id)
+            pos_client.ConversationsApi(Settings.api_client).conversations_delete_specific_conversation(conversation=conversation_id)
             print("Conversation deleted successfully")
         return
 
@@ -74,7 +74,7 @@ def conversation_handler(**kwargs):
 def get_conversations(**kwargs):
     """This function is used to print all conversation avaiable"""
     global conversation_map
-    api_instance = pos_client.ConversationsApi(api_client)
+    api_instance = pos_client.ConversationsApi(Settings.api_client)
     api_response = api_instance.conversations_snapshot()
 
     # Sort the dictionary by the "updated" timestamp
@@ -107,8 +107,8 @@ def get_conversations(**kwargs):
 def get_conversation_messages(idx:int=None,conversation_id=None):
     """Print a conversation messages. you need to pass the index of the conversation or the conversation id"""
 
-    conversation_api = pos_client.ConversationApi(api_client)
-    message_api = pos_client.ConversationMessageApi(api_client)
+    conversation_api = pos_client.ConversationApi(Settings.api_client)
+    message_api = pos_client.ConversationMessageApi(Settings.api_client)
     
     if not conversation_id:
         conversation_id = get_conversation_id(idx)
@@ -135,7 +135,7 @@ def get_conversation_messages(idx:int=None,conversation_id=None):
 def get_conversation_id(idx):
     global conversation_map
     if not conversation_map:
-        conversations_api = pos_client.ConversationsApi(api_client)
+        conversations_api = pos_client.ConversationsApi(Settings.api_client)
         api_response = conversations_api.conversations_snapshot()
         # Sort the dictionary by the "updated" timestamp
         sorted_conversations = sorted(api_response.iterable, key=lambda x: x.updated.value, reverse=True)
