@@ -1,0 +1,96 @@
+name: Build and Release CLI Agent
+
+on:
+  workflow_call:
+    inputs:
+      deploy:
+        type: boolean
+        required: true
+        default: false
+    secrets:
+      access_token:
+        required: true
+      pypi_test_token:
+        required: false
+      pypi_token:
+        required: false
+      ssh_private_key:
+        required: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      ### Checking out our Repo
+      - uses: actions/checkout@v3
+
+      ### Setting up python
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+
+      ### Getting the version from the git tag or the branch name if there is none
+      - name: Get the version
+        shell: bash
+        id: get_version
+        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+      ### Generating our staging version number if we are not production
+      - name: Get staging version
+        shell: bash
+        id: staging_version
+        run: echo "STAGING_VERSION=$(/bin/bash staging_versioning.sh)" >> $GITHUB_OUTPUT
+        if: inputs.deploy == false
+
+      ### Setting the version in the pyproject.toml for unix builds
+      - name: Set Version Shell Script
+        run: |
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          then
+                echo "This is a tagged build"
+                export RELEASE_VERSION='${{ steps.get_version.outputs.VERSION }}'
+                RELEASE_VERSION="${RELEASE_VERSION#v}"
+                echo $RELEASE_VERSION
+                poetry version $RELEASE_VERSION
+          else
+                echo "This is not a tagged build"
+                export STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
+                STAGING_VERSION=${STAGING_VERSION%"-staging"}
+                poetry version $STAGING_VERSION
+          fi
+
+      ### Installing our dependencies
+      - name: Install dependencies
+        run: |
+          pip install poetry -U
+          poetry install 
+
+      ### Building the Library
+      - name: Build library
+        run: poetry build
+
+      ### Building Standalone Package
+      - name: Build stand alone
+        run: |
+          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces
+
+      ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
+      - name: Write staging version to file
+        shell: bash
+        run: echo "${{ steps.staging_version.outputs.STAGING_VERSION }}" > staging_version$GITHUB_RUN_NUMBER.txt
+        if: ${{ inputs.deploy == false && inputs.beta == false }}
+
+      ### Uploading our builds and version text files to be pulled down in the next job
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/pieces*
+
+#      - name: Release
+#        uses: softprops/action-gh-release@v1
+#        if: startsWith(github.ref, 'refs/tags/')
+#        with:
+#          files: dist/pieces*
+
+
+
