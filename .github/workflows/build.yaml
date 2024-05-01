@@ -45,6 +45,12 @@ jobs:
         run: echo "STAGING_VERSION=$(/bin/bash staging_versioning.sh)" >> $GITHUB_OUTPUT
         if: inputs.deploy == false
 
+      ### Installing our dependencies
+      - name: Install dependencies
+        run: |
+          pip install poetry -U
+          poetry install 
+                
       ### Setting the version in the pyproject.toml for unix builds
       - name: Set Version Shell Script
         run: |
@@ -61,12 +67,6 @@ jobs:
                 STAGING_VERSION=${STAGING_VERSION%"-staging"}
                 poetry version $STAGING_VERSION
           fi
-
-      ### Installing our dependencies
-      - name: Install dependencies
-        run: |
-          pip install poetry -U
-          poetry install 
 
       ### Building the Library
       - name: Build library
