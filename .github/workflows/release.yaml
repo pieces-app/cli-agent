@@ -15,4 +15,4 @@ jobs:
       pypi_token: ${{ secrets.PYPI_TOKEN }}
       pypi_test_token: ${{ secrets.PYPI_TEST_TOKEN }}
       ssh_private_key: ${{ secrets.PIECES_GITHUB_SSH }}
-      gcp_credentials: ${{ secrets.GCP_CREDENTIALS }}
+      credentials_json: ${{ secrets.GCP_CREDENTIALS }}

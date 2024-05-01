@@ -16,7 +16,7 @@ on:
         required: false
       ssh_private_key:
         required: true
-      gcp_credentials:
+      credentials_json:
         required: false
 
 jobs:
@@ -50,7 +50,7 @@ jobs:
         run: |
           pip install poetry -U
           poetry install 
-                
+
       ### Setting the version in the pyproject.toml for unix builds
       - name: Set Version Shell Script
         run: |
@@ -88,11 +88,128 @@ jobs:
         with:
           path: dist/pieces*
 
-#      - name: Release
-#        uses: softprops/action-gh-release@v1
-#        if: startsWith(github.ref, 'refs/tags/')
-#        with:
-#          files: dist/pieces*
+      - uses: actions/upload-artifact@v3
+        with:
+          name: output
+          path: dist/pieces*
+
+      ### Uploading our staging version text file to be pulled down later
+      - uses: actions/upload-artifact@v3
+        with:
+          name: staging_version
+          path: "*.txt"
+        if: inputs.deploy == false
+
+
+
+  ### Pushing the built packages to GCP and GitHub
+  push-build:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+
+      ### Pulling down the previously built plugins
+      - uses: actions/download-artifact@v3
+        with:
+          name: output
+
+      ### Pulling down the staging version number to pass to gcp and GitHub releases
+      - uses: actions/download-artifact@v3
+        with:
+          name: staging_version
+        if: inputs.deploy == false
+
+      ### What is in here??
+      - name: List
+        run: ls -la
+
+      ### Authenticating with gcloud
+      - name: Authenticate with Google cloud
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.credentials_json }}
+          project_id: ${{ inputs.project_id }}
+          create_credentials_file: true
+
+      ### Setting up gcloud cli
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v0'
+
+      ### Verifying that we are good to go with gcloud
+      - name: 'Use gcloud CLI'
+        run: 'gcloud info'
+
+      ### Getting either the git tag or branch name to be set in the json
+      - name: Get the version
+        id: get_version
+        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+      ### Installing some machine deps
+      - name: Install Dependencies
+        run: sudo apt-get install jq -y
+
+      ### This big, long if statement handles pushing the builds to the correct location, as well as setting the proper
+      ### build info for the json files read by the server
+      - name: Upload Artifacts
+        run: |
+          GITHUB_RUN_NUMBER+="gha"
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+ ]]; then
+              echo "Git Tag Versioning"
+              export CHANNEL=production
+              export VERSION=${{ steps.get_version.outputs.VERSION }}
+              export BUCKET=app-releases-production
+              export production_json="$(curl https://storage.googleapis.com/app-releases-production/pieces_cli/production/latest.json -H "Accept: application/json")"
+              export reversed_production_json=$(echo $production_json | jq 'reverse')
+              export updated_production_json=$(echo $reversed_production_json | jq --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '.[length] |= . + {channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}')
+              echo $updated_production_json | jq 'reverse' > latest.json
+              jq -n --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '{channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}' > latest-single.json
+          else
+              echo "Staging Versioning"
+              export CHANNEL=staging
+              export VERSION=$(echo "$(set -- ./*.txt; echo "$1")" | xargs head -n 1)
+              export BUCKET=app-releases-staging
+              export staging_json="$(curl https://storage.googleapis.com/app-releases-staging/pieces_cli/staging/latest.json -H "Accept: application/json")"
+              export reversed_staging_json=$(echo $staging_json | jq 'reverse')
+              export updated_staging_json=$(echo $reversed_staging_json | jq --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '.[length] |= . + {channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}')
+              echo $updated_staging_json | jq 'reverse' > latest.json
+              jq -n --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '{channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}' > latest-single.json
+          fi
+          gsutil -h "Cache-Control: max-age=0" cp **.tar.gz gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz
+          gsutil -h "Cache-Control: max-age=0" cp **.whl gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz.whl
+          gsutil -h "Cache-Control: max-age=0" cp latest-single.json gs://$BUCKET/pieces_cli/$CHANNEL/latest-single.json
+          gsutil -h "Cache-Control: max-age=0" cp latest.json gs://$BUCKET/pieces_cli/$CHANNEL/latest.json
+          gsutil cp -r **.tar.gz gs://$BUCKET/pieces_cli/release/
+          gsutil cp -r **.whl gs://$BUCKET/pieces_cli/release/
+          echo "releasetag=$VERSION" >> $GITHUB_ENV
+
+      ### Upload to GitHub releases pre-release
+      - name: Release to GitHub Releases
+        uses: softprops/action-gh-release@v1
+        if: inputs.deploy == false
+        with:
+          files: |
+            **.tar.gz
+            **.whl
+          fail_on_unmatched_files: true
+          name: ${{ env.releasetag }}
+          tag_name: ${{ env.releasetag }}
+          generate_release_notes: true
+          prerelease: true
+
+      ### Upload to GitHub releases
+      - name: Release to GitHub Releases
+        uses: softprops/action-gh-release@v1
+        if: inputs.deploy == true
+        with:
+          files: |
+            **.tar.gz
+            **.whl
+          fail_on_unmatched_files: true
+          name: ${{ env.releasetag }}
+          tag_name: ${{ env.releasetag }}
+          generate_release_notes: true
+          prerelease: false
 
 
 
