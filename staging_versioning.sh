@@ -15,7 +15,6 @@ staging_tag=$(echo "$staging_json" | jq '.tag')
 
 # Remove "-staging" from tag to manipulate numbers
 staging_tag=${staging_tag//"-staging"/}
-echo $staging_tag
 #---------------------------------------------------------------------------
 
 #------------------------------- Version Extraction ---------------------
