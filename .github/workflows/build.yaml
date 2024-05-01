@@ -16,6 +16,8 @@ on:
         required: false
       ssh_private_key:
         required: true
+      gcp_credentials:
+        required: false
 
 jobs:
   build:
