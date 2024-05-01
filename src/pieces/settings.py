@@ -8,11 +8,21 @@ import platform
 import os
 from pathlib import Path
 
-import pieces_os_client as pos_client
 from platformdirs import user_data_dir
 
 from pieces import __version__
 from pieces.gui import server_startup_failed
+
+from pieces_os_client.api.well_known_api import WellKnownApi
+from pieces_os_client.api.connector_api import ConnectorApi
+
+from pieces_os_client.configuration import Configuration
+from pieces_os_client.api_client import ApiClient
+
+from pieces_os_client.models.application import Application
+from pieces_os_client.models.seeded_connector_connection import SeededConnectorConnection
+from pieces_os_client.models.seeded_tracked_application import SeededTrackedApplication
+from pieces_os_client.models.application_name_enum import ApplicationNameEnum
 
 class Settings:
 	# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -28,7 +38,7 @@ class Settings:
 
 	models_file  = Path(
 		pieces_data_dir, "model_data.pkl"
-	) # model data file
+	) # model data file just store the model_id that the user is using (eg. {"model_id": UUID })
 
 	platform_info = platform.platform()
 	if 'Linux' in platform_info:
@@ -39,7 +49,7 @@ class Settings:
 	host = f"http://localhost:{port}"
 	# Defining the host is optional and defaults to http://localhost:1000
 	# See configuration.py for a list of all supported configuration parameters.
-	configuration = pos_client.Configuration(host=host)
+	configuration = Configuration(host=host)
 
 
 	# Websocket config
@@ -50,7 +60,7 @@ class Settings:
 
 
 	# Initialize the ApiClient globally
-	api_client = pos_client.ApiClient(configuration)
+	api_client = ApiClient(configuration)
 
 
 	# some useful directories 
@@ -61,8 +71,10 @@ class Settings:
 	# open snippet directory
 	open_snippet_dir = os.path.join(os.getcwd(),'opened_snippets')
 
-	application:pos_client.Application = None
+	application:Application = None
 	pieces_os_version:str = None
+	model_name:str
+
 	@classmethod
 	def get_application(cls):
 		# Call the connect api
@@ -76,10 +88,7 @@ class Settings:
 		cls.models = cls.get_models_ids()
 		# Check if the models file exists
 		try: 
-			cls.get_current_model_name() # Checks if the current model is valid raise error if not vaild
-			with open(cls.models_file, 'rb') as f:
-				model_data = pickle.load(f)
-			cls.model_id = model_data["model_id"]
+			cls.model_name,cls.model_id = cls.get_current_model_name() # Checks if the current model id is valid raise error if not vaild
 		except:
 			default_model_name = "GPT-3.5-turbo Chat Model"
 			cls.model_id = cls.models[default_model_name]["uuid"] # default model id
@@ -96,20 +105,21 @@ class Settings:
 		with open(cls.models_file, 'rb') as f:
 			model_data = pickle.load(f)
 		model_id = model_data["model_id"]
-		models_reverse = {v.get("uuid"):k for k,v in model_data.items()}
-		return models_reverse[model_id]    
+		models_reverse = {v.get("uuid"):k for k,v in cls.models.items()}
+		return models_reverse[model_id],model_id
+	
 	@classmethod
-	def connect_api(cls) -> pos_client.Application:
+	def connect_api(cls) -> Application:
 		if cls.application:
 			return cls.application
 		# Decide if it's Windows, Mac, Linux or Web
 		local_os = platform.system().upper() if platform.system().upper() in ["WINDOWS","LINUX","DARWIN"] else "WEB"
 		local_os = "MACOS" if local_os == "DARWIN" else local_os
 
-		api_instance = pos_client.ConnectorApi(cls.api_client)
-		seeded_connector_connection = pos_client.SeededConnectorConnection(
-			application=pos_client.SeededTrackedApplication(
-				name = pos_client.ApplicationNameEnum.OPEN_SOURCE,
+		api_instance = ConnectorApi(cls.api_client)
+		seeded_connector_connection = SeededConnectorConnection(
+			application=SeededTrackedApplication(
+				name = ApplicationNameEnum.OPEN_SOURCE,
 				platform = local_os,
 				version = __version__))
 		api_response = api_instance.connect(seeded_connector_connection=seeded_connector_connection)
@@ -166,7 +176,7 @@ class Settings:
 		if cls.pieces_os_version:
 			return cls.pieces_os_version
 		try:
-			cls.pieces_os_version = pos_client.WellKnownApi(cls.api_client).get_well_known_version()
+			cls.pieces_os_version = WellKnownApi(cls.api_client).get_well_known_version()
 			return cls.pieces_os_version
 		except:
 			return None
@@ -179,7 +189,7 @@ class Settings:
 		bool: True if the health status is 'ok', False otherwise.
 		"""
 		try:
-			health = pos_client.WellKnownApi(cls.api_client).get_well_known_health()
+			health = WellKnownApi(cls.api_client).get_well_known_health()
 			return health == "ok"
 		except Exception as e:
 			return False

@@ -2,7 +2,7 @@
 import json
 import websocket
 import threading
-import pieces_os_client
+from pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
 
 from rich.live import Live
 from rich.markdown import Markdown
@@ -39,7 +39,7 @@ class WebSocketManager:
     def on_message(self,ws, message):
         """Handle incoming websocket messages."""
         try:
-            response = pieces_os_client.QGPTStreamOutput.from_json(message)
+            response = QGPTStreamOutput.from_json(message)
             if response.question:
                 answers = response.question.answers.iterable
                 if not self.live and self.verbose:  # Create live instance if it doesn't exist

@@ -7,12 +7,10 @@ from bs4 import BeautifulSoup
 import os
 import re
 from pieces.api.api_functions import *
-from pieces.api.assets import *
 from pieces.settings import Settings
 from pieces import __version__
+from pieces.commands.assets.assets_api import AssetsCommandsApi
 
-
-application = None
 ###############################################################################
 ############################## MAIN FUNCTIONS #################################
 ###############################################################################
@@ -63,7 +61,6 @@ def search(query, **kwargs):
 
 
 def change_model(**kwargs): # Change the model used in the ask command
-    global model_id,word_limit
     model_index = kwargs.get('MODEL_INDEX')
     try:
         if model_index:
@@ -86,12 +83,8 @@ def change_model(**kwargs): # Change the model used in the ask command
 
 
 def get_asset_name_by_id(asset_id):
-    asset = get_asset_by_id(asset_id)  # Assuming this function returns the asset details
+    asset = AssetsCommandsApi.get_asset_by_id(asset_id)  
     return asset.get('name') if asset else "Unknown"
-
-def set_parser(p):
-    global parser
-    parser = p
 
 
 # Used to create a valid file name when opening to "Opened Snippets"

@@ -1,10 +1,13 @@
-from pieces.commands import commands_functions
-from pieces.api.pieces_ask_websocket import WebSocketManager
-from pieces_os_client import *
 from pieces.settings import Settings
+from pieces.api.pieces_ask_websocket import WebSocketManager
 import os
 from pieces.gui import show_error
-from pieces.api.assets import get_assets_info_list
+from pieces.commands.assets.assets_api import AssetsCommandsApi
+
+from pieces_os_client.models.referenced_asset import ReferencedAsset
+from pieces_os_client.models.flattened_assets import FlattenedAssets
+from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
+from pieces_os_client.api.qgpt_api import QGPTApi
 
 ws_manager = WebSocketManager()
 def ask(query, **kwargs):
@@ -26,7 +29,7 @@ def ask(query, **kwargs):
             files[idx] = os.path.abspath(file) # Return the abs path
     # snippets
     if snippets:
-        asset_ids = get_assets_info_list()
+        asset_ids = AssetsCommandsApi.get_assets_info_list()
         for idx,snippet in enumerate(snippets):
             try: asset_id = asset_ids[snippet-1].get('id')  # we began enumerating from 1
             except: return show_error("Asset not found","Enter a vaild asset index")
@@ -42,10 +45,10 @@ def ask(query, **kwargs):
                             query=query,
                             paths=files,
                             assets=flattened_assets,
-                            application=commands_functions.application.id,
-                            model=commands_functions.model_id
+                            application=Settings.application.id,
+                            model=Settings.model_id
                         )).to_dict()['relevant']
         
-    ws_manager.ask_question(commands_functions.model_id, query,relevant=relevant)
+    ws_manager.ask_question(Settings.model_id, query,relevant=relevant)
 
     
