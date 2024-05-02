@@ -211,5 +211,7 @@ jobs:
           generate_release_notes: true
           prerelease: false
 
-
-
+      ### Upload to test Pypi
+      - name: Upload Packages to PyPi for release
+        if: inputs.deploy == true
+        run: python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
