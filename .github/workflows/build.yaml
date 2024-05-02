@@ -214,4 +214,7 @@ jobs:
       ### Upload to test Pypi
       - name: Upload Packages to PyPi for release
         if: inputs.deploy == true
-        run: python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
+        run: |-
+          mkdir dist
+          cp *.tar.gz *.whl ./dist/
+          python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
