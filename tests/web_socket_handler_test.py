@@ -1,7 +1,7 @@
 import json
 from unittest.mock import Mock, patch
 import pytest
-from pieces.commands.copilot.pieces_ask_websocket import AskWebsocketWS
+from pieces.copilot.pieces_ask_websocket import AskWebsocketWS
 
 class TestWebSocketManager:
 
