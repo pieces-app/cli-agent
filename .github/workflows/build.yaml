@@ -126,7 +126,7 @@ jobs:
 
       ### Authenticating with gcloud
       - name: Authenticate with Google cloud
-        uses: google-github-actions/auth@v0
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.credentials_json }}
           project_id: ${{ inputs.project_id }}
@@ -134,7 +134,7 @@ jobs:
 
       ### Setting up gcloud cli
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v0'
+        uses: 'google-github-actions/setup-gcloud@v2'
 
       ### Verifying that we are good to go with gcloud
       - name: 'Use gcloud CLI'
@@ -217,4 +217,5 @@ jobs:
         run: |-
           mkdir dist
           cp *.tar.gz *.whl ./dist/
+          python3 -m pip install --upgrade twine
           python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
