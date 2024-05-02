@@ -3,7 +3,7 @@ from pieces.settings import Settings
 from rich.console import Console
 from rich.markdown import Markdown
 from pieces.gui import show_error
-from .ask_command import ws_manager
+from .ask_command import ask_websocket
 
 
 from pieces_os_client.api.conversation_api import ConversationApi
@@ -21,14 +21,14 @@ def conversation_handler(**kwargs):
 
 
     # Check if the conversation is not empty 
-    if not ws_manager.conversation and (rename or delete) and not idx:
+    if not ask_websocket.conversation and (rename or delete) and not idx:
         show_error("Error in rename/delete","You can rename/delete an empty conversation")
         return 
     else:
         if idx:
             conversation_id = get_conversation_id(idx)  
         else:
-            conversation_id = ws_manager.conversation
+            conversation_id = ask_websocket.conversation
 
 
 
@@ -58,7 +58,7 @@ def conversation_handler(**kwargs):
 
     # Check if we want to create a new conversatiaon
     if kwargs.get("new",False):
-        ws_manager.conversation = None
+        ask_websocket.conversation = None
         print("New conversation created successfully")
         return
     
@@ -66,8 +66,8 @@ def conversation_handler(**kwargs):
     
     # If the index is not given we get the conversation that we are using in the ask websocket.
     if not idx:
-        if ws_manager.conversation:
-            get_conversation_messages(conversation_id = ws_manager.conversation)
+        if ask_websocket.conversation:
+            get_conversation_messages(conversation_id = ask_websocket.conversation)
         else:
             # Show error if no conversation in the ask show error
             show_error("The conversation is empty","Please enter a conversation index, or use the ask command to ask a question.")
@@ -98,7 +98,7 @@ def get_conversations(**kwargs):
 
         conversation_str = f"{idx}. {conversation.name} \n"
         # Check if we are using this conversation
-        if ws_manager.conversation == conversation.id:
+        if ask_websocket.conversation == conversation.id:
             output += f"\033[92m  * {conversation_str} \033[0m"
         else:
             output += conversation_str
@@ -119,7 +119,7 @@ def get_conversation_messages(idx:int=None,conversation_id=None):
 
     conversation = conversation_api.conversation_get_specific_conversation(conversation=conversation_id)
 
-    ws_manager.conversation = conversation.id # change the conversation that the ask is using
+    ask_websocket.conversation = conversation.id # change the conversation that the ask is using
     
     
     console = Console()

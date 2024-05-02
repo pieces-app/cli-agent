@@ -6,16 +6,16 @@ from pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
 
 from rich.live import Live
 from rich.markdown import Markdown
-from ..settings import Settings
+from pieces.settings import Settings
 
 
 
 
-class WebSocketManager:
+class AskWebsocketWS:
 
     def __new__(cls,*args,**kwargs):
         if not hasattr(cls, 'instance'):
-            cls.instance = super(WebSocketManager, cls).__new__(cls)
+            cls.instance = super(AskWebsocketWS, cls).__new__(cls)
         return cls.instance
     
     def __init__(self):

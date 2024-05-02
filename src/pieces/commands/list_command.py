@@ -1,6 +1,6 @@
 from pieces.settings import Settings
 from collections.abc import Iterable
-from pieces.commands.assets import check_assets_existence,AssetsCommandsApi
+from pieces.assets import check_assets_existence,AssetsCommandsApi
 
 from pieces_os_client.api.applications_api import ApplicationsApi
 

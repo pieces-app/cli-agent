@@ -3,17 +3,21 @@ import platform
 import shlex
 from prompt_toolkit import PromptSession
 
-from pieces.gui import *
-from .commands_functions import (print_instructions,
-                                 print_response, welcome)
-from pieces.settings import Settings
-from .copilot.ask_command import ws_manager
 from pieces import __version__
+from pieces.gui import *
 from pieces.pieces_argparser import PiecesArgparser
+from pieces.assets.assets_identifiers_ws import AssetsIdentifiersWS
+from pieces.copilot.ask_command import ask_websocket
+from pieces.settings import Settings
+
+
 
 def loop(**kwargs):
     
     Settings.run_in_loop = True
+
+    # Start the assets websocket identifiers
+    assets_identifiers_ws = AssetsIdentifiersWS()
 
     # Initial setup
     os_info = platform.platform()
@@ -49,7 +53,8 @@ def loop(**kwargs):
 
             if user_input == 'exit':
                 double_space("Exiting...")
-                ws_manager.close_websocket_connection()  # Close using the ws_manager instance
+                ask_websocket.close_websocket_connection()  # Close using the ask_websocket instance
+                assets_identifiers_ws.close_websocket_connection()  # Close using the assets_identifiers_ws instance
                 break
 
             # Check if the input is a number and treat it as an index for 'open' command

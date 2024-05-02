@@ -1,10 +1,16 @@
-from pieces.gui import print_help
-from pieces_os_client.api.os_api import OSApi
-from pieces.api.api_functions import sign_out
-from pieces.pieces_argparser import PiecesArgparser
-from pieces.commands import *
-from pieces.settings import Settings
 import sys
+from pieces_os_client.api.os_api import OSApi
+
+
+from pieces.gui import print_help
+from pieces.pieces_argparser import PiecesArgparser
+from pieces.settings import Settings
+
+
+from pieces.commands import *
+from pieces.autocommit import *
+from pieces.copilot import *
+from pieces.assets import *
 
 class PiecesCLI:
     def __init__(self):

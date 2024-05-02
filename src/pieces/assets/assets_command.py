@@ -1,9 +1,11 @@
-from .. import commands_functions
+import os
 import pyperclip
+
+from pieces.utils import get_file_extension,extract_code_from_markdown,sanitize_filename
 from .assets_api import AssetsCommandsApi
 from pieces.gui import show_error,print_model_details,space_below,double_line
 from pieces.settings import Settings
-import os
+
 
 def check_assets_existence(func):
     """Decorator to ensure user has assets."""
@@ -56,7 +58,7 @@ class AssetsCommands:
         asset_dict = AssetsCommandsApi.extract_asset_info(open_asset)
         
 
-        filepath = commands_functions.extract_code_from_markdown(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
+        filepath = extract_code_from_markdown(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
 
         print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
 
@@ -65,7 +67,7 @@ class AssetsCommands:
     @check_asset_selected
     def update_asset(asset_data,**kwargs):
         asset = AssetsCommandsApi.extract_asset_info(asset_data)
-        file_path = os.path.join(Settings.open_snippet_dir , f"{commands_functions.sanitize_filename(asset["name"])}{commands_functions.get_file_extension(asset["language"])}")
+        file_path = os.path.join(Settings.open_snippet_dir , f"{sanitize_filename(asset["name"])}{get_file_extension(asset["language"])}")
         print(f"Saving {file_path} to {asset['name']} snippet with uuid {current_asset}")
 
         

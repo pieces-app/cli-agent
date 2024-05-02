@@ -53,8 +53,9 @@ class Settings:
 
 
 	# Websocket config
-	ASK_WEBSOCKET_URL = f"{host.replace('http', 'ws')}/qgpt/stream"
-	TIMEOUT = 20  # seconds
+	BASE_WEBSOCKET_URL = host.replace('http', 'ws')
+	ASK_WEBSOCKET_URL = f"{BASE_WEBSOCKET_URL}/qgpt/stream"
+	ASSETS_IDENTIFIERS_WS_URL = f"{BASE_WEBSOCKET_URL}/assets/stream/identifiers"
 
 	run_in_loop = False # is CLI looping?
 

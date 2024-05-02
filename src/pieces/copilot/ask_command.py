@@ -1,15 +1,15 @@
 from pieces.settings import Settings
-from pieces.api.pieces_ask_websocket import WebSocketManager
+from pieces.copilot.pieces_ask_websocket import AskWebsocketWS
 import os
 from pieces.gui import show_error
-from pieces.commands.assets.assets_api import AssetsCommandsApi
+from pieces.assets.assets_api import AssetsCommandsApi
 
 from pieces_os_client.models.referenced_asset import ReferencedAsset
 from pieces_os_client.models.flattened_assets import FlattenedAssets
 from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
 from pieces_os_client.api.qgpt_api import QGPTApi
 
-ws_manager = WebSocketManager()
+ask_websocket = AskWebsocketWS()
 def ask(query, **kwargs):
     relevant = {"iterable":[]}
     files = kwargs.get("files",None)
@@ -49,6 +49,6 @@ def ask(query, **kwargs):
                             model=Settings.model_id
                         )).to_dict()['relevant']
         
-    ws_manager.ask_question(Settings.model_id, query,relevant=relevant)
+    ask_websocket.ask_question(Settings.model_id, query,relevant=relevant)
 
     
