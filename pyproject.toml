@@ -1,8 +1,11 @@
 [tool.poetry]
-  name = "pieces"
+  name = "pieces-cli"
   version = "0.0.15"
-  description = ""  # Add your description here
+  description = "A powerful cli tool to interact with the pieces os "  # Add your description here
   authors = ["Pieces <development@pieces.app>"]  # Add your name and email
+  packages = [
+      { include = "src/pieces" }
+  ]
 
 [tool.poetry.dependencies]
   python = ">=3.9,<3.13"
