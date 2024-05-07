@@ -38,6 +38,7 @@ def check_asset_selected(func):
             
             
     return wrapper
+
 class AssetsCommands:
     current_asset = None
 

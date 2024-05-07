@@ -7,7 +7,6 @@ from .list_command import ListCommand
 
 __all__ = ['loop',
            'version',
-           'ask',
            'search',
            'change_model',
            'sign_out',

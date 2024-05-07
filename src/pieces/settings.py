@@ -25,6 +25,10 @@ from pieces_os_client.models.seeded_tracked_application import SeededTrackedAppl
 from pieces_os_client.models.application_name_enum import ApplicationNameEnum
 
 class Settings:
+	"""Settings class for the CLI Agent"""
+	
+	TIMEOUT = 10 # Websocket ask timeout 
+
 	# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 	BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # same as used in django!
 
