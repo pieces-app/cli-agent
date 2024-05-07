@@ -11,7 +11,7 @@ def check_assets_existence(func):
     """Decorator to ensure user has assets."""
     def wrapper(*args, **kwargs):
         try:
-            assets = AssetsCommandsApi.get_asset_ids(1) # Check if there is an asset
+            assets = AssetsCommandsApi.get_assets_snapshot() # Check if there is an asset
             if not assets:
                 raise Exception("No assets found")
             return func(*args, **kwargs)
@@ -27,10 +27,10 @@ def check_asset_selected(func):
     If valid id it returns the asset_data to the called function.
     """
     def wrapper(*args, **kwargs):
-        if current_asset is None:
+        if AssetsCommands.current_asset is None:
             return show_error("No asset selected.", "Please open an asset first using pieces open.")
         try: 
-            asset_data = AssetsCommandsApi.get_asset_by_id(current_asset)
+            asset_data = AssetsCommandsApi.get_asset_snapshot(AssetsCommands.current_asset)
             return func(asset_data=asset_data,*args, **kwargs)
         except:
             # The selected asset is deleted
@@ -43,20 +43,19 @@ class AssetsCommands:
     current_asset = None
 
     @check_assets_existence
-    def open_asset(**kwargs):
-        global current_asset
+    @classmethod
+    def open_asset(cls,**kwargs):
         item_index = kwargs.get('ITEM_INDEX',1)
-        if not item_index: item_index = 1
-        asset_ids = AssetsCommandsApi.get_assets_info_list(item_index)
+        if not item_index:
+            item_index = 1
+        asset_ids = AssetsCommandsApi.get_assets_snapshot()
         try:
-            asset_id = asset_ids[item_index-1].get('id') # because we begin from 1
+            cls.current_asset = asset_ids.keys()[item_index-1] # because we begin from 1
         except IndexError:
             show_error("Invalid asset index or asset not found.","Please choose from the list or use 'pieces list assets'")
             return
         
-        current_asset = asset_id  
-        open_asset = AssetsCommandsApi.get_asset_by_id(asset_id)
-        asset_dict = AssetsCommandsApi.extract_asset_info(open_asset)
+        asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
         
 
         filepath = extract_code_from_markdown(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
@@ -64,21 +63,21 @@ class AssetsCommands:
         print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
 
 
-
+    @classmethod
     @check_asset_selected
-    def update_asset(asset_data,**kwargs):
+    def update_asset(cls,asset_data,**kwargs):
         asset = AssetsCommandsApi.extract_asset_info(asset_data)
         file_path = os.path.join(Settings.open_snippet_dir , f"{sanitize_filename(asset["name"])}{get_file_extension(asset["language"])}")
-        print(f"Saving {file_path} to {asset['name']} snippet with uuid {current_asset}")
+        print(f"Saving {file_path} to {asset['name']} snippet with uuid {cls.current_asset}")
 
         
         # Pass asset and file name
-        AssetsCommandsApi.update_asset_value(file_path, current_asset)
+        AssetsCommandsApi.update_asset_value(file_path, cls.current_asset)
 
 
+    @classmethod
     @check_asset_selected
-    def edit_asset(asset_data,**kwargs):
-        global current_asset
+    def edit_asset(cls,asset_data,**kwargs):
         asset_dict = AssetsCommandsApi.extract_asset_info(asset_data)
         print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
         
@@ -92,13 +91,13 @@ class AssetsCommands:
 
         # Check if the user actually entered a name
         if name:
-            AssetsCommandsApi.edit_asset_name(current_asset, name)
+            AssetsCommandsApi.edit_asset_name(cls.current_asset, name)
         if classification:
-            AssetsCommandsApi.reclassify_asset(current_asset, classification)
+            AssetsCommandsApi.reclassify_asset(cls.current_asset, classification)
 
+    @classmethod
     @check_asset_selected
-    def delete_asset(asset_data,**kwargs):
-        global current_asset
+    def delete_asset(cls,asset_data,**kwargs):
         # Ask the user for confirmation before deleting
         # print()
         # open_asset()
@@ -108,17 +107,16 @@ class AssetsCommands:
         confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
         if confirm == 'y':
             print("Deleting asset...")
-            AssetsCommandsApi.delete_asset_by_id(current_asset)
-            current_asset = None
+            AssetsCommandsApi.delete_asset_by_id(cls.current_asset)
+            cls.current_asset = None
             space_below("Asset Deleted")
         elif confirm == 'n':
             print("Deletion cancelled.")
         else:
             print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
         
-
-    def create_asset(**kwargs):
-        global current_asset
+    @classmethod
+    def create_asset(cls,**kwargs):
         # TODO add more ways to create an asset such as an entire file
 
         # Save text copied to the clipboard as an asset
@@ -133,7 +131,7 @@ class AssetsCommands:
                 space_below("Saving Content...")
                 new_asset = AssetsCommandsApi.create_new_asset(Settings.application, raw_string=text, metadata=None)
         
-                current_asset = new_asset.id
+                cls.current_asset = new_asset.id
                 print(f"Asset Created use 'open' to view")
 
                 return new_asset

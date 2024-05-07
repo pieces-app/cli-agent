@@ -1,8 +1,8 @@
 from pieces.settings import Settings
 from pieces.gui import show_error
-from pieces_os_client.rest import ApiException
-from typing import Dict,List
+from typing import Dict,Optional
 import json
+import queue
 
 from pieces_os_client.api.assets_api import AssetsApi
 from pieces_os_client.api.asset_api import AssetApi
@@ -15,9 +15,17 @@ from pieces_os_client.models.seeded_fragment import SeededFragment
 from pieces_os_client.models.transferable_string import TransferableString
 from pieces_os_client.models.classification_generic_enum import ClassificationGenericEnum
 from pieces_os_client.models.asset_reclassification import AssetReclassification
+from pieces_os_client.models.asset import Asset
+from pieces_os_client.models.format import Format
+from pieces_os_client.models.streamed_identifiers import StreamedIdentifiers
 
 
 class AssetsCommandsApi:
+	assets_snapshot: Dict[str, Optional[Asset]] = {} # should be filled in the run in loop
+	asset_queue = queue.Queue() # Queue for asset_ids to be processed
+	block = True # to wait for the queue to recevive the first asset id
+	asset_set = set()  # Set for asset_ids in the queue
+
 	@staticmethod
 	def create_new_asset(raw_string, metadata=None):
 		assets_api = AssetsApi(Settings.api_client)
@@ -41,7 +49,11 @@ class AssetsCommandsApi:
 		return created_asset
 	
 	@classmethod
-	def get_asset_ids(max=None, **kwargs):
+	def get_assets_snapshot(cls):
+		if cls.assets_snapshot:
+			return cls.assets_snapshot
+	
+
 		assets_api = AssetsApi(Settings.api_client)
 		# Call the API to get assets identifiers
 		api_response = assets_api.assets_identifiers_snapshot()
@@ -50,73 +62,60 @@ class AssetsCommandsApi:
 		data = api_response.to_dict()  # Convert the response to a dictionary
 
 		# Extract the 'id' values from each item in the 'iterable' list
-		ids = [item['id'] for item in data.get('iterable', [])]
+		cls.assets_snapshot = {item:None for item in data.get('iterable', [])}
 
-		# If max is specified, return only up to max ids
-		if max is not None and max > 0:
-			return ids[:max]
+		return cls.assets_snapshot
+		
+	@classmethod
+	def update_asset_snapshot(cls,asset_id):
+		asset_api = AssetApi(Settings.api_client)
+		asset = asset_api.asset_snapshot(asset_id)
+		cls.assets_snapshot[asset_id] = asset # Cache the asset
+		return asset
 
-		# Return the list of ids
-		return ids
+	@classmethod
+	def worker(cls):
+		try:
+			while True:
+				asset_id = cls.asset_queue.get(block=cls.block,timeout=5)
+				cls.asset_set.remove(asset_id)  # Remove asset_id from the set
+				cls.update_asset_snapshot(asset_id)
+				cls.asset_queue.task_done()
+		except queue.Empty: # queue is empty and the block is false
+			if cls.block:
+				cls.worker() # if there is more assets to load
+			return # End the worker
 	
 	@classmethod
-	def get_assets_info_list(cls,max_assets=10) -> List[Dict[str,str]]:
-		"""
-		Returns a list of dictionaries containing the name and id of each asset
-		"""
+	def assets_snapshot_callback(cls,ids:StreamedIdentifiers):
+		# Start the worker thread if it's not running
+		cls.worker()
+		cls.block = True
+		for item in ids.iterable:
+			asset_id = item.asset.id
+			if asset_id not in cls.assets_snapshot:
+				cls.assets_snapshot[asset_id] = None
+			
+			if asset_id not in cls.asset_set:
+				if item.deleted:
+					cls.assets_snapshot.pop(asset_id)
+				else:
+					cls.asset_queue.put(asset_id)  # Add asset_id to the queue
+					cls.asset_set.add(asset_id)  # Add asset_id to the set
+		cls.block = False # Remove the block to end the thread
 
-		assets = []
-		asset_api = AssetApi(Settings.api_client)
 
 
-		ids = cls.get_asset_ids()
-		for id in ids[:max_assets]:
-			# Use the OpenAPI client to get asset snapshot
-			api_response = asset_api.asset_snapshot(id)
+	@classmethod
+	def get_asset_snapshot(cls,asset_id):
+		asset = cls.assets_snapshot.get(asset_id)
+		if asset:
+			return asset
+		else:
+			return cls.update_asset_snapshot(asset_id)
 
-			# Convert the response to a dictionary
-			data = api_response.to_dict()
+	
 
-			# Extract the 'name' field and add it to the names list
-			name = data.get('name',"New asset")
-
-			# Add the name to the dictionary
-			asset = {}
-			asset["name"] = name
-
-			asset["id"] = id
-
-			assets.append(asset)
-				
-		return assets
-
-	@staticmethod
-	def get_single_asset_name(id):
-		asset_api = AssetApi(Settings.api_client)
-
-		try:
-			# Use the OpenAPI client to get asset snapshot
-			api_response = asset_api.asset_snapshot(id)
-
-			# Convert the response to a dictionary
-			data = api_response.to_dict()
-
-			# Extract the 'name' field and add it to the names list
-			name = data.get('name')
-			return name
-		except ApiException as e:
-			show_error(f"Error occurred for ID {id}: ",str(e))
-
-	def get_asset_by_id(id):
-		asset_api = AssetApi(Settings.api_client)
-		
-		# Use the OpenAPI client to get asset snapshot
-		api_response = asset_api.asset_snapshot(id)
-
-		# Convert the response to a dictionary
-		data = api_response.to_dict()
-
-		return data
 	@classmethod
 	def edit_asset_name(cls,asset_id, new_name):
 		asset_api = AssetApi(Settings.api_client)
@@ -140,6 +139,8 @@ class AssetsCommandsApi:
 		except Exception as e:
 			show_error("Error updating asset: ",{e})
 
+
+	@staticmethod
 	def delete_asset_by_id(asset_id):
 		delete_instance = AssetsApi(Settings.api_client)
 
@@ -201,37 +202,37 @@ class AssetsCommandsApi:
 
 		print(f"{created.name} updated successfully.")
 
-	def extract_asset_info(data:dict) -> dict:
+	def extract_asset_info(data:Asset) -> dict:
 		"""
 		Return some info about the asset
 		:param data: The data containing information about the asset
 		:return: A dictionary containing the asset's name, date created, date updated, type, language, and raw code snippet
 		"""
 
-		name = data.get('name', 'Unknown')
-		created_readable = data.get('created', {}).get('readable', 'Unknown')
+		name = data.name if data.name else None
+		created_readable = data.created.readable if data.created.readable else None
 		updated_readable = data.get('updated', {}).get('readable', 'Unknown')
 		type = "No Type"
 		language = "No Language"
 		raw = None  # Initialize raw code snippet as None
-		formats = data.get('formats', {})
+		formats = data.formats
 
-		if formats:
-			iterable = formats.get('iterable', [])
+		if not formats:
+			iterable:Format = formats.iterable
 			if iterable:
 				first_item = iterable[0] if len(iterable) > 0 else None
 				if first_item:
-					classification_str = first_item.get('classification', {}).get('generic')
+					classification_str = first_item.classification.generic
 					if classification_str:
 						# Extract the last part after the dot
 						type = classification_str.split('.')[-1]
 
-					language_str = first_item.get('classification', {}).get('specific')
+					language_str = first_item.classification.specific
 					if language_str:
 						# Extract the last part after the dot
 						language = language_str.split('.')[-1]
 
-					fragment_string = first_item.get('fragment', {}).get('string').get('raw')
+					fragment_string = first_item.fragmen.string.raw
 					if fragment_string:
 						raw = fragment_string
 

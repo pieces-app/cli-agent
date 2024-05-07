@@ -9,7 +9,7 @@ from pieces.pieces_argparser import PiecesArgparser
 from pieces.assets.assets_identifiers_ws import AssetsIdentifiersWS
 from pieces.copilot.ask_command import ask_websocket
 from pieces.settings import Settings
-
+from pieces.assets.assets_api import AssetsCommandsApi
 
 
 def loop(**kwargs):
@@ -17,7 +17,7 @@ def loop(**kwargs):
     Settings.run_in_loop = True
 
     # Start the assets websocket identifiers
-    assets_identifiers_ws = AssetsIdentifiersWS()
+    assets_identifiers_ws = AssetsIdentifiersWS(AssetsCommandsApi.assets_snapshot_callback)
 
     # Initial setup
     os_info = platform.platform()
