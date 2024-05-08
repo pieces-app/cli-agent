@@ -30,7 +30,7 @@ class Settings:
 	TIMEOUT = 10 # Websocket ask timeout 
 
 	# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-	BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # same as used in django!
+	BASE_DIR = os.path.dirname(__file__)
 
 	# Define the directory path
 	# Check if the directory exists, if not, create it
@@ -70,7 +70,7 @@ class Settings:
 
 	# some useful directories 
 	# extensions_dir
-	extensions_dir = f'{BASE_DIR}/commands/extensions.json'
+	extensions_dir = os.path.join(BASE_DIR,'commands','extensions.json')
 
 
 	# open snippet directory

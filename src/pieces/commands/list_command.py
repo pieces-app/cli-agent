@@ -49,13 +49,13 @@ class ListCommand:
         else:
             # Print an error message if the 'Applications' object does not contain an iterable list of applications
             print("Error: The 'Applications' object does not contain an iterable list of applications.")
+    
     @staticmethod
     @check_assets_existence
     def list_assets(max_assets:int=10):
-
-        asset_list = AssetsCommandsApi.get_assets_info_list(max_assets)
-        
-        for i, name in enumerate(asset_list, start=1):
-            print(f"{i}: {name.get('name')}")
-            if i >= max_assets:
-                break
+        assets_snapshot = AssetsCommandsApi.assets_snapshot
+        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
+            asset = assets_snapshot[uuid]
+            if not asset:
+                asset = AssetsCommandsApi.get_asset_snapshot(uuid)
+            print(f"{i}: {asset.name}")

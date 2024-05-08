@@ -56,7 +56,7 @@ class AssetsIdentifiersWS:
         """Handle websocket opening."""
         self.is_connected = True
 
-    async def close_websocket_connection(self):
+    def close_websocket_connection(self):
         """Close the websocket connection."""
         if self.ws and self.is_connected:
             self.ws.close()

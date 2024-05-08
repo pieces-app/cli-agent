@@ -58,11 +58,8 @@ class AssetsCommandsApi:
 		# Call the API to get assets identifiers
 		api_response = assets_api.assets_identifiers_snapshot()
 
-		# Extract data from the response
-		data = api_response.to_dict()  # Convert the response to a dictionary
-
 		# Extract the 'id' values from each item in the 'iterable' list
-		cls.assets_snapshot = {item:None for item in data.get('iterable', [])}
+		cls.assets_snapshot = {item.id:None for item in api_response.iterable}
 
 		return cls.assets_snapshot
 		
@@ -107,7 +104,7 @@ class AssetsCommandsApi:
 
 
 	@classmethod
-	def get_asset_snapshot(cls,asset_id):
+	def get_asset_snapshot(cls,asset_id:str):
 		asset = cls.assets_snapshot.get(asset_id)
 		if asset:
 			return asset
@@ -209,32 +206,29 @@ class AssetsCommandsApi:
 		:return: A dictionary containing the asset's name, date created, date updated, type, language, and raw code snippet
 		"""
 
-		name = data.name if data.name else None
-		created_readable = data.created.readable if data.created.readable else None
-		updated_readable = data.get('updated', {}).get('readable', 'Unknown')
+		name = data.name if data.name else "New Asset"
+		created_readable = data.created.readable if data.created.readable else "Unknown"
+		updated_readable = data.updated.readable if data.updated.readable else "Unknown"
 		type = "No Type"
 		language = "No Language"
 		raw = None  # Initialize raw code snippet as None
-		formats = data.formats
+		iterable = data.formats.iterable
+		if iterable:
+			first_item:Format = iterable[0] if len(iterable) > 0 else None
+			if first_item:
+				classification_str = first_item.classification.generic
+				if classification_str:
+					# Extract the last part after the dot
+					type = classification_str.split('.')[-1]
 
-		if not formats:
-			iterable:Format = formats.iterable
-			if iterable:
-				first_item = iterable[0] if len(iterable) > 0 else None
-				if first_item:
-					classification_str = first_item.classification.generic
-					if classification_str:
-						# Extract the last part after the dot
-						type = classification_str.split('.')[-1]
+				language_str = first_item.classification.specific
+				if language_str:
+					# Extract the last part after the dot
+					language = language_str.split('.')[-1]
 
-					language_str = first_item.classification.specific
-					if language_str:
-						# Extract the last part after the dot
-						language = language_str.split('.')[-1]
-
-					fragment_string = first_item.fragmen.string.raw
-					if fragment_string:
-						raw = fragment_string
+				fragment_string = first_item.fragment.string.raw
+				if fragment_string:
+					raw = fragment_string
 
 		return {"name":name,
 				"created_at":created_readable,
