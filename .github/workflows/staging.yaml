@@ -1,15 +1,15 @@
-name: Release
+name: Staging
 
 on:
   push:
-    tags:
-      - '*.*.*'
+    branches:
+      - main
 
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
     with:
-      deploy: true
+      deploy: false
     secrets:
       access_token: ${{ secrets.GITHUB_TOKEN }}
       pypi_token: ${{ secrets.PYPI_TOKEN }}
