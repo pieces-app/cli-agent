@@ -125,7 +125,7 @@ class AssetsCommands:
 			user_input = input("Do you want to save this content? (y/n): ").strip().lower()
 			if user_input == 'y':
 				space_below("Saving Content...")
-				new_asset = AssetsCommandsApi.create_new_asset(Settings.application, raw_string=text, metadata=None)
+				new_asset = AssetsCommandsApi.create_new_asset(raw_string=text, metadata=None)
 		
 				cls.current_asset = new_asset.id
 				print(f"Asset Created use 'open' to view")

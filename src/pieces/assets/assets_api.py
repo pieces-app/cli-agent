@@ -118,16 +118,12 @@ class AssetsCommandsApi:
 		asset_api = AssetApi(Settings.api_client)
 
 		# Get the asset using the provided asset_id
-		asset = cls.get_asset_by_id(asset_id)
+		asset = cls.get_asset_snapshot(asset_id)
 
 		# Check if the existing name is found and update it
-		existing_name = asset.get('name', 'Existing name not found')
-		if existing_name != 'Existing name not found':
-			asset['name'] = new_name
-			print(f"Asset name changed from '{existing_name}' to '{new_name}'")
-		else:
-			print(existing_name)
-			return
+		existing_name = asset.name
+		asset.name = new_name
+		print(f"Asset name changed from '{existing_name}' to '{new_name}'")
 
 		# Update the asset using the API
 		try:
@@ -159,7 +155,7 @@ class AssetsCommandsApi:
 		try:
 			asset = asset_api.asset_snapshot(asset_id)
 			if asset.original.reference.classification.generic == ClassificationGenericEnum.IMAGE:
-				show_error("Error in reclassify asset","Original format is not supported")
+				show_error("Error in reclassify asset","Image original format is not supported")
 				return
 			asset_api.asset_reclassify(asset_reclassification=AssetReclassification(ext=classification,asset=asset),
 												transferables=False)

@@ -94,7 +94,7 @@ class Settings:
 		# Check if the models file exists
 		try: 
 			cls.model_name,cls.model_id = cls.get_current_model_name() # Checks if the current model id is valid raise error if not vaild
-		except:
+		except KeyError:
 			default_model_name = "GPT-3.5-turbo Chat Model"
 			cls.model_id = cls.models[default_model_name]["uuid"] # default model id
 			cls.dump_pickle(file = cls.models_file, model_id=cls.model_id)
