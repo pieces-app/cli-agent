@@ -1,8 +1,14 @@
 [tool.poetry]
-  name = "pieces"
+  name = "pieces-cli"
   version = "0.0.15"
-  description = ""  # Add your description here
-  authors = ["Pieces <development@pieces.app>"]  # Add your name and email
+  description = "A powerful cli tool to interact with the pieces os "
+  authors = ["Pieces <development@pieces.app>"]
+  readme = "README.md"
+  homepage = "https://pieces.app"
+  keywords = ["copilot", "pieces","ai","snippets"]
+  packages = [{ include = "pieces", from = "src" }]
+  license = "MIT"
+
 
 [tool.poetry.dependencies]
   python = ">=3.9,<3.13"
