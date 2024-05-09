@@ -181,14 +181,11 @@ class AssetsCommandsApi:
 		if original.classification.generic == ClassificationGenericEnum.IMAGE:
 			show_error("Error in update asset","Original format is not supported")
 			return
-		try:
-			if original.fragment.string.raw:
-				original.fragment.string.raw = data
-			elif original.file.string.raw:
-				original.file.string.raw = data
-			else:
-				raise AttributeError
-		except AttributeError:
+		if original.fragment and original.fragment.string and original.fragment.string.raw:
+			original.fragment.string.raw = data
+		elif original.file and original.file.string and original.file.string.raw:
+			original.file.string.raw = data
+		else:
 			# check if the string value is not empty
 			show_error("Error in update asset","Original value is empty")
 			return
