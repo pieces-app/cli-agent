@@ -46,6 +46,7 @@ class AssetsIdentifiersWS:
 
     def on_error(self, ws, error):
         """Handle websocket errors."""
+        self.is_connected = False
         print(error)
 
     def on_close(self, ws):

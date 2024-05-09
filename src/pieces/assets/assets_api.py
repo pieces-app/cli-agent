@@ -123,12 +123,11 @@ class AssetsCommandsApi:
 		# Check if the existing name is found and update it
 		existing_name = asset.name
 		asset.name = new_name
-		print(f"Asset name changed from '{existing_name}' to '{new_name}'")
 
 		# Update the asset using the API
 		try:
 			asset_api.asset_update(asset=asset, transferables=False)
-			print("Asset name updated successfully.")
+			print(f"Asset name changed from '{existing_name}' to '{new_name}'")
 		except Exception as e:
 			show_error("Error updating asset: ",{e})
 
