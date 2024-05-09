@@ -1,7 +1,7 @@
 import os
 import pyperclip
 
-from pieces.utils import get_file_extension,extract_code_from_markdown,sanitize_filename
+from pieces.utils import get_file_extension,sanitize_filename,export_code_to_file
 from .assets_api import AssetsCommandsApi
 from pieces.gui import show_error,print_model_details,space_below,double_line
 from pieces.settings import Settings
@@ -54,7 +54,7 @@ class AssetsCommands:
 		asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
 		
 
-		filepath = extract_code_from_markdown(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
+		filepath = export_code_to_file(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
 
 		print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
 

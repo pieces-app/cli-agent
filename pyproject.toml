@@ -12,7 +12,6 @@
 
 [tool.poetry.dependencies]
   python = ">=3.9,<3.13"
-  beautifulsoup4 = "4.12.3"
   pyperclip = ">=1.8.2"
   websocket-client = "1.7.0"
   pieces_os_client = "1.2.7"

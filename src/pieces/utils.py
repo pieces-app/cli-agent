@@ -1,5 +1,4 @@
 import json
-from bs4 import BeautifulSoup
 import os
 import re
 
@@ -14,17 +13,10 @@ def sanitize_filename(name):
     name = re.sub(r'[\\/*?:"<>|]', '', name)
     return name
 
-def extract_code_from_markdown(markdown, name, language):
+def export_code_to_file(code, name, language):
     # Sanitize the name to ensure it's a valid filename
     filename = sanitize_filename(name)
     file_extension = get_file_extension(language)
-
-    # Using BeautifulSoup to parse the HTML and extract text
-    soup = BeautifulSoup(markdown, 'html.parser')
-    extracted_code = soup.get_text()
-
-    # Minimize multiple consecutive newlines to a single newline
-    extracted_code = re.sub(r'\n\s*\n', '\n', extracted_code)
 
     # Ensure the directory exists, create it if not
     if not os.path.exists(Settings.open_snippet_dir):
@@ -35,7 +27,7 @@ def extract_code_from_markdown(markdown, name, language):
 
     # Writing the extracted code to a new file
     with open(file_path, 'w') as file:
-        file.write(extracted_code)
+        file.write(code)
 
     return file_path
 
