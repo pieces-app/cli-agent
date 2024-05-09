@@ -4,6 +4,7 @@ import websocket
 from pieces.settings import Settings
 import threading
 
+
 class AssetsIdentifiersWS:
     def __new__(cls,*args,**kwargs):
         if not hasattr(cls, 'instance'):
@@ -12,7 +13,6 @@ class AssetsIdentifiersWS:
     
     def __init__(self, on_message_callback):
         self.ws = None
-        self.is_connected = False
         self.on_message_callback = on_message_callback
 
         # Create a new event loop
@@ -31,7 +31,7 @@ class AssetsIdentifiersWS:
 
     async def open_websocket(self):
         """Opens a websocket connection"""
-        if self.is_connected: # connect only once
+        if self.ws: # connect only once
             return
         self.ws = websocket.WebSocketApp(Settings.ASSETS_IDENTIFIERS_WS_URL,
                                          on_message=self.on_message,
@@ -46,19 +46,19 @@ class AssetsIdentifiersWS:
 
     def on_error(self, ws, error):
         """Handle websocket errors."""
-        self.is_connected = False
+        self.ws = None
         print(error)
 
     def on_close(self, ws):
         """Handle websocket closure."""
-        self.is_connected = False
+        self.ws = None
 
     def on_open(self, ws):
         """Handle websocket opening."""
-        self.is_connected = True
+        pass
 
     def close_websocket_connection(self):
         """Close the websocket connection."""
-        if self.ws and self.is_connected:
+        if self.ws:
             self.ws.close()
-            self.is_connected = False
+            self.ws = None
