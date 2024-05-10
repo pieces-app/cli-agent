@@ -1,10 +1,16 @@
-from pieces.gui import print_help
-import pieces_os_client as pos_client
-from pieces.api.api_functions import sign_out
-from pieces.pieces_argparser import PiecesArgparser
-from pieces.commands import *
-from pieces.settings import Settings
 import sys
+from pieces_os_client.api.os_api import OSApi
+
+
+from pieces.gui import print_help
+from pieces.pieces_argparser import PiecesArgparser
+from pieces.settings import Settings
+
+
+from pieces.commands import *
+from pieces.autocommit import *
+from pieces.copilot import *
+from pieces.assets import *
 
 class PiecesCLI:
     def __init__(self):
@@ -19,25 +25,25 @@ class PiecesCLI:
         list_parser = self.command_parser.add_parser('list', help='List the assets or apps or models')
         list_parser.add_argument('type', nargs='?', type=str ,default="assets", help='type of the list',choices=["assets","apps","models"])
         list_parser.add_argument('max_assets', nargs='?', type=int ,default=10, help='Max number of assets')
-        list_parser.set_defaults(func=list_command)
+        list_parser.set_defaults(func=ListCommand.list_command)
 
 
         # Subparser for the 'open' command
         open_parser = self.command_parser.add_parser('open', help='Open an asset')
         open_parser.add_argument('ITEM_INDEX', type=int, nargs='?', default=None, help='Index of the item to open (optional)')
-        open_parser.set_defaults(func=open_asset)
+        open_parser.set_defaults(func=AssetsCommands.open_asset)
 
         # Subparser for the 'save' command
         save_parser = self.command_parser.add_parser('save', help='Updates the current asset')
-        save_parser.set_defaults(func=update_asset_value)
+        save_parser.set_defaults(func=AssetsCommands.update_asset)
 
         # Subparser for the 'delete' command
         delete_parser = self.command_parser.add_parser('delete', help='Delete the current asset')
-        delete_parser.set_defaults(func=delete_asset)
+        delete_parser.set_defaults(func=AssetsCommands.delete_asset)
 
         # Subparser for the 'create' command
         create_parser = self.command_parser.add_parser('create', help='Create a new asset')
-        create_parser.set_defaults(func=create_asset)
+        create_parser.set_defaults(func=AssetsCommands.create_asset)
 
         # Subparser for the 'run' command
         run_parser = self.command_parser.add_parser('run', help='Runs CLI in a loop')
@@ -47,7 +53,7 @@ class PiecesCLI:
         edit_parser = self.command_parser.add_parser('edit', help='Edit an existing asset')
         edit_parser.add_argument('--name',"-n",dest='name', help='New name for the asset', required=False)
         edit_parser.add_argument('--classification',"-c",dest='classification', help='reclassify the asset', required=False)
-        edit_parser.set_defaults(func=edit_asset)
+        edit_parser.set_defaults(func=AssetsCommands.edit_asset)
 
         # Subparser for the 'ask' command
         ask_parser = self.command_parser.add_parser('ask', help='Ask a question to a model')
@@ -79,7 +85,7 @@ class PiecesCLI:
 
         # Subparser for the 'login' command
         login_parser = self.command_parser.add_parser('login', help='Login to pieces os')
-        login_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {pos_client.OSApi(Settings.api_client).sign_into_os().name}'))
+        login_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {OSApi(Settings.api_client).sign_into_os().name}'))
 
         # Subparser for the 'logout' command
         logout_parser = self.command_parser.add_parser('logout', help='Logout from pieces os')

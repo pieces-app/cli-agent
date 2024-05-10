@@ -2,20 +2,20 @@
 import json
 import websocket
 import threading
-import pieces_os_client
+from pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
 
 from rich.live import Live
 from rich.markdown import Markdown
-from ..settings import Settings
+from pieces.settings import Settings
 
 
 
 
-class WebSocketManager:
+class AskWebsocketWS:
 
     def __new__(cls,*args,**kwargs):
         if not hasattr(cls, 'instance'):
-            cls.instance = super(WebSocketManager, cls).__new__(cls)
+            cls.instance = super(AskWebsocketWS, cls).__new__(cls)
         return cls.instance
     
     def __init__(self):
@@ -39,7 +39,7 @@ class WebSocketManager:
     def on_message(self,ws, message):
         """Handle incoming websocket messages."""
         try:
-            response = pieces_os_client.QGPTStreamOutput.from_json(message)
+            response = QGPTStreamOutput.from_json(message)
             if response.question:
                 answers = response.question.answers.iterable
                 if not self.live and self.verbose:  # Create live instance if it doesn't exist

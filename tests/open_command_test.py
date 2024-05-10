@@ -5,7 +5,7 @@ import sys
 from io import StringIO
 import random,os
 import json
-from pieces.commands.commands_functions import sanitize_filename
+from pieces.utils import sanitize_filename
 
 class TestAskCommand(unittest.TestCase):
     @patch('pieces.commands.open_asset')

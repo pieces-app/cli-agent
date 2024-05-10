@@ -31,7 +31,7 @@ class TestListCommand(unittest.TestCase):
             if i == "models":
                 model = assets_list[-1]
                 assets_list = assets_list[:-1] # Remove the line which conatin the current model text
-                self.assertEqual(model,f"Currently using: {commands_functions.get_current_model_name()} with uuid {commands_functions.model_id}")
+                self.assertEqual(model,f"Currently using: {change_model.get_current_model_name()} with uuid {change_model.model_id}")
             
             # Check if the string represents a numbered list
             self.assertTrue(all(line.strip().startswith(str(i+1)) for i, line in enumerate(assets_list) if line.strip()))

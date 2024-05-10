@@ -1,36 +1,14 @@
 from .cli_loop import loop
-from .autocommit import git_commit
-from .commands_functions import (version,
-                                 search,
-                                 change_model,
-                                 set_parser)
-from .assets import (update_asset_value,
-                    edit_asset,
-                    list_assets,
-                    open_asset,
-                    create_asset,
-                    delete_asset,
-                    list_models,
-                    list_apps,
-                    list_command)
-
-from .copilot import ask,get_conversations,conversation_handler
+from .change_model import change_model
+from .search_command import search
+from .list_command import ListCommand
+from .version_command import version
+from .signout_command import sign_out
 
 __all__ = ['loop',
-           "get_conversations",
-           'conversation_handler',
-           'git_commit',
-           'set_parser',
            'version',
-           'update_asset_value',
-           'edit_asset',
-           'list_assets',
-           'open_asset',
-           'create_asset',
-           'ask',
            'search',
-           'delete_asset',
            'change_model',
-           "list_models",
-           "list_apps","list_command"]
+           'sign_out',
+           'ListCommand']
 

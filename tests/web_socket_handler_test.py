@@ -1,7 +1,7 @@
 import json
 from unittest.mock import Mock, patch
 import pytest
-from pieces.api.pieces_ask_websocket import WebSocketManager
+from pieces.copilot.pieces_ask_websocket import AskWebsocketWS
 
 class TestWebSocketManager:
 
@@ -12,7 +12,7 @@ class TestWebSocketManager:
 
     @pytest.fixture
     def ws_manager(self):
-        return WebSocketManager()
+        return AskWebsocketWS()
 
     def test_init(self, ws_manager):
         assert ws_manager.ws is None

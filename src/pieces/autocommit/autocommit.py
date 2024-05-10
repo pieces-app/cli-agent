@@ -2,13 +2,15 @@ import subprocess
 import re
 from .git_api import get_repo_issues
 from typing import Optional,Tuple
-import pieces_os_client as pos_client
-from pieces.commands import commands_functions
+from pieces.settings import Settings
 from pieces.gui import show_error
 import os
 from rich.console import Console
 from rich.markdown import Markdown
-from pieces.settings import Settings
+
+from pieces_os_client.api.qgpt_api import QGPTApi
+from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
+from pieces_os_client.models.qgpt_relevance_input_options import QGPTRelevanceInputOptions
 
 
 def get_git_repo_name() -> Optional[Tuple[str]]:
@@ -93,7 +95,7 @@ def get_current_working_changes() -> Tuple[str,list]:
 
 def git_commit(**kwargs):
     issue_flag = kwargs.get('issue_flag')
-    model = commands_functions.model_id
+    model = Settings.model_id
     try:
         changes_summary,paths = get_current_working_changes()
     except:
@@ -107,13 +109,13 @@ def git_commit(**kwargs):
                 `Here are the changes summary:`\n{changes_summary}"""
 
     try:
-        commit_message = pos_client.QGPTApi(Settings.api_client).relevance(
-            pos_client.QGPTRelevanceInput(
+        commit_message = QGPTApi(Settings.api_client).relevance(
+            QGPTRelevanceInput(
                 query=message_prompt,
                 paths=paths,
-                application=commands_functions.application.id,
+                application=Settings.application.id,
                 model=model,
-                options=pos_client.QGPTRelevanceInputOptions(question=True)
+                options=QGPTRelevanceInputOptions(question=True)
             )).answer.answers.iterable[0].text 
         
         # Remove extras from the commit message
@@ -144,13 +146,13 @@ def git_commit(**kwargs):
                 
                 try:
                     
-                    issue_number = pos_client.QGPTApi(Settings.api_client).relevance(
-                            pos_client.QGPTRelevanceInput(
+                    issue_number = QGPTApi(Settings.api_client).relevance(
+                            QGPTRelevanceInput(
                                 query=issue_prompt.format(issues=issue_list),
                                 paths=paths,
-                                application=commands_functions.application.id,
+                                application=Settings.application.id,
                                 model=model,
-                                options=pos_client.QGPTRelevanceInputOptions(question=True)
+                                options=QGPTRelevanceInputOptions(question=True)
                             )).answer.answers.iterable[0].text
             
                     
