@@ -63,7 +63,7 @@ class AssetsCommands:
 	@check_asset_selected
 	def update_asset(cls,asset_data,**kwargs):
 		asset = AssetsCommandsApi.extract_asset_info(asset_data)
-		file_path = os.path.join(Settings.open_snippet_dir , f"{sanitize_filename(asset["name"])}{get_file_extension(asset["language"])}")
+		file_path = os.path.join(Settings.open_snippet_dir , f"{sanitize_filename(asset['name'])}{get_file_extension(asset['language'])}")
 		print(f"Saving {file_path} to {asset['name']} snippet with uuid {cls.current_asset}")
 
 		

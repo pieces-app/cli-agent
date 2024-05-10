@@ -361,7 +361,7 @@ cd dist
 
 10. Install the WHL file
 ```shell
-pip install pieces-{VERSION}-py3-none-any.whl 
+pip install pieces-cli-{VERSION}-py3-none-any.whl 
 ```
 replace the VERSION with the version you downloaded
 Note: Ensure you get latest from the [releases](https://github.com/pieces-app/cli-agent/releases) of the cli-agent
@@ -379,14 +379,14 @@ these can be local/github/pypi etc.
 To update the project, run the following command:
 
 ```shell
-pip install pieces --upgrade
+pip install pieces-cli --upgrade
 ```
 
 ### Uninstallation
 To uninstall the project, run the following command:
 
 ```shell
-pip uninstall pieces
+pip uninstall pieces-cli
 ```
 Don't forget to remove the virtual environment and dist folder
 
