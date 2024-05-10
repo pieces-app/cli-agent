@@ -215,11 +215,13 @@ class AssetsCommandsApi:
 				type = original.classification.generic.value
 				language = original.classification.specific.value
 				
-				if original.fragment.string.raw:
+				if original.fragment:
 					raw = original.fragment.string.raw
-				elif original.file.string.raw:
+				elif original.file.string:
 					raw = original.file.string.raw
-
+				elif original.file.bytes:
+					return show_error("Error in the open command","Image is not supported")
+				
 		return {"name":name,
 				"created_at":created_readable,
 				'updated_at': updated_readable,
