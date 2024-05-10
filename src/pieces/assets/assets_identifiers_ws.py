@@ -49,7 +49,7 @@ class AssetsIdentifiersWS:
         self.ws = None
         print(error)
 
-    def on_close(self, ws):
+    def on_close(self, ws, close_status_code, close_msg):
         """Handle websocket closure."""
         self.ws = None
 
@@ -61,4 +61,3 @@ class AssetsIdentifiersWS:
         """Close the websocket connection."""
         if self.ws:
             self.ws.close()
-            self.ws = None
