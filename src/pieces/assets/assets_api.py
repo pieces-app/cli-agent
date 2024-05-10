@@ -3,6 +3,7 @@ from pieces.gui import show_error
 from typing import Dict,Optional
 import json
 import queue
+import threading
 
 from pieces_os_client.api.assets_api import AssetsApi
 from pieces_os_client.api.asset_api import AssetApi
@@ -86,7 +87,7 @@ class AssetsCommandsApi:
 	@classmethod
 	def assets_snapshot_callback(cls,ids:StreamedIdentifiers):
 		# Start the worker thread if it's not running
-		cls.worker()
+		threading.Thread(target = cls.worker).start()
 		cls.block = True
 		for item in ids.iterable:
 			asset_id = item.asset.id
@@ -209,22 +210,18 @@ class AssetsCommandsApi:
 		raw = None  # Initialize raw code snippet as None
 		iterable = data.formats.iterable
 		if iterable:
-			first_item:Format = iterable[0] if len(iterable) > 0 else None
-			if first_item:
-				classification_str = first_item.classification.generic
-				if classification_str:
-					# Extract the last part after the dot
-					type = classification_str.split('.')[-1]
-
-				language_str = first_item.classification.specific
-				if language_str:
-					# Extract the last part after the dot
-					language = language_str.split('.')[-1]
-
-				fragment_string = first_item.fragment.string.raw
-				if fragment_string:
-					raw = fragment_string
-
+			original:Format = [format for format in iterable if format.id == data.original.id][0]
+			if original:
+				type = original.classification.generic.value
+				language = original.classification.specific.value
+				
+				if original.fragment:
+					raw = original.fragment.string.raw
+				elif original.file.string:
+					raw = original.file.string.raw
+				elif original.file.bytes:
+					return show_error("Error in the open command","Image is not supported")
+				
 		return {"name":name,
 				"created_at":created_readable,
 				'updated_at': updated_readable,
