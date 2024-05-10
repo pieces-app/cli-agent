@@ -7,8 +7,6 @@ from pieces.assets.assets_api import AssetsCommandsApi
 
 
 def search(query, **kwargs):
-    global asset_ids 
-
     search_type = kwargs.get('search_type', 'assets')
 
     # Join the list of strings into a single search phrase
@@ -44,10 +42,9 @@ def search(query, **kwargs):
 
             # Combine and store best and suggested matches in asset_ids
             combined_ids = exact_ids + suggested_ids
-            asset_ids = {index + 1: asset_id for index, asset_id in enumerate(combined_ids)}
 
             # Prepare the combined list of names for printing
-            combined_details = [(asset_id,  AssetsCommandsApi.get_asset_by_id(asset_id)) for asset_id in combined_ids]
+            combined_details = [(asset_id,  AssetsCommandsApi.get_asset_snapshot(asset_id).name) for asset_id in combined_ids]
 
             # Print the combined asset details
             if combined_details:
