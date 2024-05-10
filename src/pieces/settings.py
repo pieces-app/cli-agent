@@ -88,7 +88,6 @@ class Settings:
 		# MODELS
 		cls.models = cls.get_models_ids()
 		# Check if the models file exists
-		print(cls.models_file)
 		try: 
 			cls.model_name,cls.model_id = cls.get_current_model_name() # Checks if the current model id is valid raise error if not vaild
 		except:
