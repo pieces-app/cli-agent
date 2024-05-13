@@ -26,8 +26,12 @@ def export_code_to_file(code, name, language):
     file_path = os.path.join(Settings.open_snippet_dir, f'{filename}{file_extension}')
 
     # Writing the extracted code to a new file
-    with open(file_path, 'w') as file:
-        file.write(code)
+    if isinstance(code, str): # Code string raw
+        with open(file_path, 'w') as file:
+            file.write(code)
+    else: # Image bytes data
+        with open(file_path, 'wb') as file:
+            file.write(bytes(code))
 
     return file_path
 

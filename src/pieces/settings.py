@@ -1,4 +1,3 @@
-import urllib.request
 import json
 import pickle
 from typing import Union,Dict,Optional
@@ -8,7 +7,7 @@ import platform
 import os
 from pathlib import Path
 import sys
-
+import threading
 from platformdirs import user_data_dir
 
 from pieces import __version__
@@ -136,7 +135,7 @@ class Settings:
 		# models = {model.name: {"uuid":model.id,"word_limit":model.max_tokens.input} for model in api_response.iterable if model.cloud or model.downloading} # getting the models that are available in the cloud or is downloaded
 		
 		# call the api until the sdks updated
-		response = urllib.request.urlopen(f'{cls.host}/models').read()
+		response = cls.api_client.call_api('/models', 'GET',{},[],response_types_map={'200': "str",'500': "str"}).raw_data
 		response = json.loads(response)["iterable"]
 		models = {model["name"]:{"uuid":model["id"]} for model in response if model["cloud"] or model.get("downloaded",False)}
 		return models
@@ -145,9 +144,12 @@ class Settings:
 	def startup(cls):
 		pieces_os_version = cls.open_pieces_os()
 		if pieces_os_version:
-			cls.connect_api()
-			cls.load_models()
-			
+			model_thread = threading.Thread(target=cls.load_models)
+			connector_thread = threading.Thread(target=cls.connect_api)
+			model_thread.start()
+			connector_thread.start()
+			model_thread.join() # Wait for it to finish
+			connector_thread.join() # Wait for it to finish
 		else:
 			server_startup_failed()
 			sys.exit(0) # Exit the program
