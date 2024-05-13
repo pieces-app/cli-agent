@@ -1,4 +1,9 @@
 # Changelog
+## May 13th, 2024
+- Add create shareable link
+- Add revoke shareable link
+- Add distrubutions shareable link
+
 ## April 8th, 2024
 
 - Add the conversation command with the --rename ,--new , --delete flags
