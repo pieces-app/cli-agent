@@ -6,6 +6,7 @@ import subprocess
 import platform
 import os
 from pathlib import Path
+import sys
 import threading
 from platformdirs import user_data_dir
 
@@ -151,6 +152,7 @@ class Settings:
 			connector_thread.join() # Wait for it to finish
 		else:
 			server_startup_failed()
+			sys.exit(0) # Exit the program
 
 	@classmethod
 	def open_pieces_os(cls) -> Optional[str]:

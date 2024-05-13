@@ -9,7 +9,10 @@
   
 ##### <p align="center"> [Website](https://pieces.app/) • [Pieces OS Documentation](https://docs.pieces.app/) • [Pieces Python CLI Documentation](https://github.com/pieces-app/cli-agent/blob/prod/Documentation.md)
 </p>
-<br>
+
+# Important
+
+Make sure you have [**Pieces OS**](https://docs.pieces.app/installation-getting-started/what-am-i-installing) installed in order to run the Pieces CLI tool.
 
 ### Table of Contents
 - [Operating System Support](#operating-system-support)
