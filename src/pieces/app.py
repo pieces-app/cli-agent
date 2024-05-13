@@ -47,7 +47,7 @@ class PiecesCLI:
 
         # Subparser for the 'run' command
         run_parser = self.command_parser.add_parser('run', help='Runs CLI in a loop')
-        run_parser.set_defaults(func=loop)
+        run_parser.set_defaults(func=CliLoop.start_loop)
 
         # Subparser for the 'edit' command
         edit_parser = self.command_parser.add_parser('edit', help='Edit an existing asset')
@@ -111,6 +111,12 @@ class PiecesCLI:
         commit_parser = self.command_parser.add_parser('commit', help='Auto generate a github commit messaage and commit changes')
         commit_parser.add_argument("-p","--push",dest="push",action="store_true", help="push the code to github")
         commit_parser.set_defaults(func=git_commit)
+
+
+        # Subparser for the 'share' command
+        share_parser = self.command_parser.add_parser('share', help='Generate a shareable link for the current asset')
+        share_parser.add_argument("-d","--delete",action="store_true", dest="delete", help="Delete the shareable link")
+        share_parser.set_defaults(func=AssetsCommands.share_asset)
 
     def run(self):
         try:
