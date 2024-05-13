@@ -220,7 +220,7 @@ class AssetsCommandsApi:
 				elif original.file.string:
 					raw = original.file.string.raw
 				elif original.file.bytes:
-					return show_error("Error in the open command","Image is not supported")
+					raw = original.file.bytes.raw
 				
 		return {"name":name,
 				"created_at":created_readable,
