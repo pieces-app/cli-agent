@@ -141,7 +141,7 @@ class Settings:
 	
 	@classmethod
 	def startup(cls):
-		pieces_os_version = cls.get_version()
+		pieces_os_version = cls.open_pieces_os()
 		if pieces_os_version:
 			model_thread = threading.Thread(target=cls.load_models)
 			connector_thread = threading.Thread(target=cls.connect_api)
