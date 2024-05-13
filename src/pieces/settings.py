@@ -163,18 +163,19 @@ class Settings:
 		else:
 			pl = platform.system()
 			if pl == "Windows":
-				subprocess.Popen(["start", "os_server"], shell=True)
-			elif pl == "Linux":
-				subprocess.Popen(["os_server"])
+				subprocess.run(["start", "pieces://launch"], shell=True)
 			elif pl == "Darwin":
-				subprocess.Popen(["open", "os_server"])
-		
+				subprocess.run(["open","pieces://launch"])
+			elif pl == "Linux":
+				subprocess.run(["pieces://launch"])
+			
 			for _ in range(2):
 				version = cls.get_version()
 				if version:
 					return version
 				time.sleep(2) # wait for the server to open
 			return cls.get_version() # pieces os version
+		
 	@classmethod
 	def get_version(cls) -> Optional[str]:
 		"""Get pieces os version return None if there is a problem"""
