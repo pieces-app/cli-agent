@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import threading
 from platformdirs import user_data_dir
+from prompt_toolkit import PromptSession
 
 from pieces import __version__
 from pieces.gui import server_startup_failed
@@ -26,6 +27,8 @@ from pieces_os_client.models.application_name_enum import ApplicationNameEnum
 class Settings:
 	"""Settings class for the CLI Agent"""
 	
+	prompt_session = PromptSession() # For input in the cli_loop
+
 	TIMEOUT = 10 # Websocket ask timeout 
 
 	# Build paths inside the project like this: os.path.join(BASE_DIR, ...)

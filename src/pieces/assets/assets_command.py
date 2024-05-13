@@ -1,5 +1,6 @@
 import os
 import pyperclip
+import threading
 
 from pieces.utils import get_file_extension,sanitize_filename,export_code_to_file
 from .assets_api import AssetsCommandsApi
@@ -27,16 +28,17 @@ def check_asset_selected(func):
 			return show_error("No asset selected.", "Please open an asset first using pieces open.")
 		try: 
 			asset_data = AssetsCommandsApi.get_asset_snapshot(AssetsCommands.current_asset)
-			return func(asset_data=asset_data,*args, **kwargs)
-		except:
-			# The selected asset is deleted
-			return show_error("Error occured in the command", "Please make sure the selected asset is valid.")
+		except:	
+			return show_error("Error occured in the getting the asset data", "Please make sure the selected asset is valid.")
+		return func(asset_data=asset_data,*args, **kwargs)
 			
 			
 	return wrapper
 
 class AssetsCommands:
 	current_asset = None
+	current_shareable_link_thread = None
+	current_asset_shareable = None
 
 	@classmethod
 	@check_assets_existence
@@ -139,8 +141,71 @@ class AssetsCommands:
 
 		except pyperclip.PyperclipException as e:
 			show_error("Error accessing clipboard:", str(e))
+	
+	@classmethod
+	@check_asset_selected
+	def share_asset(cls,asset_data,**kwargs):
+
+		# Handle delete
+		if kwargs.get("delete"):
+			if not asset_data.shares:
+				return print("That asset does not have a shareable link")
+			
+			print(asset_data.shares.iterable[0].link)
+			if input("Are you sure you want to delete this shareable link? (y/n): ").strip().lower() == "y":
+				print("Deleting")
+				AssetsCommandsApi.delete_shareable_link(asset_data.shares.iterable[0].id)
+				print("Shareable link deleted successfully.")
+				asset_data.shares.iterable
+				AssetsCommandsApi.assets_snapshot[asset_data.id] = asset_data.shares.iterable.pop(0) # Remove the asset shares from the cached assets
+			return
+		
+		# Handle creatation
+		if cls.current_shareable_link_thread:
+			print("There is currently one that is generating. Please wait")
+			return
+		
+		if asset_data.shares:
+			print(f"Link: {asset_data.shares.iterable[0].link}")
+			res = input("There is already a generated shareable link. Would you like to create another one (y/n): ").strip().lower()
+			if res != "y":
+				return
+
+		print("Generating shareable link...")
+		cls.current_shareable_link_thread = AssetsCommandsApi.generate_shareable_link(asset_data,async_req=True)
+		cls.current_asset_shareable = asset_data
+		print("This might take a while. You can continue using the cli until the link is generated")
+		threading.Thread(target=cls.check_link).start()
 
 
+	@classmethod
+	def check_link(cls):
+		session = Settings.prompt_session
+		share = None
+		for _ in range(3): # Try sharing three times
+			try:
+				share = cls.current_shareable_link_thread.get() # Wait for the link to be available
+			except Exception as e:
+				cls.current_shareable_link_thread = AssetsCommandsApi.generate_shareable_link(cls.current_asset_shareable,async_req=True)
 
+		if not share:
+			print("\nFailed to generate a shareable link")
+			return
+		print("\n")
+		print(f"Generated shareable Link: {share.iterable[0].link}")
 
+		cls.current_shareable_link_thread = None
+		cls.current_asset_shareable = None
+		
+		res = session.prompt("Post this snippet along with the context metadata as a github gist? (y/n): ").strip().lower() 
+		if res == "y":
+			gist_name = session.prompt(f"Gist name [{cls.current_asset_shareable.name}]: ").strip()
+			gist_name = gist_name if gist_name else cls.current_asset_shareable.name
+			description = cls.current_asset_shareable.annotations.iterable[0].text
+			gist_description = session.prompt(f"Gist description [{description}]: ").strip()
+			gist_description = gist_description if gist_description else description
+			gist_private = session.prompt("Do you want that gist to be private? (y/n): ").strip().lower()
+			gist_private = True if gist_private != "n" else False
+			dis = AssetsCommandsApi.create_gist(gist_name, gist_description, not gist_private)
+			print(dis)
 

@@ -8,17 +8,27 @@ import threading
 from pieces_os_client.api.assets_api import AssetsApi
 from pieces_os_client.api.asset_api import AssetApi
 from pieces_os_client.api.format_api import FormatApi
+from pieces_os_client.api.shares_api import SharesApi
+from pieces_os_client.api.distributions_api import DistributionsApi
+from pieces_os_client.api.user_api import UserApi
+from pieces_os_client.api.linkify_api import LinkifyApi
 
 from pieces_os_client.models.seed import Seed
 from pieces_os_client.models.seeded_asset import SeededAsset
 from pieces_os_client.models.seeded_format import SeededFormat
 from pieces_os_client.models.seeded_fragment import SeededFragment
+from pieces_os_client.models.seeded_share import SeededShare
+from pieces_os_client.models.seeded_distribution import SeededDistribution
+from pieces_os_client.models.seeded_git_hub_distribution import SeededGitHubDistribution
+from pieces_os_client.models.seeded_git_hub_gist_distribution import SeededGitHubGistDistribution
 from pieces_os_client.models.transferable_string import TransferableString
 from pieces_os_client.models.classification_generic_enum import ClassificationGenericEnum
 from pieces_os_client.models.asset_reclassification import AssetReclassification
 from pieces_os_client.models.asset import Asset
 from pieces_os_client.models.format import Format
 from pieces_os_client.models.streamed_identifiers import StreamedIdentifiers
+from pieces_os_client.models.linkify import Linkify
+
 
 
 class AssetsCommandsApi:
@@ -50,7 +60,14 @@ class AssetsCommandsApi:
 		return created_asset
 	
 	@classmethod
-	def get_assets_snapshot(cls):
+	def get_assets_snapshot(cls) -> Dict[str, Optional[Asset]]:
+		"""
+		Get all the assets that where cached into memory before. 
+		If no assets cached yet it will return a dict of all the assets_ids with the None value
+
+		:return: Dict[str, Optional[Asset]]
+		""" 
+
 		if cls.assets_snapshot:
 			return cls.assets_snapshot
 	
@@ -105,7 +122,8 @@ class AssetsCommandsApi:
 
 
 	@classmethod
-	def get_asset_snapshot(cls,asset_id:str):
+	def get_asset_snapshot(cls,asset_id:str) -> Asset:
+		"""Get the asset snapshot from the cache if found if not it will update the cache and return the snapshot"""
 		asset = cls.assets_snapshot.get(asset_id)
 		if asset:
 			return asset
@@ -229,3 +247,28 @@ class AssetsCommandsApi:
 				"language": language,
 				"raw": raw}
 
+	@classmethod
+	def generate_shareable_link(cls,asset:Asset,async_req=True):
+		user = UserApi(Settings.api_client).user_snapshot().user
+		return LinkifyApi(Settings.api_client).linkify(async_req=async_req,linkify=Linkify(asset=asset,access="PUBLIC",user=user))
+
+
+	@classmethod
+	def delete_shareable_link(cls,share_id):
+		return LinkifyApi(Settings.api_client).linkify_share_revoke(share=share_id)
+
+
+	@classmethod
+	def create_gist(cls,name:str,description:str,public:bool):
+		return DistributionsApi(Settings.api_client).distributions_create_new_distribution(
+			seeded_distribution = SeededDistribution(
+				github=SeededGitHubDistribution(
+					gist=SeededGitHubGistDistribution(
+						name=name,
+						description=description,
+						public=public
+					)
+				)
+			) 
+		)
+    	
