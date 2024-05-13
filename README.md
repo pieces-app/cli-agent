@@ -12,7 +12,7 @@
 
 # Important
 
-Make sure you Have [**Pieces OS**](https://docs.pieces.app/installation-getting-started/what-am-i-installing) installed to be able to run The cli tool
+Make sure you Have [**Pieces OS**](https://docs.pieces.app/installation-getting-started/what-am-i-installing) installed in order to run the Pieces CLI tool.
 
 ### Table of Contents
 - [Operating System Support](#operating-system-support)
