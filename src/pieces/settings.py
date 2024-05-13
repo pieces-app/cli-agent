@@ -167,7 +167,7 @@ class Settings:
 			elif pl == "Darwin":
 				subprocess.run(["open","pieces://launch"])
 			elif pl == "Linux":
-				subprocess.run(["pieces://launch"])
+				subprocess.run(["xdg-open","pieces://launch"])
 			
 			for _ in range(2):
 				version = cls.get_version()
