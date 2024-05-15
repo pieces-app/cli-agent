@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from pieces.assets import AssetsCommands,AssetsCommandsApi
 from pieces.settings import Settings
 import sys
@@ -8,10 +8,9 @@ import random,os
 import json
 from pieces.utils import sanitize_filename
 
-class TestOpenCommand(unittest.TestCase):
-    def test_open_command(self):
+class TestOpenSaveCommand(unittest.TestCase):
+    def test_open_command(self,ITEM_INDEX=None):
         Settings.startup()
-
         stdout = sys.stdout
         sys.stdout = StringIO()
 
@@ -20,9 +19,11 @@ class TestOpenCommand(unittest.TestCase):
 
 
         sys.stdout = StringIO()
-        idx = random.randint(1,assets_length)
+        if not ITEM_INDEX:
+            ITEM_INDEX = random.randint(1,assets_length)
+
         # Act
-        AssetsCommands.open_asset(ITEM_INDEX = idx)
+        AssetsCommands.open_asset(ITEM_INDEX = ITEM_INDEX)
 
         result_open = sys.stdout.getvalue()
         
@@ -44,9 +45,34 @@ class TestOpenCommand(unittest.TestCase):
         self.assertEqual(os.path.splitext(code_snippet_path)[-1], language_extension_mapping[language])  # assert that the file extension matches the language
         self.assertEqual(os.path.splitext(os.path.basename(code_snippet_path))[0], sanitize_filename(name))
 
+        return code_snippet_path # Return the code path to be tested for the save command
+        
+    @patch('builtins.input', side_effect=['y','y'])
+    @patch('pyperclip.paste', return_value='print("Hello, World!")')
+    def test_save_command(self, mock_paste,mock_buildins):
+        Settings.startup()
+        TEXT = "TEST SNIPPET CODE"
+        # Call create_asset to create a new asset to test on
+        AssetsCommands.create_asset() # Create a hello world asset
+
+        AssetsCommandsApi.assets_snapshot = {AssetsCommands.current_asset:None} # Update the asset cache
+
+        code_snippet_path = self.test_open_command(ITEM_INDEX=1) # Open the created asset
+
+        with open(code_snippet_path,'w') as f:
+            f.write(TEXT)
+
+        AssetsCommands.update_asset() # Run the save
+
+
+        code = AssetsCommandsApi.update_asset_snapshot(AssetsCommands.current_asset).formats.iterable[0].fragment.string.raw
+
+        self.assertEqual(code, TEXT) # Check if the code was saved
+
+        AssetsCommands.delete_asset() # Delete the asset
+        
+
 
 if __name__ == '__main__':
     unittest.main()
-        
 
-        
