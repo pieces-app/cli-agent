@@ -53,8 +53,11 @@ def loop(**kwargs):
 
             if user_input == 'exit':
                 double_space("Exiting...")
-                ask_websocket.close_websocket_connection()  # Close using the ask_websocket instance
-                assets_identifiers_ws.close_websocket_connection()  # Close using the assets_identifiers_ws instance
+                try:
+                    ask_websocket.close_websocket_connection()  # Close using the ask_websocket instance
+                    assets_identifiers_ws.close_websocket_connection()  # Close using the assets_identifiers_ws instance
+                except: pass
+                sys.exit(0)
                 break
 
             # Check if the input is a number and treat it as an index for 'open' command
