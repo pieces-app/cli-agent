@@ -94,6 +94,9 @@ def get_current_working_changes() -> Tuple[str,list]:
 
 
 def git_commit(**kwargs):
+    if kwargs.get("all_flag",False):
+        subprocess.run(["git", "add", "-A"], check=True)
+
     issue_flag = kwargs.get('issue_flag')
     model = Settings.model_id
     try:
@@ -171,12 +174,11 @@ def git_commit(**kwargs):
     
 
     # Check if the user wants to commit the changes or change the commit message
-    r_message = input(f"The generated commit message is:\n\n {commit_message}\n\nAre you sure you want to commit these changes?\n\n- y: Yes\n- n: No\n- c: Change the commit message\n\nPlease enter your choice (y/n/c): ")
+    r_message = input(f"The generated commit message is:\n\n {commit_message}\n\nAre you sure you want to commit these changes?\n\n- y: Yes\n- n: No\n- c: Change the commit message\n\nPlease enter your choice (y/n/c): ").lower().strip()
     
-    if r_message.lower() == "y" or r_message.lower() == "c":
-
+    if r_message == "y" or r_message == "c" or not r_message: # Accept by default if the user did not write anything 
         # Changing the commit message if the user wants to
-        if r_message.lower() == "c":
+        if r_message == "c":
             edit = input(f"Enter the new commit message [generated message is: '{commit_message}']: ")
             if edit:
                 commit_message = edit
@@ -211,7 +213,10 @@ def git_commit(**kwargs):
         try:
             subprocess.run(["git", "commit", "-m", commit_message], check=True)
             print("Successfully committed with message:", commit_message)
+            if kwargs.get('push',False):
+                subprocess.run(["git", "push"])
         except subprocess.CalledProcessError as e:
             print("Failed to commit changes:", e)
+        
     else:
         print("Committing changes cancelled")
