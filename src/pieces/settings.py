@@ -171,15 +171,17 @@ class Settings:
 		max_version_parsed = semver.VersionInfo.parse(cls.PIECES_OS_MAX_VERSION)
 
 		# Check compatibility
-		if not min_version_parsed <= os_version_parsed < max_version_parsed:
-			if os_version_parsed >= max_version_parsed:
-				print("Please update your cli-agent tool. It is not compatible with the current Pieces OS version")
-				print()
-				print("https://pypi.org/project/pieces-cli/")
-			else:
-				print("Please update your Pieces OS. It is not compatible with the current cli-agent version")
-				print()
-				print_pieces_os_link()
+		if os_version_parsed >= max_version_parsed:
+			print("Please update your cli-agent tool. It is not compatible with the current Pieces OS version")
+			print()
+			print("https://pypi.org/project/pieces-cli/")
+			print()
+			print_version_details(pieces_os_version, __version__)
+			sys.exit(0)
+		elif os_version_parsed < min_version_parsed:
+			print("Please update your Pieces OS. It is not compatible with the current cli-agent version")
+			print()
+			print_pieces_os_link()
 			print()
 			print_version_details(pieces_os_version, __version__)
 			sys.exit(0)
