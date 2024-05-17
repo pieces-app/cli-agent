@@ -36,8 +36,8 @@ def server_startup_failed():
 
 
 def print_version_details(pos_version,cli_version):
-    print(f"Pieces Version: {pos_version}")
-    print(f"Cli Version: {cli_version}")
+    print(f"Pieces OS Version: {pos_version}")
+    print(f"CLI Version: {cli_version}")
 
 def print_pieces_os_link():
     print("https://docs.pieces.app/installation-getting-started/what-am-i-installing")
