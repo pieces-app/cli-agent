@@ -15,6 +15,7 @@ from pieces.gui import server_startup_failed
 
 from pieces_os_client.api.well_known_api import WellKnownApi
 from pieces_os_client.api.connector_api import ConnectorApi
+from pieces_os_client.api.models_api import ModelsApi
 
 from pieces_os_client.configuration import Configuration
 from pieces_os_client.api_client import ApiClient
@@ -128,16 +129,10 @@ class Settings:
 		return cls.application
 	
 	@classmethod    
-	def get_models_ids(cls) -> Dict[str, Dict[str, Union[str, int]]]:
-		# api_instance = pos_client.ModelsApi(api_client)
+	def get_models_ids(cls) -> Dict[str, Dict[str, str]]:
 
-		# api_response = api_instance.models_snapshot()
-		# models = {model.name: {"uuid":model.id,"word_limit":model.max_tokens.input} for model in api_response.iterable if model.cloud or model.downloading} # getting the models that are available in the cloud or is downloaded
-		
-		# call the api until the sdks updated
-		response = cls.api_client.call_api('/models', 'GET',{},[],response_types_map={'200': "str",'500': "str"}).raw_data
-		response = json.loads(response)["iterable"]
-		models = {model["name"]:{"uuid":model["id"]} for model in response if model["cloud"] or model.get("downloaded",False)}
+		api_response = ModelsApi(cls.api_client).models_snapshot()
+		models = {model.name: {"uuid":model.id} for model in api_response.iterable if model.cloud or model.downloaded} # getting the models that are available in the cloud or is downloaded
 		return models
 	
 	@classmethod
