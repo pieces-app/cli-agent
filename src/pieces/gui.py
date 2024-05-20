@@ -29,10 +29,19 @@ def server_startup_failed():
     print("Please make sure Pieces OS is running and up-to-date")
     print()
     print("Or, to install Pieces OS, please visit this link:")
-    print("https://docs.pieces.app/installation-getting-started/what-am-i-installing")
+    print_pieces_os_link()
     print()
     print("############################")
     print()
+
+
+def print_version_details(pos_version,cli_version):
+    print(f"Pieces OS Version: {pos_version}")
+    print(f"CLI Version: {cli_version}")
+
+def print_pieces_os_link():
+    print("https://docs.pieces.app/installation-getting-started/what-am-i-installing")
+
 
 def double_space(text):
     print()
