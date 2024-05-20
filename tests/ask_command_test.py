@@ -1,13 +1,16 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from pieces.commands.commands_functions import ask,startup
+from pieces.copilot import ask
+from pieces.settings import Settings
 import sys
 from io import StringIO
+from pieces.copilot.conversations import conversation_handler
 
 class TestAskCommand(unittest.TestCase):
-    @patch('pieces.commands.commands_functions.ask')
-    def test_ask_command(self, mock_ask_question):
-        startup()
+    @patch('pieces.copilot.ask')
+    @patch('builtins.input', return_value='y')
+    def test_ask_command(self, mock_input,mock_ask_question):
+        Settings.startup()
         
         stdout = sys.stdout
         sys.stdout = StringIO()
@@ -25,6 +28,9 @@ class TestAskCommand(unittest.TestCase):
 
         # Check if the function prints a string
         self.assertIsInstance(result, str)
+
+        # delete the conversation created
+        conversation_handler(delete=True)
     
 
 if __name__ == '__main__':

@@ -1,20 +1,20 @@
 import unittest
 from unittest.mock import patch, MagicMock,Mock
-from pieces.commands import list_command,startup
-from pieces.commands import commands_functions
+from pieces.commands.list_command import ListCommand
+from pieces.settings import Settings
 from io import StringIO
 import sys
 
 class TestListCommand(unittest.TestCase):
     def test_list_command(self):
-        startup()
+        Settings.startup()
         for i in ["models","assets","apps"]:
             # Redirect stdout to a buffer
             stdout = sys.stdout
             sys.stdout = StringIO()
 
             # Call the function that prints to stdout
-            list_command(type = i)
+            ListCommand.list_command(type = i)
 
             # Get the output and restore stdout
             assets = sys.stdout.getvalue()
@@ -31,7 +31,7 @@ class TestListCommand(unittest.TestCase):
             if i == "models":
                 model = assets_list[-1]
                 assets_list = assets_list[:-1] # Remove the line which conatin the current model text
-                self.assertEqual(model,f"Currently using: {change_model.get_current_model_name()} with uuid {change_model.model_id}")
+                self.assertEqual(model,f"Currently using: {Settings.model_name} with uuid {Settings.model_id}")
             
             # Check if the string represents a numbered list
             self.assertTrue(all(line.strip().startswith(str(i+1)) for i, line in enumerate(assets_list) if line.strip()))

@@ -1,5 +1,5 @@
 from pieces.settings import Settings
-from pieces.copilot.pieces_ask_websocket import AskWebsocketWS
+from pieces.copilot.pieces_ask_websocket import AskWebsocket
 import os
 from pieces.gui import show_error
 from pieces.assets.assets_api import AssetsCommandsApi
@@ -9,7 +9,7 @@ from pieces_os_client.models.flattened_assets import FlattenedAssets
 from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
 from pieces_os_client.api.qgpt_api import QGPTApi
 
-ask_websocket = AskWebsocketWS()
+ask_websocket = AskWebsocket()
 def ask(query, **kwargs):
     relevant = {"iterable":[]}
     files = kwargs.get("files",None)

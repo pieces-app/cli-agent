@@ -1,35 +1,34 @@
 import unittest
 from unittest.mock import patch
-from pieces.commands import create_asset, delete_asset,startup
-from pieces.commands import commands_functions
-from pieces.api.assets import get_asset_by_id
+from pieces.assets import AssetsCommands, AssetsCommandsApi
+from pieces.settings import Settings
+from pieces_os_client.models.asset import Asset
 
-class TestAssetFunctions(unittest.TestCase):
+class TestCreateDeleteFunctions(unittest.TestCase):
 
     @patch('builtins.input', side_effect=['y', 'y'])
     @patch('pyperclip.paste', return_value='print("Hello, World!")')
     def test_create_and_delete_asset(self, mock_paste, mock_input):
-        startup()
+        Settings.startup()
         # Call create_asset and store the returned asset
-        create_asset()
+        AssetsCommands.create_asset()
 
         # Ensure that it is correctly assigned to the current asset
-        new_asset=list(commands_functions.current_asset)[0]
+        new_asset=AssetsCommands.current_asset
 
 
-        asset_object = get_asset_by_id(new_asset)
+        asset_object = AssetsCommandsApi.get_asset_snapshot(new_asset)
 
-        get_asset_by_id(new_asset) # Checks that the asset was created with no errors
+        self.assertIsInstance(asset_object,Asset)
 
         # Call delete_asset
-        delete_asset()
+        AssetsCommands.delete_asset()
 
         # Check that the asset was deleted
         try:
-            get_asset_by_id(new_asset)
-        except Exception:
+            AssetsCommandsApi.get_asset_snapshot(new_asset)
+        except: # Asset not found!
             self.assertTrue(True)
-
 
 if __name__ == '__main__':
     unittest.main()
