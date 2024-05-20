@@ -9,9 +9,9 @@ from pathlib import Path
 import sys
 import threading
 from platformdirs import user_data_dir
-
+import semver
 from pieces import __version__
-from pieces.gui import server_startup_failed
+from pieces.gui import server_startup_failed, print_pieces_os_link,print_version_details
 
 from pieces_os_client.api.well_known_api import WellKnownApi
 from pieces_os_client.api.connector_api import ConnectorApi
@@ -24,8 +24,12 @@ from pieces_os_client.models.seeded_connector_connection import SeededConnectorC
 from pieces_os_client.models.seeded_tracked_application import SeededTrackedApplication
 from pieces_os_client.models.application_name_enum import ApplicationNameEnum
 
+
+
 class Settings:
 	"""Settings class for the CLI Agent"""
+	PIECES_OS_MIN_VERSION = "9.0.0"  # Minium version (9.0.0)
+	PIECES_OS_MAX_VERSION = "10.0.0" # Maxium version (10.0.0)
 	
 	TIMEOUT = 10 # Websocket ask timeout 
 
@@ -144,6 +148,7 @@ class Settings:
 	def startup(cls):
 		pieces_os_version = cls.open_pieces_os()
 		if pieces_os_version:
+			cls.version_check() # Check the version first 
 			model_thread = threading.Thread(target=cls.load_models)
 			connector_thread = threading.Thread(target=cls.connect_api)
 			model_thread.start()
@@ -153,6 +158,34 @@ class Settings:
 		else:
 			server_startup_failed()
 			sys.exit(0) # Exit the program
+
+
+	@classmethod
+	def version_check(cls):
+		"""Check the version of the pieces os in the within range"""
+		pieces_os_version = cls.get_version()
+
+		# Parse version numbers
+		os_version_parsed = semver.VersionInfo.parse(pieces_os_version)
+		min_version_parsed = semver.VersionInfo.parse(cls.PIECES_OS_MIN_VERSION)
+		max_version_parsed = semver.VersionInfo.parse(cls.PIECES_OS_MAX_VERSION)
+
+		# Check compatibility
+		if os_version_parsed >= max_version_parsed:
+			print("Please update your cli-agent tool. It is not compatible with the current Pieces OS version")
+			print()
+			print("https://pypi.org/project/pieces-cli/")
+			print()
+			print_version_details(pieces_os_version, __version__)
+			sys.exit(0)
+		elif os_version_parsed < min_version_parsed:
+			print("Please update your Pieces OS. It is not compatible with the current cli-agent version")
+			print()
+			print_pieces_os_link()
+			print()
+			print_version_details(pieces_os_version, __version__)
+			sys.exit(0)
+			
 
 	@classmethod
 	def open_pieces_os(cls) -> Optional[str]:
