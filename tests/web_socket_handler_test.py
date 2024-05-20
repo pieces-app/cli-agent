@@ -1,10 +1,9 @@
 import json
 from unittest.mock import Mock, patch
 import pytest
-from pieces.copilot.pieces_ask_websocket import AskWebsocketWS
+from pieces.copilot.pieces_ask_websocket import AskWebsocket
 
 class TestWebSocketManager:
-
     @pytest.fixture
     def mock_websocket(self):
         with patch('websocket.WebSocketApp') as mock:
@@ -12,7 +11,7 @@ class TestWebSocketManager:
 
     @pytest.fixture
     def ws_manager(self):
-        return AskWebsocketWS()
+        return AskWebsocket()
 
     def test_init(self, ws_manager):
         assert ws_manager.ws is None

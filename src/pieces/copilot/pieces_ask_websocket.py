@@ -11,11 +11,11 @@ from pieces.settings import Settings
 
 
 
-class AskWebsocketWS:
+class AskWebsocket:
 
     def __new__(cls,*args,**kwargs):
         if not hasattr(cls, 'instance'):
-            cls.instance = super(AskWebsocketWS, cls).__new__(cls)
+            cls.instance = super(AskWebsocket, cls).__new__(cls)
         return cls.instance
     
     def __init__(self):
