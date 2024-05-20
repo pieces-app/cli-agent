@@ -64,7 +64,6 @@ jobs:
           else
                 echo "This is not a tagged build"
                 export STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
-                STAGING_VERSION=${STAGING_VERSION%"-staging"}
                 poetry version $STAGING_VERSION
           fi
 
