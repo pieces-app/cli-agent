@@ -12,6 +12,9 @@ from pieces_os_client.api.qgpt_api import QGPTApi
 from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
 from pieces_os_client.models.qgpt_relevance_input_options import QGPTRelevanceInputOptions
 
+accepted_paths = ["csx","html""htm","css","dart","java","js","jsx","json","php","php3","php4",
+                  "php5","php7","php8","py","py3","curl","go","swift","rs","ts","tsx","rb","bat",
+                  "lua","md","bash","r","sql","groovy","kt","vue"]
 
 def get_git_repo_name() -> Optional[Tuple[str]]:
     """
@@ -72,13 +75,15 @@ def get_current_working_changes() -> Tuple[str,list]:
                 file_name = file_changed.group(1)
                 if lines_diff[idx+1] == "new file mode 100644":
                     summary += f"File created: **{file_name}**\n"
-                    paths.append(os.getcwd() + file_name)
                 elif lines_diff[idx+1] == "deleted file mode 100644":
                     summary += f"File deleted: **{file_name}**\n"
-                    paths.append(os.getcwd() + file_name)
+                    
                 else:
                     summary += f"File modified: **{file_name}**\n"
+                
                 add_changes_statment = True
+                if file_name in accepted_paths:
+                    paths.append(os.getcwd() + file_name)
         elif line.startswith('+') and not line.startswith('+++'):
             if add_changes_statment:
                 summary += changes_statment.format(file_name = file_name)
@@ -90,7 +95,7 @@ def get_current_working_changes() -> Tuple[str,list]:
                 add_changes_statment = False
             summary += "Deletion: " + line[1:].strip() + "\n"
     
-    return (summary,paths)
+    return (summary,paths[:6]) # 6 files maxium 
 
 
 def git_commit(**kwargs):
