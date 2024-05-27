@@ -5,6 +5,7 @@ from typing import Optional,Tuple
 from pieces.settings import Settings
 from pieces.gui import show_error
 import os
+from collections import defaultdict 
 from rich.console import Console
 from rich.markdown import Markdown
 
@@ -47,7 +48,7 @@ def get_git_repo_name() -> Optional[Tuple[str]]:
     except:
         return None
 
-def get_current_working_changes() -> Tuple[str,list]:
+def get_current_working_changes() -> Optional[Tuple[str,list]]:
     """
     Fetches the detailed changes in the files you are currently working on, limited to a specific word count.
     
@@ -60,17 +61,15 @@ def get_current_working_changes() -> Tuple[str,list]:
     
     result = subprocess.run(["git", "diff","--staged"], capture_output=True, text=True)
     if not result.stdout.strip():
-        print()
-        return show_error("No changes found","Please make sure you have added some files to your staging area")
+        show_error("No changes found","Please make sure you have added some files to your staging area")
+        return 
     detailed_diff = result.stdout.strip()
     
     # Create a summary of the changes
     summary = ""
-    content_file = ""
-    seeds_iterable = []
+    content_file = defaultdict(str)  # {file path : changes of the file}
     lines_diff = detailed_diff.split("\n")
 
-    new_file = False # whether we are looking in a new file or the same file but diffent chunck of code
     for idx,line in enumerate(lines_diff):
         if line.startswith('diff --git'):
             file_changed = re.search(r'diff --git a/(.+) b/\1', line)
@@ -82,26 +81,16 @@ def get_current_working_changes() -> Tuple[str,list]:
                     summary += f"File deleted: **{file_name}**\n"
                 else:
                     summary += f"File modified: **{file_name}**\n"
-                new_file = True
-        elif (line.startswith('+') and not line.startswith('+++')) or (line.startswith('-') and not line.startswith('---')):
-            if new_file:
-                if content_file:
-                    file_path = os.path.join(os.getcwd(),file_name)
-                    seeds_iterable.append(create_seeded_asset(file_path ,content_file))
-                new_file = False
-            content_file += line.strip()
-    
-    return summary,Seeds(iterable=seeds_iterable) # 6 files maxium 
+        if (line.startswith('+') and not line.startswith('+++')) or (line.startswith('-') and not line.startswith('---')):
+            
+            content_file[os.path.join(os.getcwd(),*file_name.split("/"))] += line.strip()
+
+    return summary,Seeds(iterable=[
+        create_seeded_asset(file_path,content) for file_path,content in content_file.items()
+    ]) # Create seed for each new file
 
 
 def create_seeded_asset(file_path:str,content:str) -> Seed:
-    try:
-        ext = file_path.split(".")[-1]
-        print(ext)
-        if ext not in ClassificationSpecificEnum:
-            raise ValueError
-    except:
-        ext = None
     return Seed(
 			asset=SeededAsset(
 				application=Settings.application,
@@ -111,10 +100,12 @@ def create_seeded_asset(file_path:str,content:str) -> Seed:
 					)
 				),
 				metadata=SeededAssetMetadata(
-                    anchors=SeededAnchor(
-                        fullpath=file_path,
-                        type=AnchorTypeEnum.FILE
-                    )
+                    anchors=[
+                        SeededAnchor(
+                            fullpath=file_path,
+                            type=AnchorTypeEnum.FILE
+                        )
+                    ]
                 )
 			),
 			type="SEEDED_ASSET"
@@ -129,8 +120,9 @@ def git_commit(**kwargs):
     issue_flag = kwargs.get('issue_flag')
     try:
         changes_summary,seeds = get_current_working_changes()
-    except:
+    except TypeError:
         return
+
     commit_message = get_commit_message(changes_summary,seeds)
     if not commit_message: # Error in the commit message
         return
@@ -235,8 +227,10 @@ def get_commit_message(changes_summary,seeds):
                 `task done can be one from: "feat,fix,chore,refactor,docs,style,test,perf,ci,build,revert"`,
                 `Example of the message: "docs: add new guide on python"`,
                 Your response should be: `__The message is: **YOUR COMMIT MESSAGE HERE**__` WITHOUT ADDING ANYTHING ELSE",
-                `Here are the changes summary:`\n{changes_summary}
-                `The snippets changed send to you as a context where `"""
+                `Here are the changes summary:`\n{changes_summary}`
+                The actual code changes provide to you in the seeds,
+                `The changed parts is provided in the context where if the line start with "+"  means that line is added or "-" if it is removed"""
+
 
     try:
         commit_message = QGPTApi(Settings.api_client).relevance(
