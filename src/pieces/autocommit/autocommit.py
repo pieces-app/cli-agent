@@ -5,13 +5,23 @@ from typing import Optional,Tuple
 from pieces.settings import Settings
 from pieces.gui import show_error
 import os
+from collections import defaultdict 
 from rich.console import Console
 from rich.markdown import Markdown
 
 from pieces_os_client.api.qgpt_api import QGPTApi
 from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
 from pieces_os_client.models.qgpt_relevance_input_options import QGPTRelevanceInputOptions
-
+from pieces_os_client.models.seeds import Seeds
+from pieces_os_client.models.seed import Seed
+from pieces_os_client.models.classification_specific_enum import ClassificationSpecificEnum
+from pieces_os_client.models.seeded_asset import SeededAsset
+from pieces_os_client.models.seeded_format import SeededFormat
+from pieces_os_client.models.seeded_fragment import SeededFragment
+from pieces_os_client.models.transferable_string import TransferableString
+from pieces_os_client.models.seeded_asset_metadata import SeededAssetMetadata
+from pieces_os_client.models.anchor_type_enum import AnchorTypeEnum
+from pieces_os_client.models.seeded_anchor import SeededAnchor
 
 def get_git_repo_name() -> Optional[Tuple[str]]:
     """
@@ -38,140 +48,88 @@ def get_git_repo_name() -> Optional[Tuple[str]]:
     except:
         return None
 
-def get_current_working_changes() -> Tuple[str,list]:
+def get_current_working_changes() -> Optional[Tuple[str,list]]:
     """
     Fetches the detailed changes in the files you are currently working on, limited to a specific word count.
     
     Returns:
         Tuple of
             A string summarizing the detailed changes in a format suitable for generating commit messages.
-            List of the files path changed and created
+            List of seeded asset to be input to the relevence
 
     """
     
     result = subprocess.run(["git", "diff","--staged"], capture_output=True, text=True)
     if not result.stdout.strip():
-        print()
-        return show_error("No changes found","Please make sure you have added some files to your staging area")
+        show_error("No changes found","Please make sure you have added some files to your staging area")
+        return 
     detailed_diff = result.stdout.strip()
     
     # Create a summary of the changes
     summary = ""
-
+    content_file = defaultdict(str)  # {file path : changes of the file}
     lines_diff = detailed_diff.split("\n")
-    paths=[]
 
-    add_changes_statment = False
-    changes_statment = "Here are the following additions and deletions to {file_name}:\n"
     for idx,line in enumerate(lines_diff):
         if line.startswith('diff --git'):
             file_changed = re.search(r'diff --git a/(.+) b/\1', line)
-            # if file_changed.group(1).endswith("poetry.lock"):
-            #     continue
             if file_changed:
                 file_name = file_changed.group(1)
                 if lines_diff[idx+1] == "new file mode 100644":
                     summary += f"File created: **{file_name}**\n"
-                    paths.append(os.getcwd() + file_name)
                 elif lines_diff[idx+1] == "deleted file mode 100644":
                     summary += f"File deleted: **{file_name}**\n"
-                    paths.append(os.getcwd() + file_name)
                 else:
                     summary += f"File modified: **{file_name}**\n"
-                add_changes_statment = True
-        elif line.startswith('+') and not line.startswith('+++'):
-            if add_changes_statment:
-                summary += changes_statment.format(file_name = file_name)
-                add_changes_statment = False
-            summary += "Addition: " + line[1:].strip() + "\n"
-        elif line.startswith('-') and not line.startswith('---'):
-            if add_changes_statment:
-                summary += changes_statment.format(file_name = file_name)
-                add_changes_statment = False
-            summary += "Deletion: " + line[1:].strip() + "\n"
-    
-    return (summary,paths)
+        if (line.startswith('+') and not line.startswith('+++')) or (line.startswith('-') and not line.startswith('---')):
+            
+            content_file[os.path.join(os.getcwd(),*file_name.split("/"))] += line.strip()
 
+    return summary,Seeds(iterable=[
+        create_seeded_asset(file_path,content) for file_path,content in content_file.items()
+    ]) # Create seed for each new file
+
+
+def create_seeded_asset(file_path:str,content:str) -> Seed:
+    return Seed(
+			asset=SeededAsset(
+				application=Settings.application,
+				format=SeededFormat(
+					fragment=SeededFragment(
+						string=TransferableString(raw=content)
+					)
+				),
+				metadata=SeededAssetMetadata(
+                    anchors=[
+                        SeededAnchor(
+                            fullpath=file_path,
+                            type=AnchorTypeEnum.FILE
+                        )
+                    ]
+                )
+			),
+			type="SEEDED_ASSET"
+		)
+
+    
 
 def git_commit(**kwargs):
     if kwargs.get("all_flag",False):
         subprocess.run(["git", "add", "-A"], check=True)
 
     issue_flag = kwargs.get('issue_flag')
-    model = Settings.model_id
     try:
-        changes_summary,paths = get_current_working_changes()
-    except:
+        changes_summary,seeds = get_current_working_changes()
+    except TypeError:
         return
-    message_prompt = f"""Act as a git expert developer to generate a concise git commit message **using best git commit message practices** to follow these specifications:
-                `Message language: English`,
-                `Format of the message: "(task done): small description"`,
-                `task done can be one from: "feat,fix,chore,refactor,docs,style,test,perf,ci,build,revert"`,
-                `Example of the message: "docs: add new guide on python"`,
-                Your response should be: `__The message is: **YOUR COMMIT MESSAGE HERE**__` WITHOUT ADDING ANYTHING ELSE",
-                `Here are the changes summary:`\n{changes_summary}"""
 
-    try:
-        commit_message = QGPTApi(Settings.api_client).relevance(
-            QGPTRelevanceInput(
-                query=message_prompt,
-                paths=paths,
-                application=Settings.application.id,
-                model=model,
-                options=QGPTRelevanceInputOptions(question=True)
-            )).answer.answers.iterable[0].text 
-        
-        # Remove extras from the commit message
-        commit_message = commit_message.replace("The message is:","",1) # Remove the "message is" part as mentioned in the prompt
-        commit_message = commit_message.replace('*', '') # Remove the bold and italic characters
-        # Remove leading and trailing whitespace
-        commit_message = commit_message.strip()
-
-        if issue_flag:
-            
-            issue_prompt = """Please provide the issue number that is related to the changes, If nothing related write 'None'.
-                    `Output format WITHOUT ADDING ANYTHING ELSE: "Issue: **ISSUE NUMBER OR NONE HERE**`,
-                    `Example: 'Issue: 12', 'Issue: None'`,
-                    `Note: Don't provide any other information`
-                    `Here are the issues:`\n{issues}"""
-            
-            # Issues
-            repo_details = get_git_repo_name()
-            issues = get_repo_issues(*repo_details) if repo_details else [] # Check if we got a vaild repo name
-
-            if issues:
-                # Make the issues look nicer
-                issue_list = [
-                    f"- `Issue_number: {issue['number']}`\n- `Title: {issue['title']}`\n- `Body: {issue['body']}`"
-                    for issue in issues
-                ]
-                issue_list = "\n".join(issue_list) # To string
-                
-                try:
-                    
-                    issue_number = QGPTApi(Settings.api_client).relevance(
-                            QGPTRelevanceInput(
-                                query=issue_prompt.format(issues=issue_list),
-                                paths=paths,
-                                application=Settings.application.id,
-                                model=model,
-                                options=QGPTRelevanceInputOptions(question=True)
-                            )).answer.answers.iterable[0].text
-            
-                    
-                    # Extract the issue part
-                    issue_number = issue_number.replace("Issue: ", "") 
-                    # If the issue is a number 
-                    issue_number = int(issue_number)
-                    issue_title = next((issue["title"] for issue in issues if issue["number"] == issue_number), None)
-                except: 
-                    issue_number = None
-            else:
-                issue_number = None
-    except Exception as e:
-        print("Error in getting the commit message",e)
+    commit_message = get_commit_message(changes_summary,seeds)
+    if not commit_message: # Error in the commit message
         return
     
+    if issue_flag:
+        issue_number,issue_title,issue_markdown = get_issue_details(seeds)
+        
 
     # Check if the user wants to commit the changes or change the commit message
     r_message = input(f"The generated commit message is:\n\n {commit_message}\n\nAre you sure you want to commit these changes?\n\n- y: Yes\n- n: No\n- c: Change the commit message\n\nPlease enter your choice (y/n/c): ").lower().strip()
@@ -193,9 +151,10 @@ def git_commit(**kwargs):
                     commit_message += f" (issue: #{issue_number})"
                 else:
                     issue_number = None
-            if issue_number == None and issues:
+            # Print the issues if we cant find the issie
+            if issue_number == None and issue_markdown:
                 console = Console()
-                md = Markdown(issue_list)
+                md = Markdown(issue_markdown)
                 console.print(md)
                 validate_issue = True
                 while validate_issue:
@@ -206,7 +165,7 @@ def git_commit(**kwargs):
                     elif issue_number.isdigit():
                         validate_issue = False
                     elif issue_number == None or issue_number == "":
-                        break    
+                        break
                 if not validate_issue:
                     commit_message += f" (issue: #{issue_number})"
 
@@ -220,3 +179,75 @@ def git_commit(**kwargs):
         
     else:
         print("Committing changes cancelled")
+
+def get_issue_details(seeds):
+    issue_prompt = """Please provide the issue number that is related to the changes, If nothing related write 'None'.
+            `Output format WITHOUT ADDING ANYTHING ELSE: "Issue: **ISSUE NUMBER OR NONE HERE**`,
+            `Example: 'Issue: 12', 'Issue: None'`,
+            `Note: Don't provide any other information`
+            `Here are the issues:`\n{issues}"""
+    
+    # Issues
+    repo_details = get_git_repo_name()
+    issues = get_repo_issues(*repo_details) if repo_details else [] # Check if we got a vaild repo name
+
+    if issues:
+        try:
+            # Make the issues look nicer
+            issue_markdown = [
+                f"- `Issue_number: {issue['number']}`\n- `Title: {issue['title']}`\n- `Body: {issue['body']}`"
+                for issue in issues
+            ]
+            issue_markdown = "\n".join(issue_markdown) # To string
+            issue_number = QGPTApi(Settings.api_client).relevance(
+                    QGPTRelevanceInput(
+                        query=issue_prompt.format(issues=issue_markdown),
+                        application=Settings.application.id,
+                        model=Settings.model_id,
+                        options=QGPTRelevanceInputOptions(question=True),
+                        seeds=seeds
+                    )).answer.answers.iterable[0].text
+    
+            
+            # Extract the issue part
+            issue_number = issue_number.replace("Issue: ", "") 
+            # If the issue is a number 
+            issue_number = int(issue_number)
+            issue_title = next((issue["title"] for issue in issues if issue["number"] == issue_number), None)
+        except: 
+            issue_number = None
+            issue_title = ""
+        return issue_number,issue_title,issue_markdown
+    
+
+def get_commit_message(changes_summary,seeds):
+    message_prompt = f"""Act as a git expert developer to generate a concise git commit message **using best git commit message practices** to follow these specifications:
+                `Message language: English`,
+                `Format of the message: "(task done): small description"`,
+                `task done can be one from: "feat,fix,chore,refactor,docs,style,test,perf,ci,build,revert"`,
+                `Example of the message: "docs: add new guide on python"`,
+                Your response should be: `__The message is: **YOUR COMMIT MESSAGE HERE**__` WITHOUT ADDING ANYTHING ELSE",
+                `Here are the changes summary:`\n{changes_summary}`
+                The actual code changes provide to you in the seeds,
+                `The changed parts is provided in the context where if the line start with "+"  means that line is added or "-" if it is removed"""
+
+
+    try:
+        commit_message = QGPTApi(Settings.api_client).relevance(
+            QGPTRelevanceInput(
+                query=message_prompt,
+                seeds=seeds,
+                application=Settings.application.id,
+                model=Settings.model_id,
+                options=QGPTRelevanceInputOptions(question=True)
+            )).answer.answers.iterable[0].text 
+        
+        # Remove extras from the commit message
+        commit_message = commit_message.replace("The message is:","",1) # Remove the "message is" part as mentioned in the prompt
+        commit_message = commit_message.replace('*', '') # Remove the bold and italic characters
+        # Remove leading and trailing whitespace
+        commit_message = commit_message.strip()
+    except Exception as e:
+        print("Error in getting the commit message",e)
+        return
+    return commit_message
