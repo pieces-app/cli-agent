@@ -1,6 +1,6 @@
 from pieces.settings import Settings
 from pieces.gui import show_error
-from typing import Dict,Optional
+from typing import Dict,Optional,List
 import json
 import queue
 import threading
@@ -22,10 +22,12 @@ from pieces_os_client.models.streamed_identifiers import StreamedIdentifiers
 
 
 class AssetsCommandsApi:
-	assets_snapshot: Dict[str, Optional[Asset]] = {} # should be filled in the run in loop
+	_assets_snapshot: Dict[str, Optional[Asset]] = {} # should be filled in the run in loop
 	asset_queue = queue.Queue() # Queue for asset_ids to be processed
 	block = True # to wait for the queue to recevive the first asset id
 	asset_set = set()  # Set for asset_ids in the queue
+	worker_thread = None # Thread to run the worker function
+	_lock = threading.Lock() # Protects the thread from being started more than once
 
 	@staticmethod
 	def create_new_asset(raw_string, metadata=None):
@@ -49,27 +51,33 @@ class AssetsCommandsApi:
 		created_asset = assets_api.assets_create_new_asset(transferables=False, seed=seed)
 		return created_asset
 	
-	@classmethod
-	def get_assets_snapshot(cls):
-		if cls.assets_snapshot:
-			return cls.assets_snapshot
+
 	
+	@property
+	def assets_snapshot(self) -> dict[str:Asset]:
+		if self._assets_snapshot:
+			return self._assets_snapshot
+
 
 		assets_api = AssetsApi(Settings.api_client)
 		# Call the API to get assets identifiers
 		api_response = assets_api.assets_identifiers_snapshot()
 
 		# Extract the 'id' values from each item in the 'iterable' list
-		cls.assets_snapshot = {item.id:None for item in api_response.iterable}
+		self._assets_snapshot = {item.id:None for item in api_response.iterable}
 
-		return cls.assets_snapshot
+		return self._assets_snapshot
 		
 	@classmethod
-	def update_asset_snapshot(cls,asset_id):
+	def update_asset_snapshot(cls,asset_id) -> Optional[Asset]:
 		asset_api = AssetApi(Settings.api_client)
-		asset = asset_api.asset_snapshot(asset_id)
-		cls.assets_snapshot[asset_id] = asset # Cache the asset
-		return asset
+		try:
+			asset = asset_api.asset_snapshot(asset_id)
+			cls._assets_snapshot[asset_id] = asset # Cache the assete
+			return asset
+		except Exception:
+			return None
+		
 
 	@classmethod
 	def worker(cls):
@@ -87,26 +95,31 @@ class AssetsCommandsApi:
 	@classmethod
 	def assets_snapshot_callback(cls,ids:StreamedIdentifiers):
 		# Start the worker thread if it's not running
-		threading.Thread(target = cls.worker).start()
 		cls.block = True
+		cls.create_thread()
 		for item in ids.iterable:
 			asset_id = item.asset.id
-			if asset_id not in cls.assets_snapshot:
-				cls.assets_snapshot[asset_id] = None
-			
+			if asset_id not in cls._assets_snapshot:
+				cls._assets_snapshot[asset_id] = None
 			if asset_id not in cls.asset_set:
 				if item.deleted:
-					cls.assets_snapshot.pop(asset_id)
+					cls._assets_snapshot.pop(asset_id)
 				else:
 					cls.asset_queue.put(asset_id)  # Add asset_id to the queue
 					cls.asset_set.add(asset_id)  # Add asset_id to the set
 		cls.block = False # Remove the block to end the thread
-
-
+	@classmethod
+	def create_thread(cls):
+		with cls._lock:
+			if cls.worker_thread:
+				if cls.worker_thread.is_alive():
+					return
+			cls.worker_thread = threading.Thread(target = cls.worker)
+			cls.worker_thread.start()
 
 	@classmethod
 	def get_asset_snapshot(cls,asset_id:str):
-		asset = cls.assets_snapshot.get(asset_id)
+		asset = cls._assets_snapshot.get(asset_id)
 		if asset:
 			return asset
 		else:

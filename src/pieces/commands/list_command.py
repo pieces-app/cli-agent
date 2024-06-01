@@ -53,7 +53,7 @@ class ListCommand:
     @staticmethod
     @check_assets_existence
     def list_assets(max_assets:int=10):
-        assets_snapshot = AssetsCommandsApi.assets_snapshot
+        assets_snapshot = AssetsCommandsApi().assets_snapshot
         for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
             asset = assets_snapshot[uuid]
             if not asset:

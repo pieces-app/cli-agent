@@ -32,7 +32,7 @@ class Settings:
 	PIECES_OS_MIN_VERSION = "9.0.0"  # Minium version (9.0.0)
 	PIECES_OS_MAX_VERSION = "10.0.0" # Maxium version (10.0.0)
 	
-	TIMEOUT = 10 # Websocket ask timeout 
+	TIMEOUT = 20 # Websocket ask timeout 
 
 	# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 	BASE_DIR = os.path.dirname(__file__)

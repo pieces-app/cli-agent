@@ -10,7 +10,7 @@ from pieces.settings import Settings
 def check_assets_existence(func):
 	"""Decorator to ensure user has assets."""
 	def wrapper(*args, **kwargs):
-		assets = AssetsCommandsApi.get_assets_snapshot() # Check if there is an asset
+		assets = AssetsCommandsApi().assets_snapshot # Check if there is an asset
 		if not assets:
 			return show_error("No assets found", "Please create an asset first.")
 		return func(*args, **kwargs)
@@ -44,7 +44,7 @@ class AssetsCommands:
 		item_index = kwargs.get('ITEM_INDEX',1)
 		if not item_index:
 			item_index = 1
-		asset_ids = AssetsCommandsApi.get_assets_snapshot()
+		asset_ids = AssetsCommandsApi().assets_snapshot
 		try:
 			cls.current_asset = list(asset_ids.keys())[item_index-1] # because we begin from 1
 		except IndexError:
