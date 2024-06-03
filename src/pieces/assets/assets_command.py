@@ -27,11 +27,10 @@ def check_asset_selected(func):
 			return show_error("No asset selected.", "Please open an asset first using pieces open.")
 		try: 
 			asset_data = AssetsCommandsApi.get_asset_snapshot(AssetsCommands.current_asset)
-			return func(asset_data=asset_data,*args, **kwargs)
 		except:
 			# The selected asset is deleted
 			return show_error("Error occured in the command", "Please make sure the selected asset is valid.")
-			
+		return func(asset_data=asset_data,*args, **kwargs)	
 			
 	return wrapper
 
@@ -128,7 +127,7 @@ class AssetsCommands:
 				new_asset = AssetsCommandsApi.create_new_asset(raw_string=text, metadata=None)
 		
 				cls.current_asset = new_asset.id
-				print(f"Asset Created use 'open' to view")
+				print("Asset Created use 'open' to view")
 
 				return new_asset
 				# Add your saving logic here

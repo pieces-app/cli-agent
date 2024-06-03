@@ -1,6 +1,6 @@
 from pieces.settings import Settings
 from pieces.gui import show_error
-from typing import Dict,Optional,List
+from typing import Dict,Optional
 import json
 import queue
 import threading
@@ -28,6 +28,7 @@ class AssetsCommandsApi:
 	asset_set = set()  # Set for asset_ids in the queue
 	worker_thread = None # Thread to run the worker function
 	_lock = threading.Lock() # Protects the thread from being started more than once
+	first_shot = True # First time to open the websocket
 
 	@staticmethod
 	def create_new_asset(raw_string, metadata=None):
@@ -100,7 +101,10 @@ class AssetsCommandsApi:
 		for item in ids.iterable:
 			asset_id = item.asset.id
 			if asset_id not in cls._assets_snapshot:
-				cls._assets_snapshot[asset_id] = None
+				if not cls.first_shot:
+					cls._assets_snapshot = {asset_id:None,**cls.assets_snapshot}
+				else:
+					cls._assets_snapshot[asset_id] = None
 			if asset_id not in cls.asset_set:
 				if item.deleted:
 					cls._assets_snapshot.pop(asset_id)
@@ -153,7 +157,7 @@ class AssetsCommandsApi:
 		try:
 			response = delete_instance.assets_delete_asset(asset_id)
 			return response
-		except Exception as e:
+		except:
 			return f"Failed to delete {asset_id}"
 
 	@staticmethod
