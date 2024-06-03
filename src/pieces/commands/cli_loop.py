@@ -2,6 +2,7 @@ import sys
 import platform
 import shlex
 from prompt_toolkit import PromptSession
+from rich.console import Console
 
 from pieces import __version__
 from pieces.gui import *
@@ -94,4 +95,3 @@ def loop(**kwargs):
         except Exception as e:
             show_error(f"An error occurred:", {e})  #TODO: Handle by the argparser not a try/except
 
-        print()

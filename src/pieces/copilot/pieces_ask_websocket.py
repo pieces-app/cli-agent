@@ -26,7 +26,7 @@ class AskWebsocket:
         self.final_answer = ""
         self.conversation = None
         self.verbose = True
-        self.live = None
+        self.live = Live()
         self.message_compeleted = threading.Event()
     
     def open_websocket(self):
@@ -42,24 +42,18 @@ class AskWebsocket:
             response = QGPTStreamOutput.from_json(message)
             if response.question:
                 answers = response.question.answers.iterable
-                if not self.live and self.verbose:  # Create live instance if it doesn't exist
-                    self.live = Live()
-                    self.live.__enter__()  # Enter the context manually
+
                 for answer in answers:
                     text = answer.text
                     self.final_answer += text
                     if self.verbose and text:
                         self.live.update(Markdown(self.final_answer))
 
-                        
-
             if response.status == 'COMPLETED':
                 if self.verbose:
-                    self.live.update(Markdown(self.final_answer),refresh=True)
+                    self.live.update(Markdown(self.final_answer), refresh=True)
                     self.live.stop()
-                    self.live = None
-                    print("\n")
-                
+ 
 
                 self.conversation = response.conversation
 
@@ -125,14 +119,15 @@ class AskWebsocket:
         """Ask a question using the websocket."""
         self.final_answer = ""
         self.verbose = verbose
+        if verbose:
+            self.live = Live()
+            self.live.start(refresh=True)  # Start the live context
         self.send_message(model_id,query,relevant)
         finishes = self.message_compeleted.wait(Settings.TIMEOUT)
         self.message_compeleted.clear()
         if not Settings.run_in_loop and self.is_connected:
             self.close_websocket_connection()
         self.verbose = True
-        if not finishes:
-            if self.live():
-                self.live.stop()
+        if not finishes and not self.live:
             raise ConnectionError("Failed to get the reponse back")
         return self.final_answer

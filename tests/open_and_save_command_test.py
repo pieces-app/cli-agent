@@ -15,7 +15,7 @@ class TestOpenSaveCommand(unittest.TestCase):
         sys.stdout = StringIO()
 
 
-        assets_length = len(AssetsCommandsApi.get_assets_snapshot())
+        assets_length = len(AssetsCommandsApi().assets_snapshot)
 
 
         sys.stdout = StringIO()
@@ -55,7 +55,7 @@ class TestOpenSaveCommand(unittest.TestCase):
         # Call create_asset to create a new asset to test on
         AssetsCommands.create_asset() # Create a hello world asset
 
-        AssetsCommandsApi.assets_snapshot = {AssetsCommands.current_asset:None} # Update the asset cache
+        AssetsCommandsApi().assets_snapshot = {AssetsCommands.current_asset:None} # Update the asset cache
 
         code_snippet_path = self.test_open_command(ITEM_INDEX=1) # Open the created asset
 

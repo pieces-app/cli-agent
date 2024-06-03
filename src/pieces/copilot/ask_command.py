@@ -29,7 +29,7 @@ def ask(query, **kwargs):
             files[idx] = os.path.abspath(file) # Return the abs path
     # snippets
     if snippets:
-        asset_ids = list(AssetsCommandsApi.get_assets_snapshot().keys())
+        asset_ids = list(AssetsCommandsApi().assets_snapshot.keys())
         for idx,snippet in enumerate(snippets):
             try: asset_id = asset_ids[snippet-1] # we began enumerating from 1
             except KeyError: return show_error("Asset not found","Enter a vaild asset index")
