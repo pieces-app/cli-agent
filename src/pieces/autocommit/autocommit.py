@@ -247,6 +247,7 @@ def get_commit_message(changes_summary,seeds):
         # Remove extras from the commit message
         commit_message = commit_message.replace("The message is:","",1) # Remove the "message is" part as mentioned in the prompt
         commit_message = commit_message.replace('*', '') # Remove the bold and italic characters
+        commit_message = commit_message.replace('__', '') # Remove the bold and italic characters
         # Remove leading and trailing whitespace
         commit_message = commit_message.strip()
     except Exception as e:
