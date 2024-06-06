@@ -128,8 +128,10 @@ def git_commit(**kwargs):
         return
     
     if issue_flag:
-        issue_number,issue_title,issue_markdown = get_issue_details(seeds)
-        
+        try:
+            issue_number,issue_title,issue_markdown = get_issue_details(seeds)
+        except TypeError: # Returned none 
+            issue_flag = False
 
     # Check if the user wants to commit the changes or change the commit message
     r_message = input(f"The generated commit message is:\n\n {commit_message}\n\nAre you sure you want to commit these changes?\n\n- y: Yes\n- n: No\n- c: Change the commit message\n\nPlease enter your choice (y/n/c): ").lower().strip()
