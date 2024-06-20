@@ -92,6 +92,9 @@ def loop(**kwargs):
                 commands.append("exit")
                 most_similar_command = PiecesArgparser.find_most_similar_command(commands, user_input)
                 print(f"Did you mean {most_similar_command}")
+        except KeyboardInterrupt:
+            print("\nKeyboardInterrupt caught. Returning to the main loop.")
+            continue
         except Exception as e:
             show_error(f"An error occurred:", {e})  #TODO: Handle by the argparser not a try/except
 
