@@ -94,6 +94,7 @@ def loop(**kwargs):
                 print(f"Did you mean {most_similar_command}")
         except KeyboardInterrupt:
             print("\nKeyboardInterrupt caught. Returning to the main loop.")
+            print("to exit the terminal use : exit")
             continue
         except Exception as e:
             show_error(f"An error occurred:", {e})  #TODO: Handle by the argparser not a try/except
