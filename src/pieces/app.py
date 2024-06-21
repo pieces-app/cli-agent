@@ -85,7 +85,7 @@ class PiecesCLI:
 
         # Subparser for the 'login' command
         login_parser = self.command_parser.add_parser('login', help='Login to pieces os')
-        login_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {OSApi(Settings.api_client).sign_into_os().name}'))
+        login_parser.set_defaults(func=lambda **kwargs: OSApi(Settings.api_client).sign_into_os(async_req=Settings.run_in_loop)) # Work async in the run command
 
         # Subparser for the 'logout' command
         logout_parser = self.command_parser.add_parser('logout', help='Logout from pieces os')
