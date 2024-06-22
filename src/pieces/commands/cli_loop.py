@@ -3,7 +3,7 @@ import platform
 import shlex
 from prompt_toolkit import PromptSession
 from rich.console import Console
-
+import os
 from pieces import __version__
 from pieces.gui import *
 from pieces.pieces_argparser import PiecesArgparser
@@ -51,7 +51,10 @@ def loop(**kwargs):
                 command_args = command_parts[1:]  # Keep the arguments in their original case
             else:
                 continue  # Skip if the input is empty
-
+            
+            if user_input.lower() == 'clear':  # this method is used for clear a terminal 
+                clear_screen()
+                continue
             if user_input == 'exit':
                 double_space("Exiting...")
                 ask_websocket.close_websocket_connection()  # Close using the ask_websocket instance
@@ -99,3 +102,9 @@ def loop(**kwargs):
         except Exception as e:
             show_error(f"An error occurred:", {e})  #TODO: Handle by the argparser not a try/except
 
+
+def clear_screen(): # clear terminal method
+    if os.name == 'nt': # for window
+        os.system('cls')
+    else:               # for other os 
+        os.system('clear')
