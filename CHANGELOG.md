@@ -18,4 +18,4 @@
 
 ## March 25th,2024
 
-- add new cmd for  CLI
+- add new cmd clear cmd for  CLI
