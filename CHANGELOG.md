@@ -15,3 +15,7 @@
 - Fix some bugs
 - Add edit --classifcation  to reclassify an asset
 - Add the save asset command
+
+## March 25th,2024
+
+- add new cmd for  CLI
