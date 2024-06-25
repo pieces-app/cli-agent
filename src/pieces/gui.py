@@ -98,6 +98,7 @@ def print_help():
     print("  edit            - Edit the current asset name or classification you can use -n and -c for name and classification respectively")
     print("  delete          - Deletes the current or most recent asset.")
     print("  create          - Creates a new asset based on what you've copied to your clipboard")
+    print("  clear           - to clear the terminal")
     print()
     print("  change_model x  - Change the model that is used in the ask command defaults to chatGPT 3.5 similar to list models")
     print("  ask \"ask\"       - Asks a single question to the model selected in change model. Default timeout set to 10 seconds")

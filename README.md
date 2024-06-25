@@ -170,6 +170,13 @@ This will delete an opened asset by using list or search first. If you do not ha
 ```bash
 pieces delete
 ```
+##### clear:
+
+this will clear the terminal and you will stay in the cmd loop and give you clean terminal interface. 
+
+```bash
+pieces clear
+```
 
 #### Search and Query
 ##### Perform a fuzzy search:
