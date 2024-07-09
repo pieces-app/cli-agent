@@ -51,7 +51,7 @@ class Settings:
 	else:
 		port = 1000
 	
-	host = f"http://localhost:{port}"
+	host = f"http://127.0.0.1:{port}"
 	# Defining the host is optional and defaults to http://localhost:1000
 	# See configuration.py for a list of all supported configuration parameters.
 	configuration = Configuration(host=host)
