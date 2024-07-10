@@ -151,13 +151,13 @@ files = [
 
 [[package]]
 name = "pieces-os-client"
-version = "2.2.0"
+version = "2.7.0"
 description = "A powerful code engine package for writing applications on top of Pieces OS"
 optional = false
 python-versions = "<4.0,>=3.7"
 files = [
-    {file = "pieces_os_client-2.2.0-py3-none-any.whl", hash = "sha256:bc11edcd6a8c69f8c33881b32b38ab58e43a22b9d450b21a696a0b969e96417b"},
-    {file = "pieces_os_client-2.2.0.tar.gz", hash = "sha256:0a3218a6b01d0309d3ce2743009181a2a735d2a9b33ef2bca893c38e40d913ca"},
+    {file = "pieces_os_client-2.7.0-py3-none-any.whl", hash = "sha256:bffa1c3989381d6d499b7e48995e447463819a0cd0eb6e02e70e1fc0988cfa78"},
+    {file = "pieces_os_client-2.7.0.tar.gz", hash = "sha256:72483275caf2f55b46a06b33595c3de759596c4f6116dae40a3ed2b3e04c5a80"},
 ]
 
 [package.dependencies]
@@ -531,4 +531,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "5366f72ce29f87a3c02e20dc68ae96c54f9919f66efc83b26bb316db1942a3af"
+content-hash = "48537de56d990fe264cd7ebbcb93f50a2072273bbed3acfeb38628c3e70c05c0"
