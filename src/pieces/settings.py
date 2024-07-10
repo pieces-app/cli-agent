@@ -29,8 +29,8 @@ from pieces_os_client.models.application_name_enum import ApplicationNameEnum
 
 class Settings:
 	"""Settings class for the CLI Agent"""
-	PIECES_OS_MIN_VERSION = "9.0.0"  # Minium version (9.0.0)
-	PIECES_OS_MAX_VERSION = "10.0.0" # Maxium version (10.0.0)
+	PIECES_OS_MIN_VERSION = "10.0.0"  # Minium version (10.0.0)
+	PIECES_OS_MAX_VERSION = "11.0.0" # Maxium version (11.0.0)
 	
 	TIMEOUT = 20 # Websocket ask timeout 
 
