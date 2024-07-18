@@ -392,6 +392,25 @@ To update the project, run the following command:
 pip install pieces-cli --upgrade
 ```
 
+
+### Testing
+To discover and run all the test cases in the repository, run the following command:
+
+```shell
+pytest
+```
+
+To check the test coverage, you can use the coverage package. Install coverage with:
+```shell
+pip install coverage
+```
+
+Run the tests with coverage using the following command:
+```shell
+coverage run -m pytest
+coverage report
+```
+
 ### Uninstallation
 To uninstall the project, run the following command:
 
