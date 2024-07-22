@@ -90,28 +90,28 @@ class ListCommand:
         else:
             print("No model selected.")
 
-    @staticmethod
-    def list_apps():
-        # Get the list of applications
-        
+    @classmethod
+    def select_apps(cls):
         applications_api = ApplicationsApi(Settings.api_client)
-
         application_list = applications_api.applications_snapshot()
-        # Check if the application_list object has an iterable attribute and if it is an instance of Iterable
+
         if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
-            # Iterate over the applications in the list
-            for i, app in enumerate(application_list.iterable, start=1):
-                # Get the name of the application, default to 'Unknown' if not available
+            apps = []
+            for app in application_list.iterable:
                 app_name = getattr(app, 'name', 'Unknown').value if hasattr(app, 'name') and hasattr(app.name, 'value') else 'Unknown'
-                # Get the version of the application, default to 'Unknown' if not available
                 app_version = getattr(app, 'version', 'Unknown')
-                # Get the platform of the application, default to 'Unknown' if not available
                 app_platform = getattr(app, 'platform', 'Unknown').value if hasattr(app, 'platform') and hasattr(app.platform, 'value') else 'Unknown'
-                    
-                # Print the application details
-                print(f"{i}: {app_name}, {app_version}, {app_platform}")
+                apps.append((f"{app_name}, {app_version}, {app_platform}", app))
+
+            select_menu = PiecesSelectMenu(apps)
+            selected_index = select_menu.run()
+
+            if selected_index is not None:
+                cls.selected_item = apps[selected_index][1]
+                print(f"\nSelected app: {apps[selected_index][0]}")
+            else:
+                print("No app selected.")
         else:
-            # Print an error message if the 'Applications' object does not contain an iterable list of applications
             print("Error: The 'Applications' object does not contain an iterable list of applications.")
     
     @staticmethod
