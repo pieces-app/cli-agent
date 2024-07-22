@@ -25,6 +25,38 @@ class PiecesSelectMenu:
                 result.append(('class:unselected', f'  {option[0]}\n'))
         return result
 
+    def run(self):
+        bindings = KeyBindings()
+
+        @bindings.add('up')
+        def move_up(event):
+            if self.current_selection > 0:
+                self.current_selection -= 1
+            event.app.layout.focus(self.menu_window)
+
+        @bindings.add('down')
+        def move_down(event):
+            if self.current_selection < len(self.menu_options) - 1:
+                self.current_selection += 1
+            event.app.layout.focus(self.menu_window)
+
+        @bindings.add('enter')
+        def select_option(event):
+            self.selected_index = self.current_selection
+            event.app.exit()
+
+        menu_control = FormattedTextControl(text=self.get_menu_text)
+        self.menu_window = Window(content=menu_control, always_hide_cursor=True)
+        layout = Layout(HSplit([self.menu_window]))
+        style = Style.from_dict({
+            'selected': 'reverse',
+            'unselected': ''
+        })
+        app = Application(layout=layout, key_bindings=bindings, style=style, full_screen=True)
+        app.run()
+
+        return self.selected_index
+
 
 class ListCommand:
     @classmethod
