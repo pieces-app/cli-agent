@@ -80,11 +80,11 @@ class ListCommand:
     def list_assets(cls, max_assets: int = 10):
         assets_snapshot = AssetsCommandsApi().assets_snapshot
         assets = []
-        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets]):
+        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
             asset = assets_snapshot[uuid]
             if not asset:
                 asset = AssetsCommandsApi.get_asset_snapshot(uuid)
-            assets.append((f"{asset.name}", uuid))
+            assets.append((f"{i}: {asset.name}", uuid))
 
         select_menu = PiecesSelectMenu(assets)
         selected_index = select_menu.run()
@@ -97,7 +97,7 @@ class ListCommand:
 
     @classmethod
     def list_models(cls):
-        models = [(model_name, model_name) for model_name in Settings.models]
+        models = [(f"{idx}: {model_name}", model_name) for idx, model_name in enumerate(Settings.models, start=1)]
         models.append((f"Currently using: {Settings.model_name} with uuid {Settings.model_id}", Settings.model_id))
 
         select_menu = PiecesSelectMenu(models)
@@ -115,20 +115,10 @@ class ListCommand:
         application_list = applications_api.applications_snapshot()
 
         if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
-            apps = []
-            for app in application_list.iterable:
+            for i, app in enumerate(application_list.iterable, start=1):
                 app_name = getattr(app, 'name', 'Unknown').value if hasattr(app, 'name') and hasattr(app.name, 'value') else 'Unknown'
                 app_version = getattr(app, 'version', 'Unknown')
                 app_platform = getattr(app, 'platform', 'Unknown').value if hasattr(app, 'platform') and hasattr(app.platform, 'value') else 'Unknown'
-                apps.append((f"{app_name}, {app_version}, {app_platform}", app))
-
-            select_menu = PiecesSelectMenu(apps)
-            selected_index = select_menu.run()
-
-            if selected_index is not None:
-                cls.selected_item = apps[selected_index][1]
-                print(f"\nSelected app: {apps[selected_index][0]}")
-            else:
-                print("No app selected.")
+                print(f"{i}: {app_name}, {app_version}, {app_platform}")
         else:
             print("Error: The 'Applications' object does not contain an iterable list of applications.")
