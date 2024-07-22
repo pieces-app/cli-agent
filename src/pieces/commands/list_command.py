@@ -10,6 +10,12 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import List, Tuple
 
+class PiecesSelectMenu:
+    def __init__(self, menu_options: List[Tuple]):
+        self.menu_options = menu_options
+        self.current_selection = 0
+        self.selected_index = None
+
 
 class ListCommand:
     @classmethod
