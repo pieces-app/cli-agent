@@ -59,20 +59,22 @@ class PiecesSelectMenu:
 
 
 class ListCommand:
+    selected_item = None
+
     @classmethod
-    def list_command(cls,**kwargs):
-        type = kwargs.get("type","assets")
-        max_assets = kwargs.get("max_assets",10)
+    def select_command(cls, **kwargs):
+        type = kwargs.get("type", "assets")
+        max_assets = kwargs.get("max_assets", 10)
         if max_assets < 1:
             print("Max assets must be greater than 0")
             max_assets = 10
         
         if type == "assets":
-            cls.list_assets(max_assets)
+            cls.select_assets(max_assets)
         elif type == "apps":
-           cls.list_apps()
+            cls.select_apps()
         elif type == "models":
-            cls.list_models()
+            cls.select_models()
     @staticmethod
     def list_models():
         for idx,model_name in enumerate(Settings.models,start=1):
