@@ -114,12 +114,22 @@ class ListCommand:
         else:
             print("Error: The 'Applications' object does not contain an iterable list of applications.")
     
-    @staticmethod
+    @classmethod
     @check_assets_existence
-    def list_assets(max_assets:int=10):
+    def select_assets(cls, max_assets: int = 10):
         assets_snapshot = AssetsCommandsApi().assets_snapshot
-        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
+        assets = []
+        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets]):
             asset = assets_snapshot[uuid]
             if not asset:
                 asset = AssetsCommandsApi.get_asset_snapshot(uuid)
-            print(f"{i}: {asset.name}")
+            assets.append((f"{asset.name}", uuid))
+
+        select_menu = PiecesSelectMenu(assets)
+        selected_index = select_menu.run()
+        
+        if selected_index is not None:
+            cls.selected_item = assets[selected_index][1]  # Store the UUID of the selected asset
+            print(f"Selected asset: {assets[selected_index][0]}")
+        else:
+            print("No asset selected.")
