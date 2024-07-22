@@ -15,7 +15,7 @@ class PiecesSelectMenu:
         self.menu_options = menu_options
         self.current_selection = 0
         self.selected_index = None
-    
+
     def get_menu_text(self):
         result = []
         for i, option in enumerate(self.menu_options):
@@ -57,7 +57,6 @@ class PiecesSelectMenu:
 
         return self.selected_index
 
-
 class ListCommand:
     selected_item = None
 
@@ -75,7 +74,27 @@ class ListCommand:
             cls.select_apps()
         elif type == "models":
             cls.select_models()
-    
+
+    @classmethod
+    @check_assets_existence
+    def select_assets(cls, max_assets: int = 10):
+        assets_snapshot = AssetsCommandsApi().assets_snapshot
+        assets = []
+        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets]):
+            asset = assets_snapshot[uuid]
+            if not asset:
+                asset = AssetsCommandsApi.get_asset_snapshot(uuid)
+            assets.append((f"{asset.name}", uuid))
+
+        select_menu = PiecesSelectMenu(assets)
+        selected_index = select_menu.run()
+        
+        if selected_index is not None:
+            cls.selected_item = assets[selected_index][1]  # Store the UUID of the selected asset
+            print(f"Selected asset: {assets[selected_index][0]}")
+        else:
+            print("No asset selected.")
+
     @classmethod
     def select_models(cls):
         models = [(model_name, model_name) for model_name in Settings.models]
@@ -113,23 +132,3 @@ class ListCommand:
                 print("No app selected.")
         else:
             print("Error: The 'Applications' object does not contain an iterable list of applications.")
-    
-    @classmethod
-    @check_assets_existence
-    def select_assets(cls, max_assets: int = 10):
-        assets_snapshot = AssetsCommandsApi().assets_snapshot
-        assets = []
-        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets]):
-            asset = assets_snapshot[uuid]
-            if not asset:
-                asset = AssetsCommandsApi.get_asset_snapshot(uuid)
-            assets.append((f"{asset.name}", uuid))
-
-        select_menu = PiecesSelectMenu(assets)
-        selected_index = select_menu.run()
-        
-        if selected_index is not None:
-            cls.selected_item = assets[selected_index][1]  # Store the UUID of the selected asset
-            print(f"Selected asset: {assets[selected_index][0]}")
-        else:
-            print("No asset selected.")
