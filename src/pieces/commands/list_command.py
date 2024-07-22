@@ -75,11 +75,20 @@ class ListCommand:
             cls.select_apps()
         elif type == "models":
             cls.select_models()
-    @staticmethod
-    def list_models():
-        for idx,model_name in enumerate(Settings.models,start=1):
-            print(f"{idx}: {model_name}")
-        print(f"Currently using: {Settings.model_name} with uuid {Settings.model_id}")
+    
+    @classmethod
+    def select_models(cls):
+        models = [(model_name, model_name) for model_name in Settings.models]
+        models.append((f"Currently using: {Settings.model_name} with uuid {Settings.model_id}", Settings.model_id))
+
+        select_menu = PiecesSelectMenu(models)
+        selected_index = select_menu.run()
+
+        if selected_index is not None:
+            cls.selected_item = models[selected_index][1]
+            print(f"\nSelected model: {models[selected_index][0]}")
+        else:
+            print("No model selected.")
 
     @staticmethod
     def list_apps():
