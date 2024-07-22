@@ -57,11 +57,11 @@ class PiecesSelectMenu:
 
         return self.selected_index
 
-class SelectCommand:
+class ListCommand:
     selected_item = None
 
     @classmethod
-    def select_command(cls, **kwargs):
+    def list_command(cls, **kwargs):
         type = kwargs.get("type", "assets")
         max_assets = kwargs.get("max_assets", 10)
         if max_assets < 1:
@@ -69,15 +69,15 @@ class SelectCommand:
             max_assets = 10
         
         if type == "assets":
-            cls.select_assets(max_assets)
+            cls.list_assets(max_assets)
         elif type == "apps":
-            cls.select_apps()
+            cls.list_apps()
         elif type == "models":
-            cls.select_models()
+            cls.list_models()
 
     @classmethod
     @check_assets_existence
-    def select_assets(cls, max_assets: int = 10):
+    def list_assets(cls, max_assets: int = 10):
         assets_snapshot = AssetsCommandsApi().assets_snapshot
         assets = []
         for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets]):
@@ -96,7 +96,7 @@ class SelectCommand:
             print("No asset selected.")
 
     @classmethod
-    def select_models(cls):
+    def list_models(cls):
         models = [(model_name, model_name) for model_name in Settings.models]
         models.append((f"Currently using: {Settings.model_name} with uuid {Settings.model_id}", Settings.model_id))
 
@@ -110,7 +110,7 @@ class SelectCommand:
             print("No model selected.")
 
     @classmethod
-    def select_apps(cls):
+    def list_apps(cls):
         applications_api = ApplicationsApi(Settings.api_client)
         application_list = applications_api.applications_snapshot()
 
