@@ -15,6 +15,15 @@ class PiecesSelectMenu:
         self.menu_options = menu_options
         self.current_selection = 0
         self.selected_index = None
+    
+    def get_menu_text(self):
+        result = []
+        for i, option in enumerate(self.menu_options):
+            if i == self.current_selection:
+                result.append(('class:selected', f'> {option[0]}\n'))
+            else:
+                result.append(('class:unselected', f'  {option[0]}\n'))
+        return result
 
 
 class ListCommand:
