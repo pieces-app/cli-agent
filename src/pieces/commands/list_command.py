@@ -57,7 +57,7 @@ class PiecesSelectMenu:
 
         return self.selected_index
 
-class ListCommand:
+class SelectCommand:
     selected_item = None
 
     @classmethod
