@@ -44,6 +44,7 @@ class PiecesSelectMenu:
 
         @bindings.add('enter')
         def select_option(event):
+            event.app.exit()
             args = self.menu_options[self.current_selection][1]
             if isinstance(args,list):
                 self.on_enter_callback(*args)
@@ -51,7 +52,6 @@ class PiecesSelectMenu:
                 self.on_enter_callback(args)
             elif isinstance(args,dict):
                 self.on_enter_callback(**args)
-            event.app.exit()
 
         menu_control = FormattedTextControl(text=self.get_menu_text)
         self.menu_window = Window(content=menu_control, always_hide_cursor=True)
