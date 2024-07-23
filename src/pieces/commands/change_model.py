@@ -1,7 +1,7 @@
 from pieces.gui import *
 from pieces.settings import Settings
 
-
+@deprecated("change_model","list models")
 def change_model(**kwargs): # Change the model used in the ask command
     model_index = kwargs.get('MODEL_INDEX')
     try:

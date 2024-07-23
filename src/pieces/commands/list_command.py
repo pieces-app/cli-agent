@@ -13,11 +13,10 @@ from pieces.assets.assets_command import AssetsCommands
 from change_model import change_model
 
 class PiecesSelectMenu:
-    def __init__(self, menu_options: List[Tuple], on_enter_callback: Callable):
+    def __init__(self, menu_options:List[Tuple],on_enter_callback:Callable):
         self.menu_options = menu_options
         self.on_enter_callback = on_enter_callback
         self.current_selection = 0
-        self.selected_value = None
 
     def get_menu_text(self):
         result = []
@@ -45,23 +44,27 @@ class PiecesSelectMenu:
 
         @bindings.add('enter')
         def select_option(event):
-            self.selected_value = self.menu_options[self.current_selection][1]
+            args = self.menu_options[self.current_selection][1]
+            if isinstance(args,list):
+                self.on_enter_callback(*args)
+            elif isinstance(args,str):
+                self.on_enter_callback(args)
+            elif isinstance(args,dict):
+                self.on_enter_callback(**args)
             event.app.exit()
 
         menu_control = FormattedTextControl(text=self.get_menu_text)
         self.menu_window = Window(content=menu_control, always_hide_cursor=True)
+
         layout = Layout(HSplit([self.menu_window]))
+
         style = Style.from_dict({
             'selected': 'reverse',
             'unselected': ''
         })
+
         app = Application(layout=layout, key_bindings=bindings, style=style, full_screen=True)
         app.run()
-
-        if self.selected_value is not None:
-            self.on_enter_callback(self.selected_value)
-
-        return self.selected_value
 
 class ListCommand:
     @classmethod
@@ -85,17 +88,10 @@ class ListCommand:
         assets_snapshot = AssetsCommandsApi().assets_snapshot
         assets = []
         for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
-            asset = assets_snapshot[uuid]
-            if not asset:
-                asset = AssetsCommandsApi.get_asset_snapshot(uuid)
-            assets.append((f"{i}: {asset.name}", uuid))
+            asset = AssetsCommandsApi.get_asset_snapshot(uuid)
+            assets.append((f"{i}: {asset.name}", {"ITEM_INDEX":i,"show_warning":False}))
 
-        def on_asset_selected(uuid):
-            print(f"Selected asset: {next(asset[0] for asset in assets if asset[1] == uuid)}")
-            AssetsCommands.current_asset = uuid
-            AssetsCommands.open_asset()
-
-        select_menu = PiecesSelectMenu(assets, on_asset_selected)
+        select_menu = PiecesSelectMenu(assets, AssetsCommands.open_asset)
         select_menu.run()
 
     @classmethod
@@ -107,15 +103,10 @@ class ListCommand:
             print("No models available.")
             return
 
-        models = [(f"{idx}: {model_name}", model_name) for idx, model_name in enumerate(Settings.models.keys(), start=1)]
-        models.append((f"Currently using: {Settings.model_name} with uuid {Settings.model_id}", Settings.model_id))
-
-        def on_model_selected(model_name):
-            print(f"\nSelected model: {next(model[0] for model in models if model[1] == model_name)}")
-            model_index = next(idx for idx, model in enumerate(models, start=1) if model[1] == model_name)
-            change_model(MODEL_INDEX=model_index)
-
-        select_menu = PiecesSelectMenu(models, on_model_selected)
+        models = [(f"{idx}: {model_name}", {"MODEL_INDEX":idx,"show_warning":False}) for idx, model_name in enumerate(Settings.models.keys(), start=1)]
+        # models.append((f"Currently using: {Settings.model_name} with uuid {Settings.model_id}")) # TODO
+        # TODO: add a normal print message
+        select_menu = PiecesSelectMenu(models, change_model)
         select_menu.run()
 
     @classmethod
