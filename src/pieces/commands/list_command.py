@@ -9,6 +9,7 @@ from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import List, Tuple
+from pieces.assets.assets_command import AssetsCommands  # Import AssetsCommands
 
 class PiecesSelectMenu:
     def __init__(self, menu_options: List[Tuple]):
@@ -92,6 +93,8 @@ class ListCommand:
         if selected_index is not None:
             cls.selected_item = assets[selected_index][1]  # Store the UUID of the selected asset
             print(f"Selected asset: {assets[selected_index][0]}")
+            AssetsCommands.current_asset = cls.selected_item
+            AssetsCommands.open_asset()  # Call open_asset from AssetsCommands without arguments
         else:
             print("No asset selected.")
 
