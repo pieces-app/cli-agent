@@ -10,6 +10,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import List, Tuple, Callable
 from pieces.assets.assets_command import AssetsCommands
+import time
 from .change_model import change_model
 
 class PiecesSelectMenu:
@@ -44,14 +45,8 @@ class PiecesSelectMenu:
 
         @bindings.add('enter')
         def select_option(event):
-            event.app.exit()
             args = self.menu_options[self.current_selection][1]
-            if isinstance(args,list):
-                self.on_enter_callback(*args)
-            elif isinstance(args,str):
-                self.on_enter_callback(args)
-            elif isinstance(args,dict):
-                self.on_enter_callback(**args)
+            event.app.exit(result=args)
 
         menu_control = FormattedTextControl(text=self.get_menu_text)
         self.menu_window = Window(content=menu_control, always_hide_cursor=True)
@@ -64,7 +59,14 @@ class PiecesSelectMenu:
         })
 
         app = Application(layout=layout, key_bindings=bindings, style=style, full_screen=True)
-        app.run()
+        args = app.run()
+
+        if isinstance(args, list):
+            self.on_enter_callback(*args)
+        elif isinstance(args, str):
+            self.on_enter_callback(args)
+        elif isinstance(args, dict):
+            self.on_enter_callback(**args)
 
 class ListCommand:
     @classmethod
