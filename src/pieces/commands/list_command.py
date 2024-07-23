@@ -8,15 +8,16 @@ from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 from pieces.assets.assets_command import AssetsCommands
 from change_model import change_model
 
 class PiecesSelectMenu:
-    def __init__(self, menu_options: List[Tuple]):
+    def __init__(self, menu_options: List[Tuple], on_enter_callback: Callable):
         self.menu_options = menu_options
+        self.on_enter_callback = on_enter_callback
         self.current_selection = 0
-        self.selected_index = None
+        self.selected_value = None
 
     def get_menu_text(self):
         result = []
@@ -44,7 +45,7 @@ class PiecesSelectMenu:
 
         @bindings.add('enter')
         def select_option(event):
-            self.selected_index = self.current_selection
+            self.selected_value = self.menu_options[self.current_selection][1]
             event.app.exit()
 
         menu_control = FormattedTextControl(text=self.get_menu_text)
@@ -57,11 +58,12 @@ class PiecesSelectMenu:
         app = Application(layout=layout, key_bindings=bindings, style=style, full_screen=True)
         app.run()
 
-        return self.selected_index
+        if self.selected_value is not None:
+            self.on_enter_callback(self.selected_value)
+
+        return self.selected_value
 
 class ListCommand:
-    selected_item = None
-
     @classmethod
     def list_command(cls, **kwargs):
         type = kwargs.get("type", "assets")
@@ -88,20 +90,16 @@ class ListCommand:
                 asset = AssetsCommandsApi.get_asset_snapshot(uuid)
             assets.append((f"{i}: {asset.name}", uuid))
 
-        select_menu = PiecesSelectMenu(assets)
-        selected_index = select_menu.run()
-        
-        if selected_index is not None:
-            cls.selected_item = assets[selected_index][1]  # Store the UUID of the selected asset
-            print(f"Selected asset: {assets[selected_index][0]}")
-            AssetsCommands.current_asset = cls.selected_item
-            AssetsCommands.open_asset()  # Call open_asset from AssetsCommands without arguments
-        else:
-            print("No asset selected.")
+        def on_asset_selected(uuid):
+            print(f"Selected asset: {next(asset[0] for asset in assets if asset[1] == uuid)}")
+            AssetsCommands.current_asset = uuid
+            AssetsCommands.open_asset()
+
+        select_menu = PiecesSelectMenu(assets, on_asset_selected)
+        select_menu.run()
 
     @classmethod
     def list_models(cls):
-        # Ensure models are loaded
         if not hasattr(Settings, 'models'):
             Settings.load_models()
         
@@ -112,17 +110,13 @@ class ListCommand:
         models = [(f"{idx}: {model_name}", model_name) for idx, model_name in enumerate(Settings.models.keys(), start=1)]
         models.append((f"Currently using: {Settings.model_name} with uuid {Settings.model_id}", Settings.model_id))
 
-        select_menu = PiecesSelectMenu(models)
-        selected_index = select_menu.run()
+        def on_model_selected(model_name):
+            print(f"\nSelected model: {next(model[0] for model in models if model[1] == model_name)}")
+            model_index = next(idx for idx, model in enumerate(models, start=1) if model[1] == model_name)
+            change_model(MODEL_INDEX=model_index)
 
-        if selected_index is not None:
-            cls.selected_item = models[selected_index][1]
-            print(f"\nSelected model: {models[selected_index][0]}")
-            
-            # Call change_model function with the selected model index
-            change_model(MODEL_INDEX=selected_index + 1)  # Add 1 because indexing starts from 1 in change_model
-        else:
-            print("No model selected.")
+        select_menu = PiecesSelectMenu(models, on_model_selected)
+        select_menu.run()
 
     @classmethod
     def list_apps(cls):
