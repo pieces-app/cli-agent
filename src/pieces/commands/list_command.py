@@ -9,7 +9,8 @@ from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import List, Tuple
-from pieces.assets.assets_command import AssetsCommands  # Import AssetsCommands
+from pieces.assets.assets_command import AssetsCommands
+from change_model import change_model
 
 class PiecesSelectMenu:
     def __init__(self, menu_options: List[Tuple]):
@@ -100,7 +101,15 @@ class ListCommand:
 
     @classmethod
     def list_models(cls):
-        models = [(f"{idx}: {model_name}", model_name) for idx, model_name in enumerate(Settings.models, start=1)]
+        # Ensure models are loaded
+        if not hasattr(Settings, 'models'):
+            Settings.load_models()
+        
+        if not Settings.models:
+            print("No models available.")
+            return
+
+        models = [(f"{idx}: {model_name}", model_name) for idx, model_name in enumerate(Settings.models.keys(), start=1)]
         models.append((f"Currently using: {Settings.model_name} with uuid {Settings.model_id}", Settings.model_id))
 
         select_menu = PiecesSelectMenu(models)
@@ -109,6 +118,9 @@ class ListCommand:
         if selected_index is not None:
             cls.selected_item = models[selected_index][1]
             print(f"\nSelected model: {models[selected_index][0]}")
+            
+            # Call change_model function with the selected model index
+            change_model(MODEL_INDEX=selected_index + 1)  # Add 1 because indexing starts from 1 in change_model
         else:
             print("No model selected.")
 
