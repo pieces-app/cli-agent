@@ -170,5 +170,7 @@ def deprecated(command,instead):
     def decorator(func):
         def wrapper(*args, **kwargs):
             if kwargs.get("show_warning",True):
-                print(f"'\033[93m' WARNING: `{command}` is deprecated and will be removed in later versions\nPlease use `{instead}` instead \033[0m")
+                print(f"\033[93m WARNING: `{command}` is deprecated and will be removed in later versions\nPlease use `{instead}` instead \033[0m")
             func(*args,**kwargs)
+        return wrapper
+    return decorator

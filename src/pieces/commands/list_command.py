@@ -10,7 +10,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import List, Tuple, Callable
 from pieces.assets.assets_command import AssetsCommands
-from change_model import change_model
+from .change_model import change_model
 
 class PiecesSelectMenu:
     def __init__(self, menu_options:List[Tuple],on_enter_callback:Callable):
