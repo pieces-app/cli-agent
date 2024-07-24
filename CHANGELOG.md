@@ -1,4 +1,8 @@
 # Changelog
+## July 24th, 2024
+
+- Add select menu for the list command
+  
 ## April 8th, 2024
 
 - Add the conversation command with the --rename ,--new , --delete flags

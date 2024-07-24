@@ -3,7 +3,7 @@ import pyperclip
 
 from pieces.utils import get_file_extension,sanitize_filename,export_code_to_file
 from .assets_api import AssetsCommandsApi
-from pieces.gui import show_error,print_model_details,space_below,double_line
+from pieces.gui import show_error,print_model_details,space_below,double_line,deprecated
 from pieces.settings import Settings
 
 
@@ -39,6 +39,7 @@ class AssetsCommands:
 
 	@classmethod
 	@check_assets_existence
+	@deprecated("open","list assets")
 	def open_asset(cls,**kwargs):
 		item_index = kwargs.get('ITEM_INDEX',1)
 		if not item_index:

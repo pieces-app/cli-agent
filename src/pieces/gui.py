@@ -160,4 +160,17 @@ def show_error(error_message,error):
     print(f"\033[31m{error_message}\033[0m")
     print(f"\033[31m{error}\033[0m")
     print()
-    
+
+def deprecated(command,instead):
+    """
+    Decorator
+        command(str): which is the command that is deprated
+        instead(str): which command should we use instead
+    """
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if kwargs.get("show_warning",True):
+                print(f"\033[93m WARNING: `{command}` is deprecated and will be removed in later versions\nPlease use `{instead}` instead \033[0m")
+            func(*args,**kwargs)
+        return wrapper
+    return decorator
