@@ -51,32 +51,32 @@ class AssetsCommands:
 	@check_assets_existence
 	@deprecated("open","list assets")
 	def open_asset(cls, **kwargs):
-	        item_index = kwargs.get('ITEM_INDEX', 1)
-	        if not item_index:
-	            item_index = 1
-	        asset_ids = AssetsCommandsApi().assets_snapshot
-	        try:
-	            cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
-	        except IndexError:
-	            show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
-	            return
-	        
-	        asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
-	        
-	        print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
-	        
-	        code_content = asset_dict["raw"]
-	
-	        # Determine the lexer
-	        try:
-	            lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
-	        except:
-	            lexer = guess_lexer(code_content)
-	
-	        # Print the code with syntax highlighting
-	        formatted_code = highlight(code_content, lexer, TerminalFormatter())
-	        print("\nCode content:")
-	        print(formatted_code)
+		item_index = kwargs.get('ITEM_INDEX', 1)
+		if not item_index:
+			item_index = 1
+		asset_ids = AssetsCommandsApi().assets_snapshot
+		try:
+			cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
+		except IndexError:
+			show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
+			return
+		
+		asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
+		
+		print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
+		
+		code_content = asset_dict["raw"]
+
+		# Determine the lexer
+		try:
+			lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
+		except:
+			lexer = guess_lexer(code_content)
+
+		# Print the code with syntax highlighting
+		formatted_code = highlight(code_content, lexer, TerminalFormatter())
+		print("\nCode content:")
+		print(formatted_code)
 
 	@classmethod
 	@check_asset_selected
