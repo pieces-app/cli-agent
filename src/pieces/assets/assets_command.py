@@ -131,6 +131,26 @@ class AssetsCommands:
                 print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
 
 	@classmethod
+    def open_in_editor(cls, code_content, language):
+        config = cls.load_config()
+        editor = config.get('editor')
+        if not editor:
+            return print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
+        
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=f".{language}") as temp_file:
+            temp_file.write(code_content)
+            temp_file_path = temp_file.name
+
+        try:
+            subprocess.run([editor, temp_file_path], check=True)
+            print(f"Opened in {editor}")
+        except subprocess.CalledProcessError:
+            print(f"Failed to open editor {editor}. Please check your configuration.")
+        finally:
+            os.unlink(temp_file_path)
+		
+
+	@classmethod
 	@check_asset_selected
 	def update_asset(cls,asset_data,**kwargs):
 		asset = AssetsCommandsApi.extract_asset_info(asset_data)
