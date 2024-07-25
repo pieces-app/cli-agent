@@ -48,22 +48,22 @@ class AssetsCommands:
 	current_asset = None
 
 	@classmethod
-    def load_config(cls):
-        if os.path.exists(CONFIG_FILE):
-            try:
-                with open(CONFIG_FILE, 'r') as f:
-                    content = f.read().strip()
-                    if content:
-                        return json.loads(content)
-                    else:
-                        print("Config file is empty. Creating a new configuration.")
-                        return {}
-            except json.JSONDecodeError:
-                print("Invalid JSON in config file. Creating a new configuration.")
-                return {}
-        else:
-            print("Config file does not exist. Creating a new configuration.")
-            return {}
+        def load_config(cls):
+	    if os.path.exists(CONFIG_FILE):
+	        try:
+		    with open(CONFIG_FILE, 'r') as f:
+		        content = f.read().strip()
+		        if content:
+			    return json.loads(content)
+		        else:
+			    print("Config file is empty. Creating a new configuration.")
+			    return {}
+	        except json.JSONDecodeError:
+		    print("Invalid JSON in config file. Creating a new configuration.")
+		    return {}
+	    else:
+	        print("Config file does not exist. Creating a new configuration.")
+	        return {}
 
 	@classmethod
 	@check_assets_existence
