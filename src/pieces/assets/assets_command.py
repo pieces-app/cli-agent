@@ -64,10 +64,22 @@ class AssetsCommands:
 	    else:
 	        print("Config file does not exist. Creating a new configuration.")
 	        return {}
-	
+
+	@classmethod
 	def save_config(cls, config):
             with open(CONFIG_FILE, 'w') as f:
                 json.dump(config, f)
+
+	@classmethod
+	def config(cls, **kwargs):
+            config = cls.load_config()
+            if 'editor' in kwargs:
+                config['editor'] = kwargs['editor']
+                cls.save_config(config)
+                print(f"Editor set to: {kwargs['editor']}")
+            else:
+                print("Current configuration:")
+                print(f"Editor: {config.get('editor', 'Not set')}")
 
 	@classmethod
 	@check_assets_existence
