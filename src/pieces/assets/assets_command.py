@@ -68,6 +68,13 @@ class AssetsCommands:
 
 		print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
 
+	def print_model_details(name, created_at, updated_at, type, language, filepath=None):
+        print("Debug: Entered print_model_details function")
+        print(f"Name: {name}")
+        print(f"Created: {created_at}")
+        print(f"Updated: {updated_at}")
+        print(f"Type: {type}")
+        print(f"Language: {language}")
 
 	@classmethod
 	@check_asset_selected
