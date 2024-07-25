@@ -66,6 +66,17 @@ class AssetsCommands:
 	        print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
 	        
 	        code_content = asset_dict["raw"]
+	
+	        # Determine the lexer
+	        try:
+	            lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
+	        except:
+	            lexer = guess_lexer(code_content)
+	
+	        # Print the code with syntax highlighting
+	        formatted_code = highlight(code_content, lexer, TerminalFormatter())
+	        print("\nCode content:")
+	        print(formatted_code)
 
 	@classmethod
 	@check_asset_selected
