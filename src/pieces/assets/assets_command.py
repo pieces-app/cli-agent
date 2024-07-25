@@ -64,6 +64,10 @@ class AssetsCommands:
 	    else:
 	        print("Config file does not exist. Creating a new configuration.")
 	        return {}
+	
+	def save_config(cls, config):
+            with open(CONFIG_FILE, 'w') as f:
+                json.dump(config, f)
 
 	@classmethod
 	@check_assets_existence
