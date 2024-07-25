@@ -5,7 +5,17 @@ from pieces.utils import get_file_extension,sanitize_filename,export_code_to_fil
 from .assets_api import AssetsCommandsApi
 from pieces.gui import show_error,print_model_details,space_below,double_line,deprecated
 from pieces.settings import Settings
+import subprocess
+from prompt_toolkit import PromptSession
+from prompt_toolkit.document import Document
+from prompt_toolkit.key_binding import KeyBindings
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name, guess_lexer
+from pygments.formatters import TerminalFormatter
+import json
+import tempfile
 
+CONFIG_FILE = os.path.expanduser("~/.pieces_config.json")
 
 def check_assets_existence(func):
 	"""Decorator to ensure user has assets."""
