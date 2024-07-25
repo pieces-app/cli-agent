@@ -50,31 +50,22 @@ class AssetsCommands:
 	@classmethod
 	@check_assets_existence
 	@deprecated("open","list assets")
-	def open_asset(cls,**kwargs):
-		item_index = kwargs.get('ITEM_INDEX',1)
-		if not item_index:
-			item_index = 1
-		asset_ids = AssetsCommandsApi().assets_snapshot
-		try:
-			cls.current_asset = list(asset_ids.keys())[item_index-1] # because we begin from 1
-		except IndexError:
-			show_error("Invalid asset index or asset not found.","Please choose from the list or use 'pieces list assets'")
-			return
-		
-		asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
-		
-
-		filepath = export_code_to_file(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
-
-		print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"],filepath)
-
-	def print_model_details(name, created_at, updated_at, type, language, filepath=None):
-        print("Debug: Entered print_model_details function")
-        print(f"Name: {name}")
-        print(f"Created: {created_at}")
-        print(f"Updated: {updated_at}")
-        print(f"Type: {type}")
-        print(f"Language: {language}")
+	def open_asset(cls, **kwargs):
+	        item_index = kwargs.get('ITEM_INDEX', 1)
+	        if not item_index:
+	            item_index = 1
+	        asset_ids = AssetsCommandsApi().assets_snapshot
+	        try:
+	            cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
+	        except IndexError:
+	            show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
+	            return
+	        
+	        asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
+	        
+	        print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
+	        
+	        code_content = asset_dict["raw"]
 
 	@classmethod
 	@check_asset_selected
