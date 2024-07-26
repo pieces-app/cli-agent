@@ -15,7 +15,9 @@ from pygments.formatters import TerminalFormatter
 import json
 import tempfile
 
-CONFIG_FILE = os.path.expanduser("~/.pieces_config.json")
+#Ensure the data_path directory exists
+os.makedirs(Settings.pieces_data_dir, exist_ok=True)
+CONFIG_FILE = os.path.join(Settings.pieces_data_dir, "pieces_config.json")
 
 def check_assets_existence(func):
 	"""Decorator to ensure user has assets."""
@@ -49,7 +51,7 @@ class AssetsCommands:
 
 	@classmethod
 	def load_config(cls):
-	if os.path.exists(CONFIG_FILE):
+	    if os.path.exists(CONFIG_FILE):
 		try:
 		with open(CONFIG_FILE, 'r') as f:
 			content = f.read().strip()
@@ -61,7 +63,7 @@ class AssetsCommands:
 		except json.JSONDecodeError:
 		print("Invalid JSON in config file. Creating a new configuration.")
 		return {}
-	else:
+	    else:
 		print("Config file does not exist. Creating a new configuration.")
 		return {}
 
@@ -82,72 +84,72 @@ class AssetsCommands:
                 print(f"Editor: {config.get('editor', 'Not set')}")
 
 	@classmethod
-    @check_assets_existence
-    def open_asset(cls, item_index=1, open_in_editor=False, **kwargs):
-        asset_ids = AssetsCommandsApi().assets_snapshot
-        try:
-            cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
-        except IndexError:
-            return show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
-        
-        asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
-        
-        print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
-        
-        code_content = asset_dict["raw"]
-
-        if not open_in_editor:
-            # Determine the lexer
+        @check_assets_existence
+        def open_asset(cls, item_index=1, open_in_editor=False, **kwargs):
+            asset_ids = AssetsCommandsApi().assets_snapshot
             try:
-                lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
-            except:
-                lexer = guess_lexer(code_content)
+                cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
+            except IndexError:
+                return show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
+        
+            asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
+        
+            print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
+        
+            code_content = asset_dict["raw"]
 
-            # Print the code with syntax highlighting
-            formatted_code = highlight(code_content, lexer, TerminalFormatter())
-            print("\nCode content:")
-            print(formatted_code)
+            if not open_in_editor:
+                # Determine the lexer
+                try:
+                    lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
+                except:
+                    lexer = guess_lexer(code_content)
 
-        # Check if -e flag is used or open_in_editor is True
-        if kwargs.get('e') or open_in_editor:
-            config = cls.load_config()
-            editor = config.get('editor')
-            if editor:
-                # Save the code to a temporary file
-                with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=f".{asset_dict['language']}") as temp_file:
-                    temp_file.write(code_content)
-                    temp_file_path = temp_file.name
+                # Print the code with syntax highlighting
+                formatted_code = highlight(code_content, lexer, TerminalFormatter())
+                print("\nCode content:")
+                print(formatted_code)
 
-                # Open the file with the configured editor
-                subprocess.run([editor, temp_file_path])
+            # Check if -e flag is used or open_in_editor is True
+            if kwargs.get('e') or open_in_editor:
+                config = cls.load_config()
+                editor = config.get('editor')
+                if editor:
+                    # Save the code to a temporary file
+                    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=f".{asset_dict['language']}") as temp_file:
+                        temp_file.write(code_content)
+                        temp_file_path = temp_file.name
 
-                # Update the asset with the new content
-                AssetsCommandsApi.update_asset_value(temp_file_path, cls.current_asset)
-                print("Asset updated successfully.")
+                    # Open the file with the configured editor
+                    subprocess.run([editor, temp_file_path])
 
-                # Clean up the temporary file
-                os.unlink(temp_file_path)
-            else:
-                print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
+                    # Update the asset with the new content
+                    AssetsCommandsApi.update_asset_value(temp_file_path, cls.current_asset)
+                    print("Asset updated successfully.")
+
+                    # Clean up the temporary file
+                    os.unlink(temp_file_path)
+                else:
+                    print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
 
 	@classmethod
-    def open_in_editor(cls, code_content, language):
-        config = cls.load_config()
-        editor = config.get('editor')
-        if not editor:
-            return print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
+        def open_in_editor(cls, code_content, language):
+            config = cls.load_config()
+            editor = config.get('editor')
+            if not editor:
+                return print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
         
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=f".{language}") as temp_file:
-            temp_file.write(code_content)
-            temp_file_path = temp_file.name
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=f".{language}") as temp_file:
+                temp_file.write(code_content)
+                temp_file_path = temp_file.name
 
-        try:
-            subprocess.run([editor, temp_file_path], check=True)
-            print(f"Opened in {editor}")
-        except subprocess.CalledProcessError:
-            print(f"Failed to open editor {editor}. Please check your configuration.")
-        finally:
-            os.unlink(temp_file_path)
+            try:
+                subprocess.run([editor, temp_file_path], check=True)
+                print(f"Opened in {editor}")
+            except subprocess.CalledProcessError:
+                print(f"Failed to open editor {editor}. Please check your configuration.")
+            finally:
+                os.unlink(temp_file_path)
 		
 
 	@classmethod
