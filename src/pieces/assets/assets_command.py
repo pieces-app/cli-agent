@@ -5,6 +5,7 @@ from pieces.utils import get_file_extension,sanitize_filename,export_code_to_fil
 from .assets_api import AssetsCommandsApi
 from pieces.gui import show_error,print_model_details,space_below,double_line,deprecated
 from pieces.settings import Settings
+from pieces.commands.config_command import ConfigCommands
 import subprocess
 from prompt_toolkit import PromptSession
 from prompt_toolkit.document import Document
@@ -14,10 +15,6 @@ from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import TerminalFormatter
 import json
 import tempfile
-
-#Ensure the data_path directory exists
-os.makedirs(Settings.pieces_data_dir, exist_ok=True)
-CONFIG_FILE = os.path.join(Settings.pieces_data_dir, "pieces_config.json")
 
 def check_assets_existence(func):
 	"""Decorator to ensure user has assets."""
@@ -113,7 +110,7 @@ class AssetsCommands:
 
             # Check if -e flag is used or open_in_editor is True
             if kwargs.get('e') or open_in_editor:
-                config = cls.load_config()
+                config = ConfigCommands.load_config()
                 editor = config.get('editor')
                 if editor:
                     # Save the code to a temporary file
@@ -135,7 +132,7 @@ class AssetsCommands:
 
 	@classmethod
         def open_in_editor(cls, code_content, language):
-            config = cls.load_config()
+            config = ConfigCommands.load_config()
             editor = config.get('editor')
             if not editor:
                 return print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
