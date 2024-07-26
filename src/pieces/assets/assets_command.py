@@ -85,6 +85,7 @@ class AssetsCommands:
 
 	@classmethod
         @check_assets_existence
+	@deprecated("open","list assets")
         def open_asset(cls, item_index=1, open_in_editor=False, **kwargs):
             asset_ids = AssetsCommandsApi().assets_snapshot
             try:
