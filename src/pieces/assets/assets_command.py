@@ -79,20 +79,18 @@ class AssetsCommands:
                 config = ConfigCommands.load_config()
                 editor = config.get('editor')
                 if editor:
-                    # Save the code to a temporary file
-                    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=f".{asset_dict['language']}") as temp_file:
-                        temp_file.write(code_content)
-                        temp_file_path = temp_file.name
+		    # Save the code to a file in the default directory
+                    file_path = os.path.join(Settings.open_snippet_dir, f"{sanitize_filename(asset_dict['name'])}{get_file_extension(asset_dict['language'])}")
+                    with open(file_path, 'w') as file:
+                    file.write(code_content)
 
                     # Open the file with the configured editor
-                    subprocess.run([editor, temp_file_path])
+                    subprocess.run([editor, file_path])
 
                     # Update the asset with the new content
-                    AssetsCommandsApi.update_asset_value(temp_file_path, cls.current_asset)
+                    AssetsCommandsApi.update_asset_value(file_path, cls.current_asset)
                     print("Asset updated successfully.")
 
-                    # Clean up the temporary file
-                    os.unlink(temp_file_path)
                 else:
                     print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
 
