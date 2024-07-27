@@ -58,7 +58,24 @@ class AssetsCommands:
 
 		code_content = asset_dict["raw"]
 		open_in_editor = kwargs.get('editor')
-		if not open_in_editor:
+			
+		# Check if -e flag is used or open_in_editor is True
+		if open_in_editor:
+			config = ConfigCommands.load_config()
+			editor = config.get('editor')
+			if editor:
+				# Save the code to a file in the default directory
+				file_path = export_code_to_file(code_content, asset_dict["name"], asset_dict["language"])
+
+				# Open the file with the configured editor
+				try:
+					subprocess.run([editor, file_path], shell=True)
+				except Exception as e:
+					show_error("Error in opening",e)
+
+			else:
+				print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
+		else:
 			# Determine the lexer
 			try:
 				lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
@@ -70,23 +87,6 @@ class AssetsCommands:
 			print("\nCode content:")
 			print(formatted_code)
 
-		# Check if -e flag is used or open_in_editor is True
-		if open_in_editor:
-			config = ConfigCommands.load_config()
-			editor = config.get('editor')
-			if editor:
-				# Save the code to a file in the default directory
-				file_path = export_code_to_file(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
-
-				# Open the file with the configured editor
-				try:
-					subprocess.run([editor, file_path], shell=True)
-				except Exception as e:
-					show_error("Error in opening",e)
-
-			else:
-				print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
-		
 
 	@classmethod
 	@check_asset_selected
