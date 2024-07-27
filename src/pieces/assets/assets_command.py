@@ -7,14 +7,9 @@ from pieces.gui import show_error,print_model_details,space_below,double_line,de
 from pieces.settings import Settings
 from pieces.commands.config_command import ConfigCommands
 import subprocess
-from prompt_toolkit import PromptSession
-from prompt_toolkit.document import Document
-from prompt_toolkit.key_binding import KeyBindings
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import TerminalFormatter
-import json
-import tempfile
 
 def check_assets_existence(func):
 	"""Decorator to ensure user has assets."""
@@ -47,71 +42,50 @@ class AssetsCommands:
 	current_asset = None
 
 	@classmethod
-        @check_assets_existence
+	@check_assets_existence
 	@deprecated("open","list assets")
-        def open_asset(cls, item_index=1, open_in_editor=False, **kwargs):
-            asset_ids = AssetsCommandsApi().assets_snapshot
-            try:
-                cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
-            except IndexError:
-                return show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
-        
-            asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
-        
-            print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
-        
-            code_content = asset_dict["raw"]
+	def open_asset(cls, **kwargs):
+			item_index = kwargs.get("ITEM_INDEX",1)
+			asset_ids = AssetsCommandsApi().assets_snapshot
+			try:
+				cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
+			except IndexError:
+				return show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
+		
+			asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
+		
+			print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
 
-            if not open_in_editor:
-                # Determine the lexer
-                try:
-                    lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
-                except:
-                    lexer = guess_lexer(code_content)
+			code_content = asset_dict["raw"]
+			open_in_editor = kwargs.get('editor')
+			if not open_in_editor:
+				# Determine the lexer
+				try:
+					lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
+				except:
+					lexer = guess_lexer(code_content)
 
-                # Print the code with syntax highlighting
-                formatted_code = highlight(code_content, lexer, TerminalFormatter())
-                print("\nCode content:")
-                print(formatted_code)
+				# Print the code with syntax highlighting
+				formatted_code = highlight(code_content, lexer, TerminalFormatter())
+				print("\nCode content:")
+				print(formatted_code)
 
-            # Check if -e flag is used or open_in_editor is True
-            if kwargs.get('e') or open_in_editor:
-                config = ConfigCommands.load_config()
-                editor = config.get('editor')
-                if editor:
-		    # Save the code to a file in the default directory
-                    file_path = os.path.join(Settings.open_snippet_dir, f"{sanitize_filename(asset_dict['name'])}{get_file_extension(asset_dict['language'])}")
-                    with open(file_path, 'w') as file:
-                    file.write(code_content)
+			# Check if -e flag is used or open_in_editor is True
+			if open_in_editor:
+				config = ConfigCommands.load_config()
+				editor = config.get('editor')
+				if editor:
+					# Save the code to a file in the default directory
+					file_path = export_code_to_file(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
 
-                    # Open the file with the configured editor
-                    subprocess.run([editor, file_path])
+					# Open the file with the configured editor
+					try:
+						subprocess.run([editor, file_path], shell=True)
+					except Exception as e:
+						show_error("Error in opening",e)
 
-                    # Update the asset with the new content
-                    AssetsCommandsApi.update_asset_value(file_path, cls.current_asset)
-                    print("Asset updated successfully.")
-
-                else:
-                    print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
-
-	@classmethod
-        def open_in_editor(cls, code_content, language):
-            config = ConfigCommands.load_config()
-            editor = config.get('editor')
-            if not editor:
-                return print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
-        
-            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=f".{language}") as temp_file:
-                temp_file.write(code_content)
-                temp_file_path = temp_file.name
-
-            try:
-                subprocess.run([editor, temp_file_path], check=True)
-                print(f"Opened in {editor}")
-            except subprocess.CalledProcessError:
-                print(f"Failed to open editor {editor}. Please check your configuration.")
-            finally:
-                os.unlink(temp_file_path)
+				else:
+					print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
 		
 
 	@classmethod
