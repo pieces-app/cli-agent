@@ -24,7 +24,7 @@ class PiecesCLI:
         # Subparser for the 'config' command
         config_parser = self.command_parser.add_parser('config', help='Configure settings')
         config_parser.add_argument('--editor', type=str, help='Set the default code editor')
-        config_parser.set_defaults(func=AssetsCommands.config)
+        config_parser.set_defaults(func=ConfigCommands.config)
 
         # Subparser for the 'lists' command
         list_parser = self.command_parser.add_parser('list', help='List the assets or apps or models')
