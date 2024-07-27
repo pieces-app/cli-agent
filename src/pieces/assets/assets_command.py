@@ -45,47 +45,47 @@ class AssetsCommands:
 	@check_assets_existence
 	@deprecated("open","list assets")
 	def open_asset(cls, **kwargs):
-			item_index = kwargs.get("ITEM_INDEX",1)
-			asset_ids = AssetsCommandsApi().assets_snapshot
+		item_index = kwargs.get("ITEM_INDEX",1)
+		asset_ids = AssetsCommandsApi().assets_snapshot
+		try:
+			cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
+		except IndexError:
+			return show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
+	
+		asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
+	
+		print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
+
+		code_content = asset_dict["raw"]
+		open_in_editor = kwargs.get('editor')
+		if not open_in_editor:
+			# Determine the lexer
 			try:
-				cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
-			except IndexError:
-				return show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
-		
-			asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
-		
-			print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
+				lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
+			except:
+				lexer = guess_lexer(code_content)
 
-			code_content = asset_dict["raw"]
-			open_in_editor = kwargs.get('editor')
-			if not open_in_editor:
-				# Determine the lexer
+			# Print the code with syntax highlighting
+			formatted_code = highlight(code_content, lexer, TerminalFormatter())
+			print("\nCode content:")
+			print(formatted_code)
+
+		# Check if -e flag is used or open_in_editor is True
+		if open_in_editor:
+			config = ConfigCommands.load_config()
+			editor = config.get('editor')
+			if editor:
+				# Save the code to a file in the default directory
+				file_path = export_code_to_file(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
+
+				# Open the file with the configured editor
 				try:
-					lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
-				except:
-					lexer = guess_lexer(code_content)
+					subprocess.run([editor, file_path], shell=True)
+				except Exception as e:
+					show_error("Error in opening",e)
 
-				# Print the code with syntax highlighting
-				formatted_code = highlight(code_content, lexer, TerminalFormatter())
-				print("\nCode content:")
-				print(formatted_code)
-
-			# Check if -e flag is used or open_in_editor is True
-			if open_in_editor:
-				config = ConfigCommands.load_config()
-				editor = config.get('editor')
-				if editor:
-					# Save the code to a file in the default directory
-					file_path = export_code_to_file(asset_dict["raw"], asset_dict["name"], asset_dict["language"])
-
-					# Open the file with the configured editor
-					try:
-						subprocess.run([editor, file_path], shell=True)
-					except Exception as e:
-						show_error("Error in opening",e)
-
-				else:
-					print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
+			else:
+				print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
 		
 
 	@classmethod
