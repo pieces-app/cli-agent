@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import patch, MagicMock,Mock
-from pieces.commands.list_command import ListCommand
+from pieces.commands.list_command import ListCommand , PiecesSelectMenu
 from pieces.settings import Settings
-from io import StringIO
+import io
 import sys
 
 class TestListCommand(unittest.TestCase):
