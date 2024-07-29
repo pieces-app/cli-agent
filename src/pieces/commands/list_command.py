@@ -78,7 +78,7 @@ class ListCommand:
             max_assets = 10
         
         if type == "assets":
-            cls.list_assets(max_assets)
+            cls.list_assets(**kwargs)
         elif type == "apps":
             cls.list_apps()
         elif type == "models":
@@ -86,12 +86,12 @@ class ListCommand:
 
     @classmethod
     @check_assets_existence
-    def list_assets(cls, max_assets: int = 10):
+    def list_assets(cls, max_assets: int = 10,**kwargs):
         assets_snapshot = AssetsCommandsApi().assets_snapshot
         assets = []
         for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
             asset = AssetsCommandsApi.get_asset_snapshot(uuid)
-            assets.append((f"{i}: {asset.name}", {"ITEM_INDEX":i,"show_warning":False}))
+            assets.append((f"{i}: {asset.name}", {"ITEM_INDEX":i,"show_warning":False,**kwargs})) # Pass the args to the open command
 
         select_menu = PiecesSelectMenu(assets, AssetsCommands.open_asset)
         select_menu.run()

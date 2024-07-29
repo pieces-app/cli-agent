@@ -21,10 +21,16 @@ class PiecesCLI:
 
     def add_subparsers(self):
 
+        # Subparser for the 'config' command
+        config_parser = self.command_parser.add_parser('config', help='Configure settings')
+        config_parser.add_argument('--editor',"-e",dest="editor", type=str, help='Set the default code editor')
+        config_parser.set_defaults(func=ConfigCommands.config)
+
         # Subparser for the 'lists' command
         list_parser = self.command_parser.add_parser('list', help='List the assets or apps or models')
         list_parser.add_argument('type', nargs='?', type=str ,default="assets", help='type of the list',choices=["assets","apps","models"])
         list_parser.add_argument('max_assets', nargs='?', type=int ,default=10, help='Max number of assets')
+        list_parser.add_argument("--editor","-e",dest="editor",action="store_true" ,default=False, help="Open the choosen asset in the editor")
         list_parser.set_defaults(func=ListCommand.list_command)
 
 

@@ -1,4 +1,9 @@
 # Changelog
+## July 26th,2024
+
+- Add the feature to print the code with syntax highlighting in the terminal
+- Add the feature allowing to configure favourite editor and open the code directly in editor of choice 
+
 ## July 24th, 2024
 
 - Add select menu for the list command
