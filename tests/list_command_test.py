@@ -4,6 +4,7 @@ from pieces.commands.list_command import ListCommand , PiecesSelectMenu
 from pieces.settings import Settings
 import io
 import sys
+import platform
 
 class TestListCommand(unittest.TestCase):
 
