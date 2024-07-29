@@ -21,14 +21,22 @@ class TestListCommand(unittest.TestCase):
             mock_list_models.assert_called_once()
 
     def test_list_apps(self):
+        # Determine the local OS
+        local_os = platform.system().upper()
+        if local_os in ["WINDOWS", "LINUX", "DARWIN"]:
+            local_os = "MACOS" if local_os == "DARWIN" else local_os
+        else:
+            local_os = "WEB"
+
         with patch('sys.stdout', new=io.StringIO()) as fake_out:
             with patch.object(ListCommand, 'list_apps') as mock_list_apps:
-                mock_list_apps.side_effect = lambda: print("1: VS_CODE, 1.17.0, MACOS\n2: PIECES_FOR_DEVELOPERS, 3.0.2, MACOS")
+                mock_list_apps.side_effect = lambda: print(f"1: VS_CODE, 1.17.0, {local_os}\n2: PIECES_FOR_DEVELOPERS, 3.0.2, {local_os}")
                 ListCommand.list_command(type='apps')
                 
             output = fake_out.getvalue().strip()
-            self.assertIn('1: VS_CODE, 1.17.0, MACOS', output)
-            self.assertIn('2: PIECES_FOR_DEVELOPERS, 3.0.2, MACOS', output)
+            self.assertIn(f'1: VS_CODE, 1.17.0, {local_os}', output)
+            self.assertIn(f'2: PIECES_FOR_DEVELOPERS, 3.0.2, {local_os}', output)
+
 
     def test_list_command_invalid_type(self):
         with patch('sys.stdout', new=io.StringIO()) as fake_out:
