@@ -19,6 +19,16 @@ class TestListCommand(unittest.TestCase):
             ListCommand.list_command(type='models')
             mock_list_models.assert_called_once()
 
+    def test_list_apps(self):
+        with patch('sys.stdout', new=io.StringIO()) as fake_out:
+            with patch.object(ListCommand, 'list_apps') as mock_list_apps:
+                mock_list_apps.side_effect = lambda: print("1: VS_CODE, 1.17.0, MACOS\n2: PIECES_FOR_DEVELOPERS, 3.0.2, MACOS")
+                ListCommand.list_command(type='apps')
+                
+            output = fake_out.getvalue().strip()
+            self.assertIn('1: VS_CODE, 1.17.0, MACOS', output)
+            self.assertIn('2: PIECES_FOR_DEVELOPERS, 3.0.2, MACOS', output)
+
 if __name__ == '__main__':
     unittest.main()
 
