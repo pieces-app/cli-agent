@@ -12,8 +12,8 @@ class TestListCommand(unittest.TestCase):
         with patch.object(ListCommand, 'list_assets') as mock_list_assets:
             ListCommand.list_command(type='assets', max_assets=5)
             mock_list_assets.assert_called_once_with(5)
-        @patch('builtins.print')
-        
+
+    @patch('builtins.print')
     def test_list_models(self, mock_print):
         with patch.object(ListCommand, 'list_models') as mock_list_models:
             ListCommand.list_command(type='models')
@@ -46,4 +46,5 @@ class TestListCommand(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
 
