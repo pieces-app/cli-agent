@@ -29,6 +29,21 @@ class TestListCommand(unittest.TestCase):
             self.assertIn('1: VS_CODE, 1.17.0, MACOS', output)
             self.assertIn('2: PIECES_FOR_DEVELOPERS, 3.0.2, MACOS', output)
 
+    def test_list_command_invalid_type(self):
+        with patch('sys.stdout', new=io.StringIO()) as fake_out:
+            with patch.object(ListCommand, 'list_assets') as mock_list_assets:
+                with patch.object(ListCommand, 'list_apps') as mock_list_apps:
+                    with patch.object(ListCommand, 'list_models') as mock_list_models:
+                        ListCommand.list_command(type='invalid_type')
+                        
+                        # Check that none of the methods were called
+                        self.assertFalse(mock_list_assets.called)
+                        self.assertFalse(mock_list_apps.called)
+                        self.assertFalse(mock_list_models.called)
+                        
+                        # Check that nothing was printed
+                        self.assertEqual(fake_out.getvalue(), '')
+
 if __name__ == '__main__':
     unittest.main()
 
