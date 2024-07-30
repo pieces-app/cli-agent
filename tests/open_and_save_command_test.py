@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from pieces.assets import AssetsCommands,AssetsCommandsApi
+from pieces.commands import ConfigCommands
 from pieces.settings import Settings
 import sys
 from io import StringIO
