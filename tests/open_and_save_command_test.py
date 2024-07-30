@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from pieces.assets import AssetsCommands,AssetsCommandsApi
 from pieces.settings import Settings
 import sys
@@ -7,6 +7,8 @@ from io import StringIO
 import random,os
 import json
 from pieces.utils import sanitize_filename
+from pygments.lexers import get_lexer_by_name, guess_lexer
+from pygments.util import ClassNotFound
 
 class TestOpenSaveCommand(unittest.TestCase):
     def test_open_command(self,ITEM_INDEX=None):
