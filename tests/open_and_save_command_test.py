@@ -21,18 +21,14 @@ class TestOpenSaveCommand(unittest.TestCase):
         AssetsCommandsApi.asset_api = self.mock_asset_api
         AssetsCommandsApi.format_api = self.mock_format_api
     
-    def test_open_command(self,ITEM_INDEX=None):
+    def test_open_command(self, ITEM_INDEX=None):
         Settings.startup()
         stdout = sys.stdout
         sys.stdout = StringIO()
-
-
         assets_length = len(AssetsCommandsApi().assets_snapshot)
-
-
         sys.stdout = StringIO()
         if not ITEM_INDEX:
-            ITEM_INDEX = random.randint(1,assets_length)
+            ITEM_INDEX = random.randint(1, assets_length)
 
         # Act
         AssetsCommands.open_asset(ITEM_INDEX = ITEM_INDEX)
