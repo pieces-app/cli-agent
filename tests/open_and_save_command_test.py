@@ -47,13 +47,12 @@ class TestOpenSaveCommand(unittest.TestCase):
         # Test 1: Verify that the code snippet is not empty
         self.assertTrue(code_snippet.strip(), "The code snippet should not be empty")
         # Test 2: Verify that the language is valid
-        is_valid_language, identified_language = self.verify_language_with_pygments(code_snippet)
+        is_valid_language, identified_language = self.verify_language(code_snippet)
         self.assertTrue(is_valid_language, f"The code snippet should be in a valid programming language. Identified as: {identified_language}")
         
         print("test_open_command passed successfully")
 
-
-    def verify_language_with_pygments(self, code_content):
+    def verify_language(self, code_content):
         try:
             # Try to guess the lexer based on the code content
             lexer = guess_lexer(code_content)
@@ -93,7 +92,6 @@ class TestOpenSaveCommand(unittest.TestCase):
         # Simulate updating the asset
         with patch('builtins.print'):  # Suppress print statements
             AssetsCommands.update_asset()
-        
 
         # Check if the code was saved
         updated_asset = AssetsCommandsApi.update_asset_snapshot(AssetsCommands.current_asset)
