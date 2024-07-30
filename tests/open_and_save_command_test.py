@@ -52,8 +52,14 @@ class TestOpenSaveCommand(unittest.TestCase):
 
         print("test_open_command passed successfully")
 
-
-
+     def verify_language_with_pygments(self, code_content):
+        try:
+            # Try to guess the lexer based on the code content
+            lexer = guess_lexer(code_content)
+            return True, lexer.name
+        except ClassNotFound:
+            # If we can't guess the lexer, assume the language is invalid
+            return False, "Unknown"
         
     @patch('builtins.input', side_effect=['y','y'])
     @patch('pyperclip.paste', return_value='print("Hello, World!")')
