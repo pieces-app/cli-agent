@@ -12,6 +12,15 @@ from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.util import ClassNotFound
 
 class TestOpenSaveCommand(unittest.TestCase):
+    def setUp(self):
+        Settings.startup()
+        self.mock_assets_api = MagicMock()
+        self.mock_asset_api = MagicMock()
+        self.mock_format_api = MagicMock()
+        AssetsCommandsApi.assets_api = self.mock_assets_api
+        AssetsCommandsApi.asset_api = self.mock_asset_api
+        AssetsCommandsApi.format_api = self.mock_format_api
+    
     def test_open_command(self,ITEM_INDEX=None):
         Settings.startup()
         stdout = sys.stdout
