@@ -89,6 +89,10 @@ class TestOpenSaveCommand(unittest.TestCase):
         mock_updated_asset = MagicMock()
         mock_updated_asset.formats.iterable[0].fragment.string.raw = 'print("Hello, World!")'
         self.mock_asset_api.asset_update.return_value = mock_updated_asset
+
+        # Simulate updating the asset
+        with patch('builtins.print'):  # Suppress print statements
+            AssetsCommands.update_asset()
         
 
         # Check if the code was saved
