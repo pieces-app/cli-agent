@@ -70,6 +70,9 @@ class TestOpenSaveCommand(unittest.TestCase):
         mock_new_asset.name = "Print Hello World in Python"
         self.mock_asset_api.asset_create.return_value = mock_new_asset
 
+        with patch('builtins.print'):  # Suppress print statements
+            AssetsCommands.create_asset()
+
         AssetsCommandsApi().assets_snapshot = {AssetsCommands.current_asset:None} # Update the asset cache
 
         code_snippet_path = self.test_open_command(ITEM_INDEX=1) # Open the created asset
