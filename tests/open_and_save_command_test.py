@@ -82,6 +82,7 @@ class TestOpenSaveCommand(unittest.TestCase):
         with patch('builtins.print'):  # Suppress print statements
             AssetsCommands.delete_asset()
 
+        print("test_save_command passed successfully")
 
 if __name__ == '__main__':
     unittest.main()
