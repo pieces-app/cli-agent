@@ -82,6 +82,13 @@ class TestOpenSaveCommand(unittest.TestCase):
         AssetsCommandsApi._assets_snapshot = {mock_new_asset.id: mock_new_asset}
         AssetsCommands.current_asset = mock_new_asset.id
 
+        with patch('pieces.assets.assets_command.open', create=True):
+            AssetsCommands.open_asset(ITEM_INDEX=1)
+
+        # Mock the update process
+        mock_updated_asset = MagicMock()
+        mock_updated_asset.formats.iterable[0].fragment.string.raw = 'print("Hello, World!")'
+        self.mock_asset_api.asset_update.return_value = mock_updated_asset
         
 
         # Check if the code was saved
