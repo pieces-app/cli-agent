@@ -63,11 +63,12 @@ class TestOpenSaveCommand(unittest.TestCase):
         
     @patch('builtins.input', side_effect=['y','y'])
     @patch('pyperclip.paste', return_value='print("Hello, World!")')
-    def test_save_command(self, mock_paste,mock_buildins):
-        Settings.startup()
-        TEXT = "TEST SNIPPET CODE"
-        # Call create_asset to create a new asset to test on
-        AssetsCommands.create_asset() # Create a hello world asset
+    def test_save_command(self, mock_paste, mock_buildins):
+        # Simulate creating a new asset
+        mock_new_asset = MagicMock()
+        mock_new_asset.id = 'new_asset_id'
+        mock_new_asset.name = "Print Hello World in Python"
+        self.mock_asset_api.asset_create.return_value = mock_new_asset
 
         AssetsCommandsApi().assets_snapshot = {AssetsCommands.current_asset:None} # Update the asset cache
 
