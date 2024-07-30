@@ -50,6 +50,9 @@ class TestOpenSaveCommand(unittest.TestCase):
         is_valid_language, identified_language = self.verify_language_with_pygments(code_snippet)
         self.assertTrue(is_valid_language, f"The code snippet should be in a valid programming language. Identified as: {identified_language}")
 
+        print("test_open_command passed successfully")
+
+
 
         
     @patch('builtins.input', side_effect=['y','y'])
