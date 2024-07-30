@@ -31,7 +31,8 @@ class TestOpenSaveCommand(unittest.TestCase):
             ITEM_INDEX = random.randint(1, assets_length)
 
         # Act
-        AssetsCommands.open_asset(ITEM_INDEX = ITEM_INDEX)
+        AssetsCommands.open_asset(ITEM_INDEX=ITEM_INDEX)
+        result_open = sys.stdout.getvalue()
 
         result_open = sys.stdout.getvalue()
         
