@@ -77,7 +77,10 @@ class TestOpenSaveCommand(unittest.TestCase):
         updated_asset = AssetsCommandsApi.update_asset_snapshot(AssetsCommands.current_asset)
         self.assertTrue(updated_asset.formats.iterable[0].fragment.string.raw, "Updated asset content is empty")
         print("Asset update successful")
-        
+
+        # Simulate deleting the asset
+        with patch('builtins.print'):  # Suppress print statements
+            AssetsCommands.delete_asset()
 
 
 if __name__ == '__main__':
