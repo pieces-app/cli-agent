@@ -33,3 +33,6 @@ class TestGitCommit(unittest.TestCase):
         self.mock_subprocess = patch('subprocess.run').start()
         
         self.mock_show_error = patch('pieces.gui.show_error').start()
+
+    def tearDown(self):
+        patch.stopall()
