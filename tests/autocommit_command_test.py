@@ -1,7 +1,10 @@
 import unittest
-from unittest.mock import patch,MagicMock
-from pieces.autocommit.autocommit import git_commit
+from unittest.mock import patch, MagicMock, call, ANY
+from pieces.autocommit.autocommit import git_commit, get_current_working_changes, get_issue_details, create_seeded_asset
 from pieces.settings import Settings
+from pieces_os_client.models.seeds import Seeds
+from pieces.gui import show_error
+
 
 class TestGitCommit(unittest.TestCase):
     @patch('pieces.autocommit.autocommit.subprocess.run')
