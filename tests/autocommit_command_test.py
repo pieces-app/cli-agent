@@ -36,3 +36,11 @@ class TestGitCommit(unittest.TestCase):
 
     def tearDown(self):
         patch.stopall()
+
+    def test_git_commit_basic(self):
+        git_commit(issue_flag=False, push=False)
+        self.mock_subprocess.assert_called_with(["git", "commit", "-m", ANY], check=True)
+        commit_message = self.mock_subprocess.call_args[0][0][3]
+        self.assertIn("feat:", commit_message)
+        self.assertIn("add new", commit_message)
+        self.assertIn("authentication", commit_message)
