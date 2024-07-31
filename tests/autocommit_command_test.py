@@ -65,3 +65,8 @@ class TestGitCommit(unittest.TestCase):
         self.assertIn("feat:", commit_message)
         self.assertIn("add new", commit_message)
         self.assertIn("authentication", commit_message)
+
+    def test_git_commit_change_message(self):
+        self.mock_input.side_effect = ['c', 'new commit message', 'y']
+        git_commit(issue_flag=False, push=False)
+        self.mock_subprocess.assert_called_with(["git", "commit", "-m", 'new commit message'], check=True)
