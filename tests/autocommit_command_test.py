@@ -54,3 +54,14 @@ class TestGitCommit(unittest.TestCase):
         self.assertIn("add new", commit_message)
         self.assertIn("authentication", commit_message)
         self.assertIn("(issue: #1)", commit_message)
+
+    def test_git_commit_with_push(self):
+        git_commit(issue_flag=False, push=True)
+        self.mock_subprocess.assert_has_calls([
+            call(["git", "commit", "-m", ANY], check=True),
+            call(["git", "push"])
+        ])
+        commit_message = self.mock_subprocess.call_args_list[0][0][0][3]
+        self.assertIn("feat:", commit_message)
+        self.assertIn("add new", commit_message)
+        self.assertIn("authentication", commit_message)
