@@ -201,6 +201,8 @@ pieces search query --mode fts
 
 Examines all words in a document to find matches to search criteria.
 
+**Note**: For the larger queries , enclose the query in quotes.
+
 ##### change the llm model you are using:
 
 Change the model in the ask command.
