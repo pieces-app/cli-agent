@@ -97,3 +97,8 @@ class TestGitCommit(unittest.TestCase):
         self.assertIn("feat:", commit_message)
         self.assertIn("add new", commit_message)
         self.assertIn("authentication", commit_message)
+
+    def test_git_commit_no_changes(self):
+        self.mock_get_changes.return_value = (None, None)
+        git_commit(issue_flag=False, push=False)
+        print(".No changes found")
