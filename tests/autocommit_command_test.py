@@ -102,3 +102,11 @@ class TestGitCommit(unittest.TestCase):
         self.mock_get_changes.return_value = (None, None)
         git_commit(issue_flag=False, push=False)
         print(".No changes found")
+
+    def test_get_current_working_changes(self):
+        with patch('subprocess.run') as mock_run:
+            mock_run.return_value = MagicMock(stdout="diff --git a/file1.py b/file1.py\n+new line\n-old line")
+            summary, seeds = get_current_working_changes()
+            self.assertIn("File modified: **file1.py**", summary)
+            self.assertIsInstance(seeds, Seeds)
+            self.assertEqual(len(seeds.iterable), 1)
