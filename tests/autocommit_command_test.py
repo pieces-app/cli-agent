@@ -110,3 +110,18 @@ class TestGitCommit(unittest.TestCase):
             self.assertIn("File modified: **file1.py**", summary)
             self.assertIsInstance(seeds, Seeds)
             self.assertEqual(len(seeds.iterable), 1)
+
+    @patch('pieces.autocommit.autocommit.QGPTApi')
+    def test_get_issue_details(self, mock_qgpt_api):
+        mock_answer = MagicMock()
+        mock_answer.text = 'Issue: 1'
+        mock_api_response = MagicMock()
+        mock_api_response.answer.answers.iterable = [mock_answer]
+        mock_qgpt_api.return_value.relevance.return_value = mock_api_response
+
+        seeds = Seeds(iterable=[create_seeded_asset("/path/to/file1.py", "content1")])
+        issue_number, issue_title, issue_markdown = get_issue_details(seeds)
+
+        self.assertEqual(issue_number, 1)
+        self.assertEqual(issue_title, "issue1")
+        self.assertIn("Issue_number: 1", issue_markdown)
