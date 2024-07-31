@@ -37,6 +37,7 @@ class TestGitCommit(unittest.TestCase):
     def tearDown(self):
         patch.stopall()
 
+    #Test 1 : git_commit_basic
     def test_git_commit_basic(self):
         git_commit(issue_flag=False, push=False)
         self.mock_subprocess.assert_called_with(["git", "commit", "-m", ANY], check=True)
@@ -45,6 +46,7 @@ class TestGitCommit(unittest.TestCase):
         self.assertIn("add new", commit_message)
         self.assertIn("authentication", commit_message)
 
+    #Test 2 : git_commit_with_issue
     def test_git_commit_with_issue(self):
         self.mock_input.side_effect = ['y', 'y', '1', 'y']
         git_commit(issue_flag=True, push=False)
@@ -55,6 +57,7 @@ class TestGitCommit(unittest.TestCase):
         self.assertIn("authentication", commit_message)
         self.assertIn("(issue: #1)", commit_message)
 
+    #Test 3 : git_commit_with_push
     def test_git_commit_with_push(self):
         git_commit(issue_flag=False, push=True)
         self.mock_subprocess.assert_has_calls([
@@ -66,16 +69,19 @@ class TestGitCommit(unittest.TestCase):
         self.assertIn("add new", commit_message)
         self.assertIn("authentication", commit_message)
 
+    #Test 4 : git_commit_change_message
     def test_git_commit_change_message(self):
         self.mock_input.side_effect = ['c', 'new commit message', 'y']
         git_commit(issue_flag=False, push=False)
         self.mock_subprocess.assert_called_with(["git", "commit", "-m", 'new commit message'], check=True)
 
+    #Test 5 : git_commit_cancel
     def test_git_commit_cancel(self):
         self.mock_input.side_effect = ['n']
         git_commit(issue_flag=False, push=False)
         self.mock_subprocess.assert_not_called()
 
+    #Test 6 : git_commit_all_flag
     def test_git_commit_all_flag(self):
         git_commit(all_flag=True, issue_flag=False, push=False)
         self.mock_subprocess.assert_has_calls([
@@ -87,6 +93,7 @@ class TestGitCommit(unittest.TestCase):
         self.assertIn("add new", commit_message)
         self.assertIn("authentication", commit_message)
 
+    #Test 7 : git_commit_no_related_issue
     @patch('pieces.autocommit.autocommit.get_issue_details')
     def test_git_commit_no_related_issue(self, mock_get_issue_details):
         mock_get_issue_details.return_value = (None, None, "Issue markdown")
@@ -98,11 +105,13 @@ class TestGitCommit(unittest.TestCase):
         self.assertIn("add new", commit_message)
         self.assertIn("authentication", commit_message)
 
+    #Test 8 : git_commit_no_changes
     def test_git_commit_no_changes(self):
         self.mock_get_changes.return_value = (None, None)
         git_commit(issue_flag=False, push=False)
         print(".No changes found")
 
+    #Test 9 : get_current_working_changes
     def test_get_current_working_changes(self):
         with patch('subprocess.run') as mock_run:
             mock_run.return_value = MagicMock(stdout="diff --git a/file1.py b/file1.py\n+new line\n-old line")
@@ -111,6 +120,7 @@ class TestGitCommit(unittest.TestCase):
             self.assertIsInstance(seeds, Seeds)
             self.assertEqual(len(seeds.iterable), 1)
 
+    #Test 10 : get_issue_details
     @patch('pieces.autocommit.autocommit.QGPTApi')
     def test_get_issue_details(self, mock_qgpt_api):
         mock_answer = MagicMock()
