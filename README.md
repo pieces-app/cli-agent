@@ -130,7 +130,7 @@ You can configure an external editor to open assets for editing. Use the followi
 
 ##### Save, Create, Edit, and Delete Assets
 
-The save create edit and delete commands currrently work on the current asset which is by defualt set to the most recent one and you can change the current asset to anything using the open command above.
+The save create edit and delete commands currently work on the current asset which is by defualt set to the most recent one and you can change the current asset to anything using the open command above.
 
 
 ##### Save the current asset:
