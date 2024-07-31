@@ -125,3 +125,6 @@ class TestGitCommit(unittest.TestCase):
         self.assertEqual(issue_number, 1)
         self.assertEqual(issue_title, "issue1")
         self.assertIn("Issue_number: 1", issue_markdown)
+
+if __name__ == '__main__':
+    unittest.main()
