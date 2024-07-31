@@ -70,3 +70,8 @@ class TestGitCommit(unittest.TestCase):
         self.mock_input.side_effect = ['c', 'new commit message', 'y']
         git_commit(issue_flag=False, push=False)
         self.mock_subprocess.assert_called_with(["git", "commit", "-m", 'new commit message'], check=True)
+
+    def test_git_commit_cancel(self):
+        self.mock_input.side_effect = ['n']
+        git_commit(issue_flag=False, push=False)
+        self.mock_subprocess.assert_not_called()
