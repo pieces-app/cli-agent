@@ -117,8 +117,17 @@ To list assets applications or models, use the command:
 Opens an asset from a list or search. If only "open" is used then it will open your most recent asset. This also creates a link to the asset's code.
 
 ```bash
-pieces open [ITEM_INDEX]
+pieces open [ITEM_INDEX] [-e]
 ```
+
+```-e``` is an optional flag . It Opens the asset in the configured external editor. Editor of choice can be configured using config command.
+
+##### Editor Configuration:
+
+You can configure an external editor to open assets for editing. Use the following command to set your preferred editor:
+
+```pieces config editor <editor_command>```
+
 ##### Save, Create, Edit, and Delete Assets
 
 The save create edit and delete commands currrently work on the current asset which is by defualt set to the most recent one and you can change the current asset to anything using the open command above.
