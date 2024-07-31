@@ -86,3 +86,14 @@ class TestGitCommit(unittest.TestCase):
         self.assertIn("feat:", commit_message)
         self.assertIn("add new", commit_message)
         self.assertIn("authentication", commit_message)
+
+    @patch('pieces.autocommit.autocommit.get_issue_details')
+    def test_git_commit_no_related_issue(self, mock_get_issue_details):
+        mock_get_issue_details.return_value = (None, None, "Issue markdown")
+        self.mock_input.side_effect = ['y', '']
+        git_commit(issue_flag=True, push=False)
+        self.mock_subprocess.assert_called_with(["git", "commit", "-m", ANY], check=True)
+        commit_message = self.mock_subprocess.call_args[0][0][3]
+        self.assertIn("feat:", commit_message)
+        self.assertIn("add new", commit_message)
+        self.assertIn("authentication", commit_message)
