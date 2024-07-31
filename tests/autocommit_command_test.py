@@ -75,3 +75,14 @@ class TestGitCommit(unittest.TestCase):
         self.mock_input.side_effect = ['n']
         git_commit(issue_flag=False, push=False)
         self.mock_subprocess.assert_not_called()
+
+    def test_git_commit_all_flag(self):
+        git_commit(all_flag=True, issue_flag=False, push=False)
+        self.mock_subprocess.assert_has_calls([
+            call(["git", "add", "-A"], check=True),
+            call(["git", "commit", "-m", ANY], check=True)
+        ])
+        commit_message = self.mock_subprocess.call_args_list[1][0][0][3]
+        self.assertIn("feat:", commit_message)
+        self.assertIn("add new", commit_message)
+        self.assertIn("authentication", commit_message)
