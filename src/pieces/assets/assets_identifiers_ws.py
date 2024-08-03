@@ -104,4 +104,3 @@ class AssetsIdentifiersWS(BaseWebsocket):
     def close_all(cls):
         """Close all websocket connections."""
         super().close_all()
-
