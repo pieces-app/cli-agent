@@ -3,6 +3,8 @@ import pieces_os_client as pos_client
 import websocket
 from pieces.settings import Settings
 import threading
+from abc import ABC, abstractmethod
+
 
 
 class AssetsIdentifiersWS:
