@@ -14,13 +14,6 @@ class AssetsIdentifiersWS(BaseWebsocket):
             cls.instance = super(AssetsIdentifiersWS, cls).__new__(cls)
         return cls.instance
 
-    def __init__(self, on_message_callback):
-        super().__init__(on_message_callback)
-        self.ws = None
-        self.loop = asyncio.new_event_loop()
-        self.thread = threading.Thread(target=self.open_websocket)
-        self.thread.start()
-
     @property
     def url(self):
         return Settings.ASSETS_IDENTIFIERS_WS_URL
