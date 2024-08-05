@@ -1,4 +1,3 @@
-import asyncio
 import pieces_os_client as pos_client
 import websocket
 from pieces.settings import Settings
