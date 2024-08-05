@@ -3,6 +3,9 @@ import pieces_os_client as pos_client
 import websocket
 from pieces.settings import Settings
 import threading
+from base_websocket import BaseWebsocket
+import json
+from typing import Dict ,Any
 
 
 class AssetsIdentifiersWS:
