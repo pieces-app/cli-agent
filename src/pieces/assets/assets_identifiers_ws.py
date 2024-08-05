@@ -8,29 +8,28 @@ import json
 from typing import Dict ,Any
 
 
-class AssetsIdentifiersWS:
-    def __new__(cls,*args,**kwargs):
+class AssetsIdentifiersWS(BaseWebsocket):
+    def __new__(cls, *args, **kwargs):
         if not hasattr(cls, 'instance'):
             cls.instance = super(AssetsIdentifiersWS, cls).__new__(cls)
         return cls.instance
-    
+
     def __init__(self, on_message_callback):
+        super().__init__(on_message_callback)
         self.ws = None
-        self.on_message_callback = on_message_callback
-
-        # Create a new event loop
         self.loop = asyncio.new_event_loop()
-
-        # Run the event loop in a new thread
         self.thread = threading.Thread(target=self.open_websocket)
         self.thread.start()
-    
+
+    @property
+    def url(self):
+        return Settings.ASSETS_IDENTIFIERS_WS_URL
 
     def open_websocket(self):
         """Opens a websocket connection"""
-        if self.ws: # connect only once
+        if self.ws:  # connect only once
             return
-        self.ws = websocket.WebSocketApp(Settings.ASSETS_IDENTIFIERS_WS_URL,
+        self.ws = websocket.WebSocketApp(self.url,
                                          on_message=self.on_message,
                                          on_error=self.on_error,
                                          on_close=self.on_close)
@@ -39,7 +38,8 @@ class AssetsIdentifiersWS:
 
     def on_message(self, ws, message):
         """Handle incoming websocket messages."""
-        self.on_message_callback(pos_client.StreamedIdentifiers.from_json(message))
+        streamed_identifiers = pos_client.StreamedIdentifiers.from_json(message)
+        self.on_message_callback(streamed_identifiers)
 
     def on_error(self, ws, error):
         """Handle websocket errors."""
