@@ -13,6 +13,16 @@ class AskWebsocket(BaseWebsocket):
             cls.instance = super(AskWebsocket, cls).__new__(cls)
         return cls.instance
 
+    def __init__(self, on_message_callback=None):
+        super().__init__(on_message_callback)
+        self.model_id = ""
+        self.query = ""
+        self.final_answer = ""
+        self.conversation = None
+        self.verbose = True
+        self.live = Live()
+        self.message_completed = threading.Event()
+
     @property
     def url(self):
         return Settings.ASK_WEBSOCKET_URL
