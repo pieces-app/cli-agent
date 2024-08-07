@@ -69,7 +69,6 @@ class AskWebsocket(BaseWebsocket):
         super().on_close(ws, close_status_code, close_msg)
 
     def on_open(self, ws):
-        print("AskWebsocket connection opened")
         super().on_open(ws)
 
     def _start_ws(self):
