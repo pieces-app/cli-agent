@@ -65,7 +65,6 @@ class AskWebsocket(BaseWebsocket):
         super().on_error(ws, error)
 
     def on_close(self, ws, close_status_code, close_msg):
-        print(f"AskWebsocket closed. Status code: {close_status_code}, Message: {close_msg}")
         super().on_close(ws, close_status_code, close_msg)
 
     def on_open(self, ws):
