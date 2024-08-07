@@ -1,10 +1,10 @@
 import websocket
 import threading
 from abc import ABC, abstractmethod
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable , Self
 
 class BaseWebsocket(ABC):
-    instances: List['BaseWebsocket'] = []
+    instances: List[Self] = []
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, 'instance'):
