@@ -18,6 +18,12 @@ on:
         required: true
       credentials_json:
         required: false
+      apple_app_specific_password:
+        required: false
+      fastlane_password:
+        required: false
+      match_password:
+        required: false
 
 jobs:
   build:
@@ -75,6 +81,41 @@ jobs:
       - name: Build stand alone
         run: |
           poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces
+
+      ### Setting up our fastlane certificates
+      - name: Setup Certificates
+        run: |-
+          cd macos
+          bundle install
+          bundle exec fastlane setup
+        env:
+          MATCH_PASSWORD: ${{ secrets.match_password }}
+          FASTLANE_PASSWORD: ${{ secrets.fastlane_password }}
+
+      ### Codesign Binary Macos
+      - name: Codesign Binary Macos
+        run: |
+          codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements macos/Release.entitlements --timestamp -f dist/pieces
+
+      ### Binary to Zip file
+      - name: Mac Binary to Zip File
+        run: |
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          then
+              ditto -c -k --sequesterRsrc "dist/pieces" dist/pieces-cli-mac-${{ steps.staging_version.outputs.RELEASE_VERSION }}.zip
+          else
+              ditto -c -k --sequesterRsrc "dist/pieces" dist/pieces-cli-mac-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
+          fi
+
+      ### Submission to apple notary
+      - name: Submit Zip to apple notary
+        run: |
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          then
+              xcrun notarytool submit dist/pieces-cli-mac-${{ steps.staging_version.outputs.RELEASE_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+          else
+              xcrun notarytool submit dist/pieces-cli-mac-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+          fi
 
       ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
       - name: Write staging version to file
@@ -179,6 +220,7 @@ jobs:
           gsutil -h "Cache-Control: max-age=0" cp latest-single.json gs://$BUCKET/pieces_cli/$CHANNEL/latest-single.json
           gsutil -h "Cache-Control: max-age=0" cp latest.json gs://$BUCKET/pieces_cli/$CHANNEL/latest.json
           gsutil cp -r **.tar.gz gs://$BUCKET/pieces_cli/release/
+          gsutil cp -r **.zip gs://$BUCKET/pieces_cli/release/
           gsutil cp -r **.whl gs://$BUCKET/pieces_cli/release/
           echo "releasetag=$VERSION" >> $GITHUB_ENV
 
@@ -190,6 +232,7 @@ jobs:
           files: |
             **.tar.gz
             **.whl
+            **.zip
           fail_on_unmatched_files: true
           name: ${{ env.releasetag }}
           tag_name: ${{ env.releasetag }}
@@ -204,6 +247,7 @@ jobs:
           files: |
             **.tar.gz
             **.whl
+            **.zip
           fail_on_unmatched_files: true
           name: ${{ env.releasetag }}
           tag_name: ${{ env.releasetag }}
