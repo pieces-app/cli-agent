@@ -82,6 +82,14 @@ jobs:
         run: |
           poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces
 
+      ### Install SSH
+      - uses: shimataro/ssh-key-action@v2
+        with:
+          key: "${{ secrets.ssh_private_key }}"
+          name: id_rsa
+          known_hosts: "github.com"
+          if_key_exists: fail
+
       ### Setting up our fastlane certificates
       - name: Setup Certificates
         run: |-
