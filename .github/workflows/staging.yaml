@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - test_mac_binary
 
 jobs:
   build:
@@ -14,5 +15,8 @@ jobs:
       access_token: ${{ secrets.GITHUB_TOKEN }}
       pypi_token: ${{ secrets.PYPI_TOKEN }}
       pypi_test_token: ${{ secrets.PYPI_TEST_TOKEN }}
-      ssh_private_key: ${{ secrets.PIECES_GITHUB_SSH }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
       credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      apple_app_specific_password: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      fastlane_password: ${{ secrets.FASTLANE_PASSWORD }}
+      match_password: ${{ secrets.MATCH_PASSWORD }}

@@ -1,0 +1,11 @@
+git_url("git@github.com:pieces-app/apple_certs.git")
+
+platform("macos")
+
+storage_mode("git")
+
+type("developer_id") # The default type, can be: appstore, adhoc, enterprise or development
+
+username("development@pieces.app")
+
+app_identifier("com.pieces.cli")
