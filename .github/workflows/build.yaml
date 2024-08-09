@@ -95,7 +95,7 @@ jobs:
         run: |-
           cd macos
           bundle install
-          bundle exec fastlane setup
+          bundle exec fastlane setup --readonly
         env:
           MATCH_PASSWORD: ${{ secrets.match_password }}
           FASTLANE_PASSWORD: ${{ secrets.fastlane_password }}
