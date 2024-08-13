@@ -43,3 +43,20 @@ class ExecuteCommand:
         # Create the menu with our custom callback
         select_menu = PiecesSelectMenu(assets, custom_callback)
         select_menu.run()
+
+        @classmethod
+    def ask_and_execute(cls, **kwargs):
+        item_index = kwargs.get("ITEM_INDEX")
+        
+        # Get the asset using AssetsCommandsApi
+        assets_snapshot = AssetsCommandsApi().assets_snapshot
+        try:
+            uuid = list(assets_snapshot.keys())[item_index-1]
+        except IndexError:
+            print("Invalid asset index.")
+            return
+
+        asset = AssetsCommandsApi.get_asset_snapshot(uuid)
+        asset_dict = AssetsCommandsApi.extract_asset_info(asset)
+        
+        cls.execute_in_shell(asset_dict["raw"])
