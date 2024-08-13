@@ -60,3 +60,17 @@ class ExecuteCommand:
         asset_dict = AssetsCommandsApi.extract_asset_info(asset)
         
         cls.execute_in_shell(asset_dict["raw"])
+
+    @staticmethod
+    def execute_in_shell(command):
+        try:
+            result = subprocess.run(shlex.split(command), capture_output=True, text=True, shell=True)
+            print("\nExecution result:")
+            print(result.stdout)
+            if result.stderr:
+                print("Errors:")
+                print(result.stderr)
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing command: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
