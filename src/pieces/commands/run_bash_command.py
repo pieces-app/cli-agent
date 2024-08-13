@@ -32,3 +32,13 @@ class ExecuteCommand:
         for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
             asset = AssetsCommandsApi.get_asset_snapshot(uuid)
             assets.append((f"{i}: {asset.name}", {"ITEM_INDEX": i, "UUID": uuid}))
+        # Create a custom callback that combines the original functionality and our new functionality
+        def custom_callback(**kwargs):
+            # Call the original open_asset function
+            AssetsCommands.open_asset(**kwargs)
+            # Then call our ask_and_execute function
+            cls.ask_and_execute(**kwargs)
+
+        # Create the menu with our custom callback
+        select_menu = PiecesSelectMenu(assets, custom_callback)
+        select_menu.run()
