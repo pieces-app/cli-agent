@@ -19,3 +19,16 @@ class ExecuteCommand:
         
         if type == "assets":
             cls.execute_assets(max_assets)
+
+    @classmethod
+    @check_assets_existence
+    def execute_assets(cls, max_assets: int = 10):
+        # Use ListCommand to get the assets
+        list_command = ListCommand()
+        
+        # Get the assets
+        assets_snapshot = AssetsCommandsApi().assets_snapshot
+        assets = []
+        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
+            asset = AssetsCommandsApi.get_asset_snapshot(uuid)
+            assets.append((f"{i}: {asset.name}", {"ITEM_INDEX": i, "UUID": uuid}))
