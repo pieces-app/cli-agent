@@ -44,7 +44,7 @@ class ExecuteCommand:
         select_menu = PiecesSelectMenu(assets, custom_callback)
         select_menu.run()
 
-        @classmethod
+    @classmethod
     def ask_and_execute(cls, **kwargs):
         item_index = kwargs.get("ITEM_INDEX")
         
@@ -58,6 +58,7 @@ class ExecuteCommand:
 
         asset = AssetsCommandsApi.get_asset_snapshot(uuid)
         asset_dict = AssetsCommandsApi.extract_asset_info(asset)
+
         
         cls.execute_in_shell(asset_dict["raw"])
 
