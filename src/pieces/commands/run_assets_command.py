@@ -39,3 +39,10 @@ class ExecuteCommand:
 
         select_menu = PiecesSelectMenu(shell_assets, custom_callback)
         select_menu.run()
+
+    @staticmethod
+    def get_asset_classification(asset):
+        try:
+            return asset.original.reference.classification.specific.value
+        except AttributeError:
+            return "unknown"
