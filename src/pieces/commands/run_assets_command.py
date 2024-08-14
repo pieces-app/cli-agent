@@ -46,3 +46,11 @@ class ExecuteCommand:
             return asset.original.reference.classification.specific.value
         except AttributeError:
             return "unknown"
+
+    @classmethod
+    def execute_asset(cls, **kwargs):
+        uuid = kwargs.get("UUID")
+        asset = AssetsCommandsApi.get_asset_snapshot(uuid)
+        asset_dict = AssetsCommandsApi.extract_asset_info(asset)
+        
+        cls.execute_command_in_subprocess(asset_dict["raw"])
