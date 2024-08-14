@@ -54,3 +54,18 @@ class ExecuteCommand:
         asset_dict = AssetsCommandsApi.extract_asset_info(asset)
         
         cls.execute_command_in_subprocess(asset_dict["raw"])
+
+    @staticmethod
+    def execute_command_in_subprocess(command: str):
+        try:
+            result = subprocess.run(command, shell=True, capture_output=True, text=True)
+            
+            print("\nExecuting shell command:")
+            print(result.stdout)
+            if result.stderr:
+                print("Errors:")
+                print(result.stderr)
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing command: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
