@@ -8,6 +8,7 @@ from pieces.assets.assets_command import AssetsCommands
 
 class AssetClassification(Enum):
     SHELL = "sh"
+    BASH = "bat"  # Added BASH classification
 
 class ExecuteCommand:
     @classmethod
@@ -16,28 +17,24 @@ class ExecuteCommand:
         if max_assets < 1:
             print("Max assets must be greater than 0")
             max_assets = 10
-
         assets_snapshot = AssetsCommandsApi().assets_snapshot
-        shell_assets = []
+        assets = []
         
-        for i, uuid in enumerate(list(assets_snapshot.keys()), start=1):
+        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
             asset = AssetsCommandsApi.get_asset_snapshot(uuid)
             classification = cls.get_asset_classification(asset)
-            if classification == AssetClassification.SHELL.value:
-                shell_assets.append((f"{len(shell_assets) + 1}: {asset.name}", {"ITEM_INDEX": i, "UUID": uuid, "CLASSIFICATION": classification}))
-            
-            if len(shell_assets) == max_assets:
-                break
-
-        if not shell_assets:
-            print("No shell assets found")
+            if classification in [AssetClassification.SHELL.value, AssetClassification.BASH.value]:
+                assets.append((f"{i}: {asset.name}", {"ITEM_INDEX": i, "UUID": uuid, "CLASSIFICATION": classification}))
+        
+        if not assets:
+            print("No shell or bash assets found")
             return
-
+        
         def custom_callback(**kwargs):
             AssetsCommands.open_asset(**kwargs)
             cls.execute_asset(**kwargs)
-
-        select_menu = PiecesSelectMenu(shell_assets, custom_callback)
+        
+        select_menu = PiecesSelectMenu(assets, custom_callback)
         select_menu.run()
 
     @staticmethod
@@ -50,17 +47,24 @@ class ExecuteCommand:
     @classmethod
     def execute_asset(cls, **kwargs):
         uuid = kwargs.get("UUID")
+        classification = kwargs.get("CLASSIFICATION")
         asset = AssetsCommandsApi.get_asset_snapshot(uuid)
         asset_dict = AssetsCommandsApi.extract_asset_info(asset)
         
-        cls.execute_command_in_subprocess(asset_dict["raw"])
+        cls.execute_command_in_subprocess(asset_dict["raw"], classification)
 
     @staticmethod
-    def execute_command_in_subprocess(command: str):
+    def execute_command_in_subprocess(command: str, classification: str):
         try:
-            result = subprocess.run(command, shell=True, capture_output=True, text=True)
+            if classification == AssetClassification.BASH.value:
+                result = subprocess.run(['bash', '-c', command], capture_output=True, text=True)
+            elif classification == AssetClassification.SHELL.value:
+                result = subprocess.run(command, shell=True, capture_output=True, text=True)
+            else:
+                print(f"Unsupported asset classification: {classification}")
+                return
             
-            print("\nExecuting shell command:")
+            print(f"\nExecuting {classification} command:")
             print(result.stdout)
             if result.stderr:
                 print("Errors:")
@@ -69,3 +73,6 @@ class ExecuteCommand:
             print(f"Error executing command: {e}")
         except Exception as e:
             print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    ExecuteCommand.execute_command()
