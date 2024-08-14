@@ -55,6 +55,11 @@ class PiecesCLI:
         run_parser = self.command_parser.add_parser('run', help='Runs CLI in a loop')
         run_parser.set_defaults(func=loop)
 
+        # Subparser for the 'execute' command
+        execute_parser = self.command_parser.add_parser('execute', help='Execute shell or bash assets')
+        execute_parser.add_argument('max_assets', nargs='?', type=int, default=10, help='Max number of assets to display')
+        execute_parser.set_defaults(func=ExecuteCommand.execute_command)
+
         # Subparser for the 'edit' command
         edit_parser = self.command_parser.add_parser('edit', help='Edit an existing asset')
         edit_parser.add_argument('--name',"-n",dest='name', help='New name for the asset', required=False)
