@@ -32,3 +32,10 @@ class ExecuteCommand:
         if not shell_assets:
             print("No shell assets found")
             return
+
+        def custom_callback(**kwargs):
+            AssetsCommands.open_asset(**kwargs)
+            cls.execute_asset(**kwargs)
+
+        select_menu = PiecesSelectMenu(shell_assets, custom_callback)
+        select_menu.run()
