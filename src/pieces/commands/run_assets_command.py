@@ -30,11 +30,11 @@ class ExecuteCommand:
             print("No shell or bash assets found")
             return
         
-        def custom_callback(**kwargs):
+        def open_and_execute_asset(**kwargs):
             AssetsCommands.open_asset(**kwargs)
             cls.execute_asset(**kwargs)
         
-        select_menu = PiecesSelectMenu(assets, custom_callback)
+        select_menu = PiecesSelectMenu(assets, open_and_execute_asset)
         select_menu.run()
 
     @staticmethod
