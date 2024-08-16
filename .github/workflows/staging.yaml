@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - test_mac_binary
+      - mac-universal
 
 jobs:
   build:
