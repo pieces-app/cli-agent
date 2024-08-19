@@ -7,8 +7,10 @@
 
 </p>
   
-##### <p align="center"> [Website](https://pieces.app/) • [Pieces OS Documentation](https://docs.pieces.app/) • [Pieces Python CLI Documentation](https://github.com/pieces-app/cli-agent/blob/prod/Documentation.md)
+##### <p align="center"> [Website](https://pieces.app/) • [Pieces OS Documentation](https://docs.pieces.app/) • [Pieces Python CLI Documentation](https://docs.pieces.app/extensions-plugins/cli)
 </p>
+
+[![Introducing CLI](https://img.youtube.com/vi/kAgwHMxWY8c/0.jpg)](https://www.youtube.com/watch?v=kAgwHMxWY8c)
 
 # Important
 
@@ -70,96 +72,7 @@ After installing the CLI tool, you can access its functionalities through the te
 
 
 ### Usage
-
-#### Run
-The run command starts the CLI in a loop. While you can use each command without running the CLI in a loop you'll get much faster results and a better experience using run. 
-
-Once the CLI is running in a loop you can simply type the command.
-
-    For instance: 
-    open
-
-    Instead of: 
-    pieces open
-
-If you have a numbered list or search open you can just type the number and it will open the asset associated. 
-
-```bash
-  pieces run
-  ```
-
-#### List command
-To list assets applications or models, use the command:
-
-##### Default of 10 assets
-  ```bash
-  pieces list
-  ```
-
-##### Lists your x most recent assets
-  ```bash
-  pieces list assets x
-  ```
-
-##### Lists all registered applications
-  ```bash
-  pieces list apps
-  ```
-
-##### Lists all accessible AI models 
-  ```bash
-  pieces list models
-  ```
-
-
-##### Open an asset:
-
-Opens an asset from a list or search. If only "open" is used then it will open your most recent asset. This also creates a link to the asset's code.
-
-```bash
-pieces open [ITEM_INDEX] [-e]
-```
-
-```-e``` is an optional flag . It Opens the asset in the configured external editor. Editor of choice can be configured using config command.
-
-##### Editor Configuration:
-
-You can configure an external editor to open assets for editing. Use the following command to set your preferred editor:
-
-```pieces config editor <editor_command>```
-
-##### Save, Create, Edit, and Delete Assets
-
-The save create edit and delete commands currently work on the current asset which is by defualt set to the most recent one and you can change the current asset to anything using the open command above.
-
-
-##### Save the current asset:
-
-You need to edit the snippet code that was opened via the open command `pieces open` then save the changes to using the save command
-
-```bash
-pieces save
-```
-
-##### Create a new asset:
-
-Will take whatever text is copied to your clipboard and create an asset. The asset will automatically be scanned and recognized for it's file type. 
-
-```bash
-pieces create
-```
-
-##### Edit an existing asset:
-
-This will edit the name and reclassify the current asset.
-
-```bash
-pieces edit
-```
-This is used to edit both the classification and name of an asset.
-
-
-```bash
+sh
 pieces edit --name "new name"
 ```
 to edit the name
