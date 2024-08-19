@@ -16,24 +16,6 @@
 
 Make sure you have [**Pieces OS**](https://docs.pieces.app/installation-getting-started/what-am-i-installing) installed in order to run the Pieces CLI tool.
 
-## Table of Contents
-- [Operating System Support](#operating-system-support)
-- [Installing](#installing)
-- [Getting Started](#getting-started)
-- [Terminologies](#some-important-terminologies)
-- [Usage](#usage)
-  - [Run](#run)
-  - [List (assets,apps,models)](#list-command)
-  - [Open, Save, Create, Edit, and Delete Assets](#open)
-  - [Search and Query](#search-and-query)
-  - [Change the model](#change-the-llm-model-you-are-using)
-  - [conversations/conversation](#conversations-command)
-  - [Change Model](#change-model)
-  - [Ask a Question](#ask-a-question-to-a-model)
-  - [login and logout](#login-and-logout)
-  - [Additional Commands](#additional-commands)
-- [Supported Versions](#supported-versions)
-
 #### Operating System Support
 The Pieces Python CLI Tool is compatible with various operating systems, ensuring a wide range of usage and adaptability. While it offers full support across most systems, specific features might have varied performance based on the OS environment.
 
@@ -42,7 +24,7 @@ The CLI Supports
 - Mac
 - Windows
 
-#### Installing
+## Installing
 To get started with the Pieces Python CLI Tool, you need to:
 
 1. Ensure Pieces OS is installed and running on your system.
@@ -60,7 +42,7 @@ To get started with the Pieces Python CLI Tool, you need to:
    conda install pieces-cli
    ```
 
-#### Getting Started
+## Getting Started
 After installing the CLI tool, you can access its functionalities through the terminal. The tool is initialized with the command `pieces` followed by various subcommands and options.
 
 
