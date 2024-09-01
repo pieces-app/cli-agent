@@ -223,7 +223,7 @@ class Settings:
 		bool: True if the health status is 'ok', False otherwise.
 		"""
 		try:
-			health = WellKnownApi(cls.api_client).get_well_known_health()
-			return health == "ok"
-		except Exception as e:
-			return False
+            		return self.well_known_api.get_well_known_health_with_http_info().status_code == 200
+	        except:
+	            pass
+	        return False
