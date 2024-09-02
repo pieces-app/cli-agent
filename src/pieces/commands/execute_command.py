@@ -1,19 +1,13 @@
-from pieces.settings import Settings
-from pieces.assets import check_assets_existence, AssetsCommandsApi
-from typing import List, Tuple, Callable
+from ..assets import check_assets_existence, AssetsCommandsApi
 import subprocess
-from enum import Enum
-from list_command import PiecesSelectMenu
-from pieces.assets.assets_command import AssetsCommands
+from .list_command import PiecesSelectMenu
+from ..assets.assets_command import AssetsCommands
 
-class AssetClassification(Enum):
-    SHELL = "sh"
-    BASH = "bat"  # Added BASH classification
 
 class ExecuteCommand:
     @classmethod
     @check_assets_existence
-    def execute_command(cls, max_assets: int = 10):
+    def execute_command(cls, max_assets: int = 10,**kwargs):
         if max_assets < 1:
             print("Max assets must be greater than 0")
             max_assets = 10
@@ -23,8 +17,8 @@ class ExecuteCommand:
         for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
             asset = AssetsCommandsApi.get_asset_snapshot(uuid)
             classification = cls.get_asset_classification(asset)
-            if classification in [AssetClassification.SHELL.value, AssetClassification.BASH.value]:
-                assets.append((f"{i}: {asset.name}", {"ITEM_INDEX": i, "UUID": uuid, "CLASSIFICATION": classification}))
+            if classification in ["bat","sh"]:
+                assets.append((f"{i}: {asset.name}", {"ITEM_INDEX": i, "UUID": uuid, "CLASSIFICATION": classification,"show_warning":False}))
         
         if not assets:
             print("No shell or bash assets found")
@@ -56,15 +50,15 @@ class ExecuteCommand:
     @staticmethod
     def execute_command_in_subprocess(command: str, classification: str):
         try:
-            if classification == AssetClassification.BASH.value:
+            if classification == "bat":
                 result = subprocess.run(['bash', '-c', command], capture_output=True, text=True)
-            elif classification == AssetClassification.SHELL.value:
+            elif classification == "sh":
                 result = subprocess.run(command, shell=True, capture_output=True, text=True)
             else:
                 print(f"Unsupported asset classification: {classification}")
                 return
             
-            print(f"\nExecuting {classification} command:")
+            print(f"Executing {classification} command:")
             print(result.stdout)
             if result.stderr:
                 print("Errors:")
@@ -74,5 +68,3 @@ class ExecuteCommand:
         except Exception as e:
             print(f"An error occurred: {e}")
 
-if __name__ == "__main__":
-    ExecuteCommand.execute_command()

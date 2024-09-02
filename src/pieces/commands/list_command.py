@@ -8,16 +8,16 @@ from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable,Optional
 from pieces.assets.assets_command import AssetsCommands
-import time
 from .change_model import change_model
 
 class PiecesSelectMenu:
-    def __init__(self, menu_options:List[Tuple],on_enter_callback:Callable):
+    def __init__(self, menu_options: List[Tuple], on_enter_callback: Callable, footer_text: Optional[str] = None):
         self.menu_options = menu_options
         self.on_enter_callback = on_enter_callback
         self.current_selection = 0
+        self.footer_text = footer_text
 
     def get_menu_text(self):
         result = []
@@ -51,7 +51,14 @@ class PiecesSelectMenu:
         menu_control = FormattedTextControl(text=self.get_menu_text)
         self.menu_window = Window(content=menu_control, always_hide_cursor=True)
 
-        layout = Layout(HSplit([self.menu_window]))
+        layout_items = [self.menu_window]
+
+        if self.footer_text:
+            footer_control = FormattedTextControl(text=self.footer_text)
+            footer_window = Window(content=footer_control, height=1, always_hide_cursor=True)
+            layout_items.append(footer_window)
+
+        layout = Layout(HSplit(layout_items))
 
         style = Style.from_dict({
             'selected': 'reverse',
@@ -67,6 +74,7 @@ class PiecesSelectMenu:
             self.on_enter_callback(args)
         elif isinstance(args, dict):
             self.on_enter_callback(**args)
+
 
 class ListCommand:
     @classmethod
@@ -106,9 +114,7 @@ class ListCommand:
             return
 
         models = [(f"{idx}: {model_name}", {"MODEL_INDEX":idx,"show_warning":False}) for idx, model_name in enumerate(Settings.models.keys(), start=1)]
-        # models.append((f"Currently using: {Settings.model_name} with uuid {Settings.model_id}")) # TODO
-        # TODO: add a normal print message
-        select_menu = PiecesSelectMenu(models, change_model)
+        select_menu = PiecesSelectMenu(models, change_model,f"Currently using: {Settings.model_name} with uuid {Settings.model_id}")
         select_menu.run()
 
     @classmethod
