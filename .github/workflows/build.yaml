@@ -118,8 +118,8 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: pieces_${{ matrix.os }}
-          path: dist/pieces_${{ matrix.os }}
-          
+          path: dist/pieces*
+
       ### Uploading our staging version text file to be pulled down later
       - uses: actions/upload-artifact@v3
         with:
@@ -148,7 +148,7 @@ jobs:
       ### Combine the binaries into a universal binary
       - name: Combine binaries with lipo
         run: |
-          lipo -create -output dist/pieces-universal pieces_macos-latest pieces_macos-14-large
+          lipo -create -output dist/pieces-universal dist/pieces_macos-latest dist/pieces_macos-14-large
 
       ### Codesign the universal binary
       - name: Codesign Universal Binary
