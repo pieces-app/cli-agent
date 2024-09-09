@@ -80,7 +80,7 @@ jobs:
       ### Building Standalone Package for arm64
       - name: Build standalone for arm64
         run: |
-          CFLAGS="-arch arm64" poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-arm64
+          CFLAGS="-arch arm64" LDFLAGS="-arch arm64" poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-arm64
 
       ### Create and activate a new x86_64 virtual environment
       - name: Create x86_64 virtual environment
@@ -98,7 +98,7 @@ jobs:
         run: |
           arch -x86_64 /usr/bin/env bash -c "
           source venv_x86_64/bin/activate &&
-          CFLAGS='-arch x86_64' poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-x86_64
+          CFLAGS='-arch x86_64' LDFLAGS='-arch x86_64' poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-x86_64
           "
 
       ### Combine the binaries into a Universal Binary
