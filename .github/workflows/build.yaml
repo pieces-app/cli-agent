@@ -132,6 +132,9 @@ jobs:
     runs-on: macos-latest
     needs: build
     steps:
+      ### Checking out our Repo
+      - uses: actions/checkout@v3
+
       ### Download the build artifacts
       - uses: actions/download-artifact@v3
         with:
