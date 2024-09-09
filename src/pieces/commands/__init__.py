@@ -5,6 +5,7 @@ from .list_command import ListCommand
 from .version_command import version
 from .signout_command import sign_out
 from .config_command import ConfigCommands
+from .execute_command import ExecuteCommand
 
 __all__ = ['loop',
            'version',
@@ -12,5 +13,6 @@ __all__ = ['loop',
            'change_model',
            'sign_out',
            'ListCommand',
-           'ConfigCommands']
+           'ConfigCommands',
+           "ExecuteCommand"]
 
