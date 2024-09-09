@@ -75,6 +75,12 @@ jobs:
                 export STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
                 poetry version $STAGING_VERSION
           fi
+          
+      ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
+      - name: Write staging version to file
+        shell: bash
+        run: echo "${{ steps.staging_version.outputs.STAGING_VERSION }}" > staging_version$GITHUB_RUN_NUMBER.txt
+        if: ${{ inputs.deploy == false && inputs.beta == false }}
 
       ### Building the Library
       - name: Build library
@@ -113,8 +119,8 @@ jobs:
         with:
           name: pieces_${{ matrix.os }}
           path: dist/pieces_${{ matrix.os }}
+          
       ### Uploading our staging version text file to be pulled down later
-
       - uses: actions/upload-artifact@v3
         with:
           name: staging_version
@@ -135,10 +141,14 @@ jobs:
         with:
           name: pieces_macos-14-large
 
+      ### What is in here??
+      - name: List
+        run: ls -la
+
       ### Combine the binaries into a universal binary
       - name: Combine binaries with lipo
         run: |
-          lipo -create -output dist/pieces-universal dist/pieces_macos-latest dist/pieces_macos-14-large
+          lipo -create -output dist/pieces-universal pieces_macos-latest pieces_macos-14-large
 
       ### Codesign the universal binary
       - name: Codesign Universal Binary
