@@ -151,6 +151,24 @@ jobs:
           mkdir dist
           lipo -create -output dist/pieces-universal pieces_macos-latest pieces_macos-14-large
 
+      ### Install SSH
+      - uses: shimataro/ssh-key-action@v2
+        with:
+          key: "${{ secrets.ssh_private_key }}"
+          name: id_rsa
+          known_hosts: "github.com"
+          if_key_exists: fail
+
+      ### Setting up our fastlane certificates
+      - name: Setup Certificates
+        run: |-
+          cd macos
+          bundle install
+          bundle exec fastlane setup
+        env:
+          MATCH_PASSWORD: ${{ secrets.match_password }}
+          FASTLANE_PASSWORD: ${{ secrets.fastlane_password }}
+
       ### Codesign the universal binary
       - name: Codesign Universal Binary
         run: |
