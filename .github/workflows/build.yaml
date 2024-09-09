@@ -177,30 +177,57 @@ jobs:
         run: |
           codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements macos/Release.entitlements --timestamp -f dist/pieces-universal
 
+      ### Setting the version
+      - name: Set Version Shell Script
+        run: |
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          then
+                echo "This is a tagged build"
+                export RELEASE_VERSION='${{ steps.get_version.outputs.VERSION }}'
+                RELEASE_VERSION="${RELEASE_VERSION#v}"
+                echo $RELEASE_VERSION
+          else
+                echo "This is not a tagged build"
+                export STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
+          fi
+
+      ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
+      - name: Write staging version to file
+        shell: bash
+        run: echo "${{ steps.staging_version.outputs.STAGING_VERSION }}" > staging_version$GITHUB_RUN_NUMBER.txt
+        if: ${{ inputs.deploy == false && inputs.beta == false }}
+
       ### Binary to Zip file
       - name: Mac Binary to Zip File
         run: |
-          if [[ ${{ needs.build.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
           then
-              ditto -c -k --sequesterRsrc "dist/pieces-universal" dist/pieces-cli-mac-${{ needs.build.outputs.VERSION }}.zip
+              ditto -c -k --sequesterRsrc "dist/pieces-universal" dist/pieces-cli-mac-${{ steps.get_version.outputs.VERSION }}.zip
           else
-              ditto -c -k --sequesterRsrc "dist/pieces-universal" dist/pieces-cli-mac-${{ needs.build.outputs.STAGING_VERSION }}.zip
+              ditto -c -k --sequesterRsrc "dist/pieces-universal" dist/pieces-cli-mac-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
           fi
 
       ### Submission to apple notary
       - name: Submit Zip to apple notary
         run: |
-          if [[ ${{ needs.build.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
           then
-              xcrun notarytool submit dist/pieces-cli-mac-${{ needs.build.outputs.VERSION }}.zip --password ${{ secrets.apple_app_specific_password }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+              xcrun notarytool submit dist/pieces-cli-mac-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
           else
-              xcrun notarytool submit dist/pieces-cli-mac-${{ needs.build.outputs.STAGING_VERSION }}.zip --password ${{ secrets.apple_app_specific_password }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+              xcrun notarytool submit dist/pieces-cli-mac-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
           fi
 
       - uses: actions/upload-artifact@v3
         with:
           name: output
           path: dist/pieces*
+
+      ### Uploading our staging version text file to be pulled down later
+      - uses: actions/upload-artifact@v3
+        with:
+          name: staging_version
+          path: "*.txt"
+        if: inputs.deploy == false
 
 
   ### Pushing the built packages to GCP and GitHub
