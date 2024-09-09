@@ -165,7 +165,7 @@ jobs:
               xcrun notarytool submit dist/pieces-cli-mac-${{ needs.build.outputs.STAGING_VERSION }}.zip --password ${{ secrets.apple_app_specific_password }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
           fi
 
-          - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v3
         with:
           name: output
           path: dist/pieces*
