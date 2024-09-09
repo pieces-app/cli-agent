@@ -77,10 +77,20 @@ jobs:
       - name: Build library
         run: poetry build
 
-      ### Building Standalone Package
-      - name: Build stand alone
+      ### Building Standalone Package for arm64
+      - name: Build standalone for arm64
         run: |
-          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces --target-arch=universal2
+          CFLAGS="-arch arm64" poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-arm64
+
+      ### Building Standalone Package for x86_64
+      - name: Build standalone for x86_64
+        run: |
+          CFLAGS="-arch x86_64" poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-x86_64
+
+      ### Combine the binaries into a Universal Binary
+      - name: Combine binaries using lipo
+        run: |
+          lipo -create -output dist/pieces dist/pieces-arm64 dist/pieces-x86_64
 
       ### Install SSH
       - uses: shimataro/ssh-key-action@v2
