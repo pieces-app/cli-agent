@@ -82,10 +82,10 @@ jobs:
         run: |
           CFLAGS="-arch arm64" poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-arm64
 
-      ### Building Standalone Package for x86_64
+      ### Building Standalone Package for x86_64 using Rosetta
       - name: Build standalone for x86_64
         run: |
-          CFLAGS="-arch x86_64" poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-x86_64
+          arch -x86_64 /usr/bin/env CFLAGS="-arch x86_64" poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-x86_64
 
       ### Combine the binaries into a Universal Binary
       - name: Combine binaries using lipo
