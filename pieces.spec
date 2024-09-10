@@ -32,7 +32,7 @@ exe = EXE(
     console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch=universal2,
-    codesign_identity=None,
+    target_arch='universal2',
+    codesign_identity='Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)',
     entitlements_file=None,
 )
