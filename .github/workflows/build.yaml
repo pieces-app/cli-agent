@@ -154,6 +154,8 @@ jobs:
           mkdir dist
           cp *.tar.gz *.whl ./dist/
           lipo -create -output dist/pieces pieces_macos-latest pieces_macos-14-large
+          chmod 777 dist/pieces
+          file dist/pieces
 
       ### Install SSH
       - uses: shimataro/ssh-key-action@v2
