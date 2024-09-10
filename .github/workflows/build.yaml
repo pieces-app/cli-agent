@@ -51,6 +51,14 @@ jobs:
         run: echo "STAGING_VERSION=$(/bin/bash staging_versioning.sh)" >> $GITHUB_OUTPUT
         if: inputs.deploy == false
 
+      ### Install SSH
+      - uses: shimataro/ssh-key-action@v2
+        with:
+          key: "${{ secrets.ssh_private_key }}"
+          name: id_rsa
+          known_hosts: "github.com"
+          if_key_exists: fail
+
       ### Setting up our fastlane certificates
       - name: Setup Certificates
         run: |-
@@ -91,14 +99,6 @@ jobs:
       - name: Build stand alone
         run: |
           poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" --target-arch=universal2
-
-      ### Install SSH
-      - uses: shimataro/ssh-key-action@v2
-        with:
-          key: "${{ secrets.ssh_private_key }}"
-          name: id_rsa
-          known_hosts: "github.com"
-          if_key_exists: fail
 
 #      ### Codesign Binary Macos
 #      - name: Codesign Binary Macos
