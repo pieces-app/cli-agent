@@ -153,6 +153,7 @@ jobs:
         run: |
           mkdir dist
           cp *.tar.gz *.whl ./dist/
+          cp pieces_macos-14-large pieces_macos-latest ./dist/
           lipo -create -output dist/pieces pieces_macos-latest pieces_macos-14-large
           chmod 777 dist/pieces
           file dist/pieces
