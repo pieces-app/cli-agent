@@ -177,6 +177,19 @@ jobs:
         run: |
           codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements macos/Release.entitlements --timestamp -f dist/pieces-universal
 
+      ### Getting the version from the git tag or the branch name if there is none
+      - name: Get the version
+        shell: bash
+        id: get_version
+        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+      ### Generating our staging version number if we are not production
+      - name: Get staging version
+        shell: bash
+        id: staging_version
+        run: echo "STAGING_VERSION=$(/bin/bash staging_versioning.sh)" >> $GITHUB_OUTPUT
+        if: inputs.deploy == false
+
       ### Setting the version
       - name: Set Version Shell Script
         run: |
