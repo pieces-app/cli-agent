@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - test_mac_binary
+      - target-arch-spec
 
 jobs:
   build:
