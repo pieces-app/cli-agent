@@ -153,7 +153,7 @@ jobs:
         run: |
           mkdir dist
           cp *.tar.gz *.whl ./dist/
-          lipo -create -output dist/pieces-universal pieces_macos-latest pieces_macos-14-large
+          lipo -create -output dist/pieces pieces_macos-latest pieces_macos-14-large
 
       ### Install SSH
       - uses: shimataro/ssh-key-action@v2
@@ -176,7 +176,7 @@ jobs:
       ### Codesign the universal binary
       - name: Codesign Universal Binary
         run: |
-          codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements macos/Release.entitlements --timestamp -f dist/pieces-universal
+          codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements macos/Release.entitlements --timestamp -f dist/pieces
 
       ### Getting the version from the git tag or the branch name if there is none
       - name: Get the version
@@ -216,9 +216,9 @@ jobs:
         run: |
           if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
           then
-              ditto -c -k --sequesterRsrc "dist/pieces-universal" dist/pieces-cli-mac-${{ steps.get_version.outputs.VERSION }}.zip
+              ditto -c -k --sequesterRsrc "dist/pieces" dist/pieces-cli-mac-${{ steps.get_version.outputs.VERSION }}.zip
           else
-              ditto -c -k --sequesterRsrc "dist/pieces-universal" dist/pieces-cli-mac-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
+              ditto -c -k --sequesterRsrc "dist/pieces" dist/pieces-cli-mac-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
           fi
 
       ### Submission to apple notary
