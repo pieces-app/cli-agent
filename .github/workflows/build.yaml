@@ -152,6 +152,7 @@ jobs:
       - name: Combine binaries with lipo
         run: |
           mkdir dist
+          cp *.tar.gz *.whl ./dist/
           lipo -create -output dist/pieces-universal pieces_macos-latest pieces_macos-14-large
 
       ### Install SSH
