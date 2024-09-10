@@ -169,3 +169,4 @@ cython_debug/
 
 cli-agent.iml
 pieces.spec
+macos/notes.txt

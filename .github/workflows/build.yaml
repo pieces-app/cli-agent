@@ -74,6 +74,7 @@ jobs:
         run: |
           pip install poetry -U
           poetry install 
+          poetry run pip install build/*_universal2.whl --force-reinstall
 
       ### Setting the version in the pyproject.toml for unix builds
       - name: Set Version Shell Script
