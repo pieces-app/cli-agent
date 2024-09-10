@@ -116,7 +116,7 @@ jobs:
         run: |
           arch -x86_64 /usr/bin/env bash -c "
           source venv_x86_64/bin/activate &&
-          CFLAGS='-arch x86_64' LDFLAGS='-arch x86_64' poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-x86_64 --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
+          CFLAGS='-arch x86_64' LDFLAGS='-arch x86_64' poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces-x86_64 --codesign-identity='Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)'
           "
 
       ### Combine the binaries into a Universal Binary
