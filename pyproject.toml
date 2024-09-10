@@ -12,7 +12,7 @@
 
 
 [tool.poetry.dependencies]
-  python = ">=3.9,<3.13"
+  python = ">=3.11,<3.13"
   pyperclip = ">=1.8.2"
   websocket-client = "1.7.0"
   pieces_os_client = "2.7.0"
