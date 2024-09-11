@@ -33,9 +33,9 @@ jobs:
         os: [ macos-14-large, macos-latest ]
         include:
           - os: macos-14-large
-            zipFileName: pieces_x86_64
+            zipFileName: pieces-cli-mac_x86_64
           - os: macos-latest
-            zipFileName: pieces_arm64
+            zipFileName: pieces-cli-mac_arm64
     steps:
       ### Checking out our Repo
       - uses: actions/checkout@v3
