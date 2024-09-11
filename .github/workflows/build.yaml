@@ -30,11 +30,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ macos-14-large, office-mac-mini ]
+        os: [ macos-14-large, macos-latest ]
         include:
           - os: macos-14-large
             zipFileName: pieces_x86_64
-          - os: office-mac-mini
+          - os: macos-latest
             zipFileName: pieces_arm64
     steps:
       ### Checking out our Repo
