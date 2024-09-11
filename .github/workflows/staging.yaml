@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - macos-matrix-build
 
 jobs:
   build:
