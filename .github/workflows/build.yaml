@@ -30,7 +30,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ macos-latest, macos-14-large ]
+        os: [ macos-14-large, office-mac-mini ]
+        include:
+          - os: macos-14-large
+            zipFileName: pieces_x86_64
+          - os: office-mac-mini
+            zipFileName: pieces_arm64
     steps:
       ### Checking out our Repo
       - uses: actions/checkout@v3
@@ -100,127 +105,24 @@ jobs:
         run: echo "${{ steps.staging_version.outputs.STAGING_VERSION }}" > staging_version$GITHUB_RUN_NUMBER.txt
         if: ${{ inputs.deploy == false && inputs.beta == false }}
 
-      ### Building the Library
+      ### Building the Library and Wheel files
       - name: Build library
         run: poetry build
 
       ### Building Standalone Package
+      ### Note, this is also how it should be code-signed. Code-signing the Binary after it is built breaks it as I think it overwrites signatures on Python Libs
       - name: Build stand alone
         run: |
-          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces_${{ matrix.os }} --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
-
-      #      ### Codesign Binary Macos
-      #      - name: Codesign Binary Macos
-      #        run: |
-      #          codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements macos/Release.entitlements --timestamp -f dist/pieces_${{ matrix.os }}
-
-      ### Upload build artifact for combining later
-      - uses: actions/upload-artifact@v3
-        with:
-          name: pieces_${{ matrix.os }}
-          path: dist/pieces*
-
-      ### Uploading our staging version text file to be pulled down later
-      - uses: actions/upload-artifact@v3
-        with:
-          name: staging_version
-          path: "*.txt"
-        if: inputs.deploy == false
-
-
-  combine:
-    runs-on: macos-latest
-    needs: build
-    steps:
-      ### Checking out our Repo
-      - uses: actions/checkout@v3
-
-      ### Download the build artifacts
-      - uses: actions/download-artifact@v3
-        with:
-          name: pieces_macos-latest
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: pieces_macos-14-large
-
-      ### What is in here??
-      - name: List
-        run: ls -la
-
-      ### Combine the binaries into a universal binary
-      - name: Combine binaries with lipo
-        run: |
-          mkdir dist
-          cp *.tar.gz *.whl ./dist/
-          lipo -create -output dist/pieces pieces_macos-latest pieces_macos-14-large
-          chmod 777 dist/pieces
-          file dist/pieces
-
-      #      ### Install SSH
-      #      - uses: shimataro/ssh-key-action@v2
-      #        with:
-      #          key: "${{ secrets.ssh_private_key }}"
-      #          name: id_rsa
-      #          known_hosts: "github.com"
-      #          if_key_exists: fail
-      #
-      #      ### Setting up our fastlane certificates
-      #      - name: Setup Certificates
-      #        run: |-
-      #          cd macos
-      #          bundle install
-      #          bundle exec fastlane setup
-      #        env:
-      #          MATCH_PASSWORD: ${{ secrets.match_password }}
-      #          FASTLANE_PASSWORD: ${{ secrets.fastlane_password }}
-      #
-      #      ### Codesign the universal binary
-      #      - name: Codesign Universal Binary
-      #        run: |
-      #          codesign -s "Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" -i com.pieces.cli -o runtime --entitlements macos/Release.entitlements --timestamp -f dist/pieces
-
-      ### Getting the version from the git tag or the branch name if there is none
-      - name: Get the version
-        shell: bash
-        id: get_version
-        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
-
-      ### Generating our staging version number if we are not production
-      - name: Get staging version
-        shell: bash
-        id: staging_version
-        run: echo "STAGING_VERSION=$(/bin/bash staging_versioning.sh)" >> $GITHUB_OUTPUT
-        if: inputs.deploy == false
-
-      ### Setting the version
-      - name: Set Version Shell Script
-        run: |
-          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-          then
-                echo "This is a tagged build"
-                export RELEASE_VERSION='${{ steps.get_version.outputs.VERSION }}'
-                RELEASE_VERSION="${RELEASE_VERSION#v}"
-                echo $RELEASE_VERSION
-          else
-                echo "This is not a tagged build"
-                export STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
-          fi
-
-      ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
-      - name: Write staging version to file
-        shell: bash
-        run: echo "${{ steps.staging_version.outputs.STAGING_VERSION }}" > staging_version$GITHUB_RUN_NUMBER.txt
-        if: ${{ inputs.deploy == false && inputs.beta == false }}
+          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
 
       ### Binary to Zip file
       - name: Mac Binary to Zip File
         run: |
           if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
           then
-              ditto -c -k --sequesterRsrc "dist/pieces" dist/pieces-cli-mac-${{ steps.get_version.outputs.VERSION }}.zip
+              ditto -c -k --sequesterRsrc "dist/pieces" dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip
           else
-              ditto -c -k --sequesterRsrc "dist/pieces" dist/pieces-cli-mac-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
+              ditto -c -k --sequesterRsrc "dist/pieces" dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
           fi
 
       ### Submission to apple notary
@@ -228,15 +130,16 @@ jobs:
         run: |
           if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
           then
-              xcrun notarytool submit dist/pieces-cli-mac-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
           else
-              xcrun notarytool submit dist/pieces-cli-mac-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
           fi
 
+      ### Upload build artifact for pushing
       - uses: actions/upload-artifact@v3
         with:
-          name: output
-          path: dist/pieces*
+          name: artifacts
+          path: dist/*
 
       ### Uploading our staging version text file to be pulled down later
       - uses: actions/upload-artifact@v3
@@ -250,13 +153,13 @@ jobs:
   push-build:
     runs-on: ubuntu-latest
     needs:
-      - combine
+      - build
     steps:
 
       ### Pulling down the previously built plugins
       - uses: actions/download-artifact@v3
         with:
-          name: output
+          name: artifacts
 
       ### Pulling down the staging version number to pass to gcp and GitHub releases
       - uses: actions/download-artifact@v3
