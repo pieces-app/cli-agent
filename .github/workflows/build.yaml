@@ -93,10 +93,12 @@ jobs:
                 RELEASE_VERSION="${RELEASE_VERSION#v}"
                 echo $RELEASE_VERSION
                 poetry version $RELEASE_VERSION
+                sed -i "s/__version__ = .*/__version__ = \"${RELEASE_VERSION}\"/" src/pieces/__init__.py
           else
                 echo "This is not a tagged build"
                 export STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
                 poetry version $STAGING_VERSION
+                sed -i "s/__version__ = .*/__version__ = \"${STAGING_VERSION}\"/" src/pieces/__init__.py
           fi
 
       ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
