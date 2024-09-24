@@ -7,7 +7,6 @@ from pieces.settings import Settings
 from pieces.commands import *
 from pieces.autocommit import *
 from pieces.copilot import *
-from pieces.assets import *
 
 class PiecesCLI:
     def __init__(self):
@@ -54,7 +53,6 @@ class PiecesCLI:
 
         # Subparser for the 'execute' command
         execute_parser = self.command_parser.add_parser('execute', help='Execute shell or bash assets')
-        execute_parser.add_argument('max_assets', nargs='?', type=int, default=10, help='Max number of assets to display')
         execute_parser.set_defaults(func=ExecuteCommand.execute_command)
 
         # Subparser for the 'edit' command
