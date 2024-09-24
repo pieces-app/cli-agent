@@ -98,14 +98,10 @@ class StreamedIdentifiersCache(ABC):
 
     @classmethod
     def update_identifier(cls, identifier: str):
-        try:
-            id_value = cls._api_call(identifier)
-            cls.identifiers_snapshot[identifier] = id_value
-            cls.on_update(id_value)
-            return id_value
-        except Exception as e:
-            print(f"Error updating identifier {identifier}: {e}")
-            return None
+        id_value = cls._api_call(identifier)
+        cls.identifiers_snapshot[identifier] = id_value
+        cls.on_update(id_value)
+        return id_value
 
     @classmethod
     def streamed_identifiers_callback(cls, ids: StreamedIdentifiers):

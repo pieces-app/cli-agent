@@ -6,6 +6,7 @@ from .version_command import version
 from .auth_commands import sign_in, sign_out
 from .config_command import ConfigCommands
 from .execute_command import ExecuteCommand
+from .assets_command import AssetsCommands
 
 __all__ = ['loop',
            'version',
@@ -15,5 +16,6 @@ __all__ = ['loop',
            'sign_in',
            'ListCommand',
            'ConfigCommands',
-           "ExecuteCommand"]
+           "ExecuteCommand",
+           "AssetsCommands"]
 

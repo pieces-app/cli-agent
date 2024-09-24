@@ -1,7 +1,10 @@
-from pieces.settings import Settings
 from collections.abc import Iterable
+
+from pieces.settings import Settings
 from pieces.assets import check_assets_existence, AssetsCommandsApi
+from pieces.assets.assets_command import AssetsCommands
 from pieces_os_client.api.applications_api import ApplicationsApi
+
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout
@@ -9,7 +12,6 @@ from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import List, Tuple, Callable,Optional
-from pieces.assets.assets_command import AssetsCommands
 from .change_model import change_model
 
 class PiecesSelectMenu:

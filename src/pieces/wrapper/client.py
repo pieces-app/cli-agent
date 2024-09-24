@@ -73,7 +73,7 @@ class PiecesClient(PiecesApiClient):
         """
             Retruns all the assets after the caching process is done
         """
-        return [BasicAsset(id) for id in AssetSnapshot.identifiers_snapshot.keys()]
+        return [BasicAsset(id) for id in BasicAsset.identifiers_snapshot.keys()]
 
     def asset(self,asset_id):
         return BasicAsset(asset_id)

@@ -1,20 +1,23 @@
 import os
+from typing import Optional
 import pyperclip
+import subprocess
 
 from pieces.utils import get_file_extension,sanitize_filename,export_code_to_file
-from .assets_api import AssetsCommandsApi
-from pieces.gui import show_error,print_model_details,space_below,double_line,deprecated
+from pieces.gui import show_error,print_asset_details,space_below,double_line,deprecated
 from pieces.settings import Settings
 from pieces.commands.config_command import ConfigCommands
-import subprocess
+from pieces.wrapper.basic_identifier.asset import BasicAsset
+
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import TerminalFormatter
 
+
 def check_assets_existence(func):
 	"""Decorator to ensure user has assets."""
 	def wrapper(*args, **kwargs):
-		assets = AssetsCommandsApi().assets_snapshot # Check if there is an asset
+		assets = Settings.pieces_client.assets # Check if there is an asset
 		if not assets:
 			return show_error("No assets found", "Please create an asset first.")
 		return func(*args, **kwargs)
@@ -30,33 +33,31 @@ def check_asset_selected(func):
 		if AssetsCommands.current_asset is None:
 			return show_error("No asset selected.", "Please open an asset first using pieces open.")
 		try: 
-			asset_data = AssetsCommandsApi.get_asset_snapshot(AssetsCommands.current_asset)
+			AssetsCommands.current_asset.asset # Check if the current asset is vaild
 		except:
 			# The selected asset is deleted
 			return show_error("Error occured in the command", "Please make sure the selected asset is valid.")
-		return func(asset_data=asset_data,*args, **kwargs)	
-			
+		return func(asset=AssetsCommands.current_asset,*args, **kwargs)	
 	return wrapper
 
 class AssetsCommands:
-	current_asset = None
+	current_asset:Optional[BasicAsset] = None
 
 	@classmethod
 	@check_assets_existence
 	@deprecated("open","list assets")
 	def open_asset(cls, **kwargs):
 		item_index = kwargs.get("ITEM_INDEX",1)
-		asset_ids = AssetsCommandsApi().assets_snapshot
+		assets = Settings.pieces_client.assets()
 		try:
-			cls.current_asset = list(asset_ids.keys())[item_index-1]  # because we begin from 1
+			asset:BasicAsset = assets[item_index-1]  # because we begin from 1
+			cls.current_asset = asset
 		except IndexError:
 			return show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
 	
-		asset_dict = AssetsCommandsApi.extract_asset_info(AssetsCommandsApi.get_asset_snapshot(cls.current_asset))
-	
-		print_model_details(asset_dict["name"], asset_dict["created_at"], asset_dict["updated_at"], asset_dict["type"], asset_dict["language"])
+		print_asset_details(asset)
 
-		code_content = asset_dict["raw"]
+		code_content = asset.raw_content
 		open_in_editor = kwargs.get('editor')
 			
 		# Check if -e flag is used or open_in_editor is True
@@ -65,7 +66,7 @@ class AssetsCommands:
 			editor = config.get('editor')
 			if editor:
 				# Save the code to a file in the default directory
-				file_path = export_code_to_file(code_content, asset_dict["name"], asset_dict["language"])
+				file_path = export_code_to_file(code_content, asset.name, asset.classification)
 
 				# Open the file with the configured editor
 				try:
@@ -78,7 +79,7 @@ class AssetsCommands:
 		else:
 			# Determine the lexer
 			try:
-				lexer = get_lexer_by_name(asset_dict["language"], stripall=True)
+				lexer = get_lexer_by_name(asset.classification, stripall=True)
 			except:
 				lexer = guess_lexer(code_content)
 
@@ -90,22 +91,25 @@ class AssetsCommands:
 
 	@classmethod
 	@check_asset_selected
-	def update_asset(cls,asset_data,**kwargs):
-		asset = AssetsCommandsApi.extract_asset_info(asset_data)
-		file_path = os.path.join(Settings.open_snippet_dir , f"{sanitize_filename(asset['name'])}{get_file_extension(asset['language'])}")
-		print(f"Saving {file_path} to {asset['name']} snippet with uuid {cls.current_asset}")
-
+	def update_asset(cls,asset:BasicAsset,**kwargs):
+		file_path = os.path.join(Settings.open_snippet_dir , f"{sanitize_filename(asset.name)}{get_file_extension(asset.classification)}")
+		print(f"Saving {file_path} to {asset.name} snippet")
 		
-		# Pass asset and file name
-		AssetsCommandsApi.update_asset_value(file_path, cls.current_asset)
+		try:
+			with open(file_path,"r") as f:
+				data = f.read()
+		except FileNotFoundError:
+			show_error("Error in update asset","File not found")
+			return
+
+		asset.raw_content = data
+
 
 
 	@classmethod
 	@check_asset_selected
-	def edit_asset(cls,asset_data,**kwargs):
-		asset_dict = AssetsCommandsApi.extract_asset_info(asset_data)
-		print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
-		
+	def edit_asset(cls,asset:BasicAsset,**kwargs):
+		print_asset_details(asset)
 		name = kwargs.get('name', '')
 		classification = kwargs.get('classification', '')
 
@@ -116,23 +120,19 @@ class AssetsCommands:
 
 		# Check if the user actually entered a name
 		if name:
-			AssetsCommandsApi.edit_asset_name(cls.current_asset, name)
+			asset.name = name
 		if classification:
-			AssetsCommandsApi.reclassify_asset(cls.current_asset, classification)
+			asset.classification = classification
 
 	@classmethod
 	@check_asset_selected
-	def delete_asset(cls,asset_data,**kwargs):
-		# Ask the user for confirmation before deleting
-		# print()
-		# open_asset()
-		asset_dict = AssetsCommandsApi.extract_asset_info(asset_data)
-		print_model_details(asset_dict["name"],asset_dict["created_at"],asset_dict["updated_at"],asset_dict["type"],asset_dict["language"])
+	def delete_asset(cls,asset:BasicAsset,**kwargs):
+		print_asset_details(asset)
 
 		confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
 		if confirm == 'y':
 			print("Deleting asset...")
-			AssetsCommandsApi.delete_asset_by_id(cls.current_asset)
+			asset.delete()
 			cls.current_asset = None
 			space_below("Asset Deleted")
 		elif confirm == 'n':
@@ -154,12 +154,8 @@ class AssetsCommands:
 			user_input = input("Do you want to save this content? (y/n): ").strip().lower()
 			if user_input == 'y':
 				space_below("Saving Content...")
-				new_asset = AssetsCommandsApi.create_new_asset(raw_string=text, metadata=None)
-		
-				cls.current_asset = new_asset.id
+				cls.current_asset = BasicAsset(BasicAsset.create(raw_content=text, metadata=None))
 				print("Asset Created use 'open' to view")
-
-				return new_asset
 				# Add your saving logic here
 			elif user_input == 'n':
 				space_below("Save Cancelled")

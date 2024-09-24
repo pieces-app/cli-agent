@@ -21,6 +21,19 @@ class BasicAsset(Basic):
 	"""
 	A wrapper class for managing assets.
 	"""
+	@property
+	def identifiers_snapshot():
+		if AssetSnapshot.identifiers_snapshot:
+			return AssetSnapshot.identifiers_snapshot
+
+		assets_api = AssetSnapshot.pieces_client.assets_api
+		# Call the API to get assets identifiers
+		api_response = assets_api.assets_identifiers_snapshot()
+
+		# Extract the 'id' values from each item in the 'iterable' list
+		AssetSnapshot.identifiers_snapshot = {item.id:None for item in api_response.iterable}
+
+		return AssetSnapshot.identifiers_snapshot
 		
 	@property
 	def asset(self) -> "Asset":
@@ -36,6 +49,13 @@ class BasicAsset(Basic):
 		"""
 		return self.asset.id
 
+	@property
+	def created_at(self):
+		return self.asset.created.readable if self.asset.created.readable else "Unknown"
+	
+	def updated_at(self):
+		return self.asset.updated.readable if self.asset.updated.readable else "Unknown"
+	
 	@property
 	def raw_content(self) -> Optional[str]:
 		"""
@@ -89,6 +109,10 @@ class BasicAsset(Basic):
 		format_api.format_update_value(transferable=False, format=original)
 
 	@property
+	def type(self) -> ClassificationGenericEnum:
+		return self.asset.original.reference.classification.generic
+
+	@property
 	def is_image(self) -> bool:
 		"""
 		Check if the asset is an image.
@@ -97,7 +121,7 @@ class BasicAsset(Basic):
 			bool: True if the asset is an image, otherwise False.
 		"""
 		return (
-			self.asset.original.reference.classification.generic ==
+			self.type ==
 			ClassificationGenericEnum.IMAGE
 		)
 
@@ -278,16 +302,16 @@ class BasicAsset(Basic):
 	@staticmethod
 	def search(query:str,search_type:Literal["fts","ncs","fuzzy"] = "fts") -> Optional[List["BasicAsset"]]:
 		"""
-	    Perform a search using either Full Text Search (FTS) or Neural Code Search (NCS) or Fuzzy search (fuzzy).
-	    
-	    Parameters:
-	        query (str): The search query string.
-	        search_type (Literal["fts", "ncs", "fuzzy"], optional): The type of search to perform.
-	            'fts' for Full Text Search (default) or 'ncs' for Neural Code Search.
-	    
-	    Returns:
-	        Optional[List["BasicAsset"]]: A list of search results or None if no results are found.
-	    """
+		Perform a search using either Full Text Search (FTS) or Neural Code Search (NCS) or Fuzzy search (fuzzy).
+		
+		Parameters:
+			query (str): The search query string.
+			search_type (Literal["fts", "ncs", "fuzzy"], optional): The type of search to perform.
+				'fts' for Full Text Search (default) or 'ncs' for Neural Code Search.
+		
+		Returns:
+			Optional[List["BasicAsset"]]: A list of search results or None if no results are found.
+		"""
 		if search_type == 'ncs':
 			results = AssetSnapshot.pieces_client.search_api.neural_code_search(query=query)
 		elif search_type == 'fts':
