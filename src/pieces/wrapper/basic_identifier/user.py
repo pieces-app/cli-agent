@@ -1,9 +1,11 @@
 import threading
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from .basic import Basic
 
-from pieces_os_client.models.user_profile import UserProfile
 from pieces_os_client.models.allocation_status_enum import AllocationStatusEnum
+
+if TYPE_CHECKING:
+	from pieces_os_client.models.user_profile import UserProfile
 
 class BasicUser(Basic):
 	"""
@@ -14,7 +16,7 @@ class BasicUser(Basic):
 		pieces_client: The client used to interact with the pieces OS API.
 	"""
 
-	user_profile: Optional[UserProfile] = None
+	user_profile: Optional["UserProfile"] = None
 
 	def __init__(self, pieces_client) -> None:
 		"""
@@ -32,7 +34,7 @@ class BasicUser(Basic):
 			return self.user_profile.id
 
 
-	def on_user_callback(self, user: Optional[UserProfile], connecting=False):
+	def on_user_callback(self, user: Optional["UserProfile"], connecting=False):
 		"""
 		Callback function to set the user profile.
 
