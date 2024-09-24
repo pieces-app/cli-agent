@@ -1,11 +1,12 @@
 from typing import Literal, Optional,TYPE_CHECKING, List
 from .basic import Basic
 
-from pieces_os_client.models.conversation_message import ConversationMessage
 
 if TYPE_CHECKING:
+    from pieces_os_client.models.conversation_message import ConversationMessage
     from ..client import PiecesClient
-    from . import BasicChat, BasicAnnotation
+    from .chat import BasicChat
+    from .annotation import BasicAnnotation
 
 class BasicMessage(Basic):
     """
@@ -42,7 +43,7 @@ class BasicMessage(Basic):
             The ID of the message to be retrieved.
         """
         try:
-            self.message:ConversationMessage = pieces_client.conversation_message_api.message_specific_message_snapshot(
+            self.message:"ConversationMessage" = pieces_client.conversation_message_api.message_specific_message_snapshot(
                 message=id, transferables=True
             )
         except:
@@ -109,7 +110,7 @@ class BasicMessage(Basic):
         """
         Returns the chat that the message is in
         """
-        from . import BasicChat
+        from .chat import BasicChat
         return BasicChat(self.message.conversation.id)
 
     def delete(self) -> None:
@@ -128,7 +129,7 @@ class BasicMessage(Basic):
         Returns: 
             The BasicAnnotation of the message, or None if not available.
         """
-        from . import BasicAnnotation
+        from .annotation import BasicAnnotation
         return self._from_indices(
             getattr(self.message.annotations, "indices", {}),
             lambda id:BasicAnnotation.from_id(self.pieces_client,id)
