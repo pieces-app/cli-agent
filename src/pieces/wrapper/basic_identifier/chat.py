@@ -8,7 +8,9 @@ from pieces_os_client.models.annotation_type_enum import AnnotationTypeEnum
 
 
 if TYPE_CHECKING:
-    from . import BasicMessage,BasicAnnotation,BasicWebsite
+    from .message import BasicMessage
+    from .annotation import BasicAnnotation
+    from.website import BasicWebsite
 
 class BasicChat(Basic):
     """
@@ -18,7 +20,7 @@ class BasicChat(Basic):
     def conversation(self) -> Conversation:
         conversation = ConversationsSnapshot.identifiers_snapshot.get(self._id)
         if not conversation:
-            raise ValueError("Conversation not found")
+            conversation = ConversationsSnapshot.update_identifier(self._id)
         return conversation
 
     @property
@@ -76,7 +78,7 @@ class BasicChat(Basic):
         Returns:
             The BasicAnnotation of the conversation, or None if not available.
         """
-        from . import BasicAnnotation
+        from .annotation import BasicAnnotation
         return self._from_indices(
             getattr(self.conversation.annotations, "indices", {}),
             lambda id:BasicAnnotation.from_id(ConversationsSnapshot.pieces_client,id)
@@ -103,7 +105,7 @@ class BasicChat(Basic):
 
     @property
     def websites(self) -> List["BasicWebsite"]:
-        from . import BasicWebsite
+        from .website import BasicWebsite
         return self._from_indices(
             getattr(self.conversation.websites,"indices",{}),
             lambda id:BasicWebsite.from_id(ConversationsSnapshot.pieces_client,id)
