@@ -1,11 +1,8 @@
 import sys
-from pieces_os_client.api.os_api import OSApi
-
 
 from pieces.gui import print_help
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.settings import Settings
-
 
 from pieces.commands import *
 from pieces.autocommit import *
@@ -96,11 +93,11 @@ class PiecesCLI:
 
         # Subparser for the 'login' command
         login_parser = self.command_parser.add_parser('login', help='Login to pieces os')
-        login_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {OSApi(Settings.api_client).sign_into_os().name}'))
+        login_parser.set_defaults(func=sign_in)
 
         # Subparser for the 'logout' command
         logout_parser = self.command_parser.add_parser('logout', help='Logout from pieces os')
-        logout_parser.set_defaults(func=lambda **kwargs:print("Logged out successfully") if sign_out() else print('Failed to logout out'))
+        logout_parser.set_defaults(func=sign_out)
 
 
         # Subparser for the 'conversations' command
