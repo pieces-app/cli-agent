@@ -1,11 +1,9 @@
 from typing import TYPE_CHECKING, List, Optional
 
-from pieces_os_client.models.existent_metadata import ExistentMetadata
-from pieces_os_client.models.seeded_tag import SeededTag
-
 from .basic import Basic
 
 if TYPE_CHECKING:
+	from pieces_os_client.models.seeded_tag import SeededTag
 	from pieces_os_client.models.tag import Tag
 	from .asset import BasicAsset
 	from ..client import PiecesClient
@@ -58,6 +56,7 @@ class BasicTag(Basic):
 		Returns:
 		- BasicWebsite: The existing BasicWebsite object if found, None otherwise.
 		"""
+		from pieces_os_client.models.existent_metadata import ExistentMetadata
 		existance = pieces_client.tags_api.tags_exists(ExistentMetadata(
 			value=raw_content
 		))
@@ -81,13 +80,14 @@ class BasicTag(Basic):
 		if tag:
 			return tag
 		else:
+			from pieces_os_client.models.seeded_tag import SeededTag
 			return cls.create(
 				pieces_client,
 				SeededTag(text=raw_content)
 			)
 
 	@staticmethod
-	def create(pieces_client: "PiecesClient", seeded_tag: SeededTag) -> "BasicTag":
+	def create(pieces_client: "PiecesClient", seeded_tag: "SeededTag") -> "BasicTag":
 		"""
 		Creates a new tag based on a seeded tag.
 
