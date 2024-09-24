@@ -27,6 +27,7 @@ class PiecesArgparser(argparse.ArgumentParser): # subclassing the ArgumentParser
             # Default error message for other types of errors
             show_error("Error occured",message)
         sys.exit(2)
+
     @classmethod
     def levenshtein_distance(cls,s1, s2):
         # If s1 is shorter than s2, swap them to minimize the number of operations
