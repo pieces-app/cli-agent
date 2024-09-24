@@ -5,7 +5,7 @@ import subprocess
 import urllib.request
 import urllib.error
 
-
+from .websockets.base_websocket import BaseWebsocket
 from .api_client import PiecesApiClient
 
 from .. import __version__
@@ -52,7 +52,10 @@ class PiecesClient(PiecesApiClient):
         self.api_client.set_default_header("application",self._application.id)
 
     def connect_websocket(self) -> bool:
-        from .websockets import BaseWebsocket,ConversationWS,AssetsIdentifiersWS,AuthWS
+        from .websockets.conversations_ws import ConversationWS
+        from .websockets.assets_identifiers_ws import AssetsIdentifiersWS
+        from.websockets.auth_ws import AuthWS
+
         if self._is_started_runned: return True
         if not self.is_pieces_running(): return False
 
@@ -70,11 +73,9 @@ class PiecesClient(PiecesApiClient):
         """
             Retruns all the assets after the caching process is done
         """
-        self.ensure_initialization()
         return [BasicAsset(id) for id in AssetSnapshot.identifiers_snapshot.keys()]
 
     def asset(self,asset_id):
-        self.ensure_initialization()
         return BasicAsset(asset_id)
 
     @staticmethod
@@ -96,7 +97,9 @@ class PiecesClient(PiecesApiClient):
 
     @property
     def model_name(self):
-        return self._model_name
+        if hasattr(self,"_model_name"):
+            return self._model_name
+        return "GPT-3.5-turbo Chat Model"
 
     @model_name.setter
     def model_name(self,model):
@@ -112,12 +115,6 @@ class PiecesClient(PiecesApiClient):
             Returns all available models names
         """
         return list(self.get_models().keys())
-
-    def ensure_initialization(self):
-        """
-            Waits for all the assets/conversations and all the started websockets to open
-        """
-        BaseWebsocket.wait_all()
 
     @classmethod
     def close(cls):
