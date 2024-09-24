@@ -6,7 +6,7 @@ from .gui import show_error
 
 
 class PiecesArgparser(argparse.ArgumentParser): # subclassing the ArgumentParser class to modify the error messages
-    parser = None
+    parser:"PiecesArgparser"
     def error(self, message):
         if 'invalid choice' in message:
             try:

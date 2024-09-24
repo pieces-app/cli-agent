@@ -2,17 +2,14 @@ import os
 from pieces.settings import Settings
 import json
 
-#Ensure the data_path directory exists
-os.makedirs(Settings.pieces_data_dir, exist_ok=True)
-CONFIG_FILE = os.path.join(Settings.pieces_data_dir, "pieces_config.json")
+
 
 class ConfigCommands:
-
     @classmethod
     def load_config(cls):
-        if os.path.exists(CONFIG_FILE):
+        if os.path.exists(Settings.config_file):
             try:
-                with open(CONFIG_FILE, 'r') as f:
+                with open(Settings.config_file, 'r') as f:
                     content = f.read().strip()
                     if content:
                         return json.loads(content)
@@ -28,7 +25,7 @@ class ConfigCommands:
 
     @classmethod
     def save_config(cls, config):
-        with open(CONFIG_FILE, 'w') as f:
+        with open(Settings.config_file, 'w') as f:
             json.dump(config, f)
 
     @classmethod
