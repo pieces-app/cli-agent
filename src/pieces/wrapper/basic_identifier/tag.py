@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING, List, Optional
 
 from pieces_os_client.models.existent_metadata import ExistentMetadata
 from pieces_os_client.models.seeded_tag import SeededTag
-from pieces_os_client.models.tag import Tag
 
 from .basic import Basic
 
 if TYPE_CHECKING:
+	from pieces_os_client.models.tag import Tag
 	from .asset import BasicAsset
 	from ..client import PiecesClient
 
@@ -18,7 +18,7 @@ class BasicTag(Basic):
 	- pieces_client (PiecesClient): The client used to interact with the Pieces API.
 	- tag (Tag): The tag object associated with this BasicTag instance.
 	"""
-	def __init__(self, pieces_client: "PiecesClient", tag: Tag) -> None:
+	def __init__(self, pieces_client: "PiecesClient", tag: "Tag") -> None:
 		"""
 		Initializes a BasicTag instance.
 		
@@ -143,7 +143,7 @@ class BasicTag(Basic):
 		Returns:
 		- Optional[List["BasicAsset"]]: A list of BasicAsset objects associated with the tag.
 		"""
-		from . import BasicAsset
+		from .asset import BasicAsset
 		if self.tag.assets and self.tag.assets.iterable:
 			return [BasicAsset(asset.id) for asset in self.tag.assets.iterable]
 
@@ -171,7 +171,7 @@ class BasicTag(Basic):
 		"""
 		self.pieces_client.tags_api.tags_delete_specific_tag(self.tag.id)
 
-	def _edit_tag(self, tag: Tag):
+	def _edit_tag(self, tag: "Tag"):
 		"""
 		Edits the tag.
 

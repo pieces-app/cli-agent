@@ -1,13 +1,12 @@
 from typing import TYPE_CHECKING, List, Optional
 
-from pieces_os_client.models.existent_metadata import ExistentMetadata
-from pieces_os_client.models.seeded_website import SeededWebsite
-from pieces_os_client.models.website import Website
-
 from .basic import Basic
 
 if TYPE_CHECKING:
-	from . import BasicAsset, BasicChat
+	from pieces_os_client.models.seeded_website import SeededWebsite
+	from pieces_os_client.models.website import Website
+	from .asset import BasicAsset
+	from .chat import BasicChat
 	from ..client import PiecesClient
 
 
@@ -20,7 +19,7 @@ class BasicWebsite(Basic):
 	- pieces_client: The PiecesClient object used to interact with the Pieces system.
 	"""
 
-	def __init__(self, pieces_client: "PiecesClient", website: Website) -> None:
+	def __init__(self, pieces_client: "PiecesClient", website: "Website") -> None:
 		"""
 		Initializes a BasicWebsite object.
 
@@ -51,7 +50,7 @@ class BasicWebsite(Basic):
 
 
 	@staticmethod
-	def create(pieces_client: "PiecesClient", seeded_website: SeededWebsite) -> "BasicWebsite":
+	def create(pieces_client: "PiecesClient", seeded_website: "SeededWebsite") -> "BasicWebsite":
 		"""
 		Creates a new website in the Pieces system.
 
@@ -81,6 +80,7 @@ class BasicWebsite(Basic):
 		Returns:
 		- BasicWebsite: The existing BasicWebsite object if found, None otherwise.
 		"""
+		from pieces_os_client.models.existent_metadata import ExistentMetadata
 		existance = pieces_client.websites_api.websites_exists(
 			ExistentMetadata(
 				value=url
@@ -101,6 +101,7 @@ class BasicWebsite(Basic):
 		Returns:
 		- BasicWebsite: The BasicWebsite object associated with the URL.
 		"""
+		from pieces_os_client.models.seeded_website import SeededWebsite
 		website = cls.exists(pieces_client,url)
 		return website if website else cls.create(
 				pieces_client,
@@ -167,7 +168,7 @@ class BasicWebsite(Basic):
 		Returns:
 		- List[BasicAsset]: The list of BasicAsset objects associated with the website.
 		"""
-		from . import BasicAsset
+		from .asset import BasicAsset
 		if self.website.assets and self.website.assets.iterable:
 			return [BasicAsset(asset.id) for asset in self.website.assets.iterable]
 
@@ -179,7 +180,7 @@ class BasicWebsite(Basic):
 		Returns:
 		- List[BasicChat]: The list of BasicChat objects associated with the website.
 		"""
-		from . import BasicChat
+		from .chat import BasicChat
 		if self.website.conversations and self.website.conversations.iterable:
 			return [BasicChat(chat.id) for chat in self.website.conversations.iterable]
 
@@ -225,7 +226,7 @@ class BasicWebsite(Basic):
 		"""
 		self.pieces_client.websites_api.websites_delete_specific_website(self.website.id)
 
-	def _edit_website(self, website: Website):
+	def _edit_website(self, website: "Website"):
 		"""
 		Edits the website in the Pieces OS.
 

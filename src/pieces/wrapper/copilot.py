@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional, Generator
+from typing import TYPE_CHECKING, List, Optional
 import queue
 
 from .context import Context
