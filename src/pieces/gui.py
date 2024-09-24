@@ -89,6 +89,7 @@ def print_help():
     print("  edit            - Edit the current asset name or classification you can use -n and -c for name and classification respectively")
     print("  delete          - Deletes the current or most recent asset.")
     print("  create          - Creates a new asset based on what you've copied to your clipboard")
+    print("  execute         - Execute a Pieces bash snippet")
     print("  clear           - to clear the terminal")
     print()
     print("  config          - View current configuration")
