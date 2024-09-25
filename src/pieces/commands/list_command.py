@@ -1,7 +1,6 @@
 from collections.abc import Iterable
 
 from pieces.settings import Settings
-from pieces_os_client.api.applications_api import ApplicationsApi
 
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings

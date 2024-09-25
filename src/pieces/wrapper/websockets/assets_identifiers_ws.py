@@ -4,11 +4,12 @@ from .base_websocket import BaseWebsocket
 from websocket import WebSocketApp
 
 from pieces_os_client.models.streamed_identifiers import StreamedIdentifiers
-from pieces_os_client.models.asset import Asset
 
 
 if TYPE_CHECKING:
+	from pieces_os_client.models.asset import Asset
 	from ..client import PiecesClient
+
 class AssetsIdentifiersWS(BaseWebsocket):
 	"""
 	WebSocket client for handling asset identifiers updates and removals.
@@ -23,8 +24,8 @@ class AssetsIdentifiersWS(BaseWebsocket):
 	"""
 
 	def __init__(self, pieces_client: "PiecesClient", 
-				 on_asset_update: Optional[Callable[[Asset], None]] = None,
-				 on_asset_remove: Optional[Callable[[Asset], None]] = None,
+				 on_asset_update: Optional[Callable[["Asset"], None]] = None,
+				 on_asset_remove: Optional[Callable[["Asset"], None]] = None,
 				 on_open_callback: Optional[Callable[[WebSocketApp], None]] = None, 
 				 on_error: Optional[Callable[[WebSocketApp, Exception], None]] = None, 
 				 on_close: Optional[Callable[[WebSocketApp, str, str], None]] = None):

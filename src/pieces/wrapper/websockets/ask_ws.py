@@ -2,13 +2,11 @@ from websocket import WebSocketConnectionClosedException, WebSocketApp
 from typing import Callable, Optional,TYPE_CHECKING
 
 from .base_websocket import BaseWebsocket
-
-
 from pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
-from pieces_os_client.models.qgpt_stream_input import QGPTStreamInput
 
 if TYPE_CHECKING:
 	from ..client import PiecesClient
+	from pieces_os_client.models.qgpt_stream_input import QGPTStreamInput
 
 class AskStreamWS(BaseWebsocket):
 	"""
@@ -58,7 +56,7 @@ class AskStreamWS(BaseWebsocket):
 		"""
 		self.on_message_callback(QGPTStreamOutput.from_json(message))
 
-	def send_message(self, message: QGPTStreamInput):
+	def send_message(self, message: "QGPTStreamInput"):
 		"""
 		Sends a message through the WebSocket.
 

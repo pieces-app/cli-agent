@@ -7,12 +7,12 @@ from pieces import __version__
 from pieces.gui import *
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.settings import Settings
-from pieces.wrapper.websockets.base_websocket import BaseWebsocket
-from pieces.wrapper.websockets.conversations_ws import ConversationWS
-from pieces.wrapper.websockets.assets_identifiers_ws import AssetsIdentifiersWS
 
 
 def loop(**kwargs):
+    from pieces.wrapper.websockets.base_websocket import BaseWebsocket
+    from pieces.wrapper.websockets.conversations_ws import ConversationWS
+    from pieces.wrapper.websockets.assets_identifiers_ws import AssetsIdentifiersWS
     
     Settings.run_in_loop = True
 
