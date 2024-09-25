@@ -6,7 +6,6 @@ from .basic_identifier.chat import BasicChat
 from .streamed_identifiers.conversations_snapshot import ConversationsSnapshot
 
 
-from pieces_os_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
 
 
 
@@ -14,6 +13,7 @@ if TYPE_CHECKING:
     from pieces_os_client.models.qgpt_prompt_pipeline import QGPTPromptPipeline
     from pieces_os_client.models.qgpt_question_output import QGPTQuestionOutput
     from .client import PiecesClient
+    from pieces_os_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
 
 
 class Copilot:
@@ -54,6 +54,7 @@ class Copilot:
         """
         from pieces_os_client.models.qgpt_stream_input import QGPTStreamInput
         from pieces_os_client.models.qgpt_question_input import QGPTQuestionInput
+        from pieces_os_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
         relevant = self.context._relevance_api(query) if self.context._check_relevant_existence else RelevantQGPTSeeds(iterable=[])
         self.ask_stream_ws.send_message(
             QGPTStreamInput(
@@ -71,7 +72,7 @@ class Copilot:
 
     def question(self,
         query:str, 
-        relevant_qgpt_seeds: RelevantQGPTSeeds = RelevantQGPTSeeds(iterable=[]),
+        relevant_qgpt_seeds: "RelevantQGPTSeeds" = None,
         pipeline:Optional["QGPTPromptPipeline"]=None
         ) -> "QGPTQuestionOutput":
         """
@@ -87,6 +88,10 @@ class Copilot:
             QGPTQuestionOutput: The streamed output from the QGPT model.
         """
         from pieces_os_client.models.qgpt_question_input import QGPTQuestionInput
+        from pieces_os_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
+        if not relevant_qgpt_seeds:
+            relevant_qgpt_seeds = RelevantQGPTSeeds(iterable=[])
+
         gpt_input = QGPTQuestionInput(
             query = query,
             model = self.pieces_client.model_id,

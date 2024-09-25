@@ -3,11 +3,12 @@ from typing import Optional, List, TYPE_CHECKING
 from ..streamed_identifiers import ConversationsSnapshot
 from .basic import Basic
 
-from pieces_os_client.models.conversation import Conversation
+
 from pieces_os_client.models.annotation_type_enum import AnnotationTypeEnum
 
 
 if TYPE_CHECKING:
+    from pieces_os_client.models.conversation import Conversation
     from .message import BasicMessage
     from .annotation import BasicAnnotation
     from.website import BasicWebsite
@@ -42,7 +43,7 @@ class BasicChat(Basic):
         return self.conversation.updated.readable if self.conversation.updated.readable else "Unknown"
 
     @property
-    def conversation(self) -> Conversation:
+    def conversation(self) -> "Conversation":
         conversation = ConversationsSnapshot.identifiers_snapshot.get(self._id)
         if not conversation:
             conversation = ConversationsSnapshot.update_identifier(self._id)
