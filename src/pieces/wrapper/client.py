@@ -11,9 +11,8 @@ from .api_client import PiecesApiClient
 from .. import __version__
 
 from .copilot import Copilot
-from .basic_identifier.asset import BasicAsset
 from .basic_identifier.user import BasicUser
-from .streamed_identifiers import AssetSnapshot
+from .basic_identifier.asset import BasicAsset
 
 if TYPE_CHECKING:
     from pieces_os_client.models.application import Application
@@ -24,6 +23,7 @@ if TYPE_CHECKING:
 class PiecesClient(PiecesApiClient):
     def __init__(self, host:str="", **kwargs):
         self._application = None
+        self._copilot = None
         self.models:Dict[str, str] = {} # Maps model_name to the model_id
         self.models_object: list["Model"] = []
 
@@ -33,10 +33,14 @@ class PiecesClient(PiecesApiClient):
         self.local_os = platform.system().upper() if platform.system().upper() in ["WINDOWS","LINUX","DARWIN"] else "WEB"
         self.local_os = "MACOS" if self.local_os == "DARWIN" else self.local_os
         self._connect_websockets = kwargs.get("connect_wesockets",True)
-        self.user = BasicUser(self)   
-        self.copilot = Copilot(self)
+        self.user = BasicUser(self)
         super().__init__(host)
 
+    @property
+    def copilot(self):
+        if not self._copilot:
+            self._copilot = Copilot(self)
+        return self._copilot
 
     @property
     def application(self) -> "Application":

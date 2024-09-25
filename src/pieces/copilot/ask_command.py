@@ -65,6 +65,7 @@ class AskStream:
                 context.assets.append(asset)
 
     def ask(self,query, **kwargs):
+        Settings.pieces_client.copilot.ask_stream_ws.on_message = self.on_message
         Settings.get_model() # Ensure the model is loaded
         files = kwargs.get("files",None)
         assets_index = kwargs.get("snippets",None)
