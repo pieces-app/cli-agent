@@ -78,7 +78,7 @@ class Settings:
 
 	@classmethod
 	def startup(cls):
-		if cls.pieces_client.is_pieces_running:
+		if cls.pieces_client.is_pieces_running():
 			cls.version_check() # Check the version first 
 		else:
 			server_startup_failed()

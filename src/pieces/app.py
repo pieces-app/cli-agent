@@ -1,5 +1,4 @@
 import sys
-
 from pieces.gui import print_help
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.settings import Settings
@@ -8,13 +7,15 @@ from pieces.commands import *
 from pieces.autocommit import *
 from pieces.copilot import *
 
+from . import __version__
 ask_stream = AskStream()
 
 class PiecesCLI:
     def __init__(self):
         self.parser = PiecesArgparser(description="Pieces CLI for interacting with the PiecesOS",add_help=False)
-        self.command_parser = self.parser.add_subparsers(dest='command', required=True)
-        self.add_subparsers()
+        self.command_parser = self.parser.add_subparsers(dest='command')
+        self.parser.add_argument("--version","-v", action="store_true",help= "Displays the PiecesCLI version")
+        self.parser.set_defaults(func=lambda **kwargs:print(__version__))
         PiecesArgparser.parser = self.parser
 
     def add_subparsers(self):
@@ -130,7 +131,7 @@ class PiecesCLI:
             return
 
         # Check if the 'run' or 'help' command is explicitly provided
-        if arg not in ['help']:
+        if arg not in ['help',"-v","--version"]:
             Settings.startup()
 
         args = self.parser.parse_args()

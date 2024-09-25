@@ -35,7 +35,7 @@ def loop(**kwargs):
 
     # Start the loop
     while Settings.run_in_loop:
-        is_running = Settings.pieces_client.is_pieces_running
+        is_running = Settings.pieces_client.is_pieces_running()
 
         if not is_running:
             double_line("Server no longer available. Exiting loop.")
