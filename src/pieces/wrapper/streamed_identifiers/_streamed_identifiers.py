@@ -25,13 +25,15 @@ from typing import Dict, List, Union, Callable, TYPE_CHECKING
 from abc import ABC, abstractmethod
 import threading
 
-from pieces_os_client.models.conversation import Conversation
-from pieces_os_client.models.streamed_identifiers import StreamedIdentifiers
-from pieces_os_client.models.asset import Asset
+
+
 
 
 if TYPE_CHECKING:
     from ..client import PiecesClient
+    from pieces_os_client.models.streamed_identifiers import StreamedIdentifiers
+    from pieces_os_client.models.conversation import Conversation
+    from pieces_os_client.models.asset import Asset
 
 class StreamedIdentifiersCache(ABC):
     """
@@ -44,7 +46,7 @@ class StreamedIdentifiersCache(ABC):
         super().__init_subclass__(**kwargs)
         cls.on_update_list: List[Callable] = []
         cls.on_remove_list: List[Callable] = []
-        cls.identifiers_snapshot: Dict[str, Union[Asset, Conversation, None]] = {}  # Map id:return from the _api_call
+        cls.identifiers_snapshot: Dict[str, Union["Asset", "Conversation", None]] = {}  # Map id:return from the _api_call
         cls.identifiers_queue = queue.Queue()  # Queue for ids to be processed
         cls.identifiers_set = set()  # Set for ids in the queue
         cls.block = True  # to wait for the queue to receive the first id
@@ -64,7 +66,7 @@ class StreamedIdentifiersCache(ABC):
             remove(obj)
 
     @abstractmethod
-    def _api_call(cls, id: str) -> Union[Asset, Conversation]:
+    def _api_call(cls, id: str) -> Union["Asset", "Conversation"]:
         pass
 
     @abstractmethod
@@ -104,7 +106,7 @@ class StreamedIdentifiersCache(ABC):
         return id_value
 
     @classmethod
-    def streamed_identifiers_callback(cls, ids: StreamedIdentifiers):
+    def streamed_identifiers_callback(cls, ids: "StreamedIdentifiers"):
         # Start the worker thread if it's not running
         cls.block = True
         if not cls._worker_thread.is_alive():
