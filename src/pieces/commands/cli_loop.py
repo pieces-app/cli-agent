@@ -17,8 +17,8 @@ def loop(**kwargs):
     Settings.run_in_loop = True
 
     # Start the assets websocket identifiers
-    assets_identifiers_ws = AssetsIdentifiersWS(Settings.pieces_client).start()
-    conversations_ws = ConversationWS(Settings.pieces_client).start()
+    AssetsIdentifiersWS(Settings.pieces_client).start()
+    ConversationWS(Settings.pieces_client).start()
     # Initial setup
     os_info = platform.platform()
     python_version = sys.version.split()[0] 
@@ -27,7 +27,7 @@ def loop(**kwargs):
     print_response(f"Operating System: {os_info}", f"Python Version: {python_version}",
                    f"Pieces OS Version: {Settings.pieces_os_version}",
                    f"Pieces CLI Version: {__version__}",
-                   f"Application: {Settings.pieces_client.application.name.name if Settings.pieces_client.application else 'Unknown'}")
+                   f"Application: {Settings.pieces_client.application.name if Settings.pieces_client.application else 'Unknown'}")
     print_instructions()
 
     # Create a prompt session, which will maintain the history of inputs

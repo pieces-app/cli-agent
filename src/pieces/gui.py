@@ -125,8 +125,8 @@ def print_asset_details(asset:"BasicAsset"):
     print(f"Name: {asset.name}")
     print(f"Created: {asset.created_at}")
     print(f"Updated: {asset.updated_at}")
-    print(f"Type: {asset.type}")
-    print(f"Language: {asset.classification}")
+    print(f"Type: {asset.type.value}")
+    print(f"Language: {asset.classification.value}")
     if asset.raw_content: print(f"Code: {asset.raw_content}")
     print()
 

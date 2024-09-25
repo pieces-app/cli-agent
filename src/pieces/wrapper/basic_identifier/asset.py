@@ -52,7 +52,8 @@ class BasicAsset(Basic):
 	@property
 	def created_at(self):
 		return self.asset.created.readable if self.asset.created.readable else "Unknown"
-	
+
+	@property
 	def updated_at(self):
 		return self.asset.updated.readable if self.asset.updated.readable else "Unknown"
 	

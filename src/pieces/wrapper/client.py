@@ -13,6 +13,7 @@ from .. import __version__
 from .copilot import Copilot
 from .basic_identifier.user import BasicUser
 from .basic_identifier.asset import BasicAsset
+from .streamed_identifiers import AssetSnapshot,ConversationsSnapshot
 
 if TYPE_CHECKING:
     from pieces_os_client.models.application import Application
@@ -22,6 +23,8 @@ if TYPE_CHECKING:
 
 class PiecesClient(PiecesApiClient):
     def __init__(self, host:str="", **kwargs):
+        AssetSnapshot.pieces_client = self
+        ConversationsSnapshot.pieces_client = self
         self._application = None
         self._copilot = None
         self.models:Dict[str, str] = {} # Maps model_name to the model_id
