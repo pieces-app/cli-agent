@@ -67,7 +67,7 @@ class Settings:
 	def get_from_pickle(file,key):
 		with open(file, 'rb') as f:
 			data = pickle.load(f)
-		return data.get("key")
+		return data.get(key)
 
 	@staticmethod
 	def dump_pickle(file,**data):

@@ -127,7 +127,6 @@ def print_asset_details(asset:"BasicAsset"):
     print(f"Updated: {asset.updated_at}")
     print(f"Type: {asset.type.value}")
     print(f"Language: {asset.classification.value}")
-    if asset.raw_content: print(f"Code: {asset.raw_content}")
     print()
 
 def delete_most_recent():
