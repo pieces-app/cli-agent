@@ -95,15 +95,14 @@ class ListCommand:
     @classmethod
     @check_assets_existence
     def list_assets(cls, max_assets: int = 10,**kwargs):
-
+        assets = kwargs.get("assets",Settings.pieces_client.assets()[:max_assets])
 
         select_menu = PiecesSelectMenu(
             [
-            (f"{i}: {asset.name}", {"ITEM_INDEX":i,"show_warning":False,**kwargs})
-            for i, asset in enumerate(Settings.pieces_client.assets()[:max_assets],
-              start=1)
-            ]
-            , AssetsCommands.open_asset)
+                (f"{i}: {asset.name}", {"ITEM_INDEX":i,"show_warning":False,**kwargs})
+                for i, asset in enumerate(assets,start=1)
+            ],
+             AssetsCommands.open_asset,kwargs.get("footer"))
         select_menu.run()
 
     @classmethod
