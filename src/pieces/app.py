@@ -16,6 +16,7 @@ class PiecesCLI:
         self.command_parser = self.parser.add_subparsers(dest='command')
         self.parser.add_argument("--version","-v", action="store_true",help= "Displays the PiecesCLI version")
         self.parser.set_defaults(func=lambda **kwargs:print(__version__))
+        self.add_subparsers()
         PiecesArgparser.parser = self.parser
 
     def add_subparsers(self):
