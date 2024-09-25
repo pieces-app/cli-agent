@@ -2,8 +2,7 @@ from pieces.wrapper.basic_identifier.asset import BasicAsset
 
 
 def search(query, **kwargs):
-    search_type = kwargs.get('search_type', 'asset')
-    if search_type == "asset": search_type = "fuzzy"
+    search_type = kwargs.get('search_type', 'fuzzy')
 
     # Join the list of strings into a single search phrase
     search_phrase = ' '.join(query)
@@ -16,7 +15,7 @@ def search(query, **kwargs):
         search_type_map = {
             'ncs': 'Neural Code Search',
             'fts': 'Full Text Search',
-            'assets': 'Fuzzy Search'
+            'fuzzy': 'Fuzzy Search'
         }
         search_type_text = search_type_map.get(search_type, 'Search')
 

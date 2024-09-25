@@ -79,7 +79,7 @@ class PiecesCLI:
         # Subparser for Search
         search_parser = self.command_parser.add_parser('search', help='Search with a query string')
         search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
-        search_parser.add_argument('--mode', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search')
+        search_parser.add_argument('--mode', type=str, dest='search_type', default='fuzzy', choices=['fuzzy', 'ncs', 'fts'], help='Type of search')
         search_parser.set_defaults(func=search)
 
 

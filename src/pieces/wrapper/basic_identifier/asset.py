@@ -318,7 +318,7 @@ class BasicAsset(Basic):
 		elif search_type == 'fts':
 			results = AssetSnapshot.pieces_client.search_api.full_text_search(query=query)
 		elif search_type == "fuzzy":
-			results = AssetSnapshot.pieces_client.assets_api.assets_search_assets(query=query,transferables=False)
+			results = AssetSnapshot.pieces_client.assets_api.search_assets(query=query,transferables=False)
 
 		if results:
 			# Extract the iterable which contains the search results
