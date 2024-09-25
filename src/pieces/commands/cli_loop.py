@@ -27,7 +27,7 @@ def loop(**kwargs):
     print_response(f"Operating System: {os_info}", f"Python Version: {python_version}",
                    f"Pieces OS Version: {Settings.pieces_os_version}",
                    f"Pieces CLI Version: {__version__}",
-                   f"Application: {Settings.pieces_client.application.name if Settings.pieces_client.application else 'Unknown'}")
+                   f"Application: {Settings.pieces_client.application.name.value if Settings.pieces_client.application else 'Unknown'}")
     print_instructions()
 
     # Create a prompt session, which will maintain the history of inputs
