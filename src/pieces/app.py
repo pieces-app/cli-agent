@@ -8,6 +8,8 @@ from pieces.commands import *
 from pieces.autocommit import *
 from pieces.copilot import *
 
+ask_stream = AskStream()
+
 class PiecesCLI:
     def __init__(self):
         self.parser = PiecesArgparser(description="CLI for interacting with the pieces library",add_help=False)
@@ -66,7 +68,7 @@ class PiecesCLI:
         ask_parser.add_argument('query', type=str, help='Question to be asked to the model')
         ask_parser.add_argument('--files','-f', nargs='*', type=str,dest='files', help='Folder or file as a relevance you can enter an absolute or relative path')
         ask_parser.add_argument('--snippets','-s', nargs='*', type=int,dest='snippets', help='Snippet of the question to be asked to the model check list assets')
-        ask_parser.set_defaults(func=ask)
+        ask_parser.set_defaults(func=ask_stream.ask)
 
         # Subparser for the 'version' command
         version_parser = self.command_parser.add_parser('version', help='Gets version of Pieces OS')

@@ -28,7 +28,7 @@ class Copilot:
         Args:
             pieces_client: The client instance to interact with the Pieces API.
         """
-        from .websockets import AskStreamWS
+        from .websockets.ask_ws import AskStreamWS
         self.pieces_client = pieces_client
         self._on_message_queue = queue.Queue()
         self.ask_stream_ws = AskStreamWS(self.pieces_client, self._on_message_queue.put)
@@ -104,8 +104,7 @@ class Copilot:
         Returns:
             list[BasicChat]: A list of BasicChat instances representing the chat identifiers.
         """
-        self.pieces_client.ensure_initialization()
-        return [BasicChat(id) for id in ConversationsSnapshot.identifiers_snapshot]
+        return [BasicChat(id) for id in BasicChat.identifiers_snapshot().keys()]
 
     @property
     def chat(self) -> Optional[BasicChat]:

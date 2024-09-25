@@ -16,6 +16,31 @@ class BasicChat(Basic):
     """
     A class to represent a basic chat, initialized with a conversation ID.
     """
+    @staticmethod
+    def identifiers_snapshot():
+        if ConversationsSnapshot.identifiers_snapshot:
+            return ConversationsSnapshot.identifiers_snapshot
+
+        conversation_api = ConversationsSnapshot.pieces_client.conversations_api
+        # Call the API to get assets identifiers
+        api_response = conversation_api.conversations_identifiers_snapshot()
+
+        # Extract the 'id' values from each item in the 'iterable' list
+        ConversationsSnapshot.identifiers_snapshot = {item.id:None for item in api_response.iterable}
+
+        return ConversationsSnapshot.identifiers_snapshot
+
+    @staticmethod
+    def ensure_sort():
+        if ConversationsSnapshot.first_shot:
+            for i in ConversationsSnapshot.identifiers_snapshot.keys():
+                ConversationsSnapshot.identifiers_snapshot[i] = ConversationsSnapshot.update_identifier(i)
+            ConversationsSnapshot._sort_first_shot()
+            ConversationsSnapshot.first_shot = False
+    @property
+    def updated_at(self):
+        return self.conversation.updated.readable if self.conversation.updated.readable else "Unknown"
+
     @property
     def conversation(self) -> Conversation:
         conversation = ConversationsSnapshot.identifiers_snapshot.get(self._id)

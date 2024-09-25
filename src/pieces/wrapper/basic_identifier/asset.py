@@ -21,7 +21,7 @@ class BasicAsset(Basic):
 	"""
 	A wrapper class for managing assets.
 	"""
-	@property
+	@staticmethod
 	def identifiers_snapshot():
 		if AssetSnapshot.identifiers_snapshot:
 			return AssetSnapshot.identifiers_snapshot
