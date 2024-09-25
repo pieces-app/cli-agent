@@ -49,14 +49,16 @@ class PiecesClient(PiecesApiClient):
     def application(self) -> "Application":
         from pieces_os_client.models.seeded_connector_connection import SeededConnectorConnection
         from pieces_os_client.models.seeded_tracked_application import SeededTrackedApplication
-        if self._application:
-            return self._application
-        self._application = self.connector_api.connect(seeded_connector_connection=SeededConnectorConnection(
-            application=SeededTrackedApplication(
-                name = "OPEN_SOURCE",
-                platform = self.local_os,
-                version = __version__))).application
-        self.api_client.set_default_header("application",self._application.id)
+        
+        if not self._application:
+            self._application = self.connector_api.connect(seeded_connector_connection=SeededConnectorConnection(
+                application=SeededTrackedApplication(
+                    name = "OPEN_SOURCE",
+                    platform = self.local_os,
+                    version = __version__))).application
+            self.api_client.set_default_header("application",self._application.id)
+        
+        return self._application
 
     def connect_websocket(self) -> bool:
         from .websockets.conversations_ws import ConversationWS
