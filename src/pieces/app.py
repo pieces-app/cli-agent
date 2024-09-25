@@ -12,7 +12,7 @@ ask_stream = AskStream()
 
 class PiecesCLI:
     def __init__(self):
-        self.parser = PiecesArgparser(description="CLI for interacting with the pieces library",add_help=False)
+        self.parser = PiecesArgparser(description="Pieces CLI for interacting with the PiecesOS",add_help=False)
         self.command_parser = self.parser.add_subparsers(dest='command', required=True)
         self.add_subparsers()
         PiecesArgparser.parser = self.parser

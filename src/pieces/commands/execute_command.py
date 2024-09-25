@@ -12,7 +12,7 @@ class ExecuteCommand:
         
         assets = [
             (f"{i}: {asset.name}", {"ITEM_INDEX": i,  "asset":asset, "show_warning":False})
-            for i, asset in enumerate(list(Settings.pieces_client.assets()), start=1):
+            for i, asset in enumerate(list(Settings.pieces_client.assets()), start=1)
                 if asset.classification in (ClassificationSpecificEnum.SH,
                     ClassificationSpecificEnum.BAT)
         ]
@@ -40,7 +40,7 @@ class ExecuteCommand:
                 result = subprocess.run(asset.raw_content, shell=True, capture_output=True, text=True)
             else:
                 raise ValueError(f"Unsupported classification {asset.classification}")
-            print(f"Executing {ClassificationSpecificEnum.BASH.value()} command:")
+            print(f"Executing {ClassificationSpecificEnum.BASH} command:")
             print(result.stdout)
             if result.stderr:
                 print("Errors:")

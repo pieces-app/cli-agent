@@ -65,6 +65,7 @@ class AskStream:
                 context.assets.append(asset)
 
     def ask(self,query, **kwargs):
+        Settings.get_model() # Ensure the model is loaded
         files = kwargs.get("files",None)
         assets_index = kwargs.get("snippets",None)
         self.add_context(files,assets_index)
