@@ -1,7 +1,7 @@
 from pieces.settings import Settings
 from .assets_command import check_assets_existence, AssetsCommands
 import subprocess
-from .list_command import PiecesSelectMenu
+from pieces.utils import PiecesSelectMenu
 from pieces_os_client.models.classification_specific_enum import ClassificationSpecificEnum
 
 
