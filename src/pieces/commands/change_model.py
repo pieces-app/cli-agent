@@ -12,7 +12,7 @@ def change_model(**kwargs): # Change the model used in the ask command
             Settings.pieces_client.model_id = model_id
             Settings.pieces_client.model_name = model_name
             Settings.dump_pickle(file = Settings.models_file,model_id = model_id)
-            print(f"Switched to {model_name} with uuid {model_id}")
+            print(f"Switched to {model_name}")
         else:
             raise Exception("Invalid model index or model index not provided.")
     except:

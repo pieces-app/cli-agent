@@ -2,6 +2,7 @@ from collections.abc import Iterable
 
 from pieces.settings import Settings
 
+import shutil
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout
@@ -18,11 +19,17 @@ class PiecesSelectMenu:
         self.on_enter_callback = on_enter_callback
         self.current_selection = 0
         self.footer_text = footer_text
+        self.update_visible_range()
+
+    def update_visible_range(self):
+        terminal_size = shutil.get_terminal_size()
+        self.visible_start = 0
+        self.visible_end = terminal_size.lines - 2
 
     def get_menu_text(self):
         result = []
-        for i, option in enumerate(self.menu_options):
-            if i == self.current_selection:
+        for i, option in enumerate(self.menu_options[self.visible_start:self.visible_end]):
+            if i + self.visible_start == self.current_selection:
                 result.append(('class:selected', f'> {option[0]}\n'))
             else:
                 result.append(('class:unselected', f'  {option[0]}\n'))
@@ -35,12 +42,18 @@ class PiecesSelectMenu:
         def move_up(event):
             if self.current_selection > 0:
                 self.current_selection -= 1
+                if self.current_selection < self.visible_start:
+                    self.visible_start -= 1
+                    self.visible_end -= 1
             event.app.layout.focus(self.menu_window)
 
         @bindings.add('down')
         def move_down(event):
             if self.current_selection < len(self.menu_options) - 1:
                 self.current_selection += 1
+                if self.current_selection >= self.visible_end:
+                    self.visible_start += 1
+                    self.visible_end += 1
             event.app.layout.focus(self.menu_window)
 
         @bindings.add('enter')
@@ -74,7 +87,6 @@ class PiecesSelectMenu:
             self.on_enter_callback(args)
         elif isinstance(args, dict):
             self.on_enter_callback(**args)
-
 
 class ListCommand:
     @classmethod
