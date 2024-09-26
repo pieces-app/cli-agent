@@ -1,25 +1,22 @@
-from ..assets import check_assets_existence, AssetsCommandsApi
+from pieces.settings import Settings
+from .assets_command import check_assets_existence, AssetsCommands
 import subprocess
-from .list_command import PiecesSelectMenu
-from ..assets.assets_command import AssetsCommands
+from pieces.utils import PiecesSelectMenu
+from pieces_os_client.models.classification_specific_enum import ClassificationSpecificEnum
 
 
 class ExecuteCommand:
     @classmethod
     @check_assets_existence
-    def execute_command(cls, max_assets: int = 10,**kwargs):
-        if max_assets < 1:
-            print("Max assets must be greater than 0")
-            max_assets = 10
-        assets_snapshot = AssetsCommandsApi().assets_snapshot
-        assets = []
+    def execute_command(cls, **kwargs):
         
-        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
-            asset = AssetsCommandsApi.get_asset_snapshot(uuid)
-            classification = cls.get_asset_classification(asset)
-            if classification in ["bat","sh"]:
-                assets.append((f"{i}: {asset.name}", {"ITEM_INDEX": i, "UUID": uuid, "CLASSIFICATION": classification,"show_warning":False}))
-        
+        assets = [
+            (f"{asset.name}", {"ITEM_INDEX": i,  "asset":asset, "show_warning":False})
+            for i, asset in enumerate(list(Settings.pieces_client.assets()), start=1)
+                if asset.classification in (ClassificationSpecificEnum.SH,
+                    ClassificationSpecificEnum.BAT)
+        ]
+
         if not assets:
             print("No shell or bash assets found")
             return
@@ -31,34 +28,19 @@ class ExecuteCommand:
         select_menu = PiecesSelectMenu(assets, open_and_execute_asset)
         select_menu.run()
 
-    @staticmethod
-    def get_asset_classification(asset):
-        try:
-            return asset.original.reference.classification.specific.value
-        except AttributeError:
-            return "unknown"
 
     @classmethod
     def execute_asset(cls, **kwargs):
-        uuid = kwargs.get("UUID")
-        classification = kwargs.get("CLASSIFICATION")
-        asset = AssetsCommandsApi.get_asset_snapshot(uuid)
-        asset_dict = AssetsCommandsApi.extract_asset_info(asset)
-        
-        cls.execute_command_in_subprocess(asset_dict["raw"], classification)
+        asset = kwargs["asset"]
 
-    @staticmethod
-    def execute_command_in_subprocess(command: str, classification: str):
         try:
-            if classification == "bat":
-                result = subprocess.run(['bash', '-c', command], capture_output=True, text=True)
-            elif classification == "sh":
-                result = subprocess.run(command, shell=True, capture_output=True, text=True)
+            if asset.classification == ClassificationSpecificEnum.BASH:
+                result = subprocess.run(['bash', '-c', asset.raw_content], capture_output=True, text=True)
+            elif asset.classification == ClassificationSpecificEnum.SH:
+                result = subprocess.run(asset.raw_content, shell=True, capture_output=True, text=True)
             else:
-                print(f"Unsupported asset classification: {classification}")
-                return
-            
-            print(f"Executing {classification} command:")
+                raise ValueError(f"Unsupported classification {asset.classification}")
+            print(f"Executing {asset.classification.value} command:")
             print(result.stdout)
             if result.stderr:
                 print("Errors:")

@@ -1,79 +1,10 @@
-from pieces.settings import Settings
 from collections.abc import Iterable
-from pieces.assets import check_assets_existence, AssetsCommandsApi
-from pieces_os_client.api.applications_api import ApplicationsApi
-from prompt_toolkit import Application
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.containers import HSplit, Window
-from prompt_toolkit.layout.controls import FormattedTextControl
-from prompt_toolkit.styles import Style
-from typing import List, Tuple, Callable,Optional
-from pieces.assets.assets_command import AssetsCommands
+
+from pieces.settings import Settings
+from pieces.utils import PiecesSelectMenu
+
 from .change_model import change_model
-
-class PiecesSelectMenu:
-    def __init__(self, menu_options: List[Tuple], on_enter_callback: Callable, footer_text: Optional[str] = None):
-        self.menu_options = menu_options
-        self.on_enter_callback = on_enter_callback
-        self.current_selection = 0
-        self.footer_text = footer_text
-
-    def get_menu_text(self):
-        result = []
-        for i, option in enumerate(self.menu_options):
-            if i == self.current_selection:
-                result.append(('class:selected', f'> {option[0]}\n'))
-            else:
-                result.append(('class:unselected', f'  {option[0]}\n'))
-        return result
-
-    def run(self):
-        bindings = KeyBindings()
-
-        @bindings.add('up')
-        def move_up(event):
-            if self.current_selection > 0:
-                self.current_selection -= 1
-            event.app.layout.focus(self.menu_window)
-
-        @bindings.add('down')
-        def move_down(event):
-            if self.current_selection < len(self.menu_options) - 1:
-                self.current_selection += 1
-            event.app.layout.focus(self.menu_window)
-
-        @bindings.add('enter')
-        def select_option(event):
-            args = self.menu_options[self.current_selection][1]
-            event.app.exit(result=args)
-
-        menu_control = FormattedTextControl(text=self.get_menu_text)
-        self.menu_window = Window(content=menu_control, always_hide_cursor=True)
-
-        layout_items = [self.menu_window]
-
-        if self.footer_text:
-            footer_control = FormattedTextControl(text=self.footer_text)
-            footer_window = Window(content=footer_control, height=1, always_hide_cursor=True)
-            layout_items.append(footer_window)
-
-        layout = Layout(HSplit(layout_items))
-
-        style = Style.from_dict({
-            'selected': 'reverse',
-            'unselected': ''
-        })
-
-        app = Application(layout=layout, key_bindings=bindings, style=style, full_screen=True)
-        args = app.run()
-
-        if isinstance(args, list):
-            self.on_enter_callback(*args)
-        elif isinstance(args, str):
-            self.on_enter_callback(args)
-        elif isinstance(args, dict):
-            self.on_enter_callback(**args)
+from .assets_command import check_assets_existence, AssetsCommands
 
 
 class ListCommand:
@@ -95,32 +26,27 @@ class ListCommand:
     @classmethod
     @check_assets_existence
     def list_assets(cls, max_assets: int = 10,**kwargs):
-        assets_snapshot = AssetsCommandsApi().assets_snapshot
-        assets = []
-        for i, uuid in enumerate(list(assets_snapshot.keys())[:max_assets], start=1):
-            asset = AssetsCommandsApi.get_asset_snapshot(uuid)
-            assets.append((f"{i}: {asset.name}", {"ITEM_INDEX":i,"show_warning":False,**kwargs})) # Pass the args to the open command
+        assets = kwargs.get("assets",Settings.pieces_client.assets()[:max_assets])
 
-        select_menu = PiecesSelectMenu(assets, AssetsCommands.open_asset)
+        select_menu = PiecesSelectMenu(
+            [
+                (f"{i}: {asset.name}", {"ITEM_INDEX":i,"show_warning":False,**kwargs})
+                for i, asset in enumerate(assets,start=1)
+            ],
+             AssetsCommands.open_asset,kwargs.get("footer"))
         select_menu.run()
 
     @classmethod
     def list_models(cls):
-        if not hasattr(Settings, 'models'):
-            Settings.load_models()
-        
-        if not Settings.models:
-            print("No models available.")
-            return
 
-        models = [(f"{idx}: {model_name}", {"MODEL_INDEX":idx,"show_warning":False}) for idx, model_name in enumerate(Settings.models.keys(), start=1)]
-        select_menu = PiecesSelectMenu(models, change_model,f"Currently using: {Settings.model_name} with uuid {Settings.model_id}")
+        models = [(f"{idx}: {model_name}", {"MODEL_INDEX":idx,"show_warning":False}) 
+        for idx, model_name in enumerate(Settings.pieces_client.available_models_names, start=1)]
+        select_menu = PiecesSelectMenu(models, change_model,f"Currently using: {Settings.get_model()}")
         select_menu.run()
 
     @classmethod
     def list_apps(cls):
-        applications_api = ApplicationsApi(Settings.api_client)
-        application_list = applications_api.applications_snapshot()
+        application_list = Settings.pieces_client.applications_api.applications_snapshot()
 
         if hasattr(application_list, 'iterable') and isinstance(application_list.iterable, Iterable):
             for i, app in enumerate(application_list.iterable, start=1):

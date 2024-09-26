@@ -1,3 +1,9 @@
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from pieces.wrapper.basic_identifier.asset import BasicAsset
+
 
 def welcome():
     print()
@@ -55,21 +61,6 @@ def space_below(text):
 def print_response(*args):
     for arg in args:
         print(arg)
-        
-def print_asset_details(asset_details, title, search_type):
-    # Map search_type to descriptive text
-    search_type_map = {
-        'ncs': 'Neural Code Search',
-        'fts': 'Full Text Search',
-        'assets': 'Fuzzy Search'
-    }
-    search_type_text = search_type_map.get(search_type, 'Search')
-
-    print(f"\n{search_type_text}\n")
-    print(title)
-    for index, (_, asset_name) in enumerate(asset_details, start=1):
-        print(f"{index}: {asset_name}")
-    print()
 
 
 def print_instructions():
@@ -98,6 +89,7 @@ def print_help():
     print("  edit            - Edit the current asset name or classification you can use -n and -c for name and classification respectively")
     print("  delete          - Deletes the current or most recent asset.")
     print("  create          - Creates a new asset based on what you've copied to your clipboard")
+    print("  execute         - Execute a Pieces bash snippet")
     print("  clear           - to clear the terminal")
     print()
     print("  config          - View current configuration")
@@ -129,13 +121,12 @@ def print_help():
     print("  help            - Show this help message")
     print()
 
-def print_model_details(name, created_readable, updated_readable, type, language, code_snippet=None):
-    print(f"Name: {name}")
-    print(f"Created: {created_readable}")
-    print(f"Updated: {updated_readable}")
-    print(f"Type: {type}")
-    print(f"Language: {language}")
-    if code_snippet: print(f"Code: {code_snippet}")
+def print_asset_details(asset:"BasicAsset"):
+    print(f"Name: {asset.name}")
+    print(f"Created: {asset.created_at}")
+    print(f"Updated: {asset.updated_at}")
+    print(f"Type: {asset.type.value}")
+    print(f"Language: {asset.classification.value}")
     print()
 
 def delete_most_recent():
@@ -157,11 +148,11 @@ def open_from_command_line():
     print()
 
 
-def show_error(error_message,error):
+def show_error(error,error_message=None):
     # Show an error message in red color
     print()
-    print(f"\033[31m{error_message}\033[0m")
-    print(f"\033[31m{error}\033[0m")
+    print(f"\033[31m{error}\033[0m") 
+    print(f"\033[31m{error_message}\033[0m") if error_message else None
     print()
 
 def deprecated(command,instead):

@@ -2,24 +2,23 @@ import sys
 import platform
 import shlex
 from prompt_toolkit import PromptSession
-from rich.console import Console
 import os
 from pieces import __version__
 from pieces.gui import *
 from pieces.pieces_argparser import PiecesArgparser
-from pieces.assets.assets_identifiers_ws import AssetsIdentifiersWS
-from pieces.copilot.ask_command import ask_websocket
 from pieces.settings import Settings
-from pieces.assets.assets_api import AssetsCommandsApi
 
 
 def loop(**kwargs):
+    from pieces.wrapper.websockets.base_websocket import BaseWebsocket
+    from pieces.wrapper.websockets.conversations_ws import ConversationWS
+    from pieces.wrapper.websockets.assets_identifiers_ws import AssetsIdentifiersWS
     
     Settings.run_in_loop = True
 
     # Start the assets websocket identifiers
-    assets_identifiers_ws = AssetsIdentifiersWS(AssetsCommandsApi.assets_snapshot_callback)
-
+    AssetsIdentifiersWS(Settings.pieces_client).start()
+    ConversationWS(Settings.pieces_client).start()
     # Initial setup
     os_info = platform.platform()
     python_version = sys.version.split()[0] 
@@ -28,7 +27,7 @@ def loop(**kwargs):
     print_response(f"Operating System: {os_info}", f"Python Version: {python_version}",
                    f"Pieces OS Version: {Settings.pieces_os_version}",
                    f"Pieces CLI Version: {__version__}",
-                   f"Application: {Settings.application.name.name if Settings.application else 'Unknown'}")
+                   f"Application: {Settings.pieces_client.application.name.value if Settings.pieces_client.application else 'Unknown'}")
     print_instructions()
 
     # Create a prompt session, which will maintain the history of inputs
@@ -36,7 +35,7 @@ def loop(**kwargs):
 
     # Start the loop
     while Settings.run_in_loop:
-        is_running = Settings.get_health()
+        is_running = Settings.pieces_client.is_pieces_running()
 
         if not is_running:
             double_line("Server no longer available. Exiting loop.")
@@ -57,8 +56,7 @@ def loop(**kwargs):
                 continue
             if user_input == 'exit':
                 double_space("Exiting...")
-                ask_websocket.close_websocket_connection()  # Close using the ask_websocket instance
-                assets_identifiers_ws.close_websocket_connection()  # Close using the assets_identifiers_ws instance
+                BaseWebsocket.close_all()
                 break
 
             # Check if the input is a number and treat it as an index for 'open' command

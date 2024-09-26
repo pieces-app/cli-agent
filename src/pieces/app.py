@@ -1,21 +1,21 @@
 import sys
-from pieces_os_client.api.os_api import OSApi
-
-
 from pieces.gui import print_help
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.settings import Settings
 
-
 from pieces.commands import *
 from pieces.autocommit import *
 from pieces.copilot import *
-from pieces.assets import *
+
+from . import __version__
+ask_stream = AskStream()
 
 class PiecesCLI:
     def __init__(self):
-        self.parser = PiecesArgparser(description="CLI for interacting with the pieces library",add_help=False)
-        self.command_parser = self.parser.add_subparsers(dest='command', required=True)
+        self.parser = PiecesArgparser(description="Pieces CLI for interacting with the PiecesOS",add_help=False)
+        self.command_parser = self.parser.add_subparsers(dest='command')
+        self.parser.add_argument("--version","-v", action="store_true",help= "Displays the PiecesCLI version")
+        self.parser.set_defaults(func=lambda **kwargs:print(__version__))
         self.add_subparsers()
         PiecesArgparser.parser = self.parser
 
@@ -57,7 +57,6 @@ class PiecesCLI:
 
         # Subparser for the 'execute' command
         execute_parser = self.command_parser.add_parser('execute', help='Execute shell or bash assets')
-        execute_parser.add_argument('max_assets', nargs='?', type=int, default=10, help='Max number of assets to display')
         execute_parser.set_defaults(func=ExecuteCommand.execute_command)
 
         # Subparser for the 'edit' command
@@ -71,7 +70,7 @@ class PiecesCLI:
         ask_parser.add_argument('query', type=str, help='Question to be asked to the model')
         ask_parser.add_argument('--files','-f', nargs='*', type=str,dest='files', help='Folder or file as a relevance you can enter an absolute or relative path')
         ask_parser.add_argument('--snippets','-s', nargs='*', type=int,dest='snippets', help='Snippet of the question to be asked to the model check list assets')
-        ask_parser.set_defaults(func=ask)
+        ask_parser.set_defaults(func=ask_stream.ask)
 
         # Subparser for the 'version' command
         version_parser = self.command_parser.add_parser('version', help='Gets version of Pieces OS')
@@ -80,7 +79,7 @@ class PiecesCLI:
         # Subparser for Search
         search_parser = self.command_parser.add_parser('search', help='Search with a query string')
         search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
-        search_parser.add_argument('--mode', type=str, dest='search_type', default='assets', choices=['assets', 'ncs', 'fts'], help='Type of search')
+        search_parser.add_argument('--mode', type=str, dest='search_type', default='fuzzy', choices=['fuzzy', 'ncs', 'fts'], help='Type of search')
         search_parser.set_defaults(func=search)
 
 
@@ -96,15 +95,16 @@ class PiecesCLI:
 
         # Subparser for the 'login' command
         login_parser = self.command_parser.add_parser('login', help='Login to pieces os')
-        login_parser.set_defaults(func=lambda **kwargs: print(f'Logged in as {OSApi(Settings.api_client).sign_into_os().name}'))
+        login_parser.set_defaults(func=sign_in)
 
         # Subparser for the 'logout' command
         logout_parser = self.command_parser.add_parser('logout', help='Logout from pieces os')
-        logout_parser.set_defaults(func=lambda **kwargs:print("Logged out successfully") if sign_out() else print('Failed to logout out'))
+        logout_parser.set_defaults(func=sign_out)
 
 
         # Subparser for the 'conversations' command
         conversations_parser = self.command_parser.add_parser('conversations', help='print all conversations')
+        conversations_parser.add_argument('max_conversations', nargs='?', type=int ,default=10, help='Max number of conversations to show')
         conversations_parser.set_defaults(func=get_conversations)
         
 
@@ -133,7 +133,7 @@ class PiecesCLI:
             return
 
         # Check if the 'run' or 'help' command is explicitly provided
-        if arg not in ['help']:
+        if arg not in ['help',"-v","--version"]:
             Settings.startup()
 
         args = self.parser.parse_args()

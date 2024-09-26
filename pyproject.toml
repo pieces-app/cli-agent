@@ -14,12 +14,10 @@
 [tool.poetry.dependencies]
   python = ">=3.11,<3.13"
   pyperclip = ">=1.8.2"
-  websocket-client = "1.7.0"
-  pieces_os_client = "2.7.0"
+  pieces_os_client = "4.0.1"
   prompt-toolkit = "^3.0.43"
   rich = "^13.7.1"
   platformdirs = "^4.2.0"
-  semver = "^3.0.2"
 
 [tool.poetry.group.dev.dependencies]
   pytest = "^8.0.0"

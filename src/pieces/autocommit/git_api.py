@@ -1,8 +1,32 @@
 import urllib.request
 import json
-from typing import List, Dict,Optional
+from typing import List, Dict, Optional, Tuple
 from urllib.parse import urlencode
+import subprocess
+from pieces.gui import show_error
 
+def get_git_repo_name() -> Optional[Tuple[str, str]]:
+    """
+    Retrieves the name of the git repository by executing a git command to get the remote origin URL. 
+    
+    Returns:
+        A tuple containing a string representing the username and repository name.
+    """
+    try:
+        try:
+            # Get the remote origin URL of the git repository upstream url
+            repo_url = subprocess.check_output(["git", "config", "--get", "remote.upstream.url"]).decode('utf-8').strip()
+        except subprocess.CalledProcessError:
+            repo_url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode('utf-8').strip()
+            
+        # Extract the username and repository name from the URL
+        repo_info = repo_url.split('/')[-2:]
+        username, repo_name = repo_info[0], repo_info[1].replace('.git', '')
+        
+        return username, repo_name
+    except subprocess.CalledProcessError as e:
+        show_error(f"Error retrieving git repository name: {e}")
+        return None
 
 
 
