@@ -130,3 +130,4 @@ class PiecesSelectMenu:
             self.on_enter_callback(args)
         elif isinstance(args, dict):
             self.on_enter_callback(**args)
+

@@ -104,6 +104,7 @@ class PiecesCLI:
 
         # Subparser for the 'conversations' command
         conversations_parser = self.command_parser.add_parser('conversations', help='print all conversations')
+        conversations_parser.add_argument('max_conversations', nargs='?', type=int ,default=10, help='Max number of conversations to show')
         conversations_parser.set_defaults(func=get_conversations)
         
 

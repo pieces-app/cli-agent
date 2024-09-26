@@ -1,10 +1,14 @@
-import pydoc
 from typing import Optional
-from pieces.settings import Settings
+
 from rich.console import Console
+from rich.table import Table
+from rich.text import Text
+from rich.panel import Panel
 from rich.markdown import Markdown
+
 from pieces.gui import show_error
 from pieces.wrapper.basic_identifier.chat import BasicChat
+from pieces.settings import Settings
 
 
 def conversation_handler(**kwargs):
@@ -64,33 +68,36 @@ def conversation_handler(**kwargs):
     else:
         get_conversation_messages(idx)
 
-
-def get_conversations(**kwargs):
-    """This function is used to print all conversation avaiable"""
-    
-    # TODO Enhance the looking using prompt toolkit
-    
+def get_conversations(max_conversations,**kwargs):
+    """This function is used to print all conversations available"""
+    console = Console()
     conversations = Settings.pieces_client.copilot.chats()
 
+    if not conversations:
+        console.print("No conversations available.", style="bold red")
+        return
+
     readable = conversations[0].updated_at
+    output = Text(f"            {readable}\n", style="bold")
 
-    output = f"            {readable}\n"
-    for idx,conversation in enumerate(conversations,1):
-        if conversation.updated_at != readable: # if new date print it to group them
-            readable = conversation.updated_at
-            output += f"___________________________________________\n\n            {readable}\n"
+    for idx, conversation in enumerate(conversations[:max_conversations], 1):
+        conversation_str = f"{idx}. {conversation.name}"
+        summary_str = conversation.summary
 
 
-        conversation_str = f"{idx}. {conversation.name} \n"
-        # Check if we are using this conversation
         if Settings.pieces_client.copilot.chat == conversation:
-            output += f"\033[92m  * {conversation_str} \033[0m"
+            output.append(f"  * {conversation_str}\n", style="bold green")
         else:
-            output += conversation_str
-    
-    # print the pager
-    pydoc.pager(output)
+            output.append(f"  {conversation_str}\n")
+        if summary_str:
+            if len(summary_str) > 60:
+                truncated_summary = summary_str[:57] + "..."
+            else:
+                # If the string is 20 characters or less, use it as is
+                truncated_summary = summary_str
+            output.append(f"  {"\n  ".join(truncated_summary.split("\n"))}\n", style="dim")
 
+    console.print(output)
 
 
 def get_conversation_messages(idx:Optional[int]=None,conversation:Optional[BasicChat]=None):
