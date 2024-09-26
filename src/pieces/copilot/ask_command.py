@@ -7,6 +7,7 @@ from rich.live import Live
 from rich.markdown import Markdown
 
 from pieces.gui import show_error
+from pieces.wrapper.basic_identifier.chat import BasicChat
 
 if TYPE_CHECKING:
     from pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
@@ -17,7 +18,7 @@ class AskStream:
         self.message_compeleted = threading.Event()
 
         
-    def on_message(self,ws, response:"QGPTStreamOutput"):
+    def on_message(self, response:"QGPTStreamOutput"):
         """Handle incoming websocket messages."""
         try:
             if response.question:
@@ -33,10 +34,8 @@ class AskStream:
                 self.live.update(Markdown(self.final_answer), refresh=True)
                 self.live.stop()
  
-
-                self.conversation = response.conversation
-
                 self.message_compeleted.set()
+                Settings.pieces_client.copilot.chat = BasicChat(response.conversation)
 
         except Exception as e:
             print(f"Error processing message: {e}")
@@ -65,7 +64,7 @@ class AskStream:
                 context.assets.append(asset)
 
     def ask(self,query, **kwargs):
-        Settings.pieces_client.copilot.ask_stream_ws.on_message = self.on_message
+        Settings.pieces_client.copilot.ask_stream_ws.on_message_callback = self.on_message
         Settings.get_model() # Ensure the model is loaded
         files = kwargs.get("files",None)
         assets_index = kwargs.get("snippets",None)
