@@ -53,21 +53,34 @@ class Settings:
 			return cls._model_name
 
 		model_id = cls.get_from_pickle(cls.models_file,"model_id")
-		models_reverse = {v:k for k,v in cls.pieces_client.get_models().items()}
-		cls._model_name = models_reverse.get(model_id)
+		if model_id:
+			models_reverse = {v:k for k,v in cls.pieces_client.get_models().items()}
+			cls._model_name = models_reverse.get(model_id)
+		else:
+			cls._model_name = cls.pieces_client.model_name
 
 		try: 
 			cls.pieces_client.model_name = cls._model_name
 		except ValueError:
 			return cls.pieces_client.model_name
-		return  cls._model_name
+		return cls._model_name
 
+	@classmethod
+	def get_model_id(cls):
+		"""
+			Retrives the model id from the saved file
+		"""
+		cls.pieces_client.model_name # Let's load the models first
+		return cls.get_from_pickle(cls.models_file,"model_id") or cls.pieces_client.model_id
 
 	@staticmethod
 	def get_from_pickle(file,key):
-		with open(file, 'rb') as f:
-			data = pickle.load(f)
-		return data.get(key)
+		try:
+			with open(file, 'rb') as f:
+				data = pickle.load(f)
+				return data.get(key)
+		except FileNotFoundError:
+			return None
 
 	@staticmethod
 	def dump_pickle(file,**data):
