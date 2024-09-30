@@ -30,6 +30,8 @@ class Settings:
 		pieces_data_dir, "model_data.pkl"
 	) # model data file just store the model_id that the user is using (eg. {"model_id": UUID })
 
+	file_cache = {}
+
 	config_file = Path(pieces_data_dir, "pieces_config.json")
 
 	run_in_loop = False # is CLI looping?
@@ -73,12 +75,15 @@ class Settings:
 		cls.pieces_client.model_name # Let's load the models first
 		return cls.get_from_pickle(cls.models_file,"model_id") or cls.pieces_client.model_id
 
-	@staticmethod
-	def get_from_pickle(file,key):
+	@classmethod
+	def get_from_pickle(cls, file, key):
 		try:
-			with open(file, 'rb') as f:
-				data = pickle.load(f)
-				return data.get(key)
+			cache = cls.file_cache.get(file)
+			if not cache: 
+				with open(file, 'rb') as f:
+					cache = pickle.load(f)
+					cls.file_cache[file] = cache
+			return cache.get(key)
 		except FileNotFoundError:
 			return None
 
