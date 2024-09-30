@@ -78,11 +78,11 @@ class Settings:
 	@classmethod
 	def get_from_pickle(cls, file, key):
 		try:
-			cache = cls.file_cache.get(file)
+			cache = cls.file_cache.get(str(file))
 			if not cache: 
 				with open(file, 'rb') as f:
 					cache = pickle.load(f)
-					cls.file_cache[file] = cache
+					cls.file_cache[str(file)] = cache
 			return cache.get(key)
 		except FileNotFoundError:
 			return None
