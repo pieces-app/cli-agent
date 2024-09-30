@@ -23,6 +23,7 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
             List of seeded asset to be input to the relevance
     """
     from pieces_os_client.models.seed import Seed
+    from pieces_os_client.models.seeds import Seeds
     from pieces_os_client.models.seeded_asset import SeededAsset
     from pieces_os_client.models.seeded_asset_metadata import SeededAssetMetadata
     from pieces_os_client.models.seeded_format import SeededFormat
@@ -223,7 +224,7 @@ def get_commit_message(changes_summary,seeds):
                 query=message_prompt,
                 seeds=seeds,
                 application=Settings.pieces_client.application.id,
-                model=Settings.get_model(),
+                model=Settings.get_model_id(),
                 options=QGPTRelevanceInputOptions(question=True)
             )).answer.answers.iterable[0].text 
         

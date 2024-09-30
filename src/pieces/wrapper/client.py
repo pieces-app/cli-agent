@@ -53,7 +53,7 @@ class PiecesClient(PiecesApiClient):
         if not self._application:
             self._application = self.connector_api.connect(seeded_connector_connection=SeededConnectorConnection(
                 application=SeededTrackedApplication(
-                    name = "OPEN_SOURCE",
+                    name = "PIECES_FOR_DEVELOPERS_CLI",
                     platform = self.local_os,
                     version = __version__))).application
             self.api_client.set_default_header("application",self._application.id)
