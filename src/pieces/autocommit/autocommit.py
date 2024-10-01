@@ -86,9 +86,6 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
         return None
 
 
-    
-from rich.console import Console
-from rich.markdown import Markdown
 
 def git_commit(**kwargs):
     if kwargs.get("all_flag", False):
