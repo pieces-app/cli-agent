@@ -1,6 +1,6 @@
 import subprocess
 import re
-from .git_api import get_repo_issues
+from .git_api import get_repo_issues, get_git_repo_name
 from typing import TYPE_CHECKING, Optional,Tuple
 from pieces.settings import Settings
 from pieces.gui import show_error
