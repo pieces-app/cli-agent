@@ -95,7 +95,8 @@ def get_conversations(max_conversations,**kwargs):
             else:
                 # If the string is 20 characters or less, use it as is
                 truncated_summary = summary_str
-            output.append(f'  {"\n  ".join(truncated_summary.split("\n"))}'+"\n", style="dim")
+                summary = "\n  ".join(truncated_summary.split("\n")) + "\n"
+            output.append(f'  {summary}', style="dim")
 
     console.print(output)
 
