@@ -1,6 +1,6 @@
 import subprocess
 import re
-from .git_api import get_repo_issues
+from .git_api import get_repo_issues, get_git_repo_name
 from typing import TYPE_CHECKING, Optional,Tuple
 from pieces.settings import Settings
 from pieces.gui import show_error
@@ -86,9 +86,6 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
         return None
 
 
-    
-from rich.console import Console
-from rich.markdown import Markdown
 
 def git_commit(**kwargs):
     if kwargs.get("all_flag", False):

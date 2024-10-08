@@ -1,30 +1,66 @@
 import unittest
 from unittest.mock import patch, MagicMock, call, ANY
-from pieces.autocommit.autocommit import git_commit, get_current_working_changes, get_issue_details, create_seeded_asset
-from pieces.settings import Settings
-from pieces_os_client.models.seeds import Seeds
-from pieces.gui import show_error
 
-class TestGitCommit(unittest.TestCase):
+from pieces_os_client.models.application import Application
+from pieces.autocommit.autocommit import git_commit, get_current_working_changes, get_issue_details
+
+from tests.base_test import BaseTestCase
+from pieces_os_client.models.seed import Seed
+from pieces_os_client.models.seeds import Seeds
+from pieces_os_client.models.seeded_asset import SeededAsset
+from pieces_os_client.models.seeded_asset_metadata import SeededAssetMetadata
+from pieces_os_client.models.seeded_format import SeededFormat
+from pieces_os_client.models.seeded_fragment import SeededFragment
+from pieces_os_client.models.transferable_string import TransferableString
+from pieces_os_client.models.anchor_type_enum import AnchorTypeEnum
+from pieces_os_client.models.seeded_anchor import SeededAnchor
+
+class TestGitCommit(BaseTestCase):
+    def create_seeded_asset(self,path,content):
+        return Seed(
+            asset=SeededAsset(
+                application=self.get_app(),
+                format=SeededFormat(
+                    fragment=SeededFragment(
+                        string=TransferableString(raw=content)
+                    )
+                ),
+                metadata=SeededAssetMetadata(
+                    anchors=[
+                        SeededAnchor(
+                            fullpath=path,
+                            type=AnchorTypeEnum.FILE
+                        )
+                    ]
+                )
+            ),
+            type="SEEDED_ASSET"
+        )
+
+    @staticmethod
+    def get_app():
+        return Application(
+            id="test_id",
+            name="PIECES_FOR_DEVELOPERS_CLI",
+            version="test_version",
+            platform="WINDOWS",
+            onboarded=True,
+            privacy="OPEN"
+        )
+
     def setUp(self):
-        Settings.startup()
-        self.mock_get_git_repo_name = patch('pieces.autocommit.autocommit.get_git_repo_name').start()
+        self.mock_get_git_repo_name = patch('pieces.autocommit.git_api.get_git_repo_name').start()
         self.mock_get_git_repo_name.return_value = ('username', 'repo')
         
         self.mock_get_repo_issues = patch('pieces.autocommit.autocommit.get_repo_issues').start()
         self.mock_get_repo_issues.return_value = [{'title': 'issue1', 'number': 1, 'body': 'issue body'}]
         
-        self.mock_qgpt_api = patch('pieces_os_client.api.qgpt_api.QGPTApi').start()
-        mock_answer = MagicMock()
-        mock_answer.text = 'feat: add new test cases for user authentication'
-        mock_api_response = MagicMock()
-        mock_api_response.answer.answers.iterable = [mock_answer]
-        self.mock_qgpt_api.return_value.relevance.return_value = mock_api_response
+        
         
         self.mock_get_changes = patch('pieces.autocommit.autocommit.get_current_working_changes').start()
         self.mock_get_changes.return_value = ('Test changes summary', Seeds(iterable=[
-            create_seeded_asset("/path/to/file1.py", "content1"),
-            create_seeded_asset("/path/to/file2.py", "content2")
+            self. create_seeded_asset("/path/to/file1.py", "content1"),
+            self.create_seeded_asset("/path/to/file2.py", "content2")
         ]))
         
         self.mock_input = patch('builtins.input').start()
@@ -33,6 +69,15 @@ class TestGitCommit(unittest.TestCase):
         self.mock_subprocess = patch('subprocess.run').start()
         
         self.mock_show_error = patch('pieces.gui.show_error').start()
+        self.mock_settings = patch("pieces.autocommit.autocommit.Settings").start()
+        self.mock_settings.pieces_client.application = self.get_app()
+
+        mock_answer = MagicMock()
+        mock_answer.text = 'feat: add new test cases for user authentication'
+        mock_api_response = MagicMock()
+        mock_api_response.answer.answers.iterable = [mock_answer]
+        self.mock_settings.pieces_client.qgpt_api.relevance.return_value = mock_api_response
+
 
     def tearDown(self):
         patch.stopall()
@@ -121,7 +166,7 @@ class TestGitCommit(unittest.TestCase):
             self.assertEqual(len(seeds.iterable), 1)
 
     #Test 10 : get_issue_details
-    @patch('pieces.autocommit.autocommit.QGPTApi')
+    @patch('pieces.autocommit.autocommit.Settings.pieces_client.qgpt_api')
     def test_get_issue_details(self, mock_qgpt_api):
         mock_answer = MagicMock()
         mock_answer.text = 'Issue: 1'
@@ -129,7 +174,7 @@ class TestGitCommit(unittest.TestCase):
         mock_api_response.answer.answers.iterable = [mock_answer]
         mock_qgpt_api.return_value.relevance.return_value = mock_api_response
 
-        seeds = Seeds(iterable=[create_seeded_asset("/path/to/file1.py", "content1")])
+        seeds = Seeds(iterable=[self.create_seeded_asset("/path/to/file1.py", "content1")])
         issue_number, issue_title, issue_markdown = get_issue_details(seeds)
 
         self.assertEqual(issue_number, 1)
