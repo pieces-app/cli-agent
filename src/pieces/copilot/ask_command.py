@@ -17,7 +17,7 @@ class AskStream:
     def __init__(self):
         self.message_compeleted = threading.Event()
 
-        
+
     def on_message(self, response:"QGPTStreamOutput"):
         """Handle incoming websocket messages."""
         try:
@@ -33,16 +33,20 @@ class AskStream:
             if response.status == 'COMPLETED':
                 self.live.update(Markdown(self.final_answer), refresh=True)
                 self.live.stop()
- 
+
                 self.message_compeleted.set()
                 Settings.pieces_client.copilot.chat = BasicChat(response.conversation)
+
+                # There might be a cleaner way to do this using BaseWebsocket.close()
+                # But this works for now
+                os._exit(0)
 
         except Exception as e:
             print(f"Error processing message: {e}")
 
 
     def add_context(self,files,assets_index):
-        
+
         context = Settings.pieces_client.copilot.context
 
         # Files
@@ -54,7 +58,7 @@ class AskStream:
                 if os.path.exists(file): # check if file exists
                     show_error(f"{file} is not found","Please enter a valid file path")
                     return
-                
+
                 context.paths.append(os.path.abspath(file)) # Return the abs path
         # snippets
         if assets_index:
