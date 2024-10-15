@@ -8,6 +8,7 @@ from rich.markdown import Markdown
 
 from pieces.gui import show_error
 from pieces.wrapper.basic_identifier.chat import BasicChat
+from pieces.wrapper.websockets.ask_ws import AskStreamWS
 
 if TYPE_CHECKING:
     from pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
@@ -17,7 +18,7 @@ class AskStream:
     def __init__(self):
         self.message_compeleted = threading.Event()
 
-
+        
     def on_message(self, response:"QGPTStreamOutput"):
         """Handle incoming websocket messages."""
         try:
@@ -28,18 +29,14 @@ class AskStream:
                     text = answer.text
                     self.final_answer += text
                     if text:
-                        self.live.update(Markdown(self.final_answer))
+                        self.live.update(Markdown(self.final_answer), refresh=True)
 
             if response.status == 'COMPLETED':
                 self.live.update(Markdown(self.final_answer), refresh=True)
                 self.live.stop()
-
+ 
                 self.message_compeleted.set()
                 Settings.pieces_client.copilot.chat = BasicChat(response.conversation)
-
-                # There might be a cleaner way to do this using BaseWebsocket.close()
-                # But this works for now
-                os._exit(0)
 
         except Exception as e:
             print(f"Error processing message: {e}")
@@ -82,6 +79,9 @@ class AskStream:
 
         finishes = self.message_compeleted.wait(Settings.TIMEOUT)
         self.message_compeleted.clear()
+
+        if not Settings.run_in_loop:
+            AskStreamWS.instance.close() # Close the websocket if we are not run in loop
 
         if not finishes and not self.live:
             raise ConnectionError("Failed to get the reponse back")
