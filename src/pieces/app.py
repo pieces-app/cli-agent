@@ -7,7 +7,7 @@ from pieces.commands import *
 from pieces.autocommit import *
 from pieces.copilot import *
 
-from . import __version__
+from pieces import __version__
 ask_stream = AskStream()
 
 class PiecesCLI:
