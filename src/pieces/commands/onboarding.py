@@ -6,6 +6,7 @@ from rich.console import Console
 import os
 import getpass
 import platform
+import sys
 
 from pieces.commands.cli_loop import run_command, extract_text
 from pieces.settings import Settings
@@ -82,6 +83,8 @@ class OnboardingCommandStep(BasedOnboardingStep):
         
         user_input = input(get_prompt()).strip()
         while user_input != self.predicted_text:
+            if user_input == "exit":
+                sys.exit(1)
             console.print(Markdown(f"❌ Wrong command entered, You should type: `{self.predicted_text}`"))
             user_input = input(get_prompt()).strip()
 
@@ -153,6 +156,7 @@ def onboarding_command(**kwargs):
         ]
     }
     console.print("Welcome to Pieces CLI")
+    console.print("Whenever you want to exit the onboarding flow type `exit`")
     console.print("Remeber anything and Everything")
     if not Settings.pieces_client.open_pieces_os():
         console.print("❌ Pieces OS is not running")
