@@ -4,101 +4,101 @@ import shlex
 from prompt_toolkit import PromptSession
 import os
 from pieces import __version__
-from pieces.gui import *
+from pieces.gui import welcome, print_instructions, double_space, double_line
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.settings import Settings
 
 
 def loop(**kwargs):
-    from pieces.wrapper.websockets.base_websocket import BaseWebsocket
+    """Run the CLI loop."""
     from pieces.wrapper.websockets.conversations_ws import ConversationWS
     from pieces.wrapper.websockets.assets_identifiers_ws import AssetsIdentifiersWS
-    
+
     Settings.run_in_loop = True
 
-    # Start the assets websocket identifiers
+    # Start WebSockets
     AssetsIdentifiersWS(Settings.pieces_client).start()
     ConversationWS(Settings.pieces_client).start()
+
     # Initial setup
-    os_info = platform.platform()
-    python_version = sys.version.split()[0] 
     welcome()
 
-    print_response(f"Operating System: {os_info}", f"Python Version: {python_version}",
-                   f"Pieces OS Version: {Settings.pieces_os_version}",
-                   f"Pieces CLI Version: {__version__}",
-                   f"Application: {Settings.pieces_client.application.name.value if Settings.pieces_client.application else 'Unknown'}")
+    print(
+        f"Operating System: {platform.platform()}\n",
+        f"Python Version: {sys.version.split()[0]}\n",
+        f"Pieces OS Version: {Settings.pieces_os_version}\n",
+        f"Pieces CLI Version: {__version__}\n",
+        f"Application: {Settings.pieces_client.application.name.value if Settings.pieces_client.application else 'Unknown'}"
+    )
     print_instructions()
-
-    # Create a prompt session, which will maintain the history of inputs
     session = PromptSession()
-
     # Start the loop
     while Settings.run_in_loop:
-        is_running = Settings.pieces_client.is_pieces_running()
-
-        if not is_running:
+        if not Settings.pieces_client.is_pieces_running():
             double_line("Server no longer available. Exiting loop.")
             break
 
-        try:
-            # Use the session to prompt the user, enabling history navigation
-            user_input = session.prompt("User: ").strip()
-            command_parts = shlex.split(user_input)
-            if command_parts:
-                command_name = command_parts[0].lower()  # Lowercase only the command name
-                command_args = command_parts[1:]  # Keep the arguments in their original case
-            else:
-                continue  # Skip if the input is empty
-            
-            if user_input.lower() == 'clear':  # this method is used for clear a terminal 
-                clear_screen()
-                continue
-            if user_input == 'exit':
-                double_space("Exiting...")
-                BaseWebsocket.close_all()
-                break
+        if run_cli(*add_input(session)):
+            break
 
-            # Check if the input is a number and treat it as an index for 'open' command
-            if user_input.isdigit():
-                command_name = 'open'
-                command_args = [user_input]
-            else:
-                # Use shlex to split the input into command and arguments
-                split_input = shlex.split(user_input)
-                if not split_input:
-                    continue  # Skip if the input is empty
+def add_input(session: PromptSession):
+    """Add input to the session."""
+    user_input = session.prompt("User: ").strip()
+    if not user_input:
+        return
 
-                command_name, *command_args = split_input
+    return extract_text(user_input)
+def extract_text(user_input):
+    command_parts = shlex.split(user_input)
+    command_name = command_parts[0].lower()
+    command_args = command_parts[1:]
+    return user_input, command_name, command_args
 
-            command_name = command_name.lower()
 
-            if command_name in PiecesArgparser.parser._subparsers._group_actions[0].choices:
-                subparser = PiecesArgparser.parser._subparsers._group_actions[0].choices[command_name]
-                command_func = subparser.get_default('func')  # Get the function associated with the command
 
-                if command_func:
-                    # Parse the arguments using the subparser
-                    try:
-                        args = subparser.parse_args(command_args)
-                        command_func(**vars(args))
-                    except SystemExit:
-                        # Handle the case where the argument parsing fails
-                        print(f"Invalid arguments for command: {command_name}")
-                else:
-                    print(f"No function associated with command: {command_name}")
-            else:
-                print(f"Unknown command: {command_name}")
-                commands = list(PiecesArgparser.parser._subparsers._group_actions[0].choices.keys())
-                commands.append("exit")
-                most_similar_command = PiecesArgparser.find_most_similar_command(commands, user_input)
-                print(f"Did you mean {most_similar_command}")
-        except KeyboardInterrupt:
-            print("\nKeyboardInterrupt caught. Returning to the main loop.")
-            print("to exit the terminal use : exit")
-            continue
-        except Exception as e:
-            show_error(f"An error occurred:", {e})  #TODO: Handle by the argparser not a try/except
+def run_cli(user_input:str, command_name:str, command_args:str):
+    """Run the CLI loop, handling user input and routing to the appropriate functions."""    
+    try:
+        if user_input.lower() == 'clear':
+            clear_screen()
+            return
+
+        if user_input == 'exit':
+            from pieces.wrapper.websockets.base_websocket import BaseWebsocket
+            double_space("Exiting...")
+            BaseWebsocket.close_all()
+            return True
+
+        if command_name.isdigit():
+            command_name = 'open'
+            command_args = [command_name]
+
+        run_command(user_input,command_name, command_args)
+        
+    except KeyboardInterrupt:
+        print("\nKeyboardInterrupt caught. Returning to the main loop.")
+        print("to exit the terminal use : exit")
+        return False
+
+
+def run_command(user_input, command_name, command_args):
+    if command_name in PiecesArgparser.parser._subparsers._group_actions[0].choices:
+        subparser = PiecesArgparser.parser._subparsers._group_actions[0].choices[command_name]
+        command_func = subparser.get_default('func')
+        if command_func:
+            try:
+                args = subparser.parse_args(command_args)
+                command_func(**vars(args))
+            except SystemExit:
+                print(f"Invalid arguments for command: {command_name}")
+        else:
+            print(f"No function associated with command: {command_name}")
+    else:
+        print(f"Unknown command: {command_name}")
+        commands = list(PiecesArgparser.parser._subparsers._group_actions[0].choices.keys())
+        commands.append("exit")
+        most_similar_command = PiecesArgparser.find_most_similar_command(commands, user_input)
+        print(f"Did you mean {most_similar_command}")
 
 
 def clear_screen(): # clear terminal method
@@ -106,3 +106,4 @@ def clear_screen(): # clear terminal method
         os.system('cls')
     else:               # for other os 
         os.system('clear')
+

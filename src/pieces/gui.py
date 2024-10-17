@@ -58,19 +58,15 @@ def space_below(text):
     print(text)
     print()
 
-def print_response(*args):
-    for arg in args:
-        print(arg)
-
 
 def print_instructions():
     print()
     print("Enter command:")
-    print(f"  'help' to see all commands")
-    print(f"  '-h' after a command to see detailed help")
-    print(f"  'exit' to quit")
+    print("  'help' to see all commands")
+    print("  '-h' after a command to see detailed help")
+    print("  'exit' to quit")
     print()
-    print(f"Ready...")
+    print("Ready...")
     line()
 
 def print_help():
