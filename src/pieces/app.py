@@ -125,6 +125,23 @@ class PiecesCLI:
         commit_parser.add_argument("-i","--issues",dest="issue_flag",action="store_true", help="add issue number in the commit message")
         commit_parser.set_defaults(func=git_commit)
 
+        # Subparser for the 'onboarding' command
+        onboarding_parser = self.command_parser.add_parser('onboarding', help='Start the onboarding process')
+        onboarding_parser.set_defaults(func=onboarding_command)
+
+        # Subparser for the 'feedback' command
+        feedback_parser = self.command_parser.add_parser('feedback', help='Submit feedback')
+        feedback_parser.set_defaults(func=feedback)
+        
+        # Subparser for the 'contribute' command
+        contribute_parser = self.command_parser.add_parser('contribute', help='How to contribute')
+        contribute_parser.set_defaults(func=contribute)
+
+        # Subparser for the 'install' command
+        install_parser = self.command_parser.add_parser('install', help='Install the Pieces OS')
+        install_parser.set_defaults(func=install_pieces_os)
+
+
     def run(self):
         try:
             arg = sys.argv[1]
@@ -133,7 +150,7 @@ class PiecesCLI:
             return
 
         # Check if the 'run' or 'help' command is explicitly provided
-        if arg not in ['help',"-v","--version"]:
+        if arg not in ['help',"-v","--version","onboarding","install"]:
             Settings.startup()
 
         args = self.parser.parse_args()
