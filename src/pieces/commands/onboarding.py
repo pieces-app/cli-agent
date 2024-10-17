@@ -27,22 +27,6 @@ def get_prompt():
     
     return prompt
 
-def main():
-    while True:
-        # Display the prompt
-        prompt = get_prompt()
-        command = input(prompt)
-        
-        # Exit the loop if the user types 'exit'
-        if command.lower() == 'exit':
-            break
-        
-        # Execute the command (for demonstration purposes, we'll just print it)
-        print(f"Executing: {command}")
-
-if __name__ == "__main__":
-    main()
-
 
 demo_snippet = """import requests
 response = requests.get("https://docs.pieces.app")
