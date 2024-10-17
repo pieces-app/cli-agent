@@ -81,87 +81,88 @@ def create_snippet_one_validation():
     normalized_s1 = '\n'.join(line.strip() for line in text.strip().splitlines())
     normalized_s2 = '\n'.join(line.strip() for line in demo_snippet.strip().splitlines())
 
-    return normalized_s1 == normalized_s2 , "Seems you did not copy the snippet yet"
+    return normalized_s1 == normalized_s2 , "Looks like you haven't copied the snippet yet. Please copy the snippet to save it to Pieces."
 
 def onboarding_command(**kwargs):
     console = Console()
     step_number = 1
     steps = {
-        "Step 1: Creating a snippet":[
+        "Step 1: Saving a Snippet":[
             OnboardingStep("Let's get started by saving a snippet\n"
                     "copy the following snippet python snippet: \n"
                     f"```python\n{demo_snippet}\n```",
                     create_snippet_one_validation
                 ),
             OnboardingCommandStep(
-                "You can save a snippet by typing `pieces create`",
+                "You can save the snippet by typing `pieces create`",
                 "pieces create"
             )
         ],
-        "Step 2: Opening the created snippet":[
+        "Step 2: Opening the Saved Snippets":[
             OnboardingCommandStep(
                 "Now let's checkout all the saved snippets by typing `pieces list`",
                 "pieces list"
             )
         ],
-        "Step 3: Run in loop":[
+        "Step 3: Start a Session":[
             OnboardingStep(
-                "Running in loop help you to create a session with the Copilot which we will be convering " 
-                "or perform an opration on the same snippet multiple times which will increase your **productivity**",
+                "Starting a session will help you create a session with the Copilot, " 
+                "and it allows you run multiple commands without having to boot up the CLI every time.",
                 lambda: (True, "")
             ),
             OnboardingCommandStep(
-                "You can run in loop by typing `pieces run` Don't forget to exit the loop by typing `exit`",
+                "You can run in loop by typing `pieces run`. Don't forget to exit the loop by typing `exit`",
                 "pieces run"
             )
         ],
-        "Step 5: Chat with the Copilot":[
+        "Step 4: Chat with the Copilot":[
             OnboardingCommandStep(
-                "Now you understood what is `pieces run` let's try to interact with the Copilot by typing `pieces ask 'How to print I love Pieces CLI in Python and Java'`",
+                "Start a chat with the Copilot by using `pieces ask 'How to print I love Pieces CLI in Python and Java'`.",
                 "pieces ask 'How to print I love Pieces CLI in Python and Java'"
             ),
             OnboardingCommandStep(
-                "Well you just asked one question in a conversation, " "Let's create a session with Copilot by typing `pieces run` then use `ask` to interact with Copilot",
+                "Create a session with Copilot by typing `pieces run` then use ask to interact with Copilot.",
                 "pieces run"
             ),
             
         ],
-        "Step 6: Sharing your feedback" : [
+        "Step 6: Sharing your Feedback" : [
             OnboardingCommandStep(
-                "Your feedback is very **important** for us to improve feel free to share your feedback by typing `pieces feedback`",
+                "Your feedback is very **important** to us. Please share some of your feedback by typing `pieces feedback`.",
                 "pieces feedback"
             )
         ],
-        "Step 7: Contributing":[
+        "Step 6: Contributing":[
             OnboardingCommandStep(
-                "Pieces is a **open source project** and you can contribute to it by creating a pull request or open an issue by typing `pieces contribute`",
+                "The Pieces CLI is an **open source project** and you can contribute to it by creating a pull request or open an issue by typing `pieces contribute`.",
                 "pieces contribute"
             )
         ]
     }
-    console.print("Welcome to Pieces CLI")
-    console.print("Whenever you want to exit the onboarding flow type `exit`")
-    console.print("Remeber anything and Everything")
+    console.print("Welcome to the Pieces CLI")
+    console.print("Whenever you want to exit the onboarding flow type `exit`.")
+    console.print("Remember Anything and Interact with Everything")
     if not Settings.pieces_client.open_pieces_os():
         console.print("❌ Pieces OS is not running")
         console.print(
             Markdown(
                 "# Pieces OS\n\n"
-                "**Pieces OS** is a background service" 
-                " powering Pieces CLI and operating all Pieces services such as IDE integrations:\n\n"
+                "**Pieces OS** is a background service"
+                " that powers Pieces CLI and all the other Pieces Integrations such as IDE plugins:\n\n"
                 "- **VS Code**\n"
                 "- **Jetbrains IDEs**\n"
                 "- **Sublime Text**\n"
                 "- **Visual Studio**\n"
-                "and other web browser integrations like **Google Chrome** and **Firefox** and more.\n\n"
-                "Where you have the choice to process locally, ensuring **privacy** and **security**.\n\n"
-                "for more information about the ingrations check out the **documentation** https://docs.pieces.app. \n\n"
+                "and web browser extensions for Google Chrome and Firefox and more.\n\n"
+                
+                "for more information about the integrations check out the **documentation** https://docs.pieces.app/#ides-and-editors. \n\n"
 
                 "### Key Functionalities\n"
 
-                "- **AI Assistant** and Copilot\n"
+                "- Highly contextual generative AI assistant, called **Pieces Copilot**.\n"
                 "- **Snippet Management** for efficient code organization enables you to save and share snippets\n"
-                "- **Enhanced Search Capabilities** to quickly find your snippets"
+                "- **Enhanced Search Capabilities** to quickly find your snippets\n"
+                "- Provides the ability to process data locally, guaranteeing enhanced **privacy** and **security**."
             )
         )
 
