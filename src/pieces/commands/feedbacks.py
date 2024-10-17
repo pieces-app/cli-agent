@@ -8,7 +8,7 @@ def feedback(**kwargs):
     console.print(
         Markdown("Thank you for using Pieces CLI!\n"
         "We always care about your feedback.\n"
-        "Feel free to share your experience with us."
+        "Feel free to share your experience with us.\n"
         "https://github.com/pieces-app/cli-agent/discussions/194")
     )
     res = input("Would you like to open the feedback page in your browser? (y/n): ")
@@ -20,12 +20,10 @@ def contribute(**kwargs):
     console = Console()
     
     console.print(
-        Markdown(
             "Contribute to the project\n"
             "https://github.com/pieces-app/cli-agent"
-        )
     )
-    res = input("Would you like to open the contribute page? (y/n): ")
+    res = input("Would you like to open the GitHub page in your browser? (y/n): ")
 
     if res.lower() == 'y':
         webbrowser.open("https://github.com/pieces-app/cli-agent")

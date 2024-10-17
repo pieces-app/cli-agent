@@ -184,6 +184,8 @@ def onboarding_command(**kwargs):
     else:
         console.print("✅ Pieces OS is running")
     
+    Settings.startup()
+    
 
     while step_number - 1 < len(steps):
         for step in steps:
