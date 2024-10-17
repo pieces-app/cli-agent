@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Callable
 import pyperclip
 from rich.markdown import Markdown
@@ -47,7 +48,7 @@ response = requests.get("https://docs.pieces.app")
 print(response.text)
 """
 
-class BasedOnboardingStep:
+class BasedOnboardingStep(ABC):
     @staticmethod
     def click_to_continue(console:Console):
         console.print("Press any key to proceed", style="dim")
