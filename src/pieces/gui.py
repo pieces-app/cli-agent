@@ -115,6 +115,10 @@ def print_help():
     print()
     print("  version         - Gets version of Pieces OS and the version of the cli tool")
     print("  help            - Show this help message")
+    print("  onboarding      - Start the onboarding process")
+    print("  feedback        - Send feedback to Pieces")
+    print("  contribute      - Contribute to Pieces CLI")
+    print("  install         - Install Pieces OS")
     print()
 
 def print_asset_details(asset:"BasicAsset"):

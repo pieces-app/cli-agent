@@ -149,8 +149,8 @@ class PiecesCLI:
             print_help()
             return
 
-        # Check if the 'run' or 'help' command is explicitly provided
-        if arg not in ['help',"-v","--version","onboarding","install"]:
+        # Check if the command needs Pieces OS or not
+        if arg not in ['help',"-v","--version","onboarding","install", "feedback", "contribute"]:
             Settings.startup()
 
         args = self.parser.parse_args()
