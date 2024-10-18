@@ -14,6 +14,7 @@ from pygments.util import ClassNotFound
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import TerminalFormatter
 
+from pieces_os_client.exceptions import NotFoundException
 
 def check_assets_existence(func):
 	"""Decorator to ensure user has assets."""
@@ -31,13 +32,13 @@ def check_asset_selected(func):
 	If valid id it returns the asset_data to the called function.
 	"""
 	def wrapper(*args, **kwargs):
-		if AssetsCommands.current_asset is None:
-			return Settings.show_error("No asset selected.", "Please open an asset first using pieces open.")
+		from pieces.commands.list_command import ListCommand
 		try: 
+			if AssetsCommands.current_asset is None:
+				raise ValueError("No asset selected")
 			AssetsCommands.current_asset.asset # Check if the current asset is vaild
-		except:
-			# The selected asset is deleted
-			return Settings.show_error("Error occured in the command", "Please make sure the selected asset is valid.")
+		except (ValueError, NotFoundException):
+			return ListCommand.list_assets()
 		return func(asset=AssetsCommands.current_asset,*args, **kwargs)	
 	return wrapper
 
