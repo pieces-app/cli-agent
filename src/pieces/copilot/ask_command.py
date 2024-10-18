@@ -8,6 +8,7 @@ from rich.markdown import Markdown
 
 from pieces.gui import show_error
 from pieces.wrapper.basic_identifier.chat import BasicChat
+from pieces.wrapper.websockets.ask_ws import AskStreamWS
 
 if TYPE_CHECKING:
     from pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
@@ -28,7 +29,7 @@ class AskStream:
                     text = answer.text
                     self.final_answer += text
                     if text:
-                        self.live.update(Markdown(self.final_answer))
+                        self.live.update(Markdown(self.final_answer), refresh=True)
 
             if response.status == 'COMPLETED':
                 self.live.update(Markdown(self.final_answer), refresh=True)
@@ -42,7 +43,7 @@ class AskStream:
 
 
     def add_context(self,files,assets_index):
-        
+
         context = Settings.pieces_client.copilot.context
 
         # Files
@@ -54,7 +55,7 @@ class AskStream:
                 if os.path.exists(file): # check if file exists
                     show_error(f"{file} is not found","Please enter a valid file path")
                     return
-                
+
                 context.paths.append(os.path.abspath(file)) # Return the abs path
         # snippets
         if assets_index:
@@ -78,6 +79,9 @@ class AskStream:
 
         finishes = self.message_compeleted.wait(Settings.TIMEOUT)
         self.message_compeleted.clear()
+
+        if not Settings.run_in_loop:
+            AskStreamWS.instance.close() # Close the websocket if we are not run in loop
 
         if not finishes and not self.live:
             raise ConnectionError("Failed to get the reponse back")
