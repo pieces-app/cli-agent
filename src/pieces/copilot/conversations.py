@@ -30,7 +30,7 @@ def conversation_handler(**kwargs):
 
     # Rename the conversation
     if rename:
-        if rename:
+        if rename == True:  # noqa: E712
             con = Settings.pieces_client.conversation_api.conversation_specific_conversation_rename(conversation=chat._id)
             print(f"Renamed the conversation to {con.name}")
         else:
