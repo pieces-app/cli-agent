@@ -126,7 +126,7 @@ def onboarding_command(**kwargs):
             ),
             
         ],
-        "Step 6: Sharing your Feedback" : [
+        "Step 5: Sharing your Feedback" : [
             OnboardingCommandStep(
                 "Your feedback is very **important** to us. Please share some of your feedback by typing `pieces feedback`.",
                 "pieces feedback"
