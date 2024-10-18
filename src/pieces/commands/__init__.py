@@ -7,6 +7,9 @@ from .auth_commands import sign_in, sign_out
 from .config_command import ConfigCommands
 from .execute_command import ExecuteCommand
 from .assets_command import AssetsCommands
+from .onboarding import onboarding_command
+from .feedbacks import feedback, contribute
+from .install_pieces_os import install_pieces_os
 
 __all__ = ['loop',
            'version',
@@ -17,5 +20,10 @@ __all__ = ['loop',
            'ListCommand',
            'ConfigCommands',
            "ExecuteCommand",
-           "AssetsCommands"]
+           "AssetsCommands",
+           "onboarding_command",
+           "feedback",
+           "contribute",
+           "install_pieces_os"]
+
 
