@@ -79,8 +79,6 @@ def print_help():
     print("  list apps       - List all registered applications")
     print("  list models     - List all registered AI models")
     print()
-    print("  open            - Opens most recent asset and set it as the current asset")
-    print("  open x          - Open an asset in a list assets using the index number.")
     print("  save            - Save the current asset content after you edit it in the editor")
     print("  edit            - Edit the current asset name or classification you can use -n and -c for name and classification respectively")
     print("  delete          - Deletes the current or most recent asset.")
@@ -145,14 +143,6 @@ def open_from_command_line():
     print("or you typed an invalid option.")
     print()
     print("Opening most recent asset:")
-    print()
-
-
-def show_error(error,error_message=None):
-    # Show an error message in red color
-    print()
-    print(f"\033[31m{error}\033[0m") 
-    print(f"\033[31m{error_message}\033[0m") if error_message else None
     print()
 
 def deprecated(command,instead):

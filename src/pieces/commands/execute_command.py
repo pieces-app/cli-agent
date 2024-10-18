@@ -11,7 +11,7 @@ class ExecuteCommand:
     def execute_command(cls, **kwargs):
         
         assets = [
-            (f"{asset.name}", {"ITEM_INDEX": i,  "asset":asset, "show_warning":False})
+            (f"{asset.name}", {"asset_id": asset.id,  "asset":asset})
             for i, asset in enumerate(list(Settings.pieces_client.assets()), start=1)
                 if asset.classification in (ClassificationSpecificEnum.SH,
                     ClassificationSpecificEnum.BAT)

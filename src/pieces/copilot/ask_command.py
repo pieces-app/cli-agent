@@ -6,7 +6,6 @@ import threading
 from rich.live import Live
 from rich.markdown import Markdown
 
-from pieces.gui import show_error
 from pieces.wrapper.basic_identifier.chat import BasicChat
 from pieces.wrapper.websockets.ask_ws import AskStreamWS
 
@@ -53,7 +52,7 @@ class AskStream:
                     context.paths.append(os.getcwd())
                     continue
                 if os.path.exists(file): # check if file exists
-                    show_error(f"{file} is not found","Please enter a valid file path")
+                    Settings.show_error(f"{file} is not found","Please enter a valid file path")
                     return
 
                 context.paths.append(os.path.abspath(file)) # Return the abs path
@@ -61,7 +60,7 @@ class AskStream:
         if assets_index:
             for snippet in assets_index:
                 try: asset = Settings.pieces_client.assets()[snippet-1] # we began enumerating from 1
-                except KeyError: return show_error("Asset not found","Enter a vaild asset index")
+                except KeyError: return Settings.show_error("Asset not found","Enter a vaild asset index")
                 context.assets.append(asset)
 
     def ask(self,query, **kwargs):
