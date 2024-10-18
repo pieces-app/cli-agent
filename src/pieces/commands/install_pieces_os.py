@@ -9,7 +9,7 @@ def install_pieces_os(**kwargs):
     
     if Settings.pieces_client.local_os == "WINDOWS":
         install_command = (
-            f'Add-AppxPackage -Appinstaller https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller/?product={Settings.pieces_client.app_name}&download=true'
+            f'Add-AppxPackage -Appinstaller https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller?product={Settings.pieces_client.app_name}&download=true'
             '-ErrorAction Stop -Verbose ; '
             'Start-Process shell:appsFolder\\com.MeshIntelligentTechnologi.PiecesOS_84gz00a5z79wr!osserver'
         )
@@ -29,7 +29,7 @@ def install_pieces_os(**kwargs):
         arch = os.uname().machine
         pkg_url = (
             "https://builds.pieces.app/stages/production/macos_packaging/pkg-pos-launch-only"
-            f"{'-arm64' if arch == 'arm64' else ''}/download/?product={Settings.pieces_client.app_name}&download=true"
+            f"{'-arm64' if arch == 'arm64' else ''}/download?product={Settings.pieces_client.app_name}&download=true"
         )
         script = f"""
         TMP_PKG_PATH="/tmp/Pieces-OS-Launch.pkg"
