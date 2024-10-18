@@ -33,12 +33,6 @@ class PiecesCLI:
         list_parser.add_argument("--editor","-e",dest="editor",action="store_true" ,default=False, help="Open the choosen asset in the editor")
         list_parser.set_defaults(func=ListCommand.list_command)
 
-
-        # Subparser for the 'open' command
-        open_parser = self.command_parser.add_parser('open', help='Open an asset')
-        open_parser.add_argument('ITEM_INDEX', type=int, nargs='?', default=None, help='Index of the item to open (optional)')
-        open_parser.set_defaults(func=AssetsCommands.open_asset)
-
         # Subparser for the 'save' command
         save_parser = self.command_parser.add_parser('save', help='Updates the current asset')
         save_parser.set_defaults(func=AssetsCommands.update_asset)
@@ -86,12 +80,6 @@ class PiecesCLI:
         # Subparser for the 'help' command
         help_parser = self.command_parser.add_parser('help', help='Prints a list of available commands')
         help_parser.set_defaults(func=lambda **kwargs: print_help())
-
-
-        # Subparser for the 'change_model' command
-        change_model_parser = self.command_parser.add_parser('change_model', help='Change the model that you are using in the ask')
-        change_model_parser.add_argument('MODEL_INDEX', type=int, nargs='?', default=None, help='Index of the model to use (optional)')
-        change_model_parser.set_defaults(func=change_model)
 
         # Subparser for the 'login' command
         login_parser = self.command_parser.add_parser('login', help='Login to pieces os')

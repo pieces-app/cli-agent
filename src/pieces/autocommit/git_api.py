@@ -3,7 +3,7 @@ import json
 from typing import List, Dict, Optional, Tuple
 from urllib.parse import urlencode
 import subprocess
-from pieces.gui import show_error
+from pieces.settings import Settings
 
 def get_git_repo_name() -> Optional[Tuple[str, str]]:
     """
@@ -25,7 +25,7 @@ def get_git_repo_name() -> Optional[Tuple[str, str]]:
         
         return username, repo_name
     except subprocess.CalledProcessError as e:
-        show_error(f"Error retrieving git repository name: {e}")
+        Settings.show_error(f"Error retrieving git repository name: {e}")
         return None
 
 

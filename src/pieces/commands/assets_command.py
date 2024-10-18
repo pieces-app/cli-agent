@@ -4,12 +4,13 @@ import pyperclip
 import subprocess
 
 from pieces.utils import get_file_extension,sanitize_filename,export_code_to_file
-from pieces.gui import show_error,print_asset_details,space_below,double_line,deprecated
+from pieces.gui import print_asset_details,space_below,double_line
 from pieces.settings import Settings
 from pieces.commands.config_command import ConfigCommands
 from pieces.wrapper.basic_identifier.asset import BasicAsset
 
 from pygments import highlight
+from pygments.util import ClassNotFound
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import TerminalFormatter
 
@@ -20,7 +21,7 @@ def check_assets_existence(func):
 	def wrapper(*args, **kwargs):
 		assets = Settings.pieces_client.assets # Check if there is an asset
 		if not assets:
-			return show_error("No assets found", "Please create an asset first.")
+			return Settings.show_error("No assets found", "Please create an asset first.")
 		return func(*args, **kwargs)
 	return wrapper
 
@@ -37,7 +38,6 @@ def check_asset_selected(func):
 				raise ValueError("No asset selected")
 			AssetsCommands.current_asset.asset # Check if the current asset is vaild
 		except (ValueError, NotFoundException):
-			# The selected asset is deleted
 			return ListCommand.list_assets()
 		return func(asset=AssetsCommands.current_asset,*args, **kwargs)	
 	return wrapper
@@ -47,19 +47,16 @@ class AssetsCommands:
 
 	@classmethod
 	@check_assets_existence
-	@deprecated("open","list assets")
-	def open_asset(cls, **kwargs):
-		item_index = kwargs.get("ITEM_INDEX",1)
-		assets = Settings.pieces_client.assets()
+	def open_asset(cls, asset_id:str, **kwargs):
 		try:
-			asset:BasicAsset = assets[item_index-1]  # because we begin from 1
-			cls.current_asset = asset
-		except IndexError:
-			return show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
-	
-		print_asset_details(asset)
+			cls.current_asset = BasicAsset(asset_id)
 
-		code_content = asset.raw_content
+		except IndexError:
+			return Settings.show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
+	
+		print_asset_details(cls.current_asset)
+
+		code_content = cls.current_asset.raw_content
 		open_in_editor = kwargs.get('editor')
 			
 		# Check if -e flag is used or open_in_editor is True
@@ -68,21 +65,21 @@ class AssetsCommands:
 			editor = config.get('editor')
 			if editor:
 				# Save the code to a file in the default directory
-				file_path = export_code_to_file(code_content, asset.name, asset.classification)
+				file_path = export_code_to_file(code_content, cls.current_asset.name, cls.current_asset.classification)
 
 				# Open the file with the configured editor
 				try:
 					subprocess.run([editor, file_path], shell=True)
 				except Exception as e:
-					show_error("Error in opening",e)
+					Settings.show_error("Error in opening",e)
 
 			else:
 				print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
 		else:
 			# Determine the lexer
 			try:
-				lexer = get_lexer_by_name(asset.classification, stripall=True)
-			except:
+				lexer = get_lexer_by_name(cls.current_asset.classification, stripall=True)
+			except ClassNotFound:
 				lexer = guess_lexer(code_content)
 
 			# Print the code with syntax highlighting
@@ -101,7 +98,7 @@ class AssetsCommands:
 			with open(file_path,"r") as f:
 				data = f.read()
 		except FileNotFoundError:
-			show_error("Error in update asset","File not found")
+			Settings.show_error("Error in update asset","File not found")
 			return
 
 		asset.raw_content = data
@@ -157,7 +154,7 @@ class AssetsCommands:
 			if user_input == 'y':
 				space_below("Saving Content...")
 				cls.current_asset = BasicAsset(BasicAsset.create(raw_content=text, metadata=None))
-				print("Asset Created use 'open' to view")
+				print("Asset Created use 'pieces list' to view")
 				# Add your saving logic here
 			elif user_input == 'n':
 				space_below("Save Cancelled")
@@ -165,7 +162,7 @@ class AssetsCommands:
 				print("Invalid input. Please type 'y' to save or 'n' to cancel.")
 
 		except pyperclip.PyperclipException as e:
-			show_error("Error accessing clipboard:", str(e))
+			Settings.show_error("Error accessing clipboard:", str(e))
 
 
 

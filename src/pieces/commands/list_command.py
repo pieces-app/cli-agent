@@ -30,7 +30,7 @@ class ListCommand:
 
         select_menu = PiecesSelectMenu(
             [
-                (f"{i}: {asset.name}", {"ITEM_INDEX":i,"show_warning":False,**kwargs})
+                (f"{i}: {asset.name}", {"asset_id":asset.id,**kwargs})
                 for i, asset in enumerate(assets,start=1)
             ],
              AssetsCommands.open_asset,kwargs.get("footer"))
@@ -38,7 +38,6 @@ class ListCommand:
 
     @classmethod
     def list_models(cls):
-
         models = [(f"{idx}: {model_name}", {"MODEL_INDEX":idx,"show_warning":False}) 
         for idx, model_name in enumerate(Settings.pieces_client.available_models_names, start=1)]
         select_menu = PiecesSelectMenu(models, change_model,f"Currently using: {Settings.get_model()}")

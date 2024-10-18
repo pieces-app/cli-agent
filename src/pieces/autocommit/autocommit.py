@@ -3,7 +3,6 @@ import re
 from .git_api import get_repo_issues, get_git_repo_name
 from typing import TYPE_CHECKING, Optional,Tuple
 from pieces.settings import Settings
-from pieces.gui import show_error
 import os
 from collections import defaultdict 
 from rich.console import Console
@@ -35,7 +34,7 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
     try:
         result = subprocess.run(["git", "diff", "--staged"], capture_output=True, text=True)
         if not result.stdout.strip():
-            show_error("No changes found", "Please make sure you have added some files to your staging area")
+            Settings.show_error("No changes found", "Please make sure you have added some files to your staging area")
             return None
         
         detailed_diff = result.stdout.strip()
@@ -82,7 +81,7 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
             ]
         )
     except subprocess.CalledProcessError as e:
-        show_error(f"Error fetching current working changes: {e}")
+        Settings.show_error(f"Error fetching current working changes: {e}")
         return None
 
 
@@ -232,6 +231,6 @@ def get_commit_message(changes_summary,seeds):
         # Remove leading and trailing whitespace
         commit_message = commit_message.strip()
     except Exception as e:
-        show_error("Error in getting the commit message",e)
+        Settings.show_error("Error in getting the commit message",e)
         return
     return commit_message
