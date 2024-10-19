@@ -19,7 +19,7 @@ def get_prompt():
     os_type = platform.system()
 
     if os_type == "Windows":
-        prompt = f"{path}"
+        prompt = f"{path}> "
     elif os_type == "Linux":
         prompt = f"{path}$ "
     else:
