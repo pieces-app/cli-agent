@@ -14,6 +14,7 @@ from .copilot import Copilot
 from .basic_identifier.user import BasicUser
 from .basic_identifier.asset import BasicAsset
 from .streamed_identifiers import AssetSnapshot,ConversationsSnapshot
+import time
 
 if TYPE_CHECKING:
     from pieces_os_client.models.application import Application
@@ -37,6 +38,7 @@ class PiecesClient(PiecesApiClient):
         self.local_os = "MACOS" if self.local_os == "DARWIN" else self.local_os
         self._connect_websockets = kwargs.get("connect_wesockets",True)
         self.user = BasicUser(self)
+        self.app_name = "PIECES_FOR_DEVELOPERS_CLI"
         super().__init__(host)
 
     @property
@@ -53,7 +55,7 @@ class PiecesClient(PiecesApiClient):
         if not self._application:
             self._application = self.connector_api.connect(seeded_connector_connection=SeededConnectorConnection(
                 application=SeededTrackedApplication(
-                    name = "PIECES_FOR_DEVELOPERS_CLI",
+                    name = self.app_name,
                     platform = self.local_os,
                     version = __version__))).application
             self.api_client.set_default_header("application",self._application.id)
@@ -163,7 +165,7 @@ class PiecesClient(PiecesApiClient):
             subprocess.run(["open","pieces://launch"])
         elif self.local_os == "LINUX":
             subprocess.run(["xdg-open","pieces://launch"])
-        return self.is_pieces_running(maxium_retries=3)
+        return self.is_pieces_running(maxium_retries=6)
 
 
     def is_pieces_running(self,maxium_retries=1) -> bool:
@@ -177,7 +179,7 @@ class PiecesClient(PiecesApiClient):
                 with urllib.request.urlopen(f"{self.host}/.well-known/health", timeout=1) as response:
                     return response.status == 200
             except:
-                pass
+                time.sleep(1)
         return False
 
 
