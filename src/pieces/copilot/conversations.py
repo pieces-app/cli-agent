@@ -1,12 +1,9 @@
 from typing import Optional
 
 from rich.console import Console
-from rich.table import Table
 from rich.text import Text
-from rich.panel import Panel
 from rich.markdown import Markdown
 
-from pieces.gui import show_error
 from pieces.wrapper.basic_identifier.chat import BasicChat
 from pieces.settings import Settings
 
@@ -21,7 +18,7 @@ def conversation_handler(**kwargs):
 
     # Check if the conversation is not empty 
     if not Settings.pieces_client.copilot.chat and (rename or delete) and not idx:
-        show_error("Error in rename/delete","You can rename/delete an empty conversation")
+        Settings.show_error("Error in rename/delete","You can rename/delete an empty conversation")
         return 
     else:
         if idx:
@@ -33,7 +30,7 @@ def conversation_handler(**kwargs):
 
     # Rename the conversation
     if rename:
-        if rename == True:
+        if rename == True:  # noqa: E712
             con = Settings.pieces_client.conversation_api.conversation_specific_conversation_rename(conversation=chat._id)
             print(f"Renamed the conversation to {con.name}")
         else:
@@ -64,7 +61,7 @@ def conversation_handler(**kwargs):
             get_conversation_messages(conversation = Settings.pieces_client.copilot.chat)
         else:
             # Show error if no conversation in the ask show error
-            show_error("The conversation is empty","Please enter a conversation index, or use the ask command to ask a question.")
+            Settings.show_error("The conversation is empty","Please enter a conversation index, or use the ask command to ask a question.")
     else:
         get_conversation_messages(idx)
 

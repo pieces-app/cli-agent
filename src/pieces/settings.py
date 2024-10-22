@@ -6,7 +6,7 @@ from platformdirs import user_data_dir
 from .wrapper import PiecesClient
 from .wrapper.version_compatibility import VersionChecker,UpdateEnum
 from pieces import __version__
-from pieces.gui import server_startup_failed, print_pieces_os_link,print_version_details, show_error
+from pieces.gui import server_startup_failed, print_pieces_os_link,print_version_details
 
 
 
@@ -127,7 +127,10 @@ class Settings:
 	
 	@classmethod
 	def show_error(cls, error, error_message = None):
-		show_error(error,error_message)
+		print()
+		print(f"\033[31m{error}\033[0m") 
+		print(f"\033[31m{error_message}\033[0m") if error_message else None
+		print()
 		if not cls.run_in_loop:
 			sys.exit(2)
 

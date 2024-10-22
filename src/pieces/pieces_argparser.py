@@ -1,7 +1,6 @@
 import argparse
 import sys
-
-from .gui import show_error
+from pieces.settings import Settings
 
 
 
@@ -20,12 +19,11 @@ class PiecesArgparser(argparse.ArgumentParser): # subclassing the ArgumentParser
                 # Custom error message for invalid command choices
                 print(f"Invalid command '{invalid_command}'\n{suggestion_text}")
             except AttributeError:
-                show_error("Error occured",message)
-            
+                Settings.show_error("Error occured",message)
             
         else:
             # Default error message for other types of errors
-            show_error("Error occured",message)
+            Settings.show_error("Error occured",message)
         sys.exit(2)
 
     @classmethod
