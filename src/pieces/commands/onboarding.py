@@ -188,5 +188,6 @@ def onboarding_command(**kwargs):
     console.print("Thank you for using Pieces CLI!")
     console.print("You are now 10x more productive developer with Pieces")
     console.print("For more information visit https://docs.pieces.app/extensions-plugins/cli")
+    Settings.pieces_client.connector_api.onboarded(Settings.pieces_client.application.id, True)
 
 
