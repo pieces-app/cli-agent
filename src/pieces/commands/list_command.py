@@ -1,7 +1,9 @@
 from collections.abc import Iterable
+import threading
 
 from pieces.settings import Settings
 from pieces.utils import PiecesSelectMenu
+from pieces.wrapper.basic_identifier.asset import BasicAsset
 
 from .change_model import change_model
 from .assets_command import check_assets_existence, AssetsCommands
@@ -25,20 +27,24 @@ class ListCommand:
 
     @classmethod
     @check_assets_existence
-    def list_assets(cls, max_assets: int = 10,**kwargs):
-        assets = kwargs.get("assets",Settings.pieces_client.assets()[:max_assets])
+    def list_assets(cls, **kwargs):
+        assets = kwargs.get("assets",[BasicAsset(item.id) for item in BasicAsset.get_identifiers()])
 
-        select_menu = PiecesSelectMenu(
-            [
-                (f"{i}: {asset.name}", {"asset_id":asset.id,**kwargs})
-                for i, asset in enumerate(assets,start=1)
-            ],
-             AssetsCommands.open_asset,kwargs.get("footer"))
+        select_menu = PiecesSelectMenu([], AssetsCommands.open_asset,kwargs.get("footer"))
+        def update_assets():
+            for i,asset in enumerate(assets,start=1):
+                select_menu.add_entry(
+                    (f"{i}: {asset.name}", {"asset_id":asset.id,**kwargs}))
+
+        threading.Thread(target=update_assets).start()
         select_menu.run()
+        
+
+        
 
     @classmethod
     def list_models(cls):
-        models = [(f"{idx}: {model_name}", {"MODEL_INDEX":idx,"show_warning":False}) 
+        models = [(f"{idx}: {model_name}", {"MODEL_INDEX":idx}) 
         for idx, model_name in enumerate(Settings.pieces_client.available_models_names, start=1)]
         select_menu = PiecesSelectMenu(models, change_model,f"Currently using: {Settings.get_model()}")
         select_menu.run()

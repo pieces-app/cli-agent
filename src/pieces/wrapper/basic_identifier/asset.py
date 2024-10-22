@@ -21,19 +21,23 @@ class BasicAsset(Basic):
 	"""
 	A wrapper class for managing assets.
 	"""
-	@staticmethod
-	def identifiers_snapshot():
+	@classmethod
+	def identifiers_snapshot(cls):
 		if AssetSnapshot.identifiers_snapshot:
 			return AssetSnapshot.identifiers_snapshot
-
-		assets_api = AssetSnapshot.pieces_client.assets_api
-		# Call the API to get assets identifiers
-		api_response = assets_api.assets_identifiers_snapshot()
-
-		# Extract the 'id' values from each item in the 'iterable' list
-		AssetSnapshot.identifiers_snapshot = {item.id:None for item in api_response.iterable}
+		
+		AssetSnapshot.identifiers_snapshot = {item.id:None for item in cls.get_identifiers()}
 
 		return AssetSnapshot.identifiers_snapshot
+	
+	@staticmethod
+	def get_identifiers():
+		"""
+			:returns: The assets id
+		"""
+		assets_api = AssetSnapshot.pieces_client.assets_api
+		api_response = assets_api.assets_identifiers_snapshot()
+		return api_response.iterable
 		
 	@property
 	def asset(self) -> "Asset":
