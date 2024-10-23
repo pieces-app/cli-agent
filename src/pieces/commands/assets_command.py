@@ -41,7 +41,7 @@ def check_asset_selected(func):
 				raise ValueError("No asset selected")
 			AssetsCommands.current_asset.asset # Check if the current asset is vaild
 		except (ValueError, NotFoundException):
-			return ListCommand.list_assets()
+			ListCommand.list_assets()
 		return func(asset=AssetsCommands.current_asset,*args, **kwargs)	
 	return wrapper
 
