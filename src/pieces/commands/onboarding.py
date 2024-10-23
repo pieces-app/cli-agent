@@ -151,7 +151,7 @@ def onboarding_command(**kwargs):
         console.print("❌ Pieces OS is not running")
         console.print(
             Markdown(
-                "### Pieces OS\n\n"
+                "### Pieces OS\n"
                 "**Pieces OS** is a **required** background service"
                 " that powers the Pieces CLI and all other Pieces Integrations such as:\n\n"
                 "- **VS Code**\n"

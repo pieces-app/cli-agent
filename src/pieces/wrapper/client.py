@@ -158,7 +158,6 @@ class PiecesClient(PiecesApiClient):
 
             Returns (bool): true if Pieces OS runned successfully else false 
         """
-        return False
         if self.is_pieces_running(): return True
         if self.local_os == "WINDOWS":
             subprocess.run(["start", "pieces://launch"], shell=True)
