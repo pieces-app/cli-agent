@@ -137,6 +137,9 @@ class PiecesCLI:
             print_help()
             return
 
+        if not Settings.pieces_client.application.onboarded:
+            return onboarding_command()
+
         # Check if the command needs Pieces OS or not
         if arg not in ['help',"-v","--version","onboarding","install", "feedback", "contribute"]:
             Settings.startup()
