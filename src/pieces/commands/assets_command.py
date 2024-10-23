@@ -14,6 +14,9 @@ from pygments.util import ClassNotFound
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import TerminalFormatter
 
+from rich.markdown import Markdown
+from rich.console import Console
+
 from pieces_os_client.exceptions import NotFoundException
 
 def check_assets_existence(func):
@@ -77,15 +80,20 @@ class AssetsCommands:
 				print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
 		else:
 			# Determine the lexer
-			try:
-				lexer = get_lexer_by_name(cls.current_asset.classification, stripall=True)
-			except ClassNotFound:
-				lexer = guess_lexer(code_content)
-
-			# Print the code with syntax highlighting
-			formatted_code = highlight(code_content, lexer, TerminalFormatter())
 			print("\nCode content:")
-			print(formatted_code)
+			cls.print_code(cls.current_asset.raw_content, cls.current_asset.classification)
+
+	@staticmethod
+	def print_code(code_content, classification = None):
+		try:
+			if classification:
+				lexer = get_lexer_by_name(classification, stripall=True)
+			else:
+				raise ClassNotFound
+		except ClassNotFound:
+			lexer = guess_lexer(code_content)
+		formatted_code = highlight(code_content, lexer, TerminalFormatter())
+		print(formatted_code)
 
 
 	@classmethod
@@ -144,17 +152,20 @@ class AssetsCommands:
 		# TODO add more ways to create an asset such as an entire file
 
 		# Save text copied to the clipboard as an asset
+		console = Console()
 		try:
 			text = pyperclip.paste()
 			double_line("Content to save: ")
-			space_below(text)
+
+			cls.print_code(text)
 
 			# Ask the user for confirmation to save
 			user_input = input("Do you want to save this content? (y/n): ").strip().lower()
 			if user_input == 'y':
-				space_below("Saving Content...")
+				console.print("Saving...\n")
 				cls.current_asset = BasicAsset(BasicAsset.create(raw_content=text, metadata=None))
-				print("Asset Created use 'pieces list' to view")
+				
+				console.print(Markdown("Asset Created use `pieces list` to view"))
 				# Add your saving logic here
 			elif user_input == 'n':
 				space_below("Save Cancelled")
@@ -163,8 +174,4 @@ class AssetsCommands:
 
 		except pyperclip.PyperclipException as e:
 			Settings.show_error("Error accessing clipboard:", str(e))
-
-
-
-
 

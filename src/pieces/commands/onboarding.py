@@ -69,7 +69,7 @@ class OnboardingCommandStep(BasedOnboardingStep):
         while user_input != self.predicted_text:
             if user_input == "exit":
                 sys.exit(1)
-            console.print(Markdown(f"❌ Wrong command entered, You should type: `{self.predicted_text}`"))
+            console.print(Markdown(f"❌ Wrong command entered. You should type: `{self.predicted_text}`"))
             user_input = input(get_prompt()).strip()
 
         run_command(*extract_text(user_input.removeprefix("pieces ")))
@@ -88,8 +88,8 @@ def onboarding_command(**kwargs):
     step_number = 1
     steps = {
         "Step 1: Saving a Snippet":[
-            OnboardingStep("Let's get started by saving a snippet\n"
-                    "copy the following snippet python snippet: \n"
+            OnboardingStep("Let's get started by saving a snippet.\n"
+                    "Copy the following python snippet: \n"
                     f"```python\n{demo_snippet}\n```",
                     create_snippet_one_validation
                 ),
@@ -100,18 +100,14 @@ def onboarding_command(**kwargs):
         ],
         "Step 2: Opening the Saved Snippets":[
             OnboardingCommandStep(
-                "Now let's checkout all the saved snippets by typing `pieces list`",
+                "Now, let's view all of your saved snippets by typing `pieces list`.",
                 "pieces list"
             )
         ],
         "Step 3: Start a Session":[
             OnboardingStep(
-                "Starting a session will help you create a session with the Copilot, " 
-                "and it allows you run multiple commands without having to boot up the CLI every time.",
-                lambda: (True, "")
-            ),
-            OnboardingCommandStep(
-                "You can run in loop by typing `pieces run`. Don't forget to exit the loop by typing `exit`",
+                "Starting a session allows you to run multiple commands without having to start the Pieces CLI every time." 
+                "Start a session with `pieces run`. To exit your session, use `exit`.",
                 "pieces run"
             )
         ],
@@ -121,7 +117,7 @@ def onboarding_command(**kwargs):
                 "pieces ask 'How to print I love Pieces CLI in Python and Java'"
             ),
             OnboardingCommandStep(
-                "Create a session with Copilot by typing `pieces run` then use ask to interact with Copilot.",
+                "Create a session with Copilot by typing `pieces run` then use `ask` to interact with Copilot.",
                 "pieces run"
             ),
             
@@ -139,15 +135,17 @@ def onboarding_command(**kwargs):
             )
         ]
     }
-    console.print("Welcome to the Pieces CLI")
+    console.print(Markdown("# Welcome to the Pieces CLI\n"
+                           "Remember Anything and Interact with Everything\n"))
+    
     console.print("Whenever you want to exit the onboarding flow type `exit`.")
-    console.print("Remember Anything and Interact with Everything")
+    
     if not Settings.pieces_client.open_pieces_os():
         console.print("❌ Pieces OS is not running")
         console.print(
             Markdown(
-                "# Pieces OS\n\n"
-                "**Pieces OS** is a background service"
+                "### Pieces OS\n\n"
+                "**Pieces OS** is a **required** background service"
                 " that powers Pieces CLI and all the other Pieces Integrations such as IDE plugins:\n\n"
                 "- **VS Code**\n"
                 "- **Jetbrains IDEs**\n"
@@ -186,7 +184,7 @@ def onboarding_command(**kwargs):
             step_number += 1
     
     console.print("Thank you for using Pieces CLI!")
-    console.print("You are now 10x more productive developer with Pieces")
+    console.print(Markdown("You are now `10x` more productive developer with Pieces"))
     console.print("For more information visit https://docs.pieces.app/extensions-plugins/cli")
     Settings.pieces_client.connector_api.onboarded(Settings.pieces_client.application.id, True)
 
