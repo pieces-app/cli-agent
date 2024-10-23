@@ -165,7 +165,7 @@ class AssetsCommands:
 				console.print("Saving...\n")
 				cls.current_asset = BasicAsset(BasicAsset.create(raw_content=text, metadata=None))
 				
-				console.print(Markdown("Asset Created use `pieces list` to view"))
+				console.print(Markdown("Snippet successfully saved. Use `pieces list` to view."))
 				# Add your saving logic here
 			elif user_input == 'n':
 				space_below("Save Cancelled")
