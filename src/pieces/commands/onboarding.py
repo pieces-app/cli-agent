@@ -3,6 +3,10 @@ from typing import Callable
 import pyperclip
 from rich.markdown import Markdown
 from rich.console import Console
+from rich.panel import Panel
+from rich import box
+from rich.text import Text
+from rich.style import Style
 import os
 import getpass
 import platform
@@ -69,7 +73,7 @@ class OnboardingCommandStep(BasedOnboardingStep):
         while user_input != self.predicted_text:
             if user_input == "exit":
                 sys.exit(1)
-            console.print(Markdown(f"❌ Wrong command entered. You should type: `{self.predicted_text}`"))
+            console.print(Markdown(f"❌ Wrong command. Please use: `{self.predicted_text}`"))
             user_input = input(get_prompt()).strip()
 
         run_command(*extract_text(user_input.removeprefix("pieces ")))
@@ -87,8 +91,8 @@ def onboarding_command(**kwargs):
     console = Console()
     step_number = 1
     steps = {
-        "Step 1: Saving a Snippet":[
-            OnboardingStep("Let's get started by saving a snippet.\n"
+        "Step 1: Save a Snippet":[
+            OnboardingStep("Let's get started by saving a snippet to Pieces.\n"
                     "Copy the following python snippet: \n"
                     f"```python\n{demo_snippet}\n```",
                     create_snippet_one_validation
@@ -98,7 +102,7 @@ def onboarding_command(**kwargs):
                 "pieces create"
             )
         ],
-        "Step 2: Opening the Saved Snippets":[
+        "Step 2: Open your Saved Snippets":[
             OnboardingCommandStep(
                 "Now, let's view all of your saved snippets by typing `pieces list`.",
                 "pieces list"
@@ -135,8 +139,11 @@ def onboarding_command(**kwargs):
             )
         ]
     }
-    console.print(Markdown("# Welcome to the Pieces CLI\n"
-                           "Remember Anything and Interact with Everything\n"))
+    
+    console.print(Panel(
+        Text("Welcome to the Pieces CLI",justify="center",style="bold") + 
+        Text("\nRemember Anything and Interact with Everything", style=Style(bold=False,dim=True)),box=box.HEAVY,
+                style="markdown.h1.border"))
     
     console.print("Whenever you want to exit the onboarding flow type `exit`.")
     
@@ -146,9 +153,9 @@ def onboarding_command(**kwargs):
             Markdown(
                 "### Pieces OS\n\n"
                 "**Pieces OS** is a **required** background service"
-                " that powers Pieces CLI and all the other Pieces Integrations such as IDE plugins:\n\n"
+                " that powers the Pieces CLI and all other Pieces Integrations such as:\n\n"
                 "- **VS Code**\n"
-                "- **Jetbrains IDEs**\n"
+                "- **JetBrains**\n"
                 "- **Sublime Text**\n"
                 "- **Visual Studio**\n"
                 "and web browser extensions for Google Chrome and Firefox and more.\n\n"
@@ -183,8 +190,8 @@ def onboarding_command(**kwargs):
 
             step_number += 1
     
-    console.print("Thank you for using Pieces CLI!")
-    console.print(Markdown("You are now `10x` more productive developer with Pieces"))
+    console.print("Thank you for using the Pieces CLI!")
+    console.print(Markdown("You are now a `10x` more productive developer with Pieces."))
     console.print("For more information visit https://docs.pieces.app/extensions-plugins/cli")
     Settings.pieces_client.connector_api.onboarded(Settings.pieces_client.application.id, True)
 
