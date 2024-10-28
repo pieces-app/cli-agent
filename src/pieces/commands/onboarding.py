@@ -3,6 +3,10 @@ from typing import Callable
 import pyperclip
 from rich.markdown import Markdown
 from rich.console import Console
+from rich.panel import Panel
+from rich import box
+from rich.text import Text
+from rich.style import Style
 import os
 import getpass
 import platform
@@ -69,7 +73,7 @@ class OnboardingCommandStep(BasedOnboardingStep):
         while user_input != self.predicted_text:
             if user_input == "exit":
                 sys.exit(1)
-            console.print(Markdown(f"❌ Wrong command entered, You should type: `{self.predicted_text}`"))
+            console.print(Markdown(f"❌ Wrong command. Please use: `{self.predicted_text}`"))
             user_input = input(get_prompt()).strip()
 
         run_command(*extract_text(user_input.removeprefix("pieces ")))
@@ -87,9 +91,9 @@ def onboarding_command(**kwargs):
     console = Console()
     step_number = 1
     steps = {
-        "Step 1: Saving a Snippet":[
-            OnboardingStep("Let's get started by saving a snippet\n"
-                    "copy the following snippet python snippet: \n"
+        "Step 1: Save a Snippet":[
+            OnboardingStep("Let's get started by saving a snippet to Pieces.\n"
+                    "Copy the following python snippet: \n"
                     f"```python\n{demo_snippet}\n```",
                     create_snippet_one_validation
                 ),
@@ -98,20 +102,16 @@ def onboarding_command(**kwargs):
                 "pieces create"
             )
         ],
-        "Step 2: Opening the Saved Snippets":[
+        "Step 2: Open your Saved Snippets":[
             OnboardingCommandStep(
-                "Now let's checkout all the saved snippets by typing `pieces list`",
+                "Now, let's view all of your saved snippets by typing `pieces list`.",
                 "pieces list"
             )
         ],
         "Step 3: Start a Session":[
             OnboardingStep(
-                "Starting a session will help you create a session with the Copilot, " 
-                "and it allows you run multiple commands without having to boot up the CLI every time.",
-                lambda: (True, "")
-            ),
-            OnboardingCommandStep(
-                "You can run in loop by typing `pieces run`. Don't forget to exit the loop by typing `exit`",
+                "Starting a session allows you to run multiple commands without having to start the Pieces CLI every time." 
+                "Start a session with `pieces run`. To exit your session, use `exit`.",
                 "pieces run"
             )
         ],
@@ -121,7 +121,7 @@ def onboarding_command(**kwargs):
                 "pieces ask 'How to print I love Pieces CLI in Python and Java'"
             ),
             OnboardingCommandStep(
-                "Create a session with Copilot by typing `pieces run` then use ask to interact with Copilot.",
+                "Create a session with Copilot by typing `pieces run` then use `ask` to interact with Copilot.",
                 "pieces run"
             ),
             
@@ -139,18 +139,22 @@ def onboarding_command(**kwargs):
             )
         ]
     }
-    console.print("Welcome to the Pieces CLI")
+    
+    console.print(Panel(
+        Text("Welcome to the Pieces CLI",justify="center",style="bold") + 
+        Text("\nRemember Anything and Interact with Everything", style=Style(bold=False,dim=True)),box=box.HEAVY,
+                style="markdown.h1.border"))
+    
     console.print("Whenever you want to exit the onboarding flow type `exit`.")
-    console.print("Remember Anything and Interact with Everything")
+    
     if not Settings.pieces_client.open_pieces_os():
         console.print("❌ Pieces OS is not running")
         console.print(
             Markdown(
-                "# Pieces OS\n\n"
-                "**Pieces OS** is a background service"
-                " that powers Pieces CLI and all the other Pieces Integrations such as IDE plugins:\n\n"
+                "**Pieces OS** is a **required** background service"
+                " that powers the Pieces CLI and all other Pieces Integrations such as:\n\n"
                 "- **VS Code**\n"
-                "- **Jetbrains IDEs**\n"
+                "- **JetBrains**\n"
                 "- **Sublime Text**\n"
                 "- **Visual Studio**\n"
                 "and web browser extensions for Google Chrome and Firefox and more.\n\n"
@@ -185,8 +189,8 @@ def onboarding_command(**kwargs):
 
             step_number += 1
     
-    console.print("Thank you for using Pieces CLI!")
-    console.print("You are now 10x more productive developer with Pieces")
+    console.print("Thank you for using the Pieces CLI!")
+    console.print(Markdown("You are now a `10x` more productive developer with Pieces."))
     console.print("For more information visit https://docs.pieces.app/extensions-plugins/cli")
     Settings.pieces_client.connector_api.onboarded(Settings.pieces_client.application.id, True)
 
