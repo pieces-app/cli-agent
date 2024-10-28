@@ -137,8 +137,15 @@ class PiecesCLI:
             print_help()
             return
 
-        if not Settings.pieces_client.application.onboarded:
-            return onboarding_command()
+        config = ConfigCommands.load_config()
+
+        if config.get("skip_onboarding",False) or not Settings.pieces_client.application.onboarded:
+            res = input("Would you like to start onboarding (y/n/skip)? ")
+            if res.lower() == "y":
+                return onboarding_command()
+            elif res.lower() == "skip":
+                config["skip_onboarding"] = True
+                ConfigCommands.save_config(config)
 
         # Check if the command needs Pieces OS or not
         if arg not in ['help',"-v","--version","onboarding","install", "feedback", "contribute"]:
