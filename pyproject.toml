@@ -12,7 +12,7 @@
 
 
 [tool.poetry.dependencies]
-  python = ">=3.11,<3.13"
+  python = ">=3.11,<3.14"
   pyperclip = ">=1.8.2"
   pieces_os_client = "4.0.1"
   prompt-toolkit = "^3.0.43"
