@@ -109,7 +109,7 @@ def onboarding_command(**kwargs):
             )
         ],
         "Step 3: Start a Session":[
-            OnboardingStep(
+            OnboardingCommandStep(
                 "Starting a session allows you to run multiple commands without having to start the Pieces CLI every time." 
                 "Start a session with `pieces run`. To exit your session, use `exit`.",
                 "pieces run"
