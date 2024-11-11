@@ -112,13 +112,19 @@ class PiecesClient(PiecesApiClient):
             return self._model_name
         return "GPT-3.5-turbo Chat Model"
 
+    @property
+    def model_id(self):
+        if hasattr(self,"_model_id"):
+            return self._model_id
+        return self.get_models()[self.model_name]
+
     @model_name.setter
     def model_name(self,model):
         models = self.get_models()
         if model not in models:
             raise ValueError(f"Not a vaild model name, the available models are {', '.join(models.keys())}")
         self._model_name = model
-        self.model_id = models[model]
+        self._model_id = models[model]
 
     @property
     def available_models_names(self) -> list:
