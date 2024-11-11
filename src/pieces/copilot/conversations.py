@@ -100,8 +100,8 @@ def get_conversations(max_conversations,**kwargs):
 
 def get_conversation_messages(idx:Optional[int]=None,conversation:Optional[BasicChat]=None):
     """Print a conversation messages. you need to pass the index of the conversation or the conversation id"""
-    
-    if idx:
+
+    if idx is not None:
         conversation = Settings.pieces_client.copilot.chats()[idx]
 
 
