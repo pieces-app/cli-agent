@@ -22,7 +22,10 @@ def conversation_handler(**kwargs):
         return 
     else:
         if idx:
-            chat = Settings.pieces_client.copilot.chats()[idx]  
+            try:
+                chat = Settings.pieces_client.copilot.chats()[idx-1] 
+            except IndexError:
+                Settings.show_error("Error in conversation index","Please enter a valid conversation index.") 
         else:
             chat = Settings.pieces_client.copilot.chat
 
@@ -63,7 +66,7 @@ def conversation_handler(**kwargs):
             # Show error if no conversation in the ask show error
             Settings.show_error("The conversation is empty","Please enter a conversation index, or use the ask command to ask a question.")
     else:
-        get_conversation_messages(idx)
+        get_conversation_messages(idx - 1)
 
 def get_conversations(max_conversations,**kwargs):
     """This function is used to print all conversations available"""
