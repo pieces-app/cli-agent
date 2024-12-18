@@ -1,10 +1,9 @@
 from pieces_os_client.api_client import ApiClient
 from pieces_os_client.configuration import Configuration
+from .websockets.base_websocket import BaseWebsocket
 
 class PiecesApiClient:
-    def __init__(self, host):
-        self.host = host
-        self.api_client = ApiClient(Configuration(host))
+    def __init__(self):
         self._conversation_message_api = None
         self._conversation_messages_api = None
         self._conversations_api = None
@@ -29,6 +28,8 @@ class PiecesApiClient:
         self._websites_api = None
         self._applications_api = None
 
+    def init_host(self,host,reconnect_on_host_change=True):
+        self.api_client = ApiClient(Configuration(host))
         # Websocket urls
         ws_base_url:str = host.replace('http','ws')
         self.ASSETS_IDENTIFIERS_WS_URL = ws_base_url + "/assets/stream/identifiers"
@@ -36,6 +37,9 @@ class PiecesApiClient:
         self.ASK_STREAM_WS_URL = ws_base_url + "/qgpt/stream"
         self.CONVERSATION_WS_URL = ws_base_url + "/conversations/stream/identifiers"
         self.HEALTH_WS_URL = ws_base_url + "/.well-known/stream/health"
+
+        if reconnect_on_host_change:
+            BaseWebsocket.reconnect_all()
 
     @property
     def conversation_message_api(self):
