@@ -14,7 +14,7 @@
 [tool.poetry.dependencies]
   python = ">=3.11,<3.14"
   pyperclip = ">=1.8.2"
-  pieces_os_client = "4.0.1"
+  pieces_os_client = "4.1.0"
   prompt-toolkit = "^3.0.43"
   rich = "^13.7.1"
   platformdirs = "^4.2.0"
