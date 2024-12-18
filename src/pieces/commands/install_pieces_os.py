@@ -9,7 +9,7 @@ def install_pieces_os(**kwargs):
     
     if Settings.pieces_client.local_os == "WINDOWS":
         install_command = (
-            f'Add-AppxPackage -Appinstaller https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller?product={Settings.pieces_client.app_name}&download=true'
+            f'Add-AppxPackage -Appinstaller "https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller?product={Settings.pieces_client.app_name}&download=true"'
             '-ErrorAction Stop -Verbose ; '
             'Start-Process shell:appsFolder\\com.MeshIntelligentTechnologi.PiecesOS_84gz00a5z79wr!osserver'
         )
