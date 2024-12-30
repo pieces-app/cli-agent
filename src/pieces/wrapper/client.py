@@ -1,9 +1,11 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Optional,Dict, Union
 import platform
 import atexit
 import subprocess
 import urllib.request
 import urllib.error
+import socket
 
 from .websockets.base_websocket import BaseWebsocket
 from .api_client import PiecesApiClient
@@ -104,13 +106,27 @@ class PiecesClient(PiecesApiClient):
         return "http://127.0.0.1:" + self.port
 
     @staticmethod
-    def _port_scanning() -> Union[str,None]:
-        for port in range(39300, 39334):
+    def _port_scanning() -> str:
+        def check_port(port):
             try:
-                with urllib.request.urlopen(f"http://127.0.0.1:{port}/.well-known/health", timeout=1):
-                    return str(port)
-            except urllib.error.URLError:
+                with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as sock: # Use low level socket api for faster scanning
+                    sock.settimeout(0.1)
+                    result = sock.connect_ex(('127.0.0.1', port))
+                    if result == 0:
+                        health_url = f'http://127.0.0.1:{port}/.well-known/health'
+                        with urllib.request.urlopen(health_url, timeout=0.1) as response:
+                            if response.status == 200:
+                                return port
+            except:
                 pass
+            return None
+
+        with ThreadPoolExecutor(max_workers=100) as executor:
+            futures = [executor.submit(check_port, port) for port in range(39300, 39334)]
+            for future in as_completed(futures):
+                port = future.result()
+                if port is not None:
+                    return str(port)
 
         raise ValueError("PiecesOS is not running")
 
