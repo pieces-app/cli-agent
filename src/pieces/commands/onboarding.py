@@ -1,4 +1,5 @@
 from abc import ABC
+from logging import config
 from typing import Callable
 import pyperclip
 from rich.markdown import Markdown
@@ -13,6 +14,7 @@ import platform
 import sys
 
 from pieces.commands.cli_loop import run_command, extract_text
+from pieces.commands.config_command import ConfigCommands
 from pieces.settings import Settings
 
 def get_prompt():
@@ -148,10 +150,10 @@ def onboarding_command(**kwargs):
     console.print("Whenever you want to exit the onboarding flow type `exit`.")
     
     if not Settings.pieces_client.open_pieces_os():
-        console.print("❌ Pieces OS is not running")
+        console.print("❌ PiecesOS is not running")
         console.print(
             Markdown(
-                "**Pieces OS** is a **required** background service"
+                "**PiecesOS** is a **required** background service"
                 " that powers the Pieces CLI and all other Pieces Integrations such as:\n\n"
                 "- **VS Code**\n"
                 "- **JetBrains**\n"
@@ -171,12 +173,12 @@ def onboarding_command(**kwargs):
         )
 
         OnboardingCommandStep(
-            "To install Pieces OS run `pieces install`",
+            "To install PiecesOS run `pieces install`",
             "pieces install"
         ).run(console)
 
     else:
-        console.print("✅ Pieces OS is running")
+        console.print("✅ PiecesOS is running")
     
     Settings.startup()
     
@@ -193,5 +195,8 @@ def onboarding_command(**kwargs):
     console.print(Markdown("You are now a `10x` more productive developer with Pieces."))
     console.print("For more information visit https://docs.pieces.app/extensions-plugins/cli")
     Settings.pieces_client.connector_api.onboarded(Settings.pieces_client.application.id, True)
+    config = ConfigCommands.load_config()
+    config["onboarded"] = True
+    ConfigCommands.save_config(config)
 
 

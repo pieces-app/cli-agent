@@ -67,7 +67,7 @@ class PiecesCLI:
         ask_parser.set_defaults(func=ask_stream.ask)
 
         # Subparser for the 'version' command
-        version_parser = self.command_parser.add_parser('version', help='Gets version of Pieces OS')
+        version_parser = self.command_parser.add_parser('version', help='Gets version of PiecesOS')
         version_parser.set_defaults(func=version)
 
         # Subparser for Search
@@ -82,11 +82,11 @@ class PiecesCLI:
         help_parser.set_defaults(func=lambda **kwargs: print_help())
 
         # Subparser for the 'login' command
-        login_parser = self.command_parser.add_parser('login', help='Login to pieces os')
+        login_parser = self.command_parser.add_parser('login', help='Login to PiecesOS')
         login_parser.set_defaults(func=sign_in)
 
         # Subparser for the 'logout' command
-        logout_parser = self.command_parser.add_parser('logout', help='Logout from pieces os')
+        logout_parser = self.command_parser.add_parser('logout', help='Logout from PiecesOS')
         logout_parser.set_defaults(func=sign_out)
 
 
@@ -126,8 +126,12 @@ class PiecesCLI:
         contribute_parser.set_defaults(func=contribute)
 
         # Subparser for the 'install' command
-        install_parser = self.command_parser.add_parser('install', help='Install the Pieces OS')
+        install_parser = self.command_parser.add_parser('install', help='Install the PiecesOS')
         install_parser.set_defaults(func=install_pieces_os)
+
+        # Subparser for the 'install' command
+        install_parser = self.command_parser.add_parser('open', help='Opens PiecesOS')
+        install_parser.set_defaults(func=lambda **kwargs:Settings.pieces_client.open_pieces_os())
 
 
     def run(self):
@@ -138,8 +142,12 @@ class PiecesCLI:
             return
 
         config = ConfigCommands.load_config()
+        
+       
+        onboarded = config.get("onboarded", False)
 
-        if not config.get("skip_onboarding", False) and not Settings.pieces_client.application.onboarded:
+
+        if not config.get("skip_onboarding", False) and not onboarded:
             res = input("It looks like this is your first time using the Pieces CLI.\nWould you like to start onboarding (y/n/skip)? ")
             if res.lower() == "y":
                 return onboarding_command()
@@ -147,8 +155,9 @@ class PiecesCLI:
                 config["skip_onboarding"] = True
                 ConfigCommands.save_config(config)
 
-        # Check if the command needs Pieces OS or not
-        if arg not in ['help',"-v","--version","onboarding","install", "feedback", "contribute"]:
+
+        # Check if the command needs PiecesOS or not
+        if arg not in ['help',"-v","--version","install","onboarding", "feedback", "contribute","open"]:
             Settings.startup()
 
         args = self.parser.parse_args()

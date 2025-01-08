@@ -13,7 +13,7 @@ class BasicUser(Basic):
 
 	Attributes:
 		user_profile: The profile of the user.
-		pieces_client: The client used to interact with the pieces OS API.
+		pieces_client: The client used to interact with the PiecesOS API.
 	"""
 
 	user_profile: Optional["UserProfile"] = None
@@ -23,7 +23,7 @@ class BasicUser(Basic):
 		Initializes the BasicUser with a pieces client.
 
 		Args:
-			pieces_client: The client used to interact with the pieces OS API.
+			pieces_client: The client used to interact with the PiecesOS API.
 		"""
 		self.pieces_client = pieces_client
 	

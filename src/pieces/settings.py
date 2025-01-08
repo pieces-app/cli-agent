@@ -105,20 +105,20 @@ class Settings:
 
 	@classmethod
 	def version_check(cls):
-		"""Check the version of the pieces os in the within range"""
+		"""Check the version of the PiecesOS in the within range"""
 		cls.pieces_os_version = cls.pieces_client.version
 		result = VersionChecker(cls.PIECES_OS_MIN_VERSION,cls.PIECES_OS_MAX_VERSION,cls.pieces_os_version).version_check()
 
 		# Check compatibility
 		if result.update == UpdateEnum.Plugin:
-			print("Please update your cli-agent tool. It is not compatible with the current Pieces OS version")
+			print("Please update your cli-agent tool. It is not compatible with the current PiecesOS version")
 			print()
 			print("https://pypi.org/project/pieces-cli/")
 			print()
 			print_version_details(cls.pieces_os_version, __version__)
 			sys.exit(2)
 		elif result.update == UpdateEnum.PiecesOS:
-			print("Please update Pieces OS. It is not compatible with the current cli-agent version")
+			print("Please update PiecesOS. It is not compatible with the current cli-agent version")
 			print()
 			print_pieces_os_link()
 			print()

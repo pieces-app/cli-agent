@@ -21,7 +21,7 @@ class BasicTag(Basic):
 		Initializes a BasicTag instance.
 		
 		Args:
-		- tag (Tag): Pieces OS tag object
+		- tag (Tag): PiecesOS tag object
 		"""
 		self.tag = tag
 		self.pieces_client = pieces_client

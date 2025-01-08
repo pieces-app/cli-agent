@@ -119,7 +119,7 @@ files = [
 [[package]]
 name = "pieces-os-client"
 version = "4.1.0"
-description = "A powerful code engine package for writing applications on top of Pieces OS"
+description = "A powerful code engine package for writing applications on top of PiecesOS"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [

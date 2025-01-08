@@ -179,7 +179,7 @@ class PiecesClient(PiecesApiClient):
     @property
     def version(self) -> str:
         """
-            Returns Pieces OS Version
+            Returns PiecesOS Version
         """
         return self.well_known_api.get_well_known_version()
  
@@ -194,9 +194,9 @@ class PiecesClient(PiecesApiClient):
 
     def open_pieces_os(self) -> bool:
         """
-            Open Pieces OS
+            Open PiecesOS
 
-            Returns (bool): true if Pieces OS runned successfully else false 
+            Returns (bool): true if PiecesOS runned successfully else false 
         """
         if self.is_pieces_running(): return True
         if self.local_os == "WINDOWS":
@@ -210,15 +210,17 @@ class PiecesClient(PiecesApiClient):
 
     def is_pieces_running(self,maxium_retries=1) -> bool:
         """
-            Checks if Pieces OS is running or not
+            Checks if PiecesOS is running or not
 
-            Returns (bool): true if Pieces OS is running 
+            Returns (bool): true if PiecesOS is running 
         """
         for _ in range(maxium_retries):
             try:
                 with urllib.request.urlopen(f"{self.host}/.well-known/health", timeout=1) as response:
                     return response.status == 200
             except:
+                if maxium_retries == 1:
+                    return False
                 time.sleep(1)
         return False
 

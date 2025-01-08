@@ -3,18 +3,18 @@
 
 # <p align="center"> Pieces Python CLI Tool
 
-<p align="center"> This is a comprehensive command-line interface (CLI) tool designed to interact seamlessly with Pieces OS. It provides a range of functionalities such as asset management, application interaction, and integration with various Pieces OS features.
+<p align="center"> This is a comprehensive command-line interface (CLI) tool designed to interact seamlessly with PiecesOS. It provides a range of functionalities such as asset management, application interaction, and integration with various PiecesOS features.
 
 </p>
   
-##### <p align="center"> [Website](https://pieces.app/) • [Pieces OS Documentation](https://docs.pieces.app/) • [Pieces Python CLI Documentation](https://docs.pieces.app/extensions-plugins/cli)
+##### <p align="center"> [Website](https://pieces.app/) • [PiecesOS Documentation](https://docs.pieces.app/) • [Pieces Python CLI Documentation](https://docs.pieces.app/extensions-plugins/cli)
 </p>
 
 [![Introducing CLI](https://img.youtube.com/vi/kAgwHMxWY8c/0.jpg)](https://www.youtube.com/watch?v=kAgwHMxWY8c)
 
 ## Important
 
-Make sure you have [**Pieces OS**](https://docs.pieces.app/installation-getting-started/what-am-i-installing) installed in order to run the Pieces CLI tool.
+Make sure you have [**PiecesOS**](https://docs.pieces.app/installation-getting-started/what-am-i-installing) installed in order to run the Pieces CLI tool.
 
 #### Operating System Support
 The Pieces Python CLI Tool is compatible with various operating systems, ensuring a wide range of usage and adaptability. While it offers full support across most systems, specific features might have varied performance based on the OS environment.
@@ -27,7 +27,7 @@ The CLI Supports
 ## Installing
 To get started with the Pieces Python CLI Tool, you need to:
 
-1. Ensure Pieces OS is installed and running on your system.
+1. Ensure PiecesOS is installed and running on your system.
 2. Install the Python package:
 
    ```bash

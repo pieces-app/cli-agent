@@ -26,7 +26,7 @@ def loop(**kwargs):
     print(
         f"Operating System: {platform.platform()}\n",
         f"Python Version: {sys.version.split()[0]}\n",
-        f"Pieces OS Version: {Settings.pieces_os_version}\n",
+        f"PiecesOS Version: {Settings.pieces_os_version}\n",
         f"Pieces CLI Version: {__version__}\n",
         f"Application: {Settings.pieces_client.application.name.value if Settings.pieces_client.application else 'Unknown'}"
     )
