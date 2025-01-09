@@ -4,7 +4,7 @@ from pieces.settings import Settings
 
 def install_pieces_os(**kwargs):
     """
-    Install Pieces OS based on the platform
+    Install PiecesOS based on the platform
     """
     
     if Settings.pieces_client.local_os == "WINDOWS":
@@ -33,14 +33,14 @@ def install_pieces_os(**kwargs):
         )
         script = f"""
         TMP_PKG_PATH="/tmp/Pieces-OS-Launch.pkg"
-        echo "Downloading Pieces OS .pkg file from {pkg_url}..."
+        echo "Downloading PiecesOS .pkg file from {pkg_url}..."
         curl -L "{pkg_url}" -o "$TMP_PKG_PATH"
         if [ -f "$TMP_PKG_PATH" ]; then
-            echo "Pieces OS Download successful, installing the package..."
+            echo "PiecesOS Download successful, installing the package..."
             open "$TMP_PKG_PATH"
-            echo "Pieces OS Installation complete."
+            echo "PiecesOS Installation complete."
         else
-            echo "Failed to download and install Pieces OS."
+            echo "Failed to download and install PiecesOS."
         fi
         """
         os.system(script)

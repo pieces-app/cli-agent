@@ -222,13 +222,13 @@ class BasicWebsite(Basic):
 
 	def delete(self):
 		"""
-		Deletes the website from the Pieces OS.
+		Deletes the website from PiecesOS
 		"""
 		self.pieces_client.websites_api.websites_delete_specific_website(self.website.id)
 
 	def _edit_website(self, website: "Website"):
 		"""
-		Edits the website in the Pieces OS.
+		Edits the website in PiecesOS.
 
 		Args:
 		- website: The Website object to edit.

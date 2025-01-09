@@ -50,7 +50,7 @@ class VersionChecker:
             return 0
 
     def version_check(self) -> 'VersionCheckResult':
-        """Check if the Pieces OS version is within the supported range."""
+        """Check if the PiecesOS version is within the supported range."""
         if self.compare(self.pieces_os_version, self.min_version) < 0:
             return VersionCheckResult(False, UpdateEnum.PiecesOS)
         elif self.compare(self.pieces_os_version, self.max_version) >= 0:

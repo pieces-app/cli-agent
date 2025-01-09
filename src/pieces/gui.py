@@ -32,9 +32,9 @@ def server_startup_failed():
     print()
     print("############################")
     print()
-    print("Please make sure Pieces OS is running and up-to-date")
+    print("Please make sure PiecesOS is running and up-to-date")
     print()
-    print("Or, to install Pieces OS, please visit this link:")
+    print("Or, to install PiecesOS, please visit this link:")
     print_pieces_os_link()
     print()
     print("############################")
@@ -42,7 +42,7 @@ def server_startup_failed():
 
 
 def print_version_details(pos_version,cli_version):
-    print(f"Pieces OS Version: {pos_version}")
+    print(f"PiecesOS Version: {pos_version}")
     print(f"CLI Version: {cli_version}")
 
 def print_pieces_os_link():
@@ -109,12 +109,12 @@ def print_help():
     print("  Login           - Login to pieces")
     print("  Logout          - Logout from pieces")
     print()
-    print("  version         - Gets version of Pieces OS and the version of the cli tool")
+    print("  version         - Gets version of PiecesOS and the version of the cli tool")
     print("  help            - Show this help message")
     print("  onboarding      - Start the onboarding process")
     print("  feedback        - Send feedback to Pieces")
     print("  contribute      - Contribute to Pieces CLI")
-    print("  install         - Install Pieces OS")
+    print("  install         - Install PiecesOS")
     print()
 
 def print_asset_details(asset:"BasicAsset"):
