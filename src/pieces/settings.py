@@ -105,7 +105,7 @@ class Settings:
 
 	@classmethod
 	def version_check(cls):
-		"""Check the version of the PiecesOS in the within range"""
+		"""Check if the version of PiecesOS is compatible"""
 		cls.pieces_os_version = cls.pieces_client.version
 		result = VersionChecker(cls.PIECES_OS_MIN_VERSION,cls.PIECES_OS_MAX_VERSION,cls.pieces_os_version).version_check()
 

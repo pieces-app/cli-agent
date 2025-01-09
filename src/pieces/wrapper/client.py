@@ -218,7 +218,7 @@ class PiecesClient(PiecesApiClient):
         """
             Open PiecesOS
 
-            Returns (bool): true if PiecesOS runned successfully else false 
+            Returns (bool): true if PiecesOS launches successfully
         """
         if self.is_pieces_running(): return True
         if self.local_os == "WINDOWS":

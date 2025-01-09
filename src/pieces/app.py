@@ -126,7 +126,7 @@ class PiecesCLI:
         contribute_parser.set_defaults(func=contribute)
 
         # Subparser for the 'install' command
-        install_parser = self.command_parser.add_parser('install', help='Install the PiecesOS')
+        install_parser = self.command_parser.add_parser('install', help='Install PiecesOS')
         install_parser.set_defaults(func=install_pieces_os)
 
         # Subparser for the 'install' command

@@ -1,7 +1,7 @@
 [tool.poetry]
   name = "pieces-cli"
   version = "1.3.1"
-  description = "A powerful cli tool to interact with the PiecesOS "
+  description = "A powerful cli tool to interact with PiecesOS "
   authors = ["Pieces <development@pieces.app>"]
   readme = "README.md"
   homepage = "https://pieces.app"
@@ -22,7 +22,6 @@
 [tool.poetry.group.dev.dependencies]
   pytest = "^8.0.0"
   pyinstaller = "^6.3.0"
-#  pieces_os_client = {path = "../pieces-os-client-sdk-for-python/dist/pieces_os_client-1.2.7-py3-none-any.whl"}
 
 [build-system]
   requires = ["poetry-core>=1.0.0"]
