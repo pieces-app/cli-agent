@@ -94,7 +94,7 @@ def print_help():
     print()
     print("  conversations     - List all the conversations. The green conversation shows the currently using one in the ask command")
     print("  conversation      - List all the messages in a certain conversation and switch to it in the ask command")
-    print("  conversation x    - Switch to a certain x conversation in the ask command")
+    print("  conversation x    - Switch to a conversation with index 'x' in the ask command")
     print("  -n,--new          - To create a new conversation in the ask command")
     print("  -d,--delete       - Deletes the current conversation")
     print("  -r,--rename       - Rename the current conversation. If no value given it will let the model rename it for you")
