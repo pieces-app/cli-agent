@@ -24,7 +24,7 @@ def check_assets_existence(func):
 	def wrapper(*args, **kwargs):
 		assets = Settings.pieces_client.assets # Check if there is an asset
 		if not assets:
-			return Settings.show_error("No assets found", "Please create an asset first.")
+			return Settings.show_error("No materials found", "Please create an material first.")
 		return func(*args, **kwargs)
 	return wrapper
 
@@ -38,7 +38,7 @@ def check_asset_selected(func):
 		from pieces.commands.list_command import ListCommand
 		try: 
 			if AssetsCommands.current_asset is None:
-				raise ValueError("No asset selected")
+				raise ValueError("No material selected")
 			AssetsCommands.current_asset.asset # Check if the current asset is vaild
 		except (ValueError, NotFoundException):
 			ListCommand.list_assets()
@@ -55,7 +55,7 @@ class AssetsCommands:
 			cls.current_asset = BasicAsset(asset_id)
 
 		except IndexError:
-			return Settings.show_error("Invalid asset index or asset not found.", "Please choose from the list or use 'pieces list assets'")
+			return Settings.show_error("Invalid material index or material not found.", "Please choose from the list or use 'pieces list assets'")
 	
 		print_asset_details(cls.current_asset)
 
@@ -106,7 +106,7 @@ class AssetsCommands:
 			with open(file_path,"r") as f:
 				data = f.read()
 		except FileNotFoundError:
-			Settings.show_error("Error in update asset","File not found")
+			Settings.show_error("Error in update material","File not found")
 			return
 
 		asset.raw_content = data
@@ -122,8 +122,8 @@ class AssetsCommands:
 
 		if not name and not classification: # If no name or no classification is provided
 			# Ask the user for a new name
-			name = input("Enter the new name for the asset[leave blank to keep the same]: ").strip()
-			classification = input("Enter the classification for the asset[leave blank to keep the same]: ").strip()
+			name = input("Enter the new name for the material[leave blank to keep the same]: ").strip()
+			classification = input("Enter the classification for the material[leave blank to keep the same]: ").strip()
 
 		# Check if the user actually entered a name
 		if name:
@@ -136,12 +136,12 @@ class AssetsCommands:
 	def delete_asset(cls,asset:BasicAsset,**kwargs):
 		print_asset_details(asset)
 
-		confirm = input("Are you sure you really want to delete this asset? This action cannot be undone. (y/n): ").strip().lower()
+		confirm = input("Are you sure you really want to delete this material? This action cannot be undone. (y/n): ").strip().lower()
 		if confirm == 'y':
 			print("Deleting asset...")
 			asset.delete()
 			cls.current_asset = None
-			space_below("Asset Deleted")
+			space_below("Material Deleted")
 		elif confirm == 'n':
 			print("Deletion cancelled.")
 		else:
