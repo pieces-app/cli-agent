@@ -89,7 +89,7 @@ def print_help():
     print("  config --editor x - Set the editor to 'x' in the configuration")
     print()
     print("  ask \"ask\"       - Asks a single question to the model selected in change model. Default timeout set to 10 seconds")
-    print("  --materials,-m    - Add a material using the index check list materials command to the ask command")
+    print("  --materials,-m    - Add material(s) by index. Separate materials with spaces. Run 'drive' to find material indexes")
     print("  --file,-f         - Add a certain files or folders to the ask command it can be absolute or relative path")
     print()
     print("  chats             - List all the chats. The green chat shows the currently using one in the ask command")
