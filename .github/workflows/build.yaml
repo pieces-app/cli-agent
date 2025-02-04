@@ -138,13 +138,13 @@ jobs:
           fi
 
       ### Upload build artifact for pushing
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: artifacts
           path: dist/*
 
       ### Uploading our staging version text file to be pulled down later
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: staging_version
           path: "*.txt"
