@@ -140,13 +140,13 @@ jobs:
       ### Upload build artifact for pushing
       - uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: ${{ matrix.os }}
           path: dist/*
 
       ### Uploading our staging version text file to be pulled down later
       - uses: actions/upload-artifact@v4
         with:
-          name: staging_version
+          name: staging_version-${{ matrix.os }}
           path: "*.txt"
         if: inputs.deploy == false
 
@@ -159,15 +159,7 @@ jobs:
     steps:
 
       ### Pulling down the previously built plugins
-      - uses: actions/download-artifact@v3
-        with:
-          name: artifacts
-
-      ### Pulling down the staging version number to pass to gcp and GitHub releases
-      - uses: actions/download-artifact@v3
-        with:
-          name: staging_version
-        if: inputs.deploy == false
+      - uses: actions/download-artifact@v4
 
       ### What is in here??
       - name: List
@@ -224,13 +216,13 @@ jobs:
               echo $updated_staging_json | jq 'reverse' > latest.json
               jq -n --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '{channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}' > latest-single.json
           fi
-          gsutil -h "Cache-Control: max-age=0" cp **.tar.gz gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz
-          gsutil -h "Cache-Control: max-age=0" cp **.whl gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz.whl
+          gsutil -h "Cache-Control: max-age=0" cp */**.tar.gz gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz
+          gsutil -h "Cache-Control: max-age=0" cp */**.whl gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz.whl
           gsutil -h "Cache-Control: max-age=0" cp latest-single.json gs://$BUCKET/pieces_cli/$CHANNEL/latest-single.json
           gsutil -h "Cache-Control: max-age=0" cp latest.json gs://$BUCKET/pieces_cli/$CHANNEL/latest.json
-          gsutil cp -r **.tar.gz gs://$BUCKET/pieces_cli/release/
-          gsutil cp -r **.zip gs://$BUCKET/pieces_cli/release/
-          gsutil cp -r **.whl gs://$BUCKET/pieces_cli/release/
+          gsutil cp -r */**.tar.gz gs://$BUCKET/pieces_cli/release/
+          gsutil cp -r */**.zip gs://$BUCKET/pieces_cli/release/
+          gsutil cp -r */**.whl gs://$BUCKET/pieces_cli/release/
           echo "releasetag=$VERSION" >> $GITHUB_ENV
 
       ### Upload to GitHub releases pre-release
@@ -239,9 +231,9 @@ jobs:
         if: inputs.deploy == false
         with:
           files: |
-            **.tar.gz
-            **.whl
-            **.zip
+            */**.tar.gz
+            */**.whl
+            */**.zip
           fail_on_unmatched_files: true
           name: ${{ env.releasetag }}
           tag_name: ${{ env.releasetag }}
@@ -254,9 +246,9 @@ jobs:
         if: inputs.deploy == true
         with:
           files: |
-            **.tar.gz
-            **.whl
-            **.zip
+            */**.tar.gz
+            */**.whl
+            */**.zip
           fail_on_unmatched_files: true
           name: ${{ env.releasetag }}
           tag_name: ${{ env.releasetag }}
@@ -268,6 +260,6 @@ jobs:
         if: inputs.deploy == true
         run: |-
           mkdir dist
-          cp *.tar.gz *.whl ./dist/
+          cp */*.tar.gz */*.whl ./dist/
           python3 -m pip install --upgrade twine
           python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*

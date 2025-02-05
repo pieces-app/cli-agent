@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - artifact_fix
 
 jobs:
   build:
