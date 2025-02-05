@@ -227,7 +227,7 @@ jobs:
 
       ### Upload to GitHub releases pre-release
       - name: Release to GitHub Releases
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: inputs.deploy == false
         with:
           files: |
@@ -242,7 +242,7 @@ jobs:
 
       ### Upload to GitHub releases
       - name: Release to GitHub Releases
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: inputs.deploy == true
         with:
           files: |
