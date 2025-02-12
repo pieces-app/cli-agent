@@ -27,22 +27,22 @@ class PiecesCLI:
         config_parser.set_defaults(func=ConfigCommands.config)
 
         # Subparser for the 'lists' command
-        list_parser = self.command_parser.add_parser('list', help='List the assets or apps or models')
-        list_parser.add_argument('type', nargs='?', type=str ,default="assets", help='type of the list',choices=["assets","apps","models"])
-        list_parser.add_argument('max_assets', nargs='?', type=int ,default=10, help='Max number of assets')
-        list_parser.add_argument("--editor","-e",dest="editor",action="store_true" ,default=False, help="Open the choosen asset in the editor")
+        list_parser = self.command_parser.add_parser('list', aliases=["drive"], help='List materials or apps or models')
+        list_parser.add_argument('type', nargs='?', type=str ,default="materials", help='type of the list',choices=["materials","apps","models"])
+        list_parser.add_argument('max_snippets', nargs='?', type=int ,default=10, help='Max number of materials')
+        list_parser.add_argument("--editor","-e",dest="editor",action="store_true" ,default=False, help="Open the choosen material in the editor")
         list_parser.set_defaults(func=ListCommand.list_command)
 
         # Subparser for the 'save' command
-        save_parser = self.command_parser.add_parser('save', help='Updates the current asset')
+        save_parser = self.command_parser.add_parser('save', help='Updates the current material')
         save_parser.set_defaults(func=AssetsCommands.update_asset)
 
         # Subparser for the 'delete' command
-        delete_parser = self.command_parser.add_parser('delete', help='Delete the current asset')
+        delete_parser = self.command_parser.add_parser('delete', help='Delete the current material')
         delete_parser.set_defaults(func=AssetsCommands.delete_asset)
 
         # Subparser for the 'create' command
-        create_parser = self.command_parser.add_parser('create', help='Create a new asset')
+        create_parser = self.command_parser.add_parser('create', help='Create a new material')
         create_parser.set_defaults(func=AssetsCommands.create_asset)
 
         # Subparser for the 'run' command
@@ -50,20 +50,20 @@ class PiecesCLI:
         run_parser.set_defaults(func=loop)
 
         # Subparser for the 'execute' command
-        execute_parser = self.command_parser.add_parser('execute', help='Execute shell or bash assets')
+        execute_parser = self.command_parser.add_parser('execute', help='Execute shell or bash materials')
         execute_parser.set_defaults(func=ExecuteCommand.execute_command)
 
         # Subparser for the 'edit' command
-        edit_parser = self.command_parser.add_parser('edit', help='Edit an existing asset')
-        edit_parser.add_argument('--name',"-n",dest='name', help='New name for the asset', required=False)
-        edit_parser.add_argument('--classification',"-c",dest='classification', help='reclassify the asset', required=False)
+        edit_parser = self.command_parser.add_parser('edit', help='Edit an existing materials')
+        edit_parser.add_argument('--name',"-n",dest='name', help='New name for the materials', required=False)
+        edit_parser.add_argument('--classification',"-c",dest='classification', help='reclassify a material', required=False)
         edit_parser.set_defaults(func=AssetsCommands.edit_asset)
 
         # Subparser for the 'ask' command
-        ask_parser = self.command_parser.add_parser('ask', help='Ask a question to a model')
-        ask_parser.add_argument('query', type=str, help='Question to be asked to the model')
-        ask_parser.add_argument('--files','-f', nargs='*', type=str,dest='files', help='Folder or file as a relevance you can enter an absolute or relative path')
-        ask_parser.add_argument('--snippets','-s', nargs='*', type=int,dest='snippets', help='Snippet of the question to be asked to the model check list assets')
+        ask_parser = self.command_parser.add_parser('ask', help='Ask a question to the Copilot')
+        ask_parser.add_argument('query', type=str, help='Question to be asked to the Copilot')
+        ask_parser.add_argument('--files','-f', nargs='*', type=str,dest='files', help='Folder or file as a context you can enter an absolute or relative path')
+        ask_parser.add_argument('--materials','-m', nargs='*', type=int,dest='materials', help='Materials of the question to be asked to the model check list materials')
         ask_parser.set_defaults(func=ask_stream.ask)
 
         # Subparser for the 'version' command
@@ -71,7 +71,7 @@ class PiecesCLI:
         version_parser.set_defaults(func=version)
 
         # Subparser for Search
-        search_parser = self.command_parser.add_parser('search', help='Search with a query string')
+        search_parser = self.command_parser.add_parser('search', help='Perform a search for materials using the specified query string')
         search_parser.add_argument('query', type=str, nargs='+', help='Query string for the search')
         search_parser.add_argument('--mode', type=str, dest='search_type', default='fuzzy', choices=['fuzzy', 'ncs', 'fts'], help='Type of search')
         search_parser.set_defaults(func=search)
@@ -91,26 +91,26 @@ class PiecesCLI:
 
 
         # Subparser for the 'conversations' command
-        conversations_parser = self.command_parser.add_parser('conversations', help='print all conversations')
-        conversations_parser.add_argument('max_conversations', nargs='?', type=int ,default=10, help='Max number of conversations to show')
+        conversations_parser = self.command_parser.add_parser('chats', aliases=['conversations'],help='print all chats')
+        conversations_parser.add_argument('max_chats', nargs='?', type=int ,default=10, help='Max number of chats to show')
         conversations_parser.set_defaults(func=get_conversations)
         
 
         # Subparser for the 'conversation' command
-        conversation_parser = self.command_parser.add_parser('conversation', help='print all conversations')
-        conversation_parser.add_argument('CONVERSATION_INDEX', type=int, nargs='?', default=None, help='Index of the conversation if None it will get the current conversation.')
-        conversation_parser.add_argument("-n","--new",action="store_true",dest="new", help="Create a new conversation")
+        conversation_parser = self.command_parser.add_parser('chat', aliases=['conversation'], help='Select a chat')
+        conversation_parser.add_argument('CONVERSATION_INDEX', type=int, nargs='?', default=None, help='Index of the chat if None it will get the current conversation.')
+        conversation_parser.add_argument("-n","--new",action="store_true",dest="new", help="Create a new chat")
         conversation_parser.add_argument("-r","--rename",dest="rename",nargs='?', const=True,
-                            help="Rename the conversation that you are currently. If nothing is specified it will rename the current conversation using the llm model")
-        conversation_parser.add_argument("-d","--delete",action="store_true", dest="delete", help="Delete the conversation that you are currently using in the ask command")
+                            help="Rename the conversation that you are currently. If nothing is specified it will rename the current chat using the llm model")
+        conversation_parser.add_argument("-d","--delete",action="store_true", dest="delete", help="Delete the chat that you are currently using in the ask command")
         conversation_parser.set_defaults(func=conversation_handler)
 
 
         # Subparser for the 'commit' command
-        commit_parser = self.command_parser.add_parser('commit', help='Auto generate a github commit messaage and commit changes')
-        commit_parser.add_argument("-p","--push",dest="push",action="store_true", help="push the code to github")
-        commit_parser.add_argument("-a","--all",dest="all_flag",action="store_true", help="stage all the files before commiting")
-        commit_parser.add_argument("-i","--issues",dest="issue_flag",action="store_true", help="add issue number in the commit message")
+        commit_parser = self.command_parser.add_parser('commit', help='Auto-generate a GitHub commit message and commit changes')
+        commit_parser.add_argument("-p","--push",dest="push",action="store_true", help="Push the code to GitHub")
+        commit_parser.add_argument("-a","--all",dest="all_flag",action="store_true", help="Stage all the files before committing")
+        commit_parser.add_argument("-i","--issues",dest="issue_flag",action="store_true", help="Add issue number in the commit message")
         commit_parser.set_defaults(func=git_commit)
 
         # Subparser for the 'onboarding' command
