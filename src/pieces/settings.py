@@ -92,6 +92,12 @@ class Settings:
 		"""Store data in a pickle file."""
 		with open(file, 'wb') as f:
 			pickle.dump(data, f)
+	
+	@classmethod
+	def update_model(cls,model_name,model_id):
+		cls._model_name = model_name
+		cls.dump_pickle(file = cls.models_file,model_id = model_id)
+		cls.pieces_client.model_name = model_name
 
 
 	@classmethod
