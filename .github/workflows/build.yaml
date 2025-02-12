@@ -234,7 +234,7 @@ jobs:
             */**.tar.gz
             */**.whl
             */**.zip
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           name: ${{ env.releasetag }}
           tag_name: ${{ env.releasetag }}
           generate_release_notes: true
@@ -249,7 +249,7 @@ jobs:
             */**.tar.gz
             */**.whl
             */**.zip
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           name: ${{ env.releasetag }}
           tag_name: ${{ env.releasetag }}
           generate_release_notes: true
