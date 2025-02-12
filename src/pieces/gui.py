@@ -104,7 +104,6 @@ def print_help():
     print("  search q          - Does a fuzzy search for your query")
     print("  --mode ncs        - Does a neural code search for your query")
     print("  --mode fts        - Does a full text search for your query")
-    print("                    - Example search openai --type ncs")
     print()
     print("  Login             - Login to pieces")
     print("  Logout            - Logout from pieces")
