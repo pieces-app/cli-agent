@@ -231,10 +231,10 @@ jobs:
         if: inputs.deploy == false
         with:
           files: |
-            */**.tar.gz
-            */**.whl
+            macos-latest/*.tar.gz
+            macos-latest/*.whl
             */**.zip
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           name: ${{ env.releasetag }}
           tag_name: ${{ env.releasetag }}
           generate_release_notes: true
@@ -246,10 +246,10 @@ jobs:
         if: inputs.deploy == true
         with:
           files: |
-            */**.tar.gz
-            */**.whl
+            macos-latest/*.tar.gz
+            macos-latest/*.whl
             */**.zip
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           name: ${{ env.releasetag }}
           tag_name: ${{ env.releasetag }}
           generate_release_notes: true
@@ -260,6 +260,6 @@ jobs:
         if: inputs.deploy == true
         run: |-
           mkdir dist
-          cp */*.tar.gz */*.whl ./dist/
+          cp macos-latest/*.tar.gz macos-latest/*.whl ./dist/
           python3 -m pip install --upgrade twine
           python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
