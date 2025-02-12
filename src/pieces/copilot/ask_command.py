@@ -67,7 +67,7 @@ class AskStream:
         Settings.pieces_client.copilot.ask_stream_ws.on_message_callback = self.on_message
         Settings.get_model() # Ensure the model is loaded
         files = kwargs.get("files",None)
-        assets_index = kwargs.get("snippets",None)
+        assets_index = kwargs.get("materials",None)
         self.add_context(files,assets_index)
 
         self.final_answer = ""

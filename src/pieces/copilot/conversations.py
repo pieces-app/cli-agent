@@ -68,7 +68,7 @@ def conversation_handler(**kwargs):
     else:
         get_conversation_messages(idx - 1)
 
-def get_conversations(max_conversations,**kwargs):
+def get_conversations(max_chats,**kwargs):
     """This function is used to print all conversations available"""
     console = Console()
     conversations = Settings.pieces_client.copilot.chats()
@@ -80,7 +80,7 @@ def get_conversations(max_conversations,**kwargs):
     readable = conversations[0].updated_at
     output = Text(f"            {readable}\n", style="bold")
 
-    for idx, conversation in enumerate(conversations[:max_conversations], 1):
+    for idx, conversation in enumerate(conversations[:max_chats], 1):
         conversation_str = f"{idx}. {conversation.name}"
         summary_str = conversation.summary
 
