@@ -231,8 +231,8 @@ jobs:
         if: inputs.deploy == false
         with:
           files: |
-            */**.tar.gz
-            */**.whl
+            macos-latest/*.tar.gz
+            macos-latest/*.whl
             */**.zip
           fail_on_unmatched_files: false
           name: ${{ env.releasetag }}
@@ -246,8 +246,8 @@ jobs:
         if: inputs.deploy == true
         with:
           files: |
-            */**.tar.gz
-            */**.whl
+            macos-latest/*.tar.gz
+            macos-latest/*.whl
             */**.zip
           fail_on_unmatched_files: false
           name: ${{ env.releasetag }}
