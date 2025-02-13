@@ -1,4 +1,3 @@
-import json
 import os
 import re
 
@@ -12,6 +11,7 @@ from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import Any, List, Tuple, Callable,Optional
+from .commands.extensions import extensions_dict
 
 # Used to create a valid file name when opening to "Opened Snippets"
 def sanitize_filename(name):
@@ -45,14 +45,11 @@ def export_code_to_file(code, name, language):
     return file_path
 
 def get_file_extension(language):
-    with open(Settings.extensions_dir) as f:
-        extension_mapping = json.load(f)
-
     # Lowercase the language for case-insensitive matching
     language = language.lower()
 
     # Return the corresponding file extension or default to '.txt' if not found
-    return extension_mapping.get(language, '.txt')
+    return extensions_dict.get(language, '.txt')
 
 class PiecesSelectMenu:
     def __init__(self, menu_options: List[Tuple], on_enter_callback: Callable, footer_text: Optional[str] = None):

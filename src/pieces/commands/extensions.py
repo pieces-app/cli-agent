@@ -1,4 +1,4 @@
-{
+extensions_dict = {
     "csx": ".csx",
     "cs": ".cs",
     "html": ".html",
