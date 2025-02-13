@@ -1,5 +1,7 @@
 from typing import Optional
 
+import pieces_os_client
+import pieces_os_client.exceptions
 from rich.console import Console
 from rich.text import Text
 from rich.markdown import Markdown
@@ -18,14 +20,14 @@ def conversation_handler(**kwargs):
 
     # Check if the conversation is not empty 
     if not Settings.pieces_client.copilot.chat and (rename or delete) and not idx:
-        Settings.show_error("Error in rename/delete","You can rename/delete an empty conversation")
+        Settings.show_error("Error in rename/delete","You can rename/delete an empty chat")
         return 
     else:
         if idx:
             try:
                 chat = Settings.pieces_client.copilot.chats()[idx-1] 
             except IndexError:
-                Settings.show_error("Error in conversation index","Please enter a valid conversation index.") 
+                Settings.show_error("Error in chat index","Please enter a valid chat index.") 
         else:
             chat = Settings.pieces_client.copilot.chat
 
@@ -35,10 +37,10 @@ def conversation_handler(**kwargs):
     if rename:
         if rename == True:  # noqa: E712
             con = Settings.pieces_client.conversation_api.conversation_specific_conversation_rename(conversation=chat._id)
-            print(f"Renamed the conversation to {con.name}")
+            print(f"Renamed the chat to {con.name}")
         else:
             chat.name = rename
-            print("Renamed the conversation successfully")
+            print("Renamed the chat successfully")
         return
 
     # Delete the conversation
@@ -46,14 +48,14 @@ def conversation_handler(**kwargs):
         r = input(f"Are you sure you want to delete '{chat.name}'? (y/n) : ")
         if r == "y":
             chat.delete()
-            print("Conversation deleted successfully")
+            print("Chat deleted successfully")
         return
 
 
     # Check if we want to create a new conversatiaon
     if kwargs.get("new",False):
         Settings.pieces_client.copilot.chat = None
-        print("New conversation created successfully")
+        print("New chat created successfully")
         return
     
     
@@ -64,7 +66,7 @@ def conversation_handler(**kwargs):
             get_conversation_messages(conversation = Settings.pieces_client.copilot.chat)
         else:
             # Show error if no conversation in the ask show error
-            Settings.show_error("The conversation is empty","Please enter a conversation index, or use the ask command to ask a question.")
+            Settings.show_error("The chat is empty","Please enter a chat index, or use the ask command to ask a question.")
     else:
         get_conversation_messages(idx - 1)
 
@@ -74,18 +76,24 @@ def get_conversations(max_chats,**kwargs):
     conversations = Settings.pieces_client.copilot.chats()
 
     if not conversations:
-        console.print("No conversations available.", style="bold red")
+        console.print("No chat available.", style="bold red")
         return
 
     readable = conversations[0].updated_at
     output = Text(f"            {readable}\n", style="bold")
 
+    try:
+        copilot_chat = Settings.pieces_client.copilot.chat
+        copilot_chat.name # This will throw an exception if the chat is not found
+    except pieces_os_client.exceptions.NotFoundException:
+        Settings.pieces_client.copilot.chat = None
+        copilot_chat = None
+
     for idx, conversation in enumerate(conversations[:max_chats], 1):
         conversation_str = f"{idx}. {conversation.name}"
         summary_str = conversation.summary
 
-
-        if Settings.pieces_client.copilot.chat == conversation:
+        if copilot_chat == conversation:
             output.append(f"  * {conversation_str}\n", style="bold green")
         else:
             output.append(f"  {conversation_str}\n")
