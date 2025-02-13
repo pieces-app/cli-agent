@@ -48,7 +48,7 @@ def conversation_handler(**kwargs):
         r = input(f"Are you sure you want to delete '{chat.name}'? (y/n) : ")
         if r == "y":
             chat.delete()
-            print("chat deleted successfully")
+            print("Chat deleted successfully")
         return
 
 
