@@ -35,7 +35,7 @@ class PiecesCLI:
 
         # Subparser for the 'save' command
         save_parser = self.command_parser.add_parser('save', help='Updates the current material')
-        save_parser.set_defaults(func=AssetsCommands.update_asset)
+        save_parser.set_defaults(func=AssetsCommands.save_asset)
 
         # Subparser for the 'delete' command
         delete_parser = self.command_parser.add_parser('delete', help='Delete the current material')

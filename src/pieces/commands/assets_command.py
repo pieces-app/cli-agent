@@ -3,7 +3,7 @@ from typing import Optional
 import pyperclip
 import subprocess
 
-from pieces.utils import get_file_extension,sanitize_filename,export_code_to_file
+from pieces.utils import get_file_extension
 from pieces.gui import print_asset_details,space_below,double_line
 from pieces.settings import Settings
 from pieces.commands.config_command import ConfigCommands
@@ -67,17 +67,30 @@ class AssetsCommands:
 			config = ConfigCommands.load_config()
 			editor = config.get('editor')
 			if editor:
+				file_extension = get_file_extension(cls.current_asset.classification)
+
+				# Ensure the directory exists, create it if not
+				if not os.path.exists(Settings.open_snippet_dir):
+					os.makedirs(Settings.open_snippet_dir)
+				
+				file_path = os.path.join(Settings.open_snippet_dir, f'{cls.current_asset.id}{file_extension}')
+
 				# Save the code to a file in the default directory
-				file_path = export_code_to_file(code_content, cls.current_asset.name, cls.current_asset.classification)
+				if isinstance(code_content, str): # Code string raw
+					with open(file_path, 'w') as file:
+						file.write(code_content)
+				else: # Image bytes data
+					with open(file_path, 'wb') as file:
+						file.write(bytes(code_content))
 
 				# Open the file with the configured editor
 				try:
-					subprocess.run([editor, file_path], shell=True)
+					subprocess.run([editor, file_path])
 				except Exception as e:
 					Settings.show_error("Error in opening",e)
 
 			else:
-				print("No editor configured. Use 'pieces config editor <editor_command>' to set an editor.")
+				Console().print(Markdown("No editor configured. Use `pieces config editor <editor_command>` to set an editor."))
 		else:
 			# Determine the lexer
 			print("\nCode content:")
@@ -98,20 +111,24 @@ class AssetsCommands:
 
 	@classmethod
 	@check_asset_selected
-	def update_asset(cls,asset:BasicAsset,**kwargs):
-		file_path = os.path.join(Settings.open_snippet_dir , f"{sanitize_filename(asset.name)}{get_file_extension(asset.classification)}")
-		print(f"Saving {file_path} to {asset.name} snippet")
+	def save_asset(cls,asset:BasicAsset,**kwargs):
+		console = Console()
+		file_path = os.path.join(Settings.open_snippet_dir , f"{(asset.id)}{get_file_extension(asset.classification)}")
 		
 		try:
 			with open(file_path,"r") as f:
 				data = f.read()
 		except FileNotFoundError:
-			Settings.show_error("Error in update material","File not found")
+			res = console.input("Seems you did not open that snippet yet.\nDo you want to open it in your editor? [y/n]: ")
+
+			if res == 'y':
+				cls.open_asset(asset.id,editor=True)
+				console.print(Markdown("**Note:** Next time to open the snippet in your editor, use the `pieces list -e`"))
+				console.print(Markdown("**After you finish editing don't forget to save the file and run this command again**"))
 			return
-
-		asset.raw_content = data
-
-
+		if asset.raw_content != data:
+			console.print(Markdown(f"Saving `{file_path}` to `{asset.id}` snippet"))
+			asset.raw_content = data
 
 	@classmethod
 	@check_asset_selected
