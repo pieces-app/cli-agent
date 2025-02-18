@@ -76,7 +76,7 @@ def print_help():
     print()
     print("  list              - Lists all the materials in your Pieces Drive (alias: 'drive')")
     print("  list apps         - List all registered applications")
-    print("  list models       - List all registered AI models")
+    print("  list models       - List all registered AI models and change the AI model that you are using the ask command")
     print()
     print("  save              - Save the current material content after you edit it in the editor")
     print("  edit              - Edit the current material name or classification you can use -n and -c for name and classification respectively")
