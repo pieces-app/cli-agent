@@ -127,11 +127,11 @@ class AssetsCommands:
 				console.print(Markdown("**Note:** Next time to open the material in your editor, use the `pieces list -e`"))
 
 		if data and asset.raw_content != data:
-			console.print(Markdown(f"Saving `{file_path}` to `{asset.id}` material"))
+			console.print(Markdown(f"Saving `{asset.name}` material"))
 			asset.raw_content = data
 		else:
 			try:
-				input(f"Content not changed. <Press enter when you finish editing {file_path.split('/')[-1]}>")
+				input(f"Content not changed.\n<Press enter when you finish editing {asset.name}>")
 				cls.save_asset(**kwargs)
 			except KeyboardInterrupt:
 				pass
