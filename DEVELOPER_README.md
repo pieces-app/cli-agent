@@ -9,5 +9,7 @@
 Ex: `python src/pieces help` or `python src/pieces config --editor vim`
 
 ## Release
-
-TODO
+```
+git tag <tagname>
+git push origin <tagname>
+```
