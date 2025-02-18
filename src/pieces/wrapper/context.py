@@ -75,7 +75,7 @@ class Context:
 		seed_list = Seeds(iterable=[])
 		for raw in assets:
 			if not isinstance(raw,str):
-				raise ValueError("Raw snippet content should be string type")
+				raise ValueError("Raw material content should be string type")
 			seed_list.iterable.append(BasicAsset._get_seed(raw))
 		return seed_list
 
