@@ -116,21 +116,25 @@ class AssetsCommands:
 			return
 		console = Console()
 		file_path = os.path.join(Settings.open_snippet_dir , f"{(asset.id)}{get_file_extension(asset.classification)}")
-		
+		data = None
 		try:
 			with open(file_path,"r") as f:
 				data = f.read()
 		except FileNotFoundError:
 			res = console.input("Seems you did not open that material yet.\nDo you want to open it in your editor? [y/n]: ")
-
 			if res == 'y':
 				cls.open_asset(asset.id,editor=True)
 				console.print(Markdown("**Note:** Next time to open the material in your editor, use the `pieces list -e`"))
-				console.print(Markdown("**After you finish editing don't forget to save the file and run this command again**"))
-			return
-		if asset.raw_content != data:
+
+		if data and asset.raw_content != data:
 			console.print(Markdown(f"Saving `{file_path}` to `{asset.id}` material"))
 			asset.raw_content = data
+		else:
+			try:
+				input(f"Content not changed. <Press enter when you finish editing {file_path.split('/')[-1]}>")
+				cls.save_asset(**kwargs)
+			except KeyboardInterrupt:
+				pass
 
 	@classmethod
 	@check_asset_selected
