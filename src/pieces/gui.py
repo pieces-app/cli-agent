@@ -82,7 +82,7 @@ def print_help():
     print("  edit              - Edit the current material name or classification you can use -n and -c for name and classification respectively")
     print("  delete            - Deletes the current or most recent material.")
     print("  create            - Creates a new material based on what you've copied to your clipboard")
-    print("  execute           - Execute a Pieces bash snippet")
+    print("  execute           - Execute a Pieces bash material")
     print("  clear             - to clear the terminal")
     print()
     print("  config            - View current configuration")
@@ -114,6 +114,7 @@ def print_help():
     print("  feedback          - Send feedback to Pieces")
     print("  contribute        - Contribute to Pieces CLI")
     print("  install           - Install PiecesOS")
+    print("  open              - Opens PiecesOS")
     print()
 
 def print_asset_details(asset:"BasicAsset"):

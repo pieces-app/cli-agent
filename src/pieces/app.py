@@ -129,9 +129,9 @@ class PiecesCLI:
         install_parser = self.command_parser.add_parser('install', help='Install PiecesOS')
         install_parser.set_defaults(func=install_pieces_os)
 
-        # Subparser for the 'install' command
-        install_parser = self.command_parser.add_parser('open', help='Opens PiecesOS')
-        install_parser.set_defaults(func=lambda **kwargs:Settings.pieces_client.open_pieces_os())
+        # Subparser for the 'open' command
+        open_parser = self.command_parser.add_parser('open', help='Opens PiecesOS')
+        open_parser.set_defaults(func=lambda **kwargs:Settings.pieces_client.open_pieces_os())
 
 
     def run(self):

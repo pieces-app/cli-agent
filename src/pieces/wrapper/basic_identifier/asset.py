@@ -184,7 +184,7 @@ class BasicAsset(Basic):
 		Returns:
 			str: The name of the asset if available, otherwise "Unnamed snippet".
 		"""
-		return self.asset.name if self.asset.name else "Unnamed snippet"
+		return self.asset.name if self.asset.name else "Unnamed material"
 	
 	@name.setter
 	def name(self, name: str):

@@ -112,6 +112,8 @@ class AssetsCommands:
 	@classmethod
 	@check_asset_selected
 	def save_asset(cls,asset:BasicAsset,**kwargs):
+		if not asset:
+			return
 		console = Console()
 		file_path = os.path.join(Settings.open_snippet_dir , f"{(asset.id)}{get_file_extension(asset.classification)}")
 		
@@ -119,15 +121,15 @@ class AssetsCommands:
 			with open(file_path,"r") as f:
 				data = f.read()
 		except FileNotFoundError:
-			res = console.input("Seems you did not open that snippet yet.\nDo you want to open it in your editor? [y/n]: ")
+			res = console.input("Seems you did not open that material yet.\nDo you want to open it in your editor? [y/n]: ")
 
 			if res == 'y':
 				cls.open_asset(asset.id,editor=True)
-				console.print(Markdown("**Note:** Next time to open the snippet in your editor, use the `pieces list -e`"))
+				console.print(Markdown("**Note:** Next time to open the material in your editor, use the `pieces list -e`"))
 				console.print(Markdown("**After you finish editing don't forget to save the file and run this command again**"))
 			return
 		if asset.raw_content != data:
-			console.print(Markdown(f"Saving `{file_path}` to `{asset.id}` snippet"))
+			console.print(Markdown(f"Saving `{file_path}` to `{asset.id}` material"))
 			asset.raw_content = data
 
 	@classmethod
@@ -182,7 +184,7 @@ class AssetsCommands:
 				console.print("Saving...\n")
 				cls.current_asset = BasicAsset(BasicAsset.create(raw_content=text, metadata=None))
 				
-				console.print(Markdown("Snippet successfully saved. Use `pieces list` to view."))
+				console.print(Markdown("Material successfully saved. Use `pieces list` to view."))
 				# Add your saving logic here
 			elif user_input == 'n':
 				space_below("Save Cancelled")
