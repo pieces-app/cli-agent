@@ -117,7 +117,9 @@ class AssetsCommands:
 		console = Console()
 		file_path = os.path.join(Settings.open_snippet_dir , f"{(asset.id)}{get_file_extension(asset.classification)}")
 		data = None
+		found_file = False
 		try:
+			found_file = True
 			with open(file_path,"r") as f:
 				data = f.read()
 		except FileNotFoundError:
@@ -130,6 +132,8 @@ class AssetsCommands:
 			console.print(Markdown(f"Saving `{asset.name}` material"))
 			asset.raw_content = data
 		else:
+			if found_file:
+				cls.open_asset(asset.id,editor=True)
 			try:
 				input(f"Content not changed.\n<Press enter when you finish editing {asset.name}>")
 				cls.save_asset(**kwargs)
