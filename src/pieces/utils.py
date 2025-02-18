@@ -79,6 +79,11 @@ class PiecesSelectMenu:
             args = self.menu_options[self.current_selection][1]
             event.app.exit(result=args)
 
+        @bindings.add('c-c')
+        @bindings.add('q')
+        def exit_app(event):
+            event.app.exit()
+
         self.menu_window = Window(content=FormattedTextControl(text=self.get_menu_text), always_hide_cursor=True)
 
         layout_items = [self.menu_window]
