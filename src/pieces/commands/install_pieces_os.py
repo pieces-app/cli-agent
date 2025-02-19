@@ -8,11 +8,22 @@ def install_pieces_os(**kwargs):
     """
     try:
         if Settings.pieces_client.local_os == "WINDOWS":
-            install_command = (
-                f'"Add-AppxPackage -Appinstaller \"https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller?product={Settings.pieces_client.app_name}&download=true\" -ErrorAction Stop -Verbose ; '
-                'Start-Process shell:appsFolder\\com.MeshIntelligentTechnologi.PiecesOS_84gz00a5z79wr!osserver"'
-            )
-            subprocess.Popen(["powershell", "-Command", install_command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            install_command = [
+                "powershell.exe",
+                "Add-AppxPackage",
+                "-Appinstaller",
+                "https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller",
+                "-ErrorAction",
+                "Stop",
+                "-Verbose"
+            ]
+            print("Installing PiecesOS... This might take a few minutes.")
+            process = subprocess.Popen(install_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+            for line in process.stdout:
+                print(line, end='')
+
+            process.wait()
         
         elif Settings.pieces_client.local_os == "LINUX":
             install_command = (
