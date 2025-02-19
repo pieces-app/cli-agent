@@ -1,4 +1,6 @@
 extensions_dict = {
+    "kt": ".kt",
+    "kts": ".kts",
     "csx": ".csx",
     "cs": ".cs",
     "html": ".html",

@@ -87,26 +87,26 @@ def create_snippet_one_validation():
     normalized_s1 = '\n'.join(line.strip() for line in text.strip().splitlines())
     normalized_s2 = '\n'.join(line.strip() for line in demo_snippet.strip().splitlines())
 
-    return normalized_s1 == normalized_s2 , "Looks like you haven't copied the snippet yet. Please copy the snippet to save it to Pieces."
+    return normalized_s1 == normalized_s2 , "Looks like you haven't copied the material yet. Please copy the material to save it to Pieces."
 
 def onboarding_command(**kwargs):
     console = Console()
     step_number = 1
     steps = {
-        "Step 1: Save a Snippet":[
-            OnboardingStep("Let's get started by saving a snippet to Pieces.\n"
-                    "Copy the following python snippet: \n"
+        "Step 1: Save a Material":[
+            OnboardingStep("Let's get started by saving a material to Pieces.\n"
+                    "Copy the following python material: \n"
                     f"```python\n{demo_snippet}\n```",
                     create_snippet_one_validation
                 ),
             OnboardingCommandStep(
-                "You can save the snippet by typing `pieces create`",
+                "You can save the material by typing `pieces create`",
                 "pieces create"
             )
         ],
-        "Step 2: Open your Saved Snippets":[
+        "Step 2: Open your Saved materials":[
             OnboardingCommandStep(
-                "Now, let's view all of your saved snippets by typing `pieces list`.",
+                "Now, let's view all of your saved materials by typing `pieces list`.",
                 "pieces list"
             )
         ],
@@ -166,8 +166,8 @@ def onboarding_command(**kwargs):
                 "### Key Functionalities\n"
 
                 "- Highly contextual generative AI assistant, called **Pieces Copilot**.\n"
-                "- **Snippet Management** for efficient code organization enables you to save and share snippets\n"
-                "- **Enhanced Search Capabilities** to quickly find your snippets\n"
+                "- **Materials Management** for efficient code organization enables you to save and share materials\n"
+                "- **Enhanced Search Capabilities** to quickly find your materials\n"
                 "- Provides the ability to process data locally, guaranteeing enhanced **privacy** and **security**."
             )
         )
