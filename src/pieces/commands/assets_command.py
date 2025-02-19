@@ -90,7 +90,7 @@ class AssetsCommands:
 					Settings.show_error("Error in opening",e)
 
 			else:
-				Console().print(Markdown("No editor configured. Use `pieces config editor <editor_command>` to set an editor."))
+				Console().print(Markdown("No editor configured. Use `pieces config --editor <editor_command>` to set an editor."))
 		else:
 			# Determine the lexer
 			print("\nCode content:")
