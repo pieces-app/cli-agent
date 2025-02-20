@@ -90,7 +90,7 @@ class AssetsCommands:
 					Settings.show_error("Error in opening",e)
 
 			else:
-				Console().print(Markdown("No editor configured. Use `pieces config editor <editor_command>` to set an editor."))
+				Console().print(Markdown("No editor configured. Use `pieces config --editor <editor_command>` to set an editor."))
 		else:
 			# Determine the lexer
 			print("\nCode content:")
@@ -123,7 +123,7 @@ class AssetsCommands:
 			with open(file_path,"r") as f:
 				data = f.read()
 		except FileNotFoundError:
-			res = console.input("Seems you did not open that material yet.\nDo you want to open it in your editor? [y/n]: ")
+			res = console.input("Seems you did not open that material yet.\nDo you want to open it in your editor? (y/n): ")
 			if res == 'y':
 				cls.open_asset(asset.id,editor=True)
 				console.print(Markdown("**Note:** Next time to open the material in your editor, use the `pieces list -e`"))
