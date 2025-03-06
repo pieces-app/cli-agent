@@ -9,25 +9,24 @@ class ExecuteCommand:
     @classmethod
     @check_assets_existence
     def execute_command(cls, **kwargs):
-        
+
         assets = [
-            (f"{asset.name}", {"asset_id": asset.id,  "asset":asset})
+            (f"{asset.name}", {"asset_id": asset.id,  "asset": asset})
             for i, asset in enumerate(list(Settings.pieces_client.assets()), start=1)
-                if asset.classification in (ClassificationSpecificEnum.SH,
-                    ClassificationSpecificEnum.BAT)
+            if asset.classification in (ClassificationSpecificEnum.SH,
+                                        ClassificationSpecificEnum.BAT)
         ]
 
         if not assets:
             print("No shell or bash assets found")
             return
-        
+
         def open_and_execute_asset(**kwargs):
             AssetsCommands.open_asset(**kwargs)
             cls.execute_asset(**kwargs)
-        
+
         select_menu = PiecesSelectMenu(assets, open_and_execute_asset)
         select_menu.run()
-
 
     @classmethod
     def execute_asset(cls, **kwargs):
@@ -35,11 +34,14 @@ class ExecuteCommand:
 
         try:
             if asset.classification == ClassificationSpecificEnum.BASH:
-                result = subprocess.run(['bash', '-c', asset.raw_content], capture_output=True, text=True)
+                result = subprocess.run(
+                    ['bash', '-c', asset.raw_content], capture_output=True, text=True)
             elif asset.classification == ClassificationSpecificEnum.SH:
-                result = subprocess.run(asset.raw_content, shell=True, capture_output=True, text=True)
+                result = subprocess.run(
+                    asset.raw_content, shell=True, capture_output=True, text=True)
             else:
-                raise ValueError(f"Unsupported classification {asset.classification}")
+                raise ValueError(f"Unsupported classification {
+                                 asset.classification}")
             print(f"Executing {asset.classification.value} command:")
             print(result.stdout)
             if result.stderr:
@@ -49,4 +51,3 @@ class ExecuteCommand:
             print(f"Error executing command: {e}")
         except Exception as e:
             print(f"An error occurred: {e}")
-

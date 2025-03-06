@@ -5,7 +5,7 @@ from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
-from typing import Any, List, Tuple, Callable,Optional
+from typing import Any, List, Tuple, Callable, Optional
 from .commands.extensions import extensions_dict
 
 
@@ -16,8 +16,11 @@ def get_file_extension(language):
     # Return the corresponding file extension or default to '.txt' if not found
     return extensions_dict.get(language, '.txt')
 
+
 class PiecesSelectMenu:
-    def __init__(self, menu_options: List[Tuple], on_enter_callback: Callable, footer_text: Optional[str] = None):
+    def __init__(self, menu_options: List[Tuple],
+                 on_enter_callback: Callable,
+                 footer_text: Optional[str] = None):
         self.menu_options = list(menu_options)  # Ensure it's a list
         self.on_enter_callback = on_enter_callback
         self.current_selection = 0
@@ -28,7 +31,7 @@ class PiecesSelectMenu:
         terminal_size = shutil.get_terminal_size()
         self.visible_start = 0
         self.visible_end = terminal_size.lines - 2
-    
+
     def add_entry(self, entry: Tuple[str, Any]):
         """Add a new entry to the menu and update the layout."""
         self.menu_options.append(entry)
@@ -43,10 +46,11 @@ class PiecesSelectMenu:
             else:
                 result.append(('class:unselected', f'  {option[0]}\n'))
         return result
-    
+
     def update_app(self):
         if hasattr(self, "app"):
-            self.menu_window.content = FormattedTextControl(text=self.get_menu_text)
+            self.menu_window.content = FormattedTextControl(
+                text=self.get_menu_text)
             self.app.invalidate()
             # self.app.layout.focus(self.menu_window)
         else:
@@ -84,13 +88,15 @@ class PiecesSelectMenu:
         def exit_app(event):
             event.app.exit()
 
-        self.menu_window = Window(content=FormattedTextControl(text=self.get_menu_text), always_hide_cursor=True)
+        self.menu_window = Window(content=FormattedTextControl(
+            text=self.get_menu_text), always_hide_cursor=True)
 
         layout_items = [self.menu_window]
 
         if self.footer_text:
             footer_control = FormattedTextControl(text=self.footer_text)
-            footer_window = Window(content=footer_control, height=1, always_hide_cursor=True)
+            footer_window = Window(
+                content=footer_control, height=1, always_hide_cursor=True)
             layout_items.append(footer_window)
 
         layout = Layout(HSplit(layout_items))
@@ -100,7 +106,11 @@ class PiecesSelectMenu:
             'unselected': ''
         })
 
-        self.app = Application(layout=layout, key_bindings=bindings, style=style, full_screen=True)
+        self.app = Application(
+            layout=layout,
+            key_bindings=bindings,
+            style=style,
+            full_screen=True)
         args = self.app.run()
 
         if isinstance(args, list):

@@ -28,7 +28,8 @@ def loop(**kwargs):
         f"Python Version: {sys.version.split()[0]}\n",
         f"PiecesOS Version: {Settings.pieces_os_version}\n",
         f"Pieces CLI Version: {__version__}\n",
-        f"Application: {Settings.pieces_client.application.name.value if Settings.pieces_client.application else 'Unknown'}"
+        f"Application: {
+            Settings.pieces_client.application.name.value if Settings.pieces_client.application else 'Unknown'}"
     )
     print_instructions()
     session = PromptSession()
@@ -42,8 +43,9 @@ def loop(**kwargs):
             if run_cli(*add_input(session)):
                 break
         except KeyboardInterrupt:
-            run_cli("exit","","")
+            run_cli("exit", "", "")
             return False
+
 
 def add_input(session: PromptSession):
     """Add input to the session."""
@@ -52,6 +54,7 @@ def add_input(session: PromptSession):
         return
     return extract_text(user_input)
 
+
 def extract_text(user_input):
     command_parts = shlex.split(user_input)
     command_name = command_parts[0].lower()
@@ -59,9 +62,8 @@ def extract_text(user_input):
     return user_input, command_name, command_args
 
 
-
-def run_cli(user_input:str, command_name:str, command_args:str):
-    """Run the CLI loop, handling user input and routing to the appropriate functions."""    
+def run_cli(user_input: str, command_name: str, command_args: str):
+    """Run the CLI loop, handling user input and routing to the appropriate functions."""
     if user_input.lower() == 'clear':
         clear_screen()
         return
@@ -76,7 +78,7 @@ def run_cli(user_input:str, command_name:str, command_args:str):
         command_name = 'list'
         command_args = [command_name, "materials"]
 
-    run_command(user_input,command_name, command_args)
+    run_command(user_input, command_name, command_args)
 
 
 def run_command(user_input, command_name, command_args):
@@ -90,20 +92,22 @@ def run_command(user_input, command_name, command_args):
             except SystemExit:
                 print(f"Invalid arguments for command: {command_name}")
             except Exception as e:
-                Settings.show_error(f"Error in command: {command_name}", str(e))
+                Settings.show_error(f"Error in command: {
+                                    command_name}", str(e))
         else:
             print(f"No function associated with command: {command_name}")
     else:
         print(f"Unknown command: {command_name}")
-        commands = list(PiecesArgparser.parser._subparsers._group_actions[0].choices.keys())
+        commands = list(
+            PiecesArgparser.parser._subparsers._group_actions[0].choices.keys())
         commands.append("exit")
-        most_similar_command = PiecesArgparser.find_most_similar_command(commands, user_input)
+        most_similar_command = PiecesArgparser.find_most_similar_command(
+            commands, user_input)
         print(f"Did you mean {most_similar_command}")
 
 
-def clear_screen(): # clear terminal method
-    if os.name == 'nt': # for window
+def clear_screen():  # clear terminal method
+    if os.name == 'nt':  # for window
         os.system('cls')
-    else:               # for other os 
+    else:               # for other os
         os.system('clear')
-
