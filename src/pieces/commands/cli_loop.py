@@ -22,14 +22,13 @@ def loop(**kwargs):
 
     # Initial setup
     welcome()
-
+    appl = Settings.pieces_client.application.name.value if Settings.pieces_client.application else 'Unknown'
     print(
         f"Operating System: {platform.platform()}\n",
         f"Python Version: {sys.version.split()[0]}\n",
         f"PiecesOS Version: {Settings.pieces_os_version}\n",
         f"Pieces CLI Version: {__version__}\n",
-        f"Application: {
-            Settings.pieces_client.application.name.value if Settings.pieces_client.application else 'Unknown'}"
+        f"Application: {appl}"
     )
     print_instructions()
     session = PromptSession()
@@ -92,8 +91,8 @@ def run_command(user_input, command_name, command_args):
             except SystemExit:
                 print(f"Invalid arguments for command: {command_name}")
             except Exception as e:
-                Settings.show_error(f"Error in command: {
-                                    command_name}", str(e))
+                Settings.show_error(
+                    f"Error in command: {command_name}", str(e))
         else:
             print(f"No function associated with command: {command_name}")
     else:

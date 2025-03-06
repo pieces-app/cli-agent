@@ -185,8 +185,8 @@ class PiecesClient(PiecesApiClient):
     def model_name(self, model):
         models = self.get_models()
         if model not in models:
-            raise ValueError(f"Not a vaild model name, the available models are {
-                             ', '.join(models.keys())}")
+            raise ValueError("Not a vaild model name, the available models are"
+                             f"{', '.join(models.keys())}")
         self._model_name = model
         self._model_id = models[model]
 

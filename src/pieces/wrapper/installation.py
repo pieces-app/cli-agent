@@ -30,7 +30,9 @@ class TerminalEventType(Enum):
 
 
 class DownloadModel:
-    def __init__(self, state: DownloadState, terminal_event: TerminalEventType, bytes_received: int = 0, total_bytes: int = 0, percent: float = 0):
+    def __init__(self, state: DownloadState, terminal_event: TerminalEventType,
+                 bytes_received: int = 0, total_bytes: int = 0,
+                 percent: float = 0):
         self.bytes_received = bytes_received
         self.total_bytes = total_bytes
         self.percent = percent
@@ -39,7 +41,8 @@ class DownloadModel:
 
 
 class PosInstaller:
-    def __init__(self, callback: Optional[Callable[[DownloadModel], None]], product: str):
+    def __init__(self, callback: Optional[Callable[[DownloadModel], None]],
+                 product: str):
         self.platform = self.detect_platform()
         self.download_process = None
         self.progress_update_callback = callback
@@ -56,7 +59,8 @@ class PosInstaller:
             else:
                 percent = (bytes_received/total_bytes)*100
             progress = DownloadModel(
-                self.state, self.terminal_event, bytes_received, total_bytes, percent)
+                self.state, self.terminal_event,
+                bytes_received, total_bytes, percent)
             self.progress_update_callback(progress)
 
     @staticmethod
@@ -110,15 +114,16 @@ class PosInstaller:
         self.print('Starting POS download for Macos.')
 
         arch = 'arm64' if sys.maxsize > 2**32 else 'x86_64'
-        pkg_url = f'https://builds.pieces.app/stages/production/macos_packaging/pkg-pos-launch-only-{
-            arch}/download?product={self.product}&download=true'
+        pkg_url = (f'https://builds.pieces.app/stages/production/'
+                   f'macos_packaging/pkg-pos-launch-only-{arch}/'
+                   f'download?product={self.product}&download=true')
         tmp_pkg_path = "/tmp/Pieces-OS-Launch.pkg"
         self.install_using_web(pkg_url, tmp_pkg_path)
 
     def download_windows(self):
         self.print('Starting POS download for Windows.')
-        pkg_url = f'https://builds.pieces.app/stages/production/os_server/windows-exe/download?download=true&product={
-            self.product}'
+        pkg_url = ('https://builds.pieces.app/stages/production/os_server/windows-exe'
+                   f"/download?download=true&product={self.product}")
         tmp_pkg_path = f"{gettempdir()}\\Pieces-OS.exe"
         self.install_using_web(pkg_url, tmp_pkg_path)
 
@@ -150,8 +155,8 @@ class PosInstaller:
 
                     if downloaded_size % (512 * 1024) == 0 or downloaded_size == file_size:
                         self.update_progress(downloaded_size, file_size)
-                        self.print(f'Downloaded {
-                                   downloaded_size} of {file_size}')
+                        self.print(
+                            f'Downloaded {downloaded_size} of {file_size}')
                     if time.time() - last_data_time > STALL_TIMEOUT:
                         raise TimeoutError(
                             "Download stalled (no data received).")
@@ -187,7 +192,9 @@ class PosInstaller:
 
             return bytes_downloaded, total_bytes
 
-    def execute_command(self, shell: str, command: str, args: List[str], callback: Optional[Callable[[str], Tuple[int, int]]]) -> bool:
+    def execute_command(self, shell: str, command: str, args: List[str],
+                        callback: Optional[Callable[[str], Tuple[int, int]]]
+                        ) -> bool:
         try:
             self.print(f'Spawning process: {shell} {command} {args}')
             self.download_process = subprocess.Popen(
@@ -206,12 +213,12 @@ class PosInstaller:
                     try:
                         bytes_received, total_bytes = callback(
                             out.readline().decode('utf-8'))
-                        self.print(f'Downloaded {
-                                   bytes_received} of {total_bytes}')
+                        self.print(
+                            f'Downloaded {bytes_received} of {total_bytes}')
                         self.update_progress(bytes_received, total_bytes)
                     except Exception as e:
-                        self.print(f"Could not match pattern: {
-                                   e}", file=sys.stderr)
+                        self.print(
+                            f"Could not match pattern: {e}", file=sys.stderr)
 
                 if err:
                     self.terminal_event = TerminalEventType.ERROR

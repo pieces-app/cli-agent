@@ -11,17 +11,21 @@ class PiecesArgparser(argparse.ArgumentParser):
         if 'invalid choice' in message:
             try:
                 invalid_command = message.split("'")[1]
-                suggestion_text = f"Did you mean '{self.find_most_similar_command(
-                    list(self._subparsers._group_actions[0].choices.keys()), invalid_command)}'?"
+                similar_command = self.find_most_similar_command(
+                    list(self._subparsers._group_actions[0].choices.keys()),
+                    invalid_command)
+                suggestion_text = (
+                    f"Did you mean {similar_command}?"
+                )
                 # Custom error message for invalid command choices
-                print(f"Invalid command '{
-                      invalid_command}'\n{suggestion_text}")
+                print(f"Invalid command "
+                      f"'{invalid_command}'\n{suggestion_text}")
             except IndexError:
                 suggestion_text = ""
                 invalid_command = "Unknown"
                 # Custom error message for invalid command choices
-                print(f"Invalid command '{
-                      invalid_command}'\n{suggestion_text}")
+                print(f"Invalid command "
+                      f"'{invalid_command}'\n{suggestion_text}")
             except AttributeError:
                 Settings.show_error("Error occured", message)
 

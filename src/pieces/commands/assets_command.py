@@ -76,8 +76,8 @@ class AssetsCommands:
                 if not os.path.exists(Settings.open_snippet_dir):
                     os.makedirs(Settings.open_snippet_dir)
 
-                file_path = os.path.join(Settings.open_snippet_dir, f'{
-                                         cls.current_asset.id}{file_extension}')
+                file_path = os.path.join(Settings.open_snippet_dir,
+                                         f'{cls.current_asset.id}{file_extension}')
 
                 # Save the code to a file in the default directory
                 if isinstance(code_content, str):  # Code string raw
@@ -120,8 +120,8 @@ class AssetsCommands:
         if not asset:
             return
         console = Console()
-        file_path = os.path.join(Settings.open_snippet_dir, f"{(asset.id)}{
-                                 get_file_extension(asset.classification)}")
+        file_path = os.path.join(Settings.open_snippet_dir,
+                                 f"{(asset.id)}{get_file_extension(asset.classification)}")
         data = None
         found_file = False
         try:
@@ -143,8 +143,8 @@ class AssetsCommands:
             if found_file:
                 cls.open_asset(asset.id, editor=True)
             try:
-                input(f"Content not changed.\n<Press enter when you finish editing {
-                      asset.name}>")
+                input(f"Content not changed.\n"
+                      f"<Press enter when you finish editing {asset.name}>")
                 cls.save_asset(**kwargs)
             except KeyboardInterrupt:
                 pass
