@@ -8,7 +8,16 @@
 
 Ex: `python src/pieces help` or `python src/pieces config --editor vim`
 
+## Testing a staging release
+
+1. Download and unzip the release for your architecture
+2. `pip install path/to/download` (or `pip3`)
+3. `python -m pieces version` (or `python3`) <-- check you are running the staging version
+
+Ex: `python -m pieces help` or `python -m pieces config --editor vim`
+
 ## Release
+
 ```
 git tag <tagname>
 git push origin <tagname>
