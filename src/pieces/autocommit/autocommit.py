@@ -110,8 +110,11 @@ def git_commit(**kwargs):
         except TypeError:
             issue_flag = False
 
-    r_message = input(f"The generated commit message is:\n\n {
-                      commit_message}\n\nAre you sure you want to commit these changes?\n\n- y: Yes\n- n: No\n- c: Change the commit message\n\nPlease enter your choice (y/n/c): ").lower().strip()
+    r_message = input("The generated commit message is:"
+                      f"\n\n {commit_message}\n\n"
+                      "Are you sure you want to commit these changes?"
+                      "\n\n- y: Yes\n- n: No\n- c: Change the commit message"
+                      "\n\nPlease enter your choice (y/n/c): ").lower().strip()
 
     if r_message not in ["y", "c", ""]:
         print("Committing changes cancelled")
@@ -178,8 +181,9 @@ def get_issue_details(seeds):
         try:
             # Make the issues look nicer
             issue_markdown = [
-                f"- `Issue_number: {issue['number']}`\n- `Title: {
-                    issue['title']}`\n- `Body: {issue['body']}`"
+                (f"- `Issue_number: {issue['number']}`\n"
+                    f"`Title: {issue['title']}`\n"
+                 f"- `Body: {issue['body']}`")
                 for issue in issues
             ]
             issue_markdown = "\n".join(issue_markdown)  # To string

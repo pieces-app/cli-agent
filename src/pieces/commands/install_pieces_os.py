@@ -69,8 +69,8 @@ class PiecesInsertaller():
             arch = os.uname().machine
             pkg_url = (
                 "https://builds.pieces.app/stages/production/macos_packaging/pkg-pos-launch-only"
-                f"{'-arm64' if arch ==
-                   'arm64' else ''}/download?product=PIECES_FOR_DEVELOPERS_CLI&download=true"
+                f"{'-arm64' if arch == 'arm64' else ''}"
+                f"/download?product=PIECES_FOR_DEVELOPERS_CLI&download=true"
             )
             webbrowser.open(pkg_url)
 

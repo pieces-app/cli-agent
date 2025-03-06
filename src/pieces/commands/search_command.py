@@ -22,8 +22,8 @@ def search(query, **kwargs):
         search_type_text = search_type_map.get(search_type, 'Search')
         ListCommand.list_assets(
             assets=asset_details,
-            footer=f"Search Type: {search_type_text}| Results Found: {
-                len(asset_details)}"
+            footer=(f"Search Type: {search_type_text}"
+                    f"| Results Found: {len(asset_details)}")
         )
     else:
         print("No matches found.")
