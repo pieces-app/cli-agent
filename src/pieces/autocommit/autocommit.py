@@ -1,10 +1,10 @@
 import subprocess
 import re
 from .git_api import get_repo_issues, get_git_repo_name
-from typing import TYPE_CHECKING, Optional,Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 from pieces.settings import Settings
 import os
-from collections import defaultdict 
+from collections import defaultdict
 from rich.console import Console
 from rich.markdown import Markdown
 
@@ -12,10 +12,11 @@ from rich.markdown import Markdown
 if TYPE_CHECKING:
     from pieces_os_client.models.seeds import Seeds
 
+
 def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
     """
     Fetches the detailed changes in the files you are currently working on, limited to a specific word count.
-    
+
     Returns:
         Tuple of
             A string summarizing the detailed changes in a format suitable for generating commit messages.
@@ -32,11 +33,13 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
     from pieces_os_client.models.seeded_anchor import SeededAnchor
 
     try:
-        result = subprocess.run(["git", "diff", "--staged"], capture_output=True, text=True)
+        result = subprocess.run(
+            ["git", "diff", "--staged"], capture_output=True, text=True)
         if not result.stdout.strip():
-            Settings.show_error("No changes found", "Please make sure you have added some files to your staging area")
+            Settings.show_error(
+                "No changes found", "Please make sure you have added some files to your staging area")
             return None
-        
+
         detailed_diff = result.stdout.strip()
         summary = ""
         content_file = defaultdict(str)
@@ -54,7 +57,8 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
                     else:
                         summary += f"File modified: **{file_name}**\n"
             if (line.startswith('+') and not line.startswith('+++')) or (line.startswith('-') and not line.startswith('---')):
-                content_file[os.path.join(os.getcwd(), *file_name.split("/"))] += line.strip()
+                content_file[os.path.join(
+                    os.getcwd(), *file_name.split("/"))] += line.strip()
 
         return summary, Seeds(
             iterable=[
@@ -77,13 +81,12 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
                     ),
                     type="SEEDED_ASSET"
                 )
-             for file_path, content in content_file.items()
+                for file_path, content in content_file.items()
             ]
         )
     except subprocess.CalledProcessError as e:
         Settings.show_error(f"Error fetching current working changes: {e}")
         return None
-
 
 
 def git_commit(**kwargs):
@@ -99,21 +102,24 @@ def git_commit(**kwargs):
     commit_message = get_commit_message(changes_summary, seeds)
     if not commit_message:
         return
-    
+
     if issue_flag:
         try:
-            issue_number, issue_title, issue_markdown = get_issue_details(seeds)
+            issue_number, issue_title, issue_markdown = get_issue_details(
+                seeds)
         except TypeError:
             issue_flag = False
 
-    r_message = input(f"The generated commit message is:\n\n {commit_message}\n\nAre you sure you want to commit these changes?\n\n- y: Yes\n- n: No\n- c: Change the commit message\n\nPlease enter your choice (y/n/c): ").lower().strip()
-    
+    r_message = input(f"The generated commit message is:\n\n {
+                      commit_message}\n\nAre you sure you want to commit these changes?\n\n- y: Yes\n- n: No\n- c: Change the commit message\n\nPlease enter your choice (y/n/c): ").lower().strip()
+
     if r_message not in ["y", "c", ""]:
         print("Committing changes cancelled")
         return
 
     if r_message == "c":
-        edit = input(f"Enter the new commit message [generated message is: '{commit_message}']: ")
+        edit = input(
+            f"Enter the new commit message [generated message is: '{commit_message}']: ")
         if edit:
             commit_message = edit
 
@@ -132,7 +138,8 @@ def git_commit(**kwargs):
             console.print(md)
             validate_issue = True
             while validate_issue:
-                issue_number = input("Issue number?\nLeave blank if none: ").strip()
+                issue_number = input(
+                    "Issue number?\nLeave blank if none: ").strip()
                 if issue_number.startswith("#") and issue_number[1:].isdigit():
                     issue_number = issue_number[1:]
                     validate_issue = False
@@ -151,9 +158,6 @@ def git_commit(**kwargs):
     except subprocess.CalledProcessError as e:
         print("Failed to commit changes:", e)
 
-        
-
-
 
 def get_issue_details(seeds):
     from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
@@ -164,42 +168,44 @@ def get_issue_details(seeds):
             `Example: 'Issue: 12', 'Issue: None'`,
             `Note: Don't provide any other information`
             `Here are the issues:`\n{issues}"""
-    
+
     # Issues
     repo_details = get_git_repo_name()
-    issues = get_repo_issues(*repo_details) if repo_details else [] # Check if we got a vaild repo name
+    # Check if we got a vaild repo name
+    issues = get_repo_issues(*repo_details) if repo_details else []
 
     if issues:
         try:
             # Make the issues look nicer
             issue_markdown = [
-                f"- `Issue_number: {issue['number']}`\n- `Title: {issue['title']}`\n- `Body: {issue['body']}`"
+                f"- `Issue_number: {issue['number']}`\n- `Title: {
+                    issue['title']}`\n- `Body: {issue['body']}`"
                 for issue in issues
             ]
-            issue_markdown = "\n".join(issue_markdown) # To string
+            issue_markdown = "\n".join(issue_markdown)  # To string
             issue_number = Settings.pieces_client.qgpt_api.relevance(
-                    QGPTRelevanceInput(
-                        query=issue_prompt.format(issues=issue_markdown),
-                        application=Settings.pieces_client.application.id,
-                        model=Settings.pieces_client.model_name,
-                        options=QGPTRelevanceInputOptions(question=True),
-                        seeds=seeds
-                    )).answer.answers.iterable[0].text
-    
-            
+                QGPTRelevanceInput(
+                    query=issue_prompt.format(issues=issue_markdown),
+                    application=Settings.pieces_client.application.id,
+                    model=Settings.pieces_client.model_name,
+                    options=QGPTRelevanceInputOptions(question=True),
+                    seeds=seeds
+                )).answer.answers.iterable[0].text
+
             # Extract the issue part
-            issue_number = issue_number.replace("Issue: ", "") 
-            # If the issue is a number 
+            issue_number = issue_number.replace("Issue: ", "")
+            # If the issue is a number
             issue_number = int(issue_number)
-            issue_title = next((issue["title"] for issue in issues if issue["number"] == issue_number), None)
-        except: 
+            issue_title = next(
+                (issue["title"] for issue in issues if issue["number"] == issue_number), None)
+        except:
             issue_number = None
             issue_title = ""
             issue_markdown = ""
-        return issue_number,issue_title,issue_markdown
-    
+        return issue_number, issue_title, issue_markdown
 
-def get_commit_message(changes_summary,seeds):
+
+def get_commit_message(changes_summary, seeds):
     from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
     from pieces_os_client.models.qgpt_relevance_input_options import QGPTRelevanceInputOptions
 
@@ -213,7 +219,6 @@ def get_commit_message(changes_summary,seeds):
                 The actual code changes provide to you in the seeds,
                 `The changed parts is provided in the context where if the line start with "+"  means that line is added or "-" if it is removed"""
 
-
     try:
         commit_message = Settings.pieces_client.qgpt_api.relevance(
             QGPTRelevanceInput(
@@ -222,15 +227,18 @@ def get_commit_message(changes_summary,seeds):
                 application=Settings.pieces_client.application.id,
                 model=Settings.get_model_id(),
                 options=QGPTRelevanceInputOptions(question=True)
-            )).answer.answers.iterable[0].text 
-        
+            )).answer.answers.iterable[0].text
+
         # Remove extras from the commit message
-        commit_message = commit_message.replace("The message is:","",1) # Remove the "message is" part as mentioned in the prompt
-        commit_message = commit_message.replace('*', '') # Remove the bold and italic characters
-        commit_message = commit_message.replace('__', '') # Remove the bold and italic characters
+        # Remove the "message is" part as mentioned in the prompt
+        commit_message = commit_message.replace("The message is:", "", 1)
+        # Remove the bold and italic characters
+        commit_message = commit_message.replace('*', '')
+        # Remove the bold and italic characters
+        commit_message = commit_message.replace('__', '')
         # Remove leading and trailing whitespace
         commit_message = commit_message.strip()
     except Exception as e:
-        Settings.show_error("Error in getting the commit message",e)
+        Settings.show_error("Error in getting the commit message", e)
         return
     return commit_message

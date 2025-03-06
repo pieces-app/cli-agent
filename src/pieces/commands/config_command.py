@@ -3,9 +3,9 @@ from pieces.settings import Settings
 import json
 
 
-
 class ConfigCommands:
     config_data = None
+
     @classmethod
     def load_config(cls):
         if cls.config_data:
