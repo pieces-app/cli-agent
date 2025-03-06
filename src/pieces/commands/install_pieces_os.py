@@ -1,62 +1,78 @@
+import webbrowser
 import os
-import subprocess
-from pieces.settings import Settings
+import queue
+from typing import Generator
+from rich.progress import (Progress,
+                           BarColumn,
+                           DownloadColumn,
+                           TransferSpeedColumn)
+from ..wrapper.installation import (DownloadModel,
+                                    DownloadState)
+from ..settings import Settings
 
-def install_pieces_os(**kwargs):
-    """
-    Install PiecesOS based on the platform
-    """
-    try:
-        if Settings.pieces_client.local_os == "WINDOWS":
-            install_command = [
-                "powershell.exe",
-                "Add-AppxPackage",
-                "-Appinstaller",
-                "https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller",
-                "-ErrorAction",
-                "Stop",
-                "-Verbose"
-            ]
-            print("Installing PiecesOS... This might take a few minutes.")
-            process = subprocess.Popen(install_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
-            for line in process.stdout:
-                print(line, end='')
+class PiecesInsertaller():
+    lock = False
 
-            process.wait()
-        
-        elif Settings.pieces_client.local_os == "LINUX":
-            install_command = (
-                'sudo snap install pieces-os && '
-                'sudo snap connect pieces-os:process-control :process-control && '
-                'sudo snap install pieces-for-developers && '
-                'pieces-os'
-            )
-            subprocess.Popen(install_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    def run(self):
+        self.queue = queue.Queue()
+        if self.lock:
             return
-        
+        self.lock = True
+        self.installer = Settings.pieces_client.pieces_os_installer(
+            self.queue.put)
+        self.installer.start_download()
+        m = self.queue.get()  # Block the thread until we recieve the first byte
+        try:
+            print("Installing PiecesOS")
+            with Progress(
+                BarColumn(),
+                DownloadColumn(),
+                TransferSpeedColumn(),
+                auto_refresh=False,
+            ) as progress:
+                task = progress.add_task(
+                    description="Installion PiecesOS",
+                    total=m.total_bytes
+                )
+                for model in self.iterator():
+                    progress.update(task, total=model.total_bytes,
+                                    completed=model.bytes_received)
+                    if model.state == DownloadState.FAILED:
+                        print(
+                            "Failed to install PiecesOS,"
+                            " Opening in your webbrowser")
+                        self.download_docs()
+                    progress.refresh()
+        except KeyboardInterrupt:
+            self.installer.cancel_download()
+            self.lock - False
+
+    def iterator(self) -> Generator[DownloadModel, None, None]:
+        while True:
+            m = self.queue.get()
+            if m.state != DownloadState.DOWNLOADING:
+                yield m
+                self.lock = False
+                break
+            yield m
+
+    def download_docs(self):
+        if Settings.pieces_client.local_os == "WINDOWS":
+            webbrowser.open(
+                f"https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller?product=PIECES_FOR_DEVELOPERS_CLI&download=true")
+        elif Settings.pieces_client.local_os == "LINUX":
+            webbrowser.open("https://snapcraft.io/pieces-os")
+            return
+
         elif Settings.pieces_client.local_os == "MACOS":
             arch = os.uname().machine
             pkg_url = (
                 "https://builds.pieces.app/stages/production/macos_packaging/pkg-pos-launch-only"
-                f"{'-arm64' if arch == 'arm64' else ''}/download?product={Settings.pieces_client.app_name}&download=true"
+                f"{'-arm64' if arch ==
+                   'arm64' else ''}/download?product=PIECES_FOR_DEVELOPERS_CLI&download=true"
             )
-            script = f"""
-            TMP_PKG_PATH="/tmp/Pieces-OS-Launch.pkg"
-            echo "Downloading PiecesOS .pkg file from {pkg_url}..."
-            curl -L "{pkg_url}" -o "$TMP_PKG_PATH"
-            if [ -f "$TMP_PKG_PATH" ]; then
-                echo "PiecesOS Download successful, installing the package..."
-                open "$TMP_PKG_PATH"
-                echo "PiecesOS Installation complete."
-            else
-                echo "Failed to download and install PiecesOS."
-            fi
-            """
-            subprocess.run(["sh", "-c", script], check=True)
-        
-        else:
-            print("Error: Unsupported platform.")
-    except KeyboardInterrupt:
-        print("Download interrupted by user.")
+            webbrowser.open(pkg_url)
 
+        else:
+            raise ValueError("Invalid platform")
