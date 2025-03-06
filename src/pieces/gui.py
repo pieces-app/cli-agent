@@ -14,10 +14,12 @@ def welcome():
     print("############################")
     print()
 
+
 def line():
     print()
     print("############################")
     print()
+
 
 def double_line(text):
     print()
@@ -28,22 +30,23 @@ def double_line(text):
     print("############################")
     print()
 
+
 def server_startup_failed():
     print()
     print("############################")
     print()
     print("Please make sure PiecesOS is running and up-to-date")
     print()
-    print("Or, to install PiecesOS, please visit this link:")
-    print_pieces_os_link()
+    print("Or, to install PiecesOS, use \"pieces install\" command")
     print()
     print("############################")
     print()
 
 
-def print_version_details(pos_version,cli_version):
+def print_version_details(pos_version, cli_version):
     print(f"PiecesOS Version: {pos_version}")
     print(f"CLI Version: {cli_version}")
+
 
 def print_pieces_os_link():
     print("https://docs.pieces.app/installation-getting-started/what-am-i-installing")
@@ -53,6 +56,7 @@ def double_space(text):
     print()
     print(text)
     print()
+
 
 def space_below(text):
     print(text)
@@ -68,6 +72,7 @@ def print_instructions():
     print()
     print("Ready...")
     line()
+
 
 def print_help():
     print()
@@ -117,7 +122,8 @@ def print_help():
     print("  open              - Opens PiecesOS")
     print()
 
-def print_asset_details(asset:"BasicAsset"):
+
+def print_asset_details(asset: "BasicAsset"):
     print(f"Name: {asset.name}")
     print(f"Created: {asset.created_at}")
     print(f"Updated: {asset.updated_at}")
@@ -125,15 +131,18 @@ def print_asset_details(asset:"BasicAsset"):
     print(f"Language: {asset.classification.value}")
     print()
 
+
 def delete_most_recent():
     print("This is your most recent material. Are you sure you want to delete it? This action cannot be undone.")
     print("type 'delete' to confirm")
+
 
 def no_assets_in_memory():
     print()
     print("No material is Currently Saved in Memory")
     print("Please choose from the list or use 'find'")
     print()
+
 
 def open_from_command_line():
     print()
@@ -143,7 +152,8 @@ def open_from_command_line():
     print("Opening most recent material:")
     print()
 
-def deprecated(command,instead):
+
+def deprecated(command, instead):
     """
     Decorator
         command(str): which is the command that is deprated
@@ -151,8 +161,9 @@ def deprecated(command,instead):
     """
     def decorator(func):
         def wrapper(*args, **kwargs):
-            if kwargs.get("show_warning",True):
-                print(f"\033[93m WARNING: `{command}` is deprecated and will be removed in later versions\nPlease use `{instead}` instead \033[0m")
-            func(*args,**kwargs)
+            if kwargs.get("show_warning", True):
+                print(f"\033[93m WARNING: `{command}` is deprecated and will be removed in later versions\nPlease use `{
+                      instead}` instead \033[0m")
+            func(*args, **kwargs)
         return wrapper
     return decorator
