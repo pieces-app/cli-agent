@@ -30,22 +30,26 @@ class PiecesInsertaller():
                 DownloadColumn(),
                 TransferSpeedColumn(),
                 auto_refresh=False,
+                transient=True
             ) as progress:
                 task = progress.add_task(
                     description="Installion PiecesOS",
-                    total=m.total_bytes
+                    total=m.total_bytes,
                 )
                 for model in self.iterator():
                     progress.update(task, total=model.total_bytes,
                                     completed=model.bytes_received)
                     if model.state == DownloadState.FAILED:
                         print(
-                            "Failed to install PiecesOS,"
+                            "❌ Failed to install PiecesOS,"
                             " Opening in your webbrowser")
                         self.download_docs()
+                    elif model.state == DownloadState.COMPLETED:
+                        print("✅ Installed PiecesOS successfully")
                     progress.refresh()
         except KeyboardInterrupt:
             self.installer.cancel_download()
+            print("🚫 Installation cancelled")
             self.lock - False
 
     def iterator(self) -> Generator[DownloadModel, None, None]:
