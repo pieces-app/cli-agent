@@ -1,6 +1,6 @@
-import webbrowser
 from rich.markdown import Markdown
 from rich.console import Console
+from ..settings import Settings
 
 
 def feedback(**kwargs):
@@ -16,7 +16,7 @@ def feedback(**kwargs):
         "Would you like to open the feedback page in your browser? (y/n): ")
 
     if res.lower() == 'y':
-        webbrowser.open(
+        Settings.open_website(
             "https://github.com/pieces-app/cli-agent/discussions/194")
 
 
@@ -31,4 +31,4 @@ def contribute(**kwargs):
         "Would you like to open the GitHub page in your browser? (y/n): ")
 
     if res.lower() == 'y':
-        webbrowser.open("https://github.com/pieces-app/cli-agent")
+        Settings.open_website("https://github.com/pieces-app/cli-agent")

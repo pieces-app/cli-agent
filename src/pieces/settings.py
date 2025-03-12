@@ -8,6 +8,9 @@ from .wrapper.version_compatibility import VersionChecker, UpdateEnum
 from pieces import __version__
 from pieces.gui import server_startup_failed, print_pieces_os_link, print_version_details
 
+import webbrowser
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+
 
 class Settings:
     """Settings class for the PiecesCLI"""
@@ -141,3 +144,34 @@ class Settings:
         print()
         if not cls.run_in_loop:
             sys.exit(2)
+
+    @classmethod
+    def get_os_id(cls):
+        from pieces_os_client.models.application_name_enum import ApplicationNameEnum
+        if cls._os_id:
+            return cls._os_id
+        for app in cls.api_client.application_api.applications_snapshot().iterable:
+            if app.name == ApplicationNameEnum.OS_SERVER:
+                cls._os_id = app.id
+                return app.id
+
+    @classmethod
+    def open_website(cls, url: str):
+        from .auth.auth_user import AuthUser
+        if (not cls.api_client.is_pos_stream_running) and ("pieces.app" not in url):
+            return webbrowser.open(url)
+        para = {}
+        if AuthUser.user_profile:
+            para["user"] = AuthUser.user_profile.id
+        _id = cls.get_os_id()
+        if _id:
+            para["os"] = _id
+
+        url_parts = list(urlparse(url))
+        query = dict(parse_qsl(url_parts[4]))
+        query.update(para)
+
+        url_parts[4] = urlencode(query)
+        new_url = urlunparse(url_parts)
+        print(new_url)
+        webbrowser.open(new_url)
