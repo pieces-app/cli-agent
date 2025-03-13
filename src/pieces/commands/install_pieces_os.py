@@ -1,4 +1,3 @@
-import webbrowser
 import os
 import queue
 from typing import Generator
@@ -63,10 +62,10 @@ class PiecesInsertaller():
 
     def download_docs(self):
         if Settings.pieces_client.local_os == "WINDOWS":
-            webbrowser.open(
+            Settings.open_website(
                 f"https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller?product=PIECES_FOR_DEVELOPERS_CLI&download=true")
         elif Settings.pieces_client.local_os == "LINUX":
-            webbrowser.open("https://snapcraft.io/pieces-os")
+            Settings.open_website("https://snapcraft.io/pieces-os")
             return
 
         elif Settings.pieces_client.local_os == "MACOS":
@@ -76,7 +75,7 @@ class PiecesInsertaller():
                 f"{'-arm64' if arch == 'arm64' else ''}"
                 f"/download?product=PIECES_FOR_DEVELOPERS_CLI&download=true"
             )
-            webbrowser.open(pkg_url)
+            Settings.open_website(pkg_url)
 
         else:
             raise ValueError("Invalid platform")
