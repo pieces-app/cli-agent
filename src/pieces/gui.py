@@ -49,7 +49,7 @@ def print_version_details(pos_version, cli_version):
 
 
 def print_pieces_os_link():
-    print("https://docs.pieces.app/installation-getting-started/what-am-i-installing")
+    print("https://docs.pieces.app/products/meet-pieces/fundamentals")
 
 
 def double_space(text):
