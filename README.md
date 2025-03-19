@@ -14,7 +14,7 @@
 
 ## Important
 
-Make sure you have [**PiecesOS**](https://docs.pieces.app/installation-getting-started/what-am-i-installing) installed in order to run the Pieces CLI tool.
+Make sure you have [**PiecesOS**](https://docs.pieces.app/products/meet-pieces/fundamentals) installed in order to run the Pieces CLI tool.
 
 #### Operating System Support
 The Pieces Python CLI Tool is compatible with various operating systems, ensuring a wide range of usage and adaptability. While it offers full support across most systems, specific features might have varied performance based on the OS environment.
