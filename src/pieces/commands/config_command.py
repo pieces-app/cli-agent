@@ -48,11 +48,11 @@ class ConfigCommands:
         config = cls.load_config()
         return {
             'enabled': config.get('remote_enabled', False),
-            'host': config.get('remote_host'),
-            'username': config.get('remote_username'),
-            'method': config.get('remote_method'),
-            'password': config.get('remote_password'),
-            'key_file': config.get('remote_key_file')
+            'host': config.get('remote_host', ''),
+            'username': config.get('remote_username', ''),
+            'method': config.get('remote_method', ''),
+            'password': config.get('remote_password', ''),
+            'key_file': config.get('remote_key_file', '')
         }
 
     @classmethod
@@ -60,11 +60,12 @@ class ConfigCommands:
         """Set the remote configuration"""
         current_config = cls.load_config()
         current_config.update({
-            'remote_host': config.get('host'),
-            'remote_username': config.get('username'),
-            'remote_method': config.get('method'),
-            'remote_password': config.get('password'),
-            'remote_key_file': config.get('key_file')
+            'remote_enabled': config.get('enabled', False),
+            'remote_host': config.get('host', ''),
+            'remote_username': config.get('username', ''),
+            'remote_method': config.get('method', ''),
+            'remote_password': config.get('password', ''),
+            'remote_key_file': config.get('key_file', '')
         })
         cls.save_config(current_config)
 

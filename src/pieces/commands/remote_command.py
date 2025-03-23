@@ -83,7 +83,8 @@ class RemoteCommand:
                     'username': username,
                     'method': method,
                     'password': password if method == 'password' else None,
-                    'key_file': key_file if method == 'key' else None
+                    'key_file': key_file if method == 'key' else None,
+                    'enabled': True
                 }
                 ConfigCommands.set_remote_config(config)
                 print("Remote settings saved successfully!")
@@ -103,12 +104,15 @@ class RemoteCommand:
                                key_file: Optional[str] = None) -> bool:
         """Validate remote settings"""
         if not host or not username:
+            print("Host and username are required")
             return False
             
-        if not password and not key_file:
+        if password is None and key_file is None:
+            print("Either password or key file must be provided")
             return False
             
         if key_file and not os.path.exists(key_file):
+            print(f"Key file not found: {key_file}")
             return False
             
         return True

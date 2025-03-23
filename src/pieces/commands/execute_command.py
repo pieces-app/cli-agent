@@ -4,6 +4,7 @@ import subprocess
 from pieces.utils import PiecesSelectMenu
 from pieces_os_client.models.classification_specific_enum import ClassificationSpecificEnum
 from .remote_command import RemoteCommand
+from .config_command import ConfigCommands
 
 class ExecuteCommand:
     @classmethod
@@ -34,8 +35,8 @@ class ExecuteCommand:
         
         try:
             # Get remote config if enabled
-            remote_config = RemoteCommand.get_remote_config()
-            use_remote = bool(remote_config)
+            remote_config = ConfigCommands.get_remote_config()
+            use_remote = remote_config.get('enabled', False)
 
             # Prepare command based on classification
             if asset.classification == ClassificationSpecificEnum.BASH:
@@ -63,10 +64,7 @@ class ExecuteCommand:
                     RemoteCommand.close_connection(client)
                     
                     print(f"Executing {asset.classification.value} command on {remote_config['host']}:")
-                    print(result['stdout'])
-                    if result['stderr']:
-                        print("Errors:")
-                        print(result['stderr'])
+                    print(result)
                 except Exception as e:
                     print(f"Remote execution failed: {e}")
                     print("Falling back to local execution...")
