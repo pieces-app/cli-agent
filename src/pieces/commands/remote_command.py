@@ -10,6 +10,7 @@ class RemoteCommand:
     def execute_command(cls, **kwargs):
         """Main entry point for 'pieces remote' command"""
         subcommand = kwargs.get('subcommand', 'status')
+        command = kwargs.get('command', None)
         
         if subcommand == 'setup':
             cls.setup_remote()
@@ -20,14 +21,14 @@ class RemoteCommand:
         elif subcommand == 'status':
             cls._show_status()
         elif subcommand == 'test':
-            cls.test_connection()
+            cls.test_connection(command)
         else:
             print("Available subcommands:")
             print("  setup   - Configure remote connection settings")
             print("  enable  - Enable remote execution")
             print("  disable - Disable remote execution")
             print("  status  - Show current remote configuration")
-            print("  test    - Test the remote connection")
+            print("  test    - Test the remote connection with an optional command")
 
     @classmethod
     def _show_status(cls):
@@ -147,7 +148,7 @@ class RemoteCommand:
         return output
 
     @classmethod
-    def test_connection(cls):
+    def test_connection(cls, command: Optional[str] = None):
         """Test the remote connection by executing a simple command"""
         config = ConfigCommands.get_remote_config()
         if not config['enabled']:
@@ -164,14 +165,23 @@ class RemoteCommand:
             
             # Execute a test command
             print("\nTesting remote connection...")
-            print("\nExecuting test commands:")
-            print("- Hostname:")
-            hostname = cls.execute_remote_command(client, "hostname")
-            print(f"  Host: {hostname}")
             
-            print("- Current directory:")
-            pwd = cls.execute_remote_command(client, "pwd")
-            print(f"  Directory: {pwd}")
+            if command:
+                print(f"\nExecuting user command: {command}")
+                try:
+                    output = cls.execute_remote_command(client, command)
+                    print(f"\nCommand output:\n{output}")
+                except Exception as e:
+                    print(f"\nCommand failed: {str(e)}")
+            else:
+                print("\nExecuting default test commands:")
+                print("- Hostname:")
+                hostname = cls.execute_remote_command(client, "hostname")
+                print(f"  Host: {hostname}")
+                
+                print("- Current directory:")
+                pwd = cls.execute_remote_command(client, "pwd")
+                print(f"  Directory: {pwd}")
             
             print("\nConnection test successful!")
             cls.close_connection(client)
