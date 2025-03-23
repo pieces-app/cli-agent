@@ -93,6 +93,7 @@ def print_help():
     print("  remote enable     - Enable remote execution")
     print("  remote disable    - Disable remote execution")
     print("  remote status     - Show current remote configuration")
+    print("  remote test       - Test the remote connection")
     print("  clear             - to clear the terminal")
     print()
     print("  config            - View current configuration")

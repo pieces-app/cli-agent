@@ -19,12 +19,15 @@ class RemoteCommand:
             ConfigCommands.toggle_remote(False)
         elif subcommand == 'status':
             cls._show_status()
+        elif subcommand == 'test':
+            cls.test_connection()
         else:
             print("Available subcommands:")
             print("  setup   - Configure remote connection settings")
             print("  enable  - Enable remote execution")
             print("  disable - Disable remote execution")
             print("  status  - Show current remote configuration")
+            print("  test    - Test the remote connection")
 
     @classmethod
     def _show_status(cls):
@@ -111,38 +114,70 @@ class RemoteCommand:
 
     @classmethod
     def setup_remote_connection(cls, host: str, username: str, 
-                               password: Optional[str] = None, 
-                               key_file: Optional[str] = None) -> 'paramiko.SSHClient':
-        """Set up SSH connection"""
-        if not cls.validate_remote_settings(host, username, password, key_file):
-            raise ValueError("Invalid remote settings provided")
-            
+                              password: Optional[str] = None, 
+                              key_file: Optional[str] = None) -> paramiko.SSHClient:
+        """Set up an SSH connection to the remote host"""
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         
-        try:
-            if key_file:
-                client.connect(host, username=username, key_filename=key_file)
-            else:
-                client.connect(host, username=username, password=password)
-            return client
-        except Exception as e:
-            raise Exception(f"Failed to connect to remote host: {str(e)}")
+        if password:
+            client.connect(host, username=username, password=password)
+        else:
+            key = paramiko.RSAKey.from_private_key_file(key_file)
+            client.connect(host, username=username, pkey=key)
+            
+        return client
 
     @classmethod
-    def execute_remote_command(cls, client: 'paramiko.SSHClient', 
-                             command: str) -> Dict[str, str]:
-        """Execute remote command"""
-        try:
-            stdin, stdout, stderr = client.exec_command(command)
-            return {
-                'stdout': stdout.read().decode(),
-                'stderr': stderr.read().decode()
-            }
-        except Exception as e:
-            raise Exception(f"Failed to execute remote command: {str(e)}")
+    def close_connection(cls, client: paramiko.SSHClient):
+        """Close the SSH connection"""
+        if client:
+            client.close()
 
     @classmethod
-    def close_connection(cls, client: 'paramiko.SSHClient'):
-        """Close SSH connection"""
-        client.close()
+    def execute_remote_command(cls, client: paramiko.SSHClient, command: str) -> str:
+        """Execute a command on the remote system and return the output"""
+        stdin, stdout, stderr = client.exec_command(command)
+        output = stdout.read().decode('utf-8').strip()
+        error = stderr.read().decode('utf-8').strip()
+        
+        if error:
+            raise Exception(f"Remote command failed: {error}")
+            
+        return output
+
+    @classmethod
+    def test_connection(cls):
+        """Test the remote connection by executing a simple command"""
+        config = ConfigCommands.get_remote_config()
+        if not config['enabled']:
+            print("Remote execution is disabled. Use 'pieces remote enable' to enable it.")
+            return False
+            
+        try:
+            client = cls.setup_remote_connection(
+                config['host'],
+                config['username'],
+                config['password'] if config['method'] == 'password' else None,
+                config['key_file'] if config['method'] == 'key' else None
+            )
+            
+            # Execute a test command
+            print("\nTesting remote connection...")
+            print("\nExecuting test commands:")
+            print("- Hostname:")
+            hostname = cls.execute_remote_command(client, "hostname")
+            print(f"  Host: {hostname}")
+            
+            print("- Current directory:")
+            pwd = cls.execute_remote_command(client, "pwd")
+            print(f"  Directory: {pwd}")
+            
+            print("\nConnection test successful!")
+            cls.close_connection(client)
+            return True
+            
+        except Exception as e:
+            print(f"\nConnection test failed: {e}")
+            cls.close_connection(client)
+            return False

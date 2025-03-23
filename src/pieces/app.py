@@ -95,8 +95,8 @@ class PiecesCLI:
             'remote', help='Configure and manage remote execution settings')
         remote_parser.add_argument(
             'subcommand', nargs='?', default='status',
-            choices=['setup', 'enable', 'disable', 'status'],
-            help='Subcommand: setup, enable, disable, or status')
+            choices=['setup', 'enable', 'disable', 'status', 'test'],
+            help='Subcommand: setup, enable, disable, status, or test')
         remote_parser.set_defaults(func=RemoteCommand.execute_command)
 
         # Subparser for the 'edit' command
