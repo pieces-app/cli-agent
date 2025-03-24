@@ -4,9 +4,9 @@
 2. Fetch remote branches `git fetch`
 3. Checkout the feature branch `git checkout <feat-branch-name>`
 4. Install dependencies `poetry install`
-5. Run the CLI with `python src/pieces <CLI command> ` (or `python3`)
+5. Run the CLI with `poetry run src/pieces <CLI command>`
 
-Ex: `python src/pieces help` or `python src/pieces config --editor vim`
+Ex: `poetry run src/pieces help` or `poetry run src/pieces config --editor vim`
 
 ## Testing a staging release
 
