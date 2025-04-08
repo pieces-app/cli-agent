@@ -10,6 +10,7 @@ from .assets_command import AssetsCommands
 from .onboarding import onboarding_command
 from .feedbacks import feedback, contribute
 from .install_pieces_os import PiecesInsertaller
+from .remote_command import RemoteCommand
 
 __all__ = ['loop',
            'version',
@@ -24,4 +25,5 @@ __all__ = ['loop',
            "onboarding_command",
            "feedback",
            "contribute",
-           "PiecesInsertaller"]
+           "PiecesInsertaller",
+           "RemoteCommand"]
