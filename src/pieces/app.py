@@ -1,4 +1,5 @@
 import sys
+import argparse
 from pieces.gui import print_help
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.settings import Settings
@@ -77,6 +78,10 @@ class PiecesCLI:
         # Subparser for the 'create' command
         create_parser = self.command_parser.add_parser(
             'create', help='Create a new material')
+        create_parser.add_argument(
+            "-c", "--content", dest="content",
+            action="store_true",
+            help="Specify the content of the material")
         create_parser.set_defaults(func=AssetsCommands.create_asset)
 
         # Subparser for the 'run' command

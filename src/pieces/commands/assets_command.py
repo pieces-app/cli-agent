@@ -80,14 +80,16 @@ class AssetsCommands:
             config = ConfigCommands.load_config()
             editor = config.get("editor")
             if editor:
-                file_extension = get_file_extension(cls.current_asset.classification)
+                file_extension = get_file_extension(
+                    cls.current_asset.classification)
 
                 # Ensure the directory exists, create it if not
                 if not os.path.exists(Settings.open_snippet_dir):
                     os.makedirs(Settings.open_snippet_dir)
 
                 file_path = os.path.join(
-                    Settings.open_snippet_dir, f"{cls.current_asset.id}{file_extension}"
+                    Settings.open_snippet_dir, f"{
+                        cls.current_asset.id}{file_extension}"
                 )
 
                 # Save the code to a file in the default directory
@@ -229,26 +231,27 @@ class AssetsCommands:
         # Check if the content has the flag -c
         content_flag = kwargs.get("content", None)
         if content_flag:
-            text = content_flag
+            text = sys.stdin.read()
         else:
-            if not os.isatty(0):
-                text = sys.stdin.read().strip()
-            else:
-                try:
-                    text = pyperclip.paste()
-                except pyperclip.PyperclipException as e:
-                    Settings.show_error("Error accessing clipboard:", str(e))
-                    return
+            try:
+                text = pyperclip.paste()
+            except pyperclip.PyperclipException as e:
+                Settings.show_error("Error accessing clipboard:", str(e))
+                return
 
         if not text:
-            console.print("No content found in the clipboard to create a material.")
+            console.print(
+                "No content found in the clipboard to create a material.")
             return
 
         double_line("Content to save: ")
         cls.print_code(text)
 
         # Ask the user for confirmation to save
-        user_input = input("Do you want to save this content? (y/n): ").strip().lower()
+        try:
+            user_input = input("Do you want to save this content? (y/n): ")
+        except EOFError:
+            user_input = "y"
 
         if user_input == "y":
             console.print("Saving...\n")
