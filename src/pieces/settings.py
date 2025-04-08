@@ -16,8 +16,8 @@ class Settings:
     """Settings class for the PiecesCLI"""
     pieces_client = PiecesClient()
 
-    PIECES_OS_MIN_VERSION = "11.0.0"  # Minium version (11.0.0)
-    PIECES_OS_MAX_VERSION = "12.0.0"  # Maxium version (12.0.0)
+    PIECES_OS_MIN_VERSION = "12.0.0"  # Minium version (12.0.0)
+    PIECES_OS_MAX_VERSION = "13.0.0"  # Maxium version (13.0.0)
 
     TIMEOUT = 20  # Websocket ask timeout
 
