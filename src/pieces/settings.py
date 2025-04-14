@@ -34,6 +34,7 @@ class Settings:
         # model data file just store the model_id that the user is using (eg. {"model_id": UUID })
     )
 
+    _os_id = None
     file_cache = {}
 
     config_file = Path(pieces_data_dir, "pieces_config.json")
@@ -150,19 +151,19 @@ class Settings:
         from pieces_os_client.models.application_name_enum import ApplicationNameEnum
         if cls._os_id:
             return cls._os_id
-        for app in cls.api_client.applications_api.applications_snapshot().iterable:
+        for app in cls.pieces_client.applications_api.applications_snapshot().iterable:
             if app.name == ApplicationNameEnum.OS_SERVER:
                 cls._os_id = app.id
                 return app.id
 
     @classmethod
     def open_website(cls, url: str):
-        from .auth.auth_user import AuthUser
-        if (not cls.api_client.is_pos_stream_running) and ("pieces.app" not in url):
+        user_profile = cls.pieces_client.user_api.user_snapshot().user
+        if (not cls.pieces_client.is_pieces_running) or ("pieces.app" not in url):
             return webbrowser.open(url)
         para = {}
-        if AuthUser.user_profile:
-            para["user"] = AuthUser.user_profile.id
+        if user_profile:
+            para["user"] = user_profile.id
         _id = cls.get_os_id()
         if _id:
             para["os"] = _id

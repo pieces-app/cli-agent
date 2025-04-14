@@ -10,18 +10,22 @@ from .assets_command import AssetsCommands
 from .onboarding import onboarding_command
 from .feedbacks import feedback, contribute
 from .install_pieces_os import PiecesInsertaller
+from .open_command import open_command
 
-__all__ = ['loop',
-           'version',
-           'search',
-           'change_model',
-           'sign_out',
-           'sign_in',
-           'ListCommand',
-           'ConfigCommands',
-           "ExecuteCommand",
-           "AssetsCommands",
-           "onboarding_command",
-           "feedback",
-           "contribute",
-           "PiecesInsertaller"]
+__all__ = [
+    "loop",
+    "version",
+    "search",
+    "change_model",
+    "sign_out",
+    "sign_in",
+    "ListCommand",
+    "ConfigCommands",
+    "ExecuteCommand",
+    "AssetsCommands",
+    "onboarding_command",
+    "feedback",
+    "contribute",
+    "PiecesInsertaller",
+    "open_command",
+]
