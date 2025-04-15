@@ -40,6 +40,11 @@ class PiecesCLI:
             action="store_true",
             help="Displays the Pieces CLI version",
         )
+        self.parser.add_argument(
+            "--ignore-onboarding",
+            action="store_true",
+            help="Ignores the onboarding for the running command",
+        )
         self.parser.set_defaults(func=lambda **kwargs: print(__version__))
         self.add_subparsers()
         PiecesArgparser.parser = self.parser
@@ -339,15 +344,26 @@ class PiecesCLI:
     def run(self):
         try:
             arg = sys.argv[1]
+            if arg == "--ignore-onboarding":
+                arg = sys.argv[2]
         except IndexError:  # No command provided
             print_help()
             return
+
+        ignore_onboarding = False
+        for _arg in sys.argv:
+            if _arg == "--ignore-onboarding":
+                ignore_onboarding = True
 
         config = ConfigCommands.load_config()
 
         onboarded = config.get("onboarded", False)
 
-        if not config.get("skip_onboarding", False) and not onboarded:
+        if (
+            not config.get("skip_onboarding", False)
+            and not onboarded
+            and not ignore_onboarding
+        ):
             res = input(
                 "It looks like this is your first time using the Pieces CLI."
                 "\nWould you like to start onboarding (y/n/skip)? "
