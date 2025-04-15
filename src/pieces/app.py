@@ -16,7 +16,7 @@ from pieces.commands import (
     onboarding_command,
     feedback,
     contribute,
-    PiecesInsertaller,
+    PiecesInstaller,
     open_command,
 )
 from pieces.autocommit import git_commit
@@ -30,7 +30,8 @@ ask_stream = AskStream()
 class PiecesCLI:
     def __init__(self):
         self.parser = PiecesArgparser(
-            description="Pieces CLI for interacting with the PiecesOS", add_help=False
+            description="Pieces CLI for interacting with the PiecesOS",
+            add_help=False,
         )
         self.command_parser = self.parser.add_subparsers(dest="command")
         self.parser.add_argument(
@@ -299,7 +300,7 @@ class PiecesCLI:
         install_parser = self.command_parser.add_parser(
             "install", help="Install PiecesOS"
         )
-        install_parser.set_defaults(func=lambda **kwargs: PiecesInsertaller().run())
+        install_parser.set_defaults(func=lambda **kwargs: PiecesInstaller().run())
 
         # Subparser for the 'open' command
         open_parser = self.command_parser.add_parser(
@@ -325,6 +326,13 @@ class PiecesCLI:
             dest="drive",
             action="store_true",
             help="Opens Pieces Drive",
+        )
+        open_parser.add_argument(
+            "-s",
+            "--settings",
+            dest="settings",
+            action="store_true",
+            help="Opens Pieces Settings",
         )
         open_parser.set_defaults(func=open_command)
 

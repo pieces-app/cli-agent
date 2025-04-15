@@ -9,7 +9,7 @@ from .execute_command import ExecuteCommand
 from .assets_command import AssetsCommands
 from .onboarding import onboarding_command
 from .feedbacks import feedback, contribute
-from .install_pieces_os import PiecesInsertaller
+from .install_pieces_os import PiecesInstaller
 from .open_command import open_command
 
 __all__ = [
@@ -26,6 +26,6 @@ __all__ = [
     "onboarding_command",
     "feedback",
     "contribute",
-    "PiecesInsertaller",
+    "PiecesInstaller",
     "open_command",
 ]
