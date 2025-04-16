@@ -88,8 +88,7 @@ class AssetsCommands:
                     os.makedirs(Settings.open_snippet_dir)
 
                 file_path = os.path.join(
-                    Settings.open_snippet_dir, f"{
-                        cls.current_asset.id}{file_extension}"
+                    Settings.open_snippet_dir, f"{cls.current_asset.id}{file_extension}"
                 )
 
                 # Save the code to a file in the default directory
