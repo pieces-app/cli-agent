@@ -17,7 +17,8 @@ from pieces.commands import (
     feedback,
     contribute,
     PiecesInstaller,
-    open_command,
+    open_command,,
+    RemoteCommand
 )
 from pieces.autocommit import git_commit
 from pieces.copilot import AskStream, conversation_handler, get_conversations
@@ -126,6 +127,18 @@ class PiecesCLI:
             "execute", help="Execute shell or bash materials"
         )
         execute_parser.set_defaults(func=ExecuteCommand.execute_command)
+
+        # Subparser for the 'remote' command
+        remote_parser = self.command_parser.add_parser(
+            'remote', help='Configure and manage remote execution settings')
+        remote_parser.add_argument(
+            'subcommand', nargs='?', default='status',
+            choices=['setup', 'enable', 'disable', 'status', 'test'],
+            help='Subcommand: setup, enable, disable, status, or test')
+        remote_parser.add_argument(
+            'command', nargs='?', default=None,
+            help='Optional command to execute on the remote host')
+        remote_parser.set_defaults(func=RemoteCommand.execute_command)
 
         # Subparser for the 'edit' command
         edit_parser = self.command_parser.add_parser(
