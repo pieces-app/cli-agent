@@ -10,7 +10,7 @@ from ..wrapper.installation import (DownloadModel,
 from ..settings import Settings
 
 
-class PiecesInsertaller():
+class PiecesInstaller():
     lock = False
 
     def run(self):

@@ -48,9 +48,10 @@ def loop(**kwargs):
 
 def add_input(session: PromptSession):
     """Add input to the session."""
-    user_input = session.prompt("User: ").strip()
-    if not user_input:
-        return
+    while True:
+        user_input = session.prompt("User: ").strip()
+        if user_input:
+            break
     return extract_text(user_input)
 
 

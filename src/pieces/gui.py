@@ -126,7 +126,7 @@ def print_help():
     print("  feedback          - Send feedback to Pieces")
     print("  contribute        - Contribute to Pieces CLI")
     print("  install           - Install PiecesOS")
-    print("  open              - Opens PiecesOS")
+    print("  open              - Opens PiecesOS or Applet")
     print()
 
 
