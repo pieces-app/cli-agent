@@ -1,5 +1,4 @@
 import sys
-import argparse
 from pieces.gui import print_help
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.settings import Settings
@@ -17,10 +16,11 @@ from pieces.commands import (
     onboarding_command,
     feedback,
     contribute,
-    PiecesInsertaller
+    PiecesInsertaller,
 )
 from pieces.autocommit import git_commit
 from pieces.copilot import (AskStream, conversation_handler, get_conversations)
+from pieces.mcp import handle_mcp
 
 from pieces import __version__
 ask_stream = AskStream()
@@ -215,6 +215,25 @@ class PiecesCLI:
             'open', help='Opens PiecesOS')
         open_parser.set_defaults(
             func=lambda **kwargs: Settings.pieces_client.open_pieces_os())
+
+        mcp_parser = self.command_parser.add_parser(
+            'mcp',
+            help="setup the MCP server for an intgration",
+        )
+        mcp_parser.add_argument("--vscode", dest="vscode",
+                                action="store",
+                                nargs='?',
+                                const=True,
+                                default=None,
+                                choices=["global", "local"],
+                                help="Set up the MCP for VS Code (specify 'global' or 'local' or leave it empty)")
+        mcp_parser.add_argument("--cursor", dest="cursor",
+                                action="store_true",
+                                help="Set up the MCP for Cursor")
+        mcp_parser.add_argument("--goose", dest="goose",
+                                action="store_true",
+                                help="Set up the MCP for Goose")
+        mcp_parser.set_defaults(func=handle_mcp)
 
     def run(self):
         try:
