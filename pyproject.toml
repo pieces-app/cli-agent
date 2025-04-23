@@ -11,6 +11,11 @@ packages = [{ include = "pieces", from = "src" }]
 license = "MIT"
 
 
+[tool.ruff]
+lint.ignore = [
+  "E501", # Line too long
+]
+
 [tool.poetry.dependencies]
 python = ">=3.11,<3.14"
 pyperclip = ">=1.8.2"
