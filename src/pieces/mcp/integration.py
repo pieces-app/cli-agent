@@ -5,7 +5,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 import yaml
 
-from .utils import get_mcp_urls
+from .utils import get_mcp_latest_url, get_mcp_urls
 from ..utils import PiecesSelectMenu
 
 
@@ -58,10 +58,14 @@ class Integration:
                 )
             )
             console.print(Markdown(self.text_end))
-        except:  # noqa: E722
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:  # noqa: E722
+            print(e)
             console.print(Markdown(self.error_text))
 
     def on_select(self, **kwargs):
+        self.mcp_settings[self.url_property_name] = get_mcp_latest_url()
         path = self.get_settings_path(**kwargs)
         dirname = os.path.dirname(path)
         settings = self.load_config(**kwargs)
@@ -105,8 +109,11 @@ class Integration:
 
         return settings
 
-    def is_setted_up(self):
-        config = self.load_config()
+    def is_setted_up(self) -> bool:
+        try:
+            config = self.load_config()
+        except FileNotFoundError:
+            return False
         # Ignore the server name (Pieces)
         for p in self.path_to_mcp_settings[:-1]:
             config = config.get(p, {})
@@ -116,3 +123,7 @@ class Integration:
                 and server.get(self.url_property_name) in get_mcp_urls()
             ):
                 return True
+        return False
+
+    def __str__(self) -> str:
+        return self.readable

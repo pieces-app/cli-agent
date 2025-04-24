@@ -4,7 +4,6 @@ import platform
 import os
 
 from .integration import Integration
-from .utils import get_mcp_latest_url
 from ..settings import Settings
 
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
@@ -115,7 +114,7 @@ cursor_inetgration = Integration(
     readable="Cursor",
     get_settings_path=get_cursor_path,
     path_to_mcp_settings=["mcp_servers", "Pieces"],
-    mcp_settings={"url": get_mcp_latest_url()},
+    mcp_settings={},
 )
 vscode_inetgration = Integration(
     options=[
@@ -132,7 +131,6 @@ vscode_inetgration = Integration(
     path_to_mcp_settings=["mcp", "servers", "Pieces"],
     mcp_settings={
         "type": "see",
-        "url": get_mcp_latest_url(),
     },
 )
 goose_integration = Integration(
@@ -150,10 +148,9 @@ goose_integration = Integration(
         "name": "Pieces",
         "timeout": 300,
         "type": "sse",
-        "uri": get_mcp_latest_url(),
     },
     saver=yaml.dump,
-    loader=yaml.load,
+    loader=yaml.safe_load,
     path_to_mcp_settings=["extensions", "pieces"],
     url_property_name="uri",
 )

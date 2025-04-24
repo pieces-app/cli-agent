@@ -1,8 +1,11 @@
+from typing import Dict
+
 from ..utils import PiecesSelectMenu
 from .integrations import vscode_inetgration, goose_integration, cursor_inetgration
+from .integration import Integration
 
 # NOTE: the key should be the same as the parameter name in the handle_mcp function
-supported_mcps = {
+supported_mcps: Dict[str, Integration] = {
     "vscode": vscode_inetgration,
     "goose": goose_integration,
     "cursor": cursor_inetgration,
