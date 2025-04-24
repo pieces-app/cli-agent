@@ -21,7 +21,7 @@ from pieces.commands import (
 )
 from pieces.autocommit import git_commit
 from pieces.copilot import AskStream, conversation_handler, get_conversations
-from pieces.mcp import handle_mcp
+from pieces.mcp import handle_mcp, handle_list
 from pieces import __version__
 
 ask_stream = AskStream()
@@ -345,29 +345,63 @@ class PiecesCLI:
             "mcp",
             help="setup the MCP server for an intgration",
         )
-        mcp_parser.add_argument(
+
+        mcp_parser.set_defaults(func=lambda **kwargs: mcp_parser.print_help())
+
+        mcp_subparser = mcp_parser.add_subparsers(dest="mcp")
+
+        mcp_setup_parser = mcp_subparser.add_parser(
+            "setup", help="Sets up a new sub parser"
+        )
+
+        mcp_setup_parser.add_argument(
             "--vscode",
             dest="vscode",
-            action="store",
-            nargs="?",
-            const=True,
-            default=None,
-            choices=["global", "local"],
-            help="Set up the MCP for VS Code (specify 'global' or 'local' or leave it empty)",
+            action="store_true",
+            help="Set up the MCP for VS Code",
         )
-        mcp_parser.add_argument(
+        mcp_setup_parser.add_argument(
+            "--global",
+            dest="global",
+            action="store_true",
+            help="For VS Code to set the Global MCP",
+        )
+        mcp_setup_parser.add_argument(
+            "--local",
+            dest="local",
+            action="store_true",
+            help="For VS Code to set the Local MCP",
+        )
+        mcp_setup_parser.add_argument(
             "--cursor",
             dest="cursor",
             action="store_true",
             help="Set up the MCP for Cursor",
         )
-        mcp_parser.add_argument(
+        mcp_setup_parser.add_argument(
             "--goose",
             dest="goose",
             action="store_true",
             help="Set up the MCP for Goose",
         )
-        mcp_parser.set_defaults(func=handle_mcp)
+        mcp_setup_parser.set_defaults(func=handle_mcp)
+
+        mcp_list_parser = mcp_subparser.add_parser(
+            "list",
+            help="List all MCPs")
+        mcp_list_parser.add_argument(
+            "--already-registered",
+            dest="already-registered",
+            action="store_true",
+            help="Display the list of the registered MCPs"
+        )
+        mcp_list_parser.add_argument(
+            "--available-for-setup",
+            dest="available_for_setup",
+            action="store_true",
+            help="Display the list of the ready to be registered MCPs"
+        )
+        mcp_list_parser.set_defaults(func=handle_list)
 
     def run(self):
         try:
