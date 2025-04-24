@@ -56,11 +56,13 @@ class Context:
 	def _check_assets(assets):
 		from pieces_os_client.models.flattened_assets import FlattenedAssets
 		from .basic_identifier.asset import BasicAsset
+		from pieces_os_client.models.referenced_asset import ReferencedAsset
 		assets_list = FlattenedAssets(iterable=[])
 		for snippet in assets:
+			
 			if not isinstance(snippet,BasicAsset):
 				raise ValueError("Invalid asset type")
-			assets_list.iterable.append(snippet.asset)
+			assets_list.iterable.append(ReferencedAsset(id=snippet.asset.id))
 		return assets_list
 
 	@staticmethod
@@ -78,13 +80,3 @@ class Context:
 				raise ValueError("Raw material content should be string type")
 			seed_list.iterable.append(BasicAsset._get_seed(raw))
 		return seed_list
-
-	def _relevance_api(self,query):
-		from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
-		return self.pieces_client.qgpt_api.relevance(
-			QGPTRelevanceInput(
-				query=query,
-				application=self.pieces_client.application.id,
-				model=self.pieces_client.model_id,
-				**self._get_relevant_dict()
-			)).relevant
