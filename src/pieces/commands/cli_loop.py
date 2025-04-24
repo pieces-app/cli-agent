@@ -74,7 +74,6 @@ def run_cli(user_input: str, command_name: str, command_args: List[str]):
         double_space("Exiting...")
         BaseWebsocket.close_all()
         return True
-    print(command_args)
 
     if command_name.isdigit():
         command_name = "drive"
