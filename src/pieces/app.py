@@ -117,6 +117,11 @@ class PiecesCLI:
         )
         create_parser.set_defaults(func=AssetsCommands.create_asset)
 
+        share_parser = self.command_parser.add_parser(
+            "share", help="Share the current material"
+        )
+        share_parser.set_defaults(func=AssetsCommands.share_asset)
+
         # Subparser for the 'run' command
         run_parser = self.command_parser.add_parser("run", help="Runs CLI in a loop")
         run_parser.set_defaults(func=loop)
