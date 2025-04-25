@@ -151,10 +151,8 @@ class Settings:
 
     @classmethod
     def show_error(cls, error, error_message=None):
-        print()
         print(f"\033[31m{error}\033[0m")
         print(f"\033[31m{error_message}\033[0m") if error_message else None
-        print()
         if not cls.run_in_loop:
             sys.exit(2)
 

@@ -1,6 +1,10 @@
 from typing import Dict, Literal, cast
 from rich.console import Console
 from rich.markdown import Markdown
+import urllib.request
+
+from pieces.mcp.utils import get_mcp_latest_url
+from pieces.settings import Settings
 
 from ..utils import PiecesSelectMenu
 from .integrations import vscode_integration, goose_integration, cursor_integration
@@ -20,6 +24,16 @@ def handle_mcp(
     goose: bool = False,
     **kwargs,
 ):
+    # Let's check for the MCP server to see if it is running
+    try:
+        with urllib.request.urlopen(get_mcp_latest_url(), timeout=1) as response:
+            for line in response:
+                message = line.decode("utf-8").strip()
+                if message:
+                    break
+    except Exception as e:
+        Settings.show_error(f"Pieces MCP server is not running {e}")
+        return
     if vscode:
         args = {}
         if kwargs.get("global"):
