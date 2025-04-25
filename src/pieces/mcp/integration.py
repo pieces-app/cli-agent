@@ -26,14 +26,14 @@ class Integration:
         saver=lambda x, y: json.dump(x, y, indent=4),
         url_property_name="url",
     ) -> None:
+        # remove the css selector
+        self.docs_no_css_selector = docs.split("#")[0]
         self.options = options
         self.text_end = text_success
         self.readable = readable
         self.error_text = error_text or (
             "Something went wrong. "
-            f"Please refer to the documentation: `{
-                docs.split('#')[0]
-            }`"  # remove the css selector
+            f"Please refer to the documentation: `{self.docs_no_css_selector}`"
         )
         self.docs = docs
         self.get_settings_path = get_settings_path

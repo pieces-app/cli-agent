@@ -1,4 +1,6 @@
-from typing import Dict
+from typing import Dict, Literal, cast
+from rich.console import Console
+from rich.markdown import Markdown
 
 from ..utils import PiecesSelectMenu
 from .integrations import vscode_integration, goose_integration, cursor_integration
@@ -37,3 +39,18 @@ def handle_mcp(
             [(val.readable, {key: True}) for key, val in supported_mcps.items()],
             handle_mcp,
         ).run()
+
+
+def handle_mcp_docs(
+    ide: Literal["vscode", "goose", "cursor", "all", "current"], **kwargs
+):
+    if ide in ["all", "current"]:
+        for mcp_name, mcp_integration in supported_mcps.items():
+            if ide == "current" and not mcp_integration.is_set_up():
+                continue
+            handle_mcp_docs(cast(Literal["vscode", "goose", "cursor"], mcp_name))
+        return
+    integration = supported_mcps[ide]
+    Console().print(
+        Markdown(f"**{integration.readable}**: `{integration.docs_no_css_selector}`")
+    )

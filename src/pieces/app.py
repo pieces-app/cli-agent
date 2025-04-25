@@ -21,7 +21,7 @@ from pieces.commands import (
 )
 from pieces.autocommit import git_commit
 from pieces.copilot import AskStream, conversation_handler, get_conversations
-from pieces.mcp import handle_mcp, handle_list
+from pieces.mcp import handle_mcp, handle_list, handle_mcp_docs
 from pieces import __version__
 
 ask_stream = AskStream()
@@ -400,6 +400,19 @@ class PiecesCLI:
             help="Display the list of the ready to be registered MCPs",
         )
         mcp_list_parser.set_defaults(func=handle_list)
+
+        mcp_docs_parser = mcp_subparser.add_parser(
+            "docs", help="Print the documentations for an integration"
+        )
+        mcp_docs_parser.add_argument(
+            "--ide",
+            dest="ide",
+            type=str,
+            choices=["vscode", "cursor", "goose", "current", "all"],
+            default="all",
+            help="The IDE to print its documentation",
+        )
+        mcp_docs_parser.set_defaults(func=handle_mcp_docs)
 
     def run(self):
         try:
