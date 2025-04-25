@@ -109,7 +109,7 @@ class Integration:
 
         return settings
 
-    def is_setted_up(self) -> bool:
+    def is_set_up(self) -> bool:
         try:
             config = self.load_config()
         except FileNotFoundError:

@@ -1,3 +1,4 @@
+from queue import Empty
 from typing import Literal
 import yaml
 import platform
@@ -28,20 +29,38 @@ def get_global_vs_settings():
     return settings_path
 
 
+def validate_vscode_project(path):
+    """Validate that the path is a legitimate VS Code project."""
+    if not path or path.isspace():
+        return False, ""
+    path = os.path.abspath(os.path.expanduser(path))
+
+    # Check if directory exists
+    if not os.path.isdir(path):
+        return False, "The specified path is not a directory"
+
+    # Check for .vscode folder or specific VS Code files
+    vscode_dir = os.path.join(path, ".vscode")
+    if not os.path.isdir(vscode_dir):
+        return False, "No .vscode directory found - this may not be a VS Code project"
+
+    return True, path
+
+
 def get_vscode_path(option: Literal["global", "local"] = "global"):
     if option == "global":
         settings_path = get_global_vs_settings()
 
     elif option == "local":
         path = input("Enter the path to the VS Code project: ")
-        path = os.path.abspath(os.path.expanduser(path))
+        is_valid, m = validate_vscode_project(path)
 
-        while not os.path.exists(path):
-            print("Invalid Path: The directory does not exist")
+        while not is_valid:
+            print(m)
             path = input("Enter a valid path for the VS Code project: ")
-            path = os.path.abspath(os.path.expanduser(path))
+            is_valid, m = validate_vscode_project(path)
+        settings_path = m
 
-        settings_path = os.path.join(path, ".vscode", "settings.json")
     return settings_path
 
 
@@ -107,7 +126,7 @@ text_success_cursor = """
 > Ensure PiecesOS is running & LTM is enabled
 """
 
-cursor_inetgration = Integration(
+cursor_integration = Integration(
     options=[],
     text_success=text_success_cursor,
     docs="https://docs.pieces.app/products/mcp/cursor#using-pieces-mcp-server-in-cursor",
@@ -116,7 +135,7 @@ cursor_inetgration = Integration(
     path_to_mcp_settings=["mcp_servers", "Pieces"],
     mcp_settings={},
 )
-vscode_inetgration = Integration(
+vscode_integration = Integration(
     options=[
         (
             "Global (Set the MCP to run globally for all your projects) ",

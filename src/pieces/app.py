@@ -343,7 +343,7 @@ class PiecesCLI:
 
         mcp_parser = self.command_parser.add_parser(
             "mcp",
-            help="setup the MCP server for an intgration",
+            help="setup the MCP server for an integration",
         )
 
         mcp_parser.set_defaults(func=lambda **kwargs: mcp_parser.print_help())
