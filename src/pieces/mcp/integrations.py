@@ -1,4 +1,3 @@
-from queue import Empty
 from typing import Literal
 import yaml
 import platform

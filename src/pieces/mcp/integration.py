@@ -5,6 +5,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 import yaml
 
+from pieces.settings import Settings
+
 from .utils import get_mcp_latest_url, get_mcp_urls
 from ..utils import PiecesSelectMenu
 
@@ -57,6 +59,19 @@ class Integration:
                     f"For more information please refer to the docs: `{self.docs}`"
                 )
             )
+            # Update the local cache
+            Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
+            if (
+                not Settings.pieces_client.copilot.context.ltm.is_enabled
+                and console.input(
+                    "Pieces LTM is not running, do you want to enable it? (y/n): "
+                )
+                == "y"
+            ):
+                try:
+                    Settings.pieces_client.copilot.context.ltm.enable(True)
+                except PermissionError as e:
+                    console.print(f"**{e}**, Please enable them")
             console.print(Markdown(self.text_end))
         except KeyboardInterrupt:
             pass
