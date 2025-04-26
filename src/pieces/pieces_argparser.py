@@ -37,16 +37,67 @@ class PiecesArgparser(argparse.ArgumentParser):
             )
         sys.exit(2)
 
+    def format_usage(self):
+        """Override the standard usage formatter to use Rich styling with bracket syntax."""
+        # Get the raw usage text from the parent's format_usage method
+        raw_usage = super().format_usage()
+
+        # Format the usage text with Rich styling using bracket syntax
+        usage_parts = raw_usage.split("usage: ", 1)
+        if len(usage_parts) > 1:
+            program_name, arguments = usage_parts[1].split(" ", 1)
+
+            # Create styled text using bracket syntax
+            styled_usage = "[bold yellow]usage:[/] [green]" + program_name + "[/] "
+
+            # Format different argument types
+            current_text = ""
+            in_optional = False
+            in_required = False
+
+            for char in arguments:
+                if char == "[":
+                    if current_text:
+                        styled_usage += current_text
+                        current_text = ""
+                    styled_usage += "[cyan]["
+                    in_optional = True
+                elif char == "]":
+                    styled_usage += "][/cyan]"
+                    in_optional = False
+                    current_text = ""
+                elif char == "{":
+                    if current_text:
+                        styled_usage += current_text
+                        current_text = ""
+                    styled_usage += "[magenta]{"
+                    in_required = True
+                elif char == "}":
+                    styled_usage += "}[/magenta]"
+                    in_required = False
+                    current_text = ""
+                else:
+                    if in_optional or in_required:
+                        styled_usage += char
+                    else:
+                        current_text += char
+
+            if current_text:
+                styled_usage += current_text
+
+            return styled_usage
+
+        return raw_usage
+
     def print_help(self, file=None):
         console = self.console
 
         # HEADER
-        console.print(f"[bold blue]{self.description or f'Pieces CLI {self.prog.split(" ")[-1].title()} Command'}[/]")
+        console.print(
+            f"[bold blue]{self.description or f'Pieces CLI {self.prog.split(" ")[-1].title()} Command'}[/]"
+        )
 
-        usage = Text()
-        usage.append("USAGE: ", style="bold yellow")
-        usage.append(self.format_usage().split("usage: ")[1].strip())
-        console.print(usage, "\n")
+        console.print(self.format_usage(), "\n")
 
         # Collect all actions by type
         pos_actions = [
@@ -77,9 +128,11 @@ class PiecesArgparser(argparse.ArgumentParser):
                     arg_name = f"  {action.dest}"
                     padding = " " * (max_width - len(arg_name))
                     if action.choices:
-                        pos_text += f"[green bold]{arg_name}[/]{padding}- {", ".join( action.choices )}\n"
+                        pos_text += f"[green bold]{arg_name}[/]{padding}- {', '.join(action.choices)}\n"
                     elif action.help:
-                        pos_text += f"[green bold]{arg_name}[/]{padding}- {action.help}\n"
+                        pos_text += (
+                            f"[green bold]{arg_name}[/]{padding}- {action.help}\n"
+                        )
             if len(pos_text.splitlines()) > 1:
                 console.print(pos_text)
 
