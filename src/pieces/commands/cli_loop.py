@@ -82,6 +82,8 @@ def run_cli(user_input: str, command_name: str, command_args: str):
 
 
 def run_command(user_input, command_name, command_args):
+    if command_name == "run":
+        return # Avoid running multiple instance in the same "loop"
     Settings.logger.debug(f"Running {user_input} with {command_name} and {command_args}")
     if command_name in PiecesArgparser.parser._subparsers._group_actions[0].choices:
         subparser = PiecesArgparser.parser._subparsers._group_actions[0].choices[command_name]
@@ -102,6 +104,7 @@ def run_command(user_input, command_name, command_args):
         commands = list(
             PiecesArgparser.parser._subparsers._group_actions[0].choices.keys())
         commands.append("exit")
+        commands.remove("run")
         most_similar_command = PiecesArgparser.find_most_similar_command(
             commands, user_input)
         Settings.logger.print(f"Did you mean {most_similar_command}")

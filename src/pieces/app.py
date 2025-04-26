@@ -65,7 +65,9 @@ class PiecesCLI:
 
         # Subparser for the 'lists' command
         list_parser = self.command_parser.add_parser(
-            "list", aliases=["drive"], help="List materials or apps or models",
+            "list",
+            aliases=["drive"],
+            help="List materials or apps or models",
             description="Pieces CLI List (Alias for drive)",
         )
         list_parser.add_argument(
@@ -368,7 +370,7 @@ class PiecesCLI:
             res = Settings.logger.prompt(
                 "It looks like this is your first time using the Pieces CLI."
                 "\nWould you like to start onboarding",
-                choices=["y", "n", "skip"]
+                choices=["y", "n", "skip"],
             )
             if res.lower() == "y":
                 return onboarding_command()
@@ -398,6 +400,8 @@ def main():
     try:
         cli = PiecesCLI()
         cli.run()
+    except KeyboardInterrupt:
+        pass
     except Exception as e:
         Settings.logger.critical(e)
         Settings.show_error("UNKOWN EXCEPTION", e)

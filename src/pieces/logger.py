@@ -11,6 +11,7 @@ from rich.prompt import Prompt
 
 class Logger:
     _instance: Self
+
     def __init__(self, debug_mode=False, log_dir=None):
         """
         Initialize the logger.
@@ -63,7 +64,7 @@ class Logger:
 
     def critical(self, message, *args, **kwargs):
         """Log a critical message."""
-        exc_info = kwargs.pop('exc_info', True) 
+        exc_info = kwargs.pop("exc_info", True)
         self.logger.error(message, exc_info=exc_info, *args, **kwargs)
 
     @property
