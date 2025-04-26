@@ -26,7 +26,7 @@ class ExecuteCommand:
             AssetsCommands.open_asset(**kwargs)
             cls.execute_asset(**kwargs)
 
-        select_menu = PiecesSelectMenu(assets, open_and_execute_asset)
+        select_menu = PiecesSelectMenu(assets, open_and_execute_asset, title="Select a material to execute")
         select_menu.run()
 
     @classmethod

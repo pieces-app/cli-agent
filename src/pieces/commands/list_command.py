@@ -32,7 +32,7 @@ class ListCommand:
                             for item in BasicAsset.get_identifiers()])
 
         select_menu = PiecesSelectMenu(
-            [], AssetsCommands.open_asset, kwargs.get("footer"))
+            [], AssetsCommands.open_asset, kwargs.get("footer"), title="Select a material")
 
         def update_assets():
             for i, asset in enumerate(assets, start=1):
@@ -47,7 +47,7 @@ class ListCommand:
         models = [(f"{idx}: {model_name}", {"MODEL_INDEX": idx})
                   for idx, model_name in enumerate(Settings.pieces_client.available_models_names, start=1)]
         select_menu = PiecesSelectMenu(
-            models, change_model, f"Currently using: {Settings.get_model()}")
+            models, change_model, f"Currently using: {Settings.get_model()}", title="Select a LLM")
         select_menu.run()
 
     @classmethod
