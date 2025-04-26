@@ -15,7 +15,7 @@ class ListCommand:
         type = kwargs.get("type", "materials")
         max_assets = kwargs.get("max_assets", 10)
         if max_assets < 1:
-            print("Max assets must be greater than 0")
+            Settings.logger.print("Max assets must be greater than 0")
             max_assets = 10
 
         if type == "materials":
@@ -61,7 +61,7 @@ class ListCommand:
                 app_version = getattr(app, 'version', 'Unknown')
                 app_platform = getattr(app, 'platform', 'Unknown').value if hasattr(
                     app, 'platform') and hasattr(app.platform, 'value') else 'Unknown'
-                print(f"{i}: {app_name}, {app_version}, {app_platform}")
+                Settings.logger.print(f"{i}: {app_name}, {app_version}, {app_platform}")
         else:
-            print(
+            Settings.logger.print(
                 "Error: The 'Applications' object does not contain an iterable list of applications.")

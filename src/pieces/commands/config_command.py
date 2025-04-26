@@ -36,7 +36,7 @@ class ConfigCommands:
         if editor:
             config['editor'] = editor
             cls.save_config(config)
-            print(f"Editor set to: {kwargs['editor']}")
+            Settings.logger.print(f"Editor set to: {kwargs['editor']}")
         else:
-            print("Current configuration:")
-            print(f"Editor: {config.get('editor', 'Not set')}")
+            Settings.logger.print("Current configuration:")
+            Settings.logger.print(f"Editor: {config.get('editor', 'Not set')}")

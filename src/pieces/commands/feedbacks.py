@@ -1,34 +1,29 @@
 from rich.markdown import Markdown
-from rich.console import Console
 from ..settings import Settings
 
 
 def feedback(**kwargs):
-    console = Console()
-
-    console.print(
+    Settings.logger.print(
         Markdown("Thank you for using Pieces CLI!\n"
                  "We always care about your feedback.\n"
-                 "Feel free to share your experience with us.\n"
-                 "https://github.com/pieces-app/cli-agent/discussions/194")
+                 "Feel free to share your experience with us.\n\n"
+                 "`https://github.com/pieces-app/cli-agent/discussions/194`")
     )
-    res = input(
-        "Would you like to open the feedback page in your browser? (y/n): ")
+    res = Settings.logger.confirm(
+        "Would you like to open the feedback page in your browser?")
 
-    if res.lower() == 'y':
+    if res:
         Settings.open_website(
             "https://github.com/pieces-app/cli-agent/discussions/194")
 
 
 def contribute(**kwargs):
-    console = Console()
-
-    console.print(
-        "Contribute to the project\n"
-        "https://github.com/pieces-app/cli-agent"
+    Settings.logger.print(
+        "Contribute to the project\n\n"
+        "`https://github.com/pieces-app/cli-agent`"
     )
-    res = input(
-        "Would you like to open the GitHub page in your browser? (y/n): ")
+    res = Settings.logger.confirm(
+        "Would you like to open the GitHub page in your browser?")
 
-    if res.lower() == 'y':
+    if res:
         Settings.open_website("https://github.com/pieces-app/cli-agent")

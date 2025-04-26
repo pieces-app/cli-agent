@@ -1,4 +1,5 @@
 from pieces.wrapper.basic_identifier.asset import BasicAsset
+from ..settings import Settings
 from .list_command import ListCommand
 
 # Map search_type to descriptive text
@@ -26,4 +27,4 @@ def search(query, **kwargs):
                     f"| Results Found: {len(asset_details)}")
         )
     else:
-        print("No matches found.")
+        Settings.logger.print("No matches found.")

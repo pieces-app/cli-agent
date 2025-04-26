@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Optional, Tuple
 from pieces.settings import Settings
 import os
 from collections import defaultdict
-from rich.console import Console
 from rich.markdown import Markdown
 
 
@@ -110,35 +109,34 @@ def git_commit(**kwargs):
         except TypeError:
             issue_flag = False
 
-    r_message = input("The generated commit message is:"
+    r_message = Settings.logger.prompt("The generated commit message is:"
                       f"\n\n {commit_message}\n\n"
                       "Are you sure you want to commit these changes?"
-                      "\n\n- y: Yes\n- n: No\n- c: Change the commit message"
-                      "\n\nPlease enter your choice (y/n/c): ").lower().strip()
+                      "\n\n- y: Yes\n- n: No\n- c: Change the commit message",
+                                           choices=["y","n","c"])
 
-    if r_message not in ["y", "c", ""]:
-        print("Committing changes cancelled")
+    if r_message not in ["y", "c"]:
+        Settings.logger.print("Committing changes cancelled")
         return
 
     if r_message == "c":
-        edit = input(
-            f"Enter the new commit message [generated message is: '{commit_message}']: ")
+        edit = Settings.logger.prompt(
+            f"Enter the new commit message [generated message is: '{commit_message}']")
         if edit:
             commit_message = edit
 
     if issue_flag:
         if issue_number:
-            print("Issue Number: ", issue_number)
-            print("Issue Title: ", issue_title)
-            r_issue = input("Is this issue related to the commit? (y/n): ")
-            if r_issue.lower() == "y":
+            Settings.logger.print("Issue Number: ", issue_number)
+            Settings.logger.print("Issue Title: ", issue_title)
+            r_issue = Settings.logger.confirm("Is this issue related to the commit?")
+            if r_issue:
                 commit_message += f" (issue: #{issue_number})"
             else:
                 issue_number = None
         if issue_number is None and issue_markdown:
-            console = Console()
             md = Markdown(issue_markdown)
-            console.print(md)
+            Settings.logger.print(md)
             validate_issue = True
             while validate_issue:
                 issue_number = input(
@@ -155,11 +153,11 @@ def git_commit(**kwargs):
 
     try:
         subprocess.run(["git", "commit", "-m", commit_message], check=True)
-        print("Successfully committed with message:", commit_message)
+        Settings.logger.print("Successfully committed with message:", commit_message)
         if kwargs.get('push', False):
             subprocess.run(["git", "push"], check=True)
     except subprocess.CalledProcessError as e:
-        print("Failed to commit changes:", e)
+        Settings.logger.print("Failed to commit changes:", e)
 
 
 def get_issue_details(seeds):

@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 import sys
 from platformdirs import user_data_dir
+
+from pieces.logger import Logger
 from .wrapper import PiecesClient
 from .wrapper.version_compatibility import VersionChecker, UpdateEnum
 from pieces import __version__
@@ -20,6 +22,7 @@ class Settings:
     """Settings class for the PiecesCLI"""
 
     pieces_client = PiecesClient()
+    logger = Logger() # Will be set on the app startup
 
     PIECES_OS_MIN_VERSION = "11.0.0"  # Minium version (11.0.0)
     PIECES_OS_MAX_VERSION = "12.0.0"  # Maxium version (12.0.0)

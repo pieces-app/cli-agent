@@ -39,7 +39,7 @@ class AskStream:
                     response.conversation)
 
         except Exception as e:
-            print(f"Error processing message: {e}")
+            Settings.logger.print(f"Error processing message: {e}")
 
     def add_context(self, files, assets_index):
 
