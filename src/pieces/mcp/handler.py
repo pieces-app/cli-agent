@@ -34,16 +34,19 @@ def handle_mcp(
     except Exception as e:
         Settings.show_error(f"Pieces MCP server is not running {e}")
         return
+
+    # Getting the args
+    args = {}
+    if kwargs.get("global"):
+        args = {"option": "global"}
+    elif kwargs.get("local"):
+        args = {"option": "local"}
+
     if vscode:
-        args = {}
-        if kwargs.get("global"):
-            args = {"option": "global"}
-        elif kwargs.get("local"):
-            args = {"option": "local"}
         supported_mcps["vscode"].run(**args)
 
     if goose:
-        supported_mcps["goose"].run()
+        supported_mcps["goose"].run(**args)
 
     if cursor:
         supported_mcps["cursor"].run()

@@ -1,7 +1,9 @@
+from os.path import exists
 from typing import Literal
 import yaml
 import platform
 import os
+import json
 
 from .integration import Integration
 from ..settings import Settings
@@ -28,8 +30,8 @@ def get_global_vs_settings():
     return settings_path
 
 
-def validate_vscode_project(path):
-    """Validate that the path is a legitimate VS Code project."""
+def validate_project_path(path, dot_file=".vscode"):
+    """Validate that the path is a legitimate VS Code or cursor project."""
     if not path or path.isspace():
         return False, ""
     path = os.path.abspath(os.path.expanduser(path))
@@ -39,43 +41,60 @@ def validate_vscode_project(path):
         return False, "The specified path is not a directory"
 
     # Check for .vscode folder or specific VS Code files
-    vscode_dir = os.path.join(path, ".vscode")
+    vscode_dir = os.path.join(path, dot_file)
     if not os.path.isdir(vscode_dir):
         return False, "No .vscode directory found - this may not be a VS Code project"
 
     return True, path
 
 
-def get_vscode_path(option: Literal["global", "local"] = "global"):
-    if option == "global":
-        settings_path = get_global_vs_settings()
+def input_local_path(dot_file: str, name: str) -> str:
+    path = input(f"Enter the path to the {name} project: ")
+    is_valid, m = validate_project_path(path, dot_file)
 
-    elif option == "local":
-        path = input("Enter the path to the VS Code project: ")
-        is_valid, m = validate_vscode_project(path)
-
-        while not is_valid:
-            print(m)
-            path = input("Enter a valid path for the VS Code project: ")
-            is_valid, m = validate_vscode_project(path)
-        settings_path = m
+    while not is_valid:
+        print(m)
+        path = input(f"Enter a valid path for the {name} project: ")
+        is_valid, m = validate_project_path(path, dot_file)
+    settings_path = m
 
     return settings_path
 
 
-def get_cursor_path():
-    system = platform.system()
-    if system == "Darwin":  # macOS
-        config_path = os.path.expanduser(
-            "~/Library/Application Support/Cursor/User/mcp.json"
-        )
-    elif system == "Windows":
-        config_path = os.path.join(os.environ["APPDATA"], "Cursor", "User", "mcp.json")
-    elif system == "Linux":
-        config_path = os.path.expanduser("~/.config/Cursor/User/mcp.json")
-    else:
-        Settings.show_error(f"Unsupported platform {system}")
-        raise ValueError
+def get_vscode_path(option: Literal["global", "local"] = "global"):
+    if option == "global":
+        settings_path = get_global_vs_settings()
+    elif option == "local":
+        settings_path = input_local_path(".vscode", "VS Code")
+    create_config(settings_path)
+    return settings_path
+
+
+def create_config(path: str):
+    # Create the MCP file if not exists
+    dir = os.path.dirname(path)
+    if os.path.exists(dir) and not os.path.exists(path):
+        with open(path, "w") as file:
+            json.dump({}, file)
+
+
+def get_cursor_path(option: Literal["global", "local"] = "global"):
+    if option == "global":
+        system = platform.system()
+        if system == "Darwin":  # macOS
+            config_path = os.path.expanduser("~/.cursor/mcp.json")
+        elif system == "Windows":
+            # FIXME: the path is not correct on Windows
+            config_path = os.path.join(os.environ["APPDATA"], ".cursor", "mcp.json")
+        elif system == "Linux":
+            config_path = os.path.expanduser("~/.cursor/mcp.json")
+        else:
+            Settings.show_error(f"Unsupported platform {system}")
+            raise ValueError
+    elif option == "local":
+        config_path = input_local_path(".cursor", "Cursor")
+
+    create_config(config_path)
 
     return config_path
 
@@ -118,15 +137,24 @@ text_success_cursor = """
 
 1. Open chat panel: `⌘+i` (Mac) / `Ctrl+i` (Win)
 2. Switch to **Agent Mode**
-3. Ask a question like:
-   > What was I working on yesterday?
+3. **Ask a prompt:**
+
+       What was I working on yesterday?
+       Summarize it with 5 bullet points and timestamps.
+
 4. Click **Use Tool** when prompted
 
 > Ensure PiecesOS is running & LTM is enabled
 """
 
 cursor_integration = Integration(
-    options=[],
+    options=[
+        (
+            "Global (Set the MCP to run globally for all your projects) ",
+            {"option": "global"},
+        ),
+        ("Local (Set the MCP to run for a specific Project)", {"option": "local"}),
+    ],
     text_success=text_success_cursor,
     docs="https://docs.pieces.app/products/mcp/cursor#using-pieces-mcp-server-in-cursor",
     readable="Cursor",

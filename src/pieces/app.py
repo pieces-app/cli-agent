@@ -364,13 +364,13 @@ class PiecesCLI:
             "--global",
             dest="global",
             action="store_true",
-            help="For VS Code to set the Global MCP",
+            help="For VS Code or Cursor to set the Global MCP",
         )
         mcp_setup_parser.add_argument(
             "--local",
             dest="local",
             action="store_true",
-            help="For VS Code to set the Local MCP",
+            help="For VS Code or Cursor to set the Local MCP",
         )
         mcp_setup_parser.add_argument(
             "--cursor",
