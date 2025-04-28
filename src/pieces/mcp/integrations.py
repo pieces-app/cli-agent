@@ -107,7 +107,7 @@ text_success_vscode = """
 
 1. **Open Copilot Chat:**
 
-       ⌘+Ctrl+I (macOS)
+       ⌘+⌃+I (macOS)
        Ctrl+Alt+I (Windows/Linux)
 
 2. **Switch to Agent Mode**

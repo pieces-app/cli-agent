@@ -71,7 +71,9 @@ class Integration:
                 try:
                     Settings.pieces_client.copilot.context.ltm.enable(True)
                 except PermissionError as e:
-                    console.print(f"**{e}**, Please enable them")
+                    console.print("Could not enable the LTM")
+                    console.print(Markdown(f"**{e}**"))
+                    return
             console.print(Markdown(self.text_end))
         except KeyboardInterrupt:
             pass

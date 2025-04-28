@@ -63,6 +63,7 @@ class LongTermMemory:
         from pieces_os_client.models.workstream_pattern_engine_vision_status import (
             WorkstreamPatternEngineVisionStatus,
         )
+        import urllib3
 
         if self.is_enabled:
             return
@@ -78,13 +79,21 @@ class LongTermMemory:
                 missing_permissions.append("accessibility")
 
         if missing_permissions and show_message:
-            out = self.pieces_client.os_api.os_permissions_request(
-                os_permissions=OSPermissions(
-                    processing=OSProcessingPermissions(
-                        **{perm: True for perm in missing_permissions}
-                    )
-                )
+            print(
+                f"Enabling the following permissions: {' ,'.join(missing_permissions)}"
             )
+            try:
+                out = self.pieces_client.os_api.os_permissions_request(
+                    os_permissions=OSPermissions(
+                        processing=OSProcessingPermissions(
+                            **{perm: True for perm in missing_permissions}
+                        )
+                    ),
+                    _request_timeout=7,
+                )
+            except urllib3.exceptions.TimeoutError:
+                out = self.pieces_client.os_api.os_permissions()
+
             missing_permissions.clear()
             if out.processing:
                 if not out.processing.vision:
