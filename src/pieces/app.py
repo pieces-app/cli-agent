@@ -75,7 +75,7 @@ class PiecesCLI:
             nargs="?",
             type=str,
             default="materials",
-            help="type of the list",
+            help="Type of the list",
             choices=["materials", "apps", "models"],
         )
         list_parser.add_argument(
@@ -145,7 +145,7 @@ class PiecesCLI:
             "--classification",
             "-c",
             dest="classification",
-            help="reclassify a material",
+            help="Reclassify a material",
             required=False,
         )
         edit_parser.set_defaults(func=AssetsCommands.edit_asset)
@@ -217,7 +217,7 @@ class PiecesCLI:
 
         # Subparser for the 'conversations' command
         conversations_parser = self.command_parser.add_parser(
-            "chats", aliases=["conversations"], help="print all chats"
+            "chats", aliases=["conversations"], help="Print all chats"
         )
         conversations_parser.add_argument(
             "max_chats",
