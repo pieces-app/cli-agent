@@ -351,7 +351,7 @@ class PiecesCLI:
         mcp_subparser = mcp_parser.add_subparsers(dest="mcp")
 
         mcp_setup_parser = mcp_subparser.add_parser(
-            "setup", help="Sets up a new sub parser"
+            "setup", help="Sets up a integration"
         )
 
         mcp_setup_parser.add_argument(
