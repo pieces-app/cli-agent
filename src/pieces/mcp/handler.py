@@ -65,9 +65,13 @@ def handle_mcp_docs(
         for mcp_name, mcp_integration in supported_mcps.items():
             if ide == "current" and not mcp_integration.is_set_up():
                 continue
-            handle_mcp_docs(cast(Literal["vscode", "goose", "cursor"], mcp_name))
+            handle_mcp_docs(
+                cast(Literal["vscode", "goose", "cursor"], mcp_name), **kwargs
+            )
         return
     integration = supported_mcps[ide]
     Console().print(
         Markdown(f"**{integration.readable}**: `{integration.docs_no_css_selector}`")
     )
+    if kwargs.get("open"):
+        Settings.open_website(integration.docs_no_css_selector)

@@ -412,6 +412,13 @@ class PiecesCLI:
             default="all",
             help="The IDE to print its documentation",
         )
+        mcp_docs_parser.add_argument(
+            "--open",
+            "-o",
+            dest="open",
+            action="store_true",
+            help="Open the queried docs in the browser",
+        )
         mcp_docs_parser.set_defaults(func=handle_mcp_docs)
 
     def run(self):

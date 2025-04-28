@@ -113,14 +113,13 @@ class Integration:
     def load_config(self, path: str = "", **kwargs) -> Dict:
         if not path:
             path = self.get_settings_path(**kwargs)
-        dirname = os.path.dirname(path)
         try:
             with open(path, "r") as f:
                 settings = self.loader(f)
         except FileNotFoundError as e:
             raise e
         except (json.JSONDecodeError, yaml.YAMLError):
-            print(f"Error parsing {dirname} - it may be malformed")
+            print(f"Failed in prasing {self.readable}, {path} - it may be malformed")
             raise ValueError
 
         return settings
@@ -129,6 +128,9 @@ class Integration:
         try:
             config = self.load_config()
         except FileNotFoundError:
+            return False
+        except ValueError as e:
+            print(e)
             return False
         # Ignore the server name (Pieces)
         for p in self.path_to_mcp_settings[:-1]:

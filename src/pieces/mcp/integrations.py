@@ -86,7 +86,6 @@ def get_cursor_path(option: Literal["global", "local"] = "global"):
         if system == "Darwin":  # macOS
             config_path = os.path.expanduser("~/.cursor/mcp.json")
         elif system == "Windows":
-            # FIXME: the path is not correct on Windows
             config_path = os.path.join(os.environ["APPDATA"], ".cursor", "mcp.json")
         elif system == "Linux":
             config_path = os.path.expanduser("~/.cursor/mcp.json")
