@@ -46,10 +46,10 @@ def handle_mcp(
         supported_mcps["vscode"].run(**args)
 
     if goose:
-        supported_mcps["goose"].run(**args)
+        supported_mcps["goose"].run()
 
     if cursor:
-        supported_mcps["cursor"].run()
+        supported_mcps["cursor"].run(**args)
 
     if not goose and not vscode and not cursor:
         PiecesSelectMenu(

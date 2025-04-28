@@ -83,7 +83,7 @@ class Integration:
         self.mcp_settings[self.url_property_name] = get_mcp_latest_url()
         path = self.get_settings_path(**kwargs)
         dirname = os.path.dirname(path)
-        settings = self.load_config(**kwargs)
+        settings = self.load_config(path, **kwargs)
         begin = settings
         for p in self.path_to_mcp_settings:
             begin = begin.get(p, {})
@@ -110,8 +110,9 @@ class Integration:
             print(f"Error writing {self.readable} {dirname}")
             raise e
 
-    def load_config(self, **kwargs) -> Dict:
-        path = self.get_settings_path(**kwargs)
+    def load_config(self, path: str = "", **kwargs) -> Dict:
+        if not path:
+            path = self.get_settings_path(**kwargs)
         dirname = os.path.dirname(path)
         try:
             with open(path, "r") as f:

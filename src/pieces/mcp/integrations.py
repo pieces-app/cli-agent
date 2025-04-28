@@ -1,4 +1,3 @@
-from os.path import exists
 from typing import Literal
 import yaml
 import platform
@@ -41,11 +40,11 @@ def validate_project_path(path, dot_file=".vscode"):
         return False, "The specified path is not a directory"
 
     # Check for .vscode folder or specific VS Code files
-    vscode_dir = os.path.join(path, dot_file)
-    if not os.path.isdir(vscode_dir):
+    dot_dir = os.path.join(path, dot_file)
+    if not os.path.isdir(dot_dir):
         return False, "No .vscode directory found - this may not be a VS Code project"
 
-    return True, path
+    return True, dot_dir
 
 
 def input_local_path(dot_file: str, name: str) -> str:
@@ -66,6 +65,9 @@ def get_vscode_path(option: Literal["global", "local"] = "global"):
         settings_path = get_global_vs_settings()
     elif option == "local":
         settings_path = input_local_path(".vscode", "VS Code")
+        settings_path = os.path.join(
+            settings_path, "settings.json"
+        )  # Add the settings.json to the settings path to edit
     create_config(settings_path)
     return settings_path
 
@@ -93,7 +95,9 @@ def get_cursor_path(option: Literal["global", "local"] = "global"):
             raise ValueError
     elif option == "local":
         config_path = input_local_path(".cursor", "Cursor")
-
+        config_path = os.path.join(
+            config_path, "mcp.json"
+        )  # Add the settings.json to the settings path to edit
     create_config(config_path)
 
     return config_path
