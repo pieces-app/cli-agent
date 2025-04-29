@@ -25,7 +25,7 @@ def check_assets_existence(func):
     """Decorator to ensure user has assets."""
 
     def wrapper(*args, **kwargs):
-        assets = Settings.pieces_client.assets  # Check if there is an asset
+        assets = Settings.pieces_client.assets()  # Check if there is an asset
         if not assets:
             return Settings.show_error(
                 "No materials found", "Please create an material first."
@@ -70,8 +70,6 @@ class AssetsCommands:
                 "Please choose from the list or use 'pieces list assets'",
             )
 
-        print_asset_details(cls.current_asset)
-
         code_content = cls.current_asset.raw_content
         open_in_editor = kwargs.get("editor")
 
@@ -106,6 +104,7 @@ class AssetsCommands:
                     Settings.show_error("Error in opening", e)
 
             else:
+                print_asset_details(cls.current_asset)
                 Console().print(
                     Markdown(
                         "No editor configured. Use `pieces config --editor <editor_command>` to set an editor."
@@ -141,29 +140,21 @@ class AssetsCommands:
             f"{(asset.id)}{get_file_extension(asset.classification)}",
         )
         data = None
-        found_file = False
         try:
-            found_file = True
             with open(file_path, "r") as f:
                 data = f.read()
         except FileNotFoundError:
-            res = console.input(
-                "Seems you did not open that material yet.\nDo you want to open it in your editor? (y/n): "
-            )
-            if res == "y":
-                cls.open_asset(asset.id, editor=True)
-                console.print(
-                    Markdown(
-                        "**Note:** Next time to open the material in your editor, use the `pieces list -e`"
-                    )
+            cls.open_asset(asset.id, editor=True)
+            console.print(
+                Markdown(
+                    "**Note:** Next time to open the material in your editor, use the `pieces list -e`"
                 )
+            )
 
         if data and asset.raw_content != data:
             console.print(Markdown(f"Saving `{asset.name}` material"))
             asset.raw_content = data
         else:
-            if found_file:
-                cls.open_asset(asset.id, editor=True)
             try:
                 input(
                     f"Content not changed.\n"
