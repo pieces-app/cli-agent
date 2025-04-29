@@ -85,16 +85,7 @@ def create_config(path: str):
 
 def get_cursor_path(option: Literal["global", "local"] = "global"):
     if option == "global":
-        system = platform.system()
-        if system == "Darwin":  # macOS
-            config_path = os.path.expanduser("~/.cursor/mcp.json")
-        elif system == "Windows":
-            config_path = os.path.join(os.environ["APPDATA"], ".cursor", "mcp.json")
-        elif system == "Linux":
-            config_path = os.path.expanduser("~/.cursor/mcp.json")
-        else:
-            Settings.show_error(f"Unsupported platform {system}")
-            raise ValueError
+        config_path = os.path.expanduser(os.path.join("~", ".cursor", "mcp.json"))
     elif option == "local":
         config_path = input_local_path(".cursor", "Cursor")
         config_path = os.path.join(
