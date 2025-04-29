@@ -15,7 +15,7 @@ def handle_list(
             else:
                 console.print(
                     Markdown(
-                        f"❌ {integration} MCP is not set up\n"
+                        f"❌ {integration} MCP is not set up, "
                         f"Use `pieces mcp setup --{key}` to set it up."
                     )
                 )

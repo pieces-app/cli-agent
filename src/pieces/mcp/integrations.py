@@ -29,7 +29,7 @@ def get_global_vs_settings():
     return settings_path
 
 
-def validate_project_path(path, dot_file=".vscode"):
+def validate_project_path(path, dot_file=".vscode", readable: str = "VS Code"):
     """Validate that the path is a legitimate VS Code or cursor project."""
     if not path or path.isspace():
         return False, ""
@@ -42,19 +42,22 @@ def validate_project_path(path, dot_file=".vscode"):
     # Check for .vscode folder or specific VS Code files
     dot_dir = os.path.join(path, dot_file)
     if not os.path.isdir(dot_dir):
-        return False, "No .vscode directory found - this may not be a VS Code project"
+        return (
+            False,
+            f"No {dot_file} directory found - this may not be a {readable} project",
+        )
 
     return True, dot_dir
 
 
 def input_local_path(dot_file: str, name: str) -> str:
     path = input(f"Enter the path to the {name} project: ")
-    is_valid, m = validate_project_path(path, dot_file)
+    is_valid, m = validate_project_path(path, dot_file, name)
 
     while not is_valid:
         print(m)
         path = input(f"Enter a valid path for the {name} project: ")
-        is_valid, m = validate_project_path(path, dot_file)
+        is_valid, m = validate_project_path(path, dot_file, name)
     settings_path = m
 
     return settings_path
@@ -162,7 +165,7 @@ cursor_integration = Integration(
     docs="https://docs.pieces.app/products/mcp/cursor#using-pieces-mcp-server-in-cursor",
     readable="Cursor",
     get_settings_path=get_cursor_path,
-    path_to_mcp_settings=["mcp_servers", "Pieces"],
+    path_to_mcp_settings=["mcpServers", "Pieces"],
     mcp_settings={},
 )
 vscode_integration = Integration(
@@ -179,7 +182,7 @@ vscode_integration = Integration(
     get_settings_path=get_vscode_path,
     path_to_mcp_settings=["mcp", "servers", "Pieces"],
     mcp_settings={
-        "type": "see",
+        "type": "sse",
     },
 )
 goose_integration = Integration(
