@@ -25,7 +25,7 @@ class Integration:
         loader=json.load,
         saver=lambda x, y: json.dump(x, y, indent=4),
         url_property_name="url",
-        id=Optional[str],
+        id: Optional[str] = None,
     ) -> None:
         # remove the css selector
         self.docs_no_css_selector = docs.split("#")[0]
@@ -44,7 +44,7 @@ class Integration:
         self.saver = saver
         self.url_property_name = url_property_name
         self.console = Console()
-        self.id = id or self.readable.lower().replace(" ", "_")
+        self.id: str = id or self.readable.lower().replace(" ", "_")
 
     def handle_options(self, **kwargs):
         if self.options and not kwargs:
@@ -77,13 +77,11 @@ class Integration:
         try:
             with open(Settings.mcp_config, "r") as f:
                 return json.load(f)
-        except FileNotFoundError:
+        except (FileNotFoundError, json.JSONDecodeError):
             return {}
 
     @classmethod
-    def add_local_project(
-        cls, integration: Literal["vscode", "goose", "cursor"], path: str
-    ):
+    def add_local_project(cls, integration: str, path: str):
         config = cls.load_mcp_config()
         c = config.get(integration, [])
         c.append(path)
@@ -118,14 +116,16 @@ class Integration:
         return True
 
     def repair(self):
-        if self.need_repair():
-            self.on_select()
+        paths_to_repair = self.need_repair()
+        if paths_to_repair:
+            [self.on_select(p) for p in paths_to_repair]
         else:
             self.console.print(f"No issues detected in {self.readable}")
 
-    def on_select(self, **kwargs):
+    def on_select(self, path=None, **kwargs):
         self.mcp_settings[self.url_property_name] = get_mcp_latest_url()
-        path = self.get_settings_path(**kwargs)
+        if not path:
+            path = self.get_settings_path(**kwargs)
         dirname = os.path.dirname(path)
         settings = self.load_config(path, **kwargs)
         begin = settings
@@ -170,28 +170,30 @@ class Integration:
 
         return settings
 
-    def need_repair(self) -> bool:
-        return not self._is_set_up()
+    def need_repair(self) -> list:
+        paths = self.load_mcp_config().get(self.id, [])
+        paths.append(self.get_settings_path())  # Get the global one as well
+        paths_to_repair = [path for path in paths if not self._is_set_up(True, path)]
+        return paths_to_repair
 
     def is_set_up(self) -> bool:
-        return self._is_set_up(False)
+        return self._is_set_up(False, None)
 
-    def _is_set_up(self, url=True) -> bool:
+    def _is_set_up(self, check_url=True, path: Optional[str] = None) -> bool:
         try:
-            config = self.load_config()
+            config = self.load_config(path or "")
         except FileNotFoundError:
             return False
         except ValueError as e:
             print(e)
             return False
-        # Ignore the server name (Pieces)
         for p in self.path_to_mcp_settings[:-1]:
             config = config.get(p, {})
 
-        for server in config.values():
-            if isinstance(server, dict) and server.get(self.url_property_name):
-                if url and server.get(self.url_property_name) in get_mcp_urls():
-                    return True
+        for value in config.values():
+            if isinstance(value, dict) and value.get(self.url_property_name):
+                if check_url:
+                    return value.get(self.url_property_name) in get_mcp_urls()
                 return True
         return False
 

@@ -99,8 +99,8 @@ def handle_status(**kwargs):
 
     for key, integration in supported_mcps.items():
         if integration.is_set_up() and integration.need_repair():
-            response = input(
-                f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow] (y/n)",
+            response = console.input(
+                f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow] (y/n): ",
             )
             if response == "y":
                 handle_repair(cast(Literal["vscode", "goose", "cursor"], key))
