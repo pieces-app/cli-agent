@@ -94,6 +94,7 @@ def handle_status(**kwargs):
         console.print("[green]LTM running[/green]")
     else:
         console.print("[red]LTM is not running[/red]")
+        return  # Do you we need to check the rest of integrations if the ltm is not running?
 
     console.print("[bold]Checking integration[/bold]")
 

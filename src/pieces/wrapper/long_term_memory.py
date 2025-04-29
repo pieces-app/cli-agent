@@ -80,7 +80,7 @@ class LongTermMemory:
 
         if missing_permissions and show_message:
             print(
-                f"Enabling the following permissions: {' ,'.join(missing_permissions)}"
+                f"Enabling the following PiecesOS permissions: {', '.join(missing_permissions)}"
             )
             try:
                 out = self.pieces_client.os_api.os_permissions_request(
@@ -103,7 +103,7 @@ class LongTermMemory:
 
         if missing_permissions:
             raise PermissionError(
-                f"{', '.join(missing_permissions).capitalize()} is not enabled"
+                f"{', '.join(missing_permissions).capitalize()} is not enabled yet"
             )
 
         state = WorkstreamPatternEngineStatus(
