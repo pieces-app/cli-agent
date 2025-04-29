@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Callable, Dict, List, Tuple, Optional
+from typing import Callable, Dict, List, Literal, Tuple, Optional
 from rich.console import Console
 from rich.markdown import Markdown
 import yaml
@@ -25,6 +25,7 @@ class Integration:
         loader=json.load,
         saver=lambda x, y: json.dump(x, y, indent=4),
         url_property_name="url",
+        id=Optional[str],
     ) -> None:
         # remove the css selector
         self.docs_no_css_selector = docs.split("#")[0]
@@ -43,6 +44,7 @@ class Integration:
         self.saver = saver
         self.url_property_name = url_property_name
         self.console = Console()
+        self.id = id or self.readable.lower().replace(" ", "_")
 
     def handle_options(self, **kwargs):
         if self.options and not kwargs:
@@ -70,6 +72,26 @@ class Integration:
             print(e)
             self.console.print(Markdown(self.error_text))
 
+    @classmethod
+    def load_mcp_config(cls):
+        try:
+            with open(Settings.mcp_config, "r") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
+
+    @classmethod
+    def add_local_project(
+        cls, integration: Literal["vscode", "goose", "cursor"], path: str
+    ):
+        config = cls.load_mcp_config()
+        c = config.get(integration, [])
+        c.append(path)
+        # avoid duplicates
+        config[integration] = list(set(c))
+        with open(Settings.mcp_config, "w") as f:
+            json.dump(config, f)
+
     def check_ltm(self) -> bool:
         # Update the local cache
         Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
@@ -95,9 +117,11 @@ class Integration:
                 return False
         return True
 
-    def repair(self, **kwargs):
+    def repair(self):
         if self.need_repair():
-            self.handle_options(**kwargs)
+            self.on_select()
+        else:
+            self.console.print(f"No issues detected in {self.readable}")
 
     def on_select(self, **kwargs):
         self.mcp_settings[self.url_property_name] = get_mcp_latest_url()
@@ -129,6 +153,8 @@ class Integration:
         except Exception as e:
             print(f"Error writing {self.readable} {dirname}")
             raise e
+        if kwargs.get("option", None) == "local":
+            self.add_local_project(self.id, path)
 
     def load_config(self, path: str = "", **kwargs) -> Dict:
         if not path:

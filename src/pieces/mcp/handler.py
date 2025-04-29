@@ -2,6 +2,7 @@ from typing import Dict, Literal, cast
 from rich.console import Console
 from rich.markdown import Markdown
 import urllib.request
+import time
 
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
@@ -85,3 +86,24 @@ def handle_repair(ide: Literal["vscode", "goose", "cursor", "all"], **kwargs):
         ]
         return
     supported_mcps[ide].repair()
+
+
+def handle_status(**kwargs):
+    console = Console()
+    if supported_mcps["vscode"].check_ltm():
+        console.print("[green]LTM running[/green]")
+    else:
+        console.print("[red]LTM is not running[/red]")
+
+    console.print("[bold]Checking integration[/bold]")
+
+    for key, integration in supported_mcps.items():
+        if integration.is_set_up() and integration.need_repair():
+            response = input(
+                f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow] (y/n)",
+            )
+            if response == "y":
+                handle_repair(cast(Literal["vscode", "goose", "cursor"], key))
+
+    time.sleep(1)
+    console.print("[bold green]All integrations are checked[/bold green]")
