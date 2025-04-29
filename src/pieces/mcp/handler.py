@@ -75,3 +75,13 @@ def handle_mcp_docs(
     )
     if kwargs.get("open"):
         Settings.open_website(integration.docs_no_css_selector)
+
+
+def handle_repair(ide: Literal["vscode", "goose", "cursor", "all"], **kwargs):
+    if ide == "all":
+        [
+            handle_repair(cast(Literal["vscode", "goose", "cursor"], integration))
+            for integration in supported_mcps
+        ]
+        return
+    supported_mcps[ide].repair()

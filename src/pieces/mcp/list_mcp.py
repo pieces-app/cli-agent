@@ -11,7 +11,14 @@ def handle_list(
     if not available_for_setup and not already_registered:
         for key, integration in supported_mcps.items():
             if integration.is_set_up():
-                console.print(f"✅ {integration} MCP is set up!")
+                if not integration.need_repair():
+                    console.print(f"✅ {integration} MCP is set up!")
+                else:
+                    console.print(
+                        Markdown(
+                            f"🛠️ it looks like {integration} needs to be repaired use `pieces mcp repair --{key}` to repair"
+                        )
+                    )
             else:
                 console.print(
                     Markdown(
@@ -20,9 +27,15 @@ def handle_list(
                     )
                 )
     elif already_registered:
-        for integration in supported_mcps.values():
+        for key, integration in supported_mcps.items():
             if integration.is_set_up():
-                console.print(integration)
+                if integration.need_repair():
+                    console.print(
+                        f"🛠️ it looks like {integration} needs to be repaired use `pieces mcp repair --{key}` to repair"
+                    )
+                else:
+                    console.print(f"✅ {integration} MCP is set up")
+
     elif available_for_setup:
         for key, integration in supported_mcps.items():
             if not integration.is_set_up():

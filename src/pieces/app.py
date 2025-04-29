@@ -21,7 +21,7 @@ from pieces.commands import (
 )
 from pieces.autocommit import git_commit
 from pieces.copilot import AskStream, conversation_handler, get_conversations
-from pieces.mcp import handle_mcp, handle_list, handle_mcp_docs
+from pieces.mcp import handle_mcp, handle_list, handle_mcp_docs, handle_repair
 from pieces import __version__
 
 ask_stream = AskStream()
@@ -361,13 +361,13 @@ class PiecesCLI:
             help="Set up the MCP for VS Code",
         )
         mcp_setup_parser.add_argument(
-            "--global",
+            "--globally",
             dest="global",
             action="store_true",
             help="For VS Code or Cursor to set the Global MCP",
         )
         mcp_setup_parser.add_argument(
-            "--local",
+            "--specific-workspace",
             dest="local",
             action="store_true",
             help="For VS Code or Cursor to set the Local MCP",
@@ -420,6 +420,31 @@ class PiecesCLI:
             help="Open the queried docs in the browser",
         )
         mcp_docs_parser.set_defaults(func=handle_mcp_docs)
+
+        mcp_repair_parser = mcp_subparser.add_parser(
+            "repair", help="Repair an MCP config settings"
+        )
+        mcp_repair_parser.add_argument(
+            "--globally",
+            dest="global",
+            action="store_true",
+            help="For VS Code or Cursor to set the Global MCP",
+        )
+        mcp_repair_parser.add_argument(
+            "--specific-workspace",
+            dest="local",
+            action="store_true",
+            help="For VS Code or Cursor to set the Local MCP",
+        )
+        mcp_docs_parser.add_argument(
+            "--ide",
+            dest="ide",
+            type=str,
+            choices=["vscode", "cursor", "goose", "all"],
+            default="all",
+            help="The IDE to repair",
+        )
+        mcp_repair_parser.set_defaults(func=handle_repair)
 
     def run(self):
         try:

@@ -152,15 +152,16 @@ text_success_cursor = """
 
 > Ensure PiecesOS is running & LTM is enabled
 """
+options = [
+    (
+        "Globally (Set the MCP to run globally for all your workspaces) ",
+        {"option": "global"},
+    ),
+    ("Workspace (Set the MCP to run for a specific workspace)", {"option": "local"}),
+]
 
 cursor_integration = Integration(
-    options=[
-        (
-            "Global (Set the MCP to run globally for all your projects) ",
-            {"option": "global"},
-        ),
-        ("Local (Set the MCP to run for a specific Project)", {"option": "local"}),
-    ],
+    options=options,
     text_success=text_success_cursor,
     docs="https://docs.pieces.app/products/mcp/cursor#using-pieces-mcp-server-in-cursor",
     readable="Cursor",
@@ -169,13 +170,7 @@ cursor_integration = Integration(
     mcp_settings={},
 )
 vscode_integration = Integration(
-    options=[
-        (
-            "Global (Set the MCP to run globally for all your projects) ",
-            {"option": "global"},
-        ),
-        ("Local (Set the MCP to run for a specific Project)", {"option": "local"}),
-    ],
+    options=options,
     text_success=text_success_vscode,
     readable="VS Code",
     docs="https://docs.pieces.app/products/mcp/github-copilot#using-pieces-mcp-server-in-github-copilot",
