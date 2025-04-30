@@ -3,6 +3,7 @@ import os
 from typing import Callable, Dict, List, Tuple, Optional
 from rich.console import Console
 from rich.markdown import Markdown
+import urllib3
 import yaml
 
 from pieces.settings import Settings
@@ -122,6 +123,23 @@ class Integration:
                     self.console.print(self.docs_no_css_selector + css_selector)
                     self.console.print(Markdown(f"**{e}**"))
                     return False
+                except urllib3.exceptions.ProtocolError:  # Cool POS is restarting
+                    if Settings.pieces_client.open_pieces_os():
+                        # Check for the perms here
+                        perms = Settings.pieces_client.os_api.os_permissions()
+                        missing_permissions = []
+
+                        if perms.processing:
+                            if not perms.processing.vision:
+                                missing_permissions.append("vision")
+
+                            if not perms.processing.accessibility:
+                                missing_permissions.append("accessibility")
+                        if missing_permissions:
+                            print(
+                                f"Missing the following permissions: {' ,'.join(missing_permissions)}"
+                            )
+
             else:
                 return False
         return True
