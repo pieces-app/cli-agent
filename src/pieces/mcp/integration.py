@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Callable, Dict, List, Literal, Tuple, Optional
+from typing import Callable, Dict, List, Tuple, Optional
 from rich.console import Console
 from rich.markdown import Markdown
 import yaml
@@ -81,12 +81,23 @@ class Integration:
             return {}
 
     @classmethod
-    def add_local_project(cls, integration: str, path: str):
+    def add_project(cls, integration: str, path: str):
         config = cls.load_mcp_config()
         c = config.get(integration, [])
         c.append(path)
         # avoid duplicates
         config[integration] = list(set(c))
+        with open(Settings.mcp_config, "w") as f:
+            json.dump(config, f)
+
+    def remove_project(self, path: str):
+        config = self.load_mcp_config()
+        c = config.get(self.id, [])
+        try:
+            c.remove(path)
+        except ValueError:
+            pass
+        config[self.id] = c
         with open(Settings.mcp_config, "w") as f:
             json.dump(config, f)
 
@@ -153,8 +164,7 @@ class Integration:
         except Exception as e:
             print(f"Error writing {self.readable} {dirname}")
             raise e
-        if kwargs.get("option", None) == "local":
-            self.add_local_project(self.id, path)
+        self.add_project(self.id, path)
 
     def load_config(self, path: str = "", **kwargs) -> Dict:
         if not path:
@@ -171,31 +181,81 @@ class Integration:
         return settings
 
     def need_repair(self) -> list:
+        """
+        Checking for every project in the local cache ONLY
+        Checking all attributes if they are good to go
+            1. Searching for the correct URL if found we check for repairs in the other values as well
+            If any of these not found we remove it from the local cache (the user removed it already and don't want it)
+        Returns: list of the paths that needs to be repaired
+        """
         paths = self.load_mcp_config().get(self.id, [])
-        paths.append(self.get_settings_path())  # Get the global one as well
-        paths_to_repair = [path for path in paths if not self._is_set_up(True, path)]
+        paths_to_repair = []
+        for path in paths:
+            check, config = self.search(path)
+            # Check is True
+            if check:
+                if not self.check_properties(config):
+                    paths_to_repair.append(path)
+            else:
+                ## Try searching any property with Pieces maybe
+                appended = False
+                for key in config:
+                    if key.lower() in "pieces":
+                        ## might be an issue here because it is already in the local cache
+                        paths_to_repair.append(path)
+                        appended = True
+                        break
+                if not appended:
+                    # SADLY let's removed from the local cache
+                    self.remove_project(path)
+
         return paths_to_repair
 
-    def is_set_up(self) -> bool:
-        return self._is_set_up(False, None)
+    def check_properties(self, config) -> bool:
+        for k, value in config.items():
+            if k == self.url_property_name:
+                if value != get_mcp_latest_url():
+                    return False
+            elif k in self.mcp_settings:
+                if self.mcp_settings[k] != value:
+                    return False
+            else:
+                return False
+        return True
 
-    def _is_set_up(self, check_url=True, path: Optional[str] = None) -> bool:
+    def is_set_up(self) -> bool:
+        """
+        Checks for the local cache and the global paths as well
+        This should check for 2 things
+        1. Valid url in any property has Pieces
+        2. Add it to the cache if yes
+        """
+        paths = self.load_mcp_config().get(self.id, [])
+        gb = self.get_settings_path()
+
+        if gb not in paths and self.search(gb)[0]:
+            self.add_project(self.id, gb)
+            return True
+
+        return any([self.search(path)[0] for path in paths])
+
+    def search(self, path: str) -> Tuple[bool, Dict]:
         try:
             config = self.load_config(path or "")
         except FileNotFoundError:
-            return False
+            return False, {}
         except ValueError as e:
             print(e)
-            return False
+            return False, {}
+
+        # Ignore the Pieces because it might be named anything else
         for p in self.path_to_mcp_settings[:-1]:
             config = config.get(p, {})
+        for k in config.keys():
+            if config[k].get(self.url_property_name, "") in get_mcp_urls():
+                return True, config[k]
 
-        for value in config.values():
-            if isinstance(value, dict) and value.get(self.url_property_name):
-                if check_url:
-                    return value.get(self.url_property_name) in get_mcp_urls()
-                return True
-        return False
+        return False, config
 
     def __str__(self) -> str:
         return self.readable

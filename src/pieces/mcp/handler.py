@@ -99,7 +99,7 @@ def handle_status(**kwargs):
     console.print("[bold]Checking integration[/bold]")
 
     for key, integration in supported_mcps.items():
-        if integration.is_set_up() and integration.need_repair():
+        if integration.need_repair():
             response = console.input(
                 f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow] (y/n): ",
             )
