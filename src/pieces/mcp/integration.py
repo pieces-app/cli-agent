@@ -54,6 +54,7 @@ class Integration:
             self.on_select(**kwargs)
 
     def run(self, **kwargs):
+        self.console.print(f"Attempting to update Global {self.readable} MCP Tooling")
         if not self.check_ltm():
             return
         try:
