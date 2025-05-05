@@ -1,5 +1,4 @@
 import json
-import threading
 import os
 from typing import Callable, Dict, List, Tuple, Optional
 from rich.markdown import Markdown
@@ -13,6 +12,13 @@ from pieces.settings import Settings
 
 from .utils import get_mcp_latest_url, get_mcp_urls
 from ..utils import PiecesSelectMenu
+
+
+class ConditionalSpinnerColumn(SpinnerColumn):
+    def render(self, task):
+        if task.completed:
+            return ""
+        return super().render(task)
 
 
 class Integration:
@@ -130,7 +136,7 @@ class Integration:
             return True
 
         with Progress(
-            SpinnerColumn(),
+            ConditionalSpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             console=self.console,
             transient=False,
@@ -187,6 +193,7 @@ class Integration:
                         progress.update(
                             main_task,
                             description="[green]All permissions are activiated",
+                            completed=True,
                         )
                         break
 
@@ -223,13 +230,18 @@ class Integration:
                             progress.update(
                                 main_task,
                                 description="[green]All permissions are enabled!",
+                                completed=True,
                             )
                             time.sleep(0.5)
                             break
+                        else:
+                            progress.update(vision_task, visible=True)
+                            progress.update(accessibility_task, visible=True)
                     else:
                         progress.update(
                             main_task,
                             description="[red]Failed to open PiecesOS",
+                            completed=True,
                         )
                         time.sleep(1)
                         return False
@@ -240,6 +252,7 @@ class Integration:
                     progress.update(
                         main_task,
                         description="[red]Operation cancelled by user",
+                        completed=True,
                     )
                     return False
                 except Exception as e:
@@ -249,6 +262,7 @@ class Integration:
                     progress.update(
                         main_task,
                         description=f"[red]Unexpected error: {str(e)}",
+                        completed=True,
                     )
                     return False
             self._open_ltm()
