@@ -1,0 +1,10 @@
+{
+    "mcp": {
+        "servers": {
+            "Pieces": {
+                "type": "sse",
+                "url": "http://localhost_context_protocol/2024-11-05/sse"
+            }
+        }
+    }
+}

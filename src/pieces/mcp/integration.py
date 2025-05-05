@@ -49,16 +49,18 @@ class Integration:
 
     def handle_options(self, **kwargs):
         if self.options and not kwargs:
-            PiecesSelectMenu(self.options, self.on_select).run()
+            return PiecesSelectMenu(self.options, self.on_select).run()
         else:
             self.on_select(**kwargs)
+            return True
 
     def run(self, **kwargs):
         self.console.print(f"Attempting to update Global {self.readable} MCP Tooling")
         if not self.check_ltm():
             return
         try:
-            self.handle_options(**kwargs)
+            if not self.handle_options(**kwargs):
+                return
             self.console.print(
                 Markdown(f"✅ Pieces MCP is now enabled for {self.readable}!")
             )
