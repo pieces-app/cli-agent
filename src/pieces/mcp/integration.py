@@ -203,10 +203,7 @@ class Integration:
                     )
 
                     if show_message:
-                        try:
-                            Settings.pieces_client.copilot.context.ltm.enable(True)
-                        except:  # TODO: Enhance the timeout here
-                            pass
+                        Settings.pieces_client.copilot.context.ltm.enable(True)
                     else:
                         time.sleep(3)  # 3 sec delay
                 except (
@@ -222,7 +219,7 @@ class Integration:
                     progress.update(vision_task, visible=False)
                     progress.update(accessibility_task, visible=False)
 
-                    if Settings.pieces_client.open_pieces_os():
+                    if Settings.pieces_client.is_pieces_running(maxium_retries=10):
                         missing_permissions = (
                             Settings.pieces_client.copilot.context.ltm.check_perms()
                         )
