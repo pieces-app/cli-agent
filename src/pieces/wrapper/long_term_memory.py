@@ -1,5 +1,5 @@
 import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 
 
 if TYPE_CHECKING:
@@ -68,22 +68,11 @@ class LongTermMemory:
         if self.is_enabled:
             return
 
-        perms = self.pieces_client.os_api.os_permissions()
         missing_permissions = []
-
-        if perms.processing:
-            if not perms.processing.vision:
-                missing_permissions.append("vision")
-
-            if not perms.processing.accessibility:
-                missing_permissions.append("accessibility")
-
+        missing_permissions = self.check_perms()
         if missing_permissions and show_message:
-            print(
-                f"Enabling the following PiecesOS permissions: {', '.join(missing_permissions)}"
-            )
             try:
-                out = self.pieces_client.os_api.os_permissions_request(
+                self.pieces_client.os_api.os_permissions_request(
                     os_permissions=OSPermissions(
                         processing=OSProcessingPermissions(
                             **{perm: True for perm in missing_permissions}
@@ -92,14 +81,9 @@ class LongTermMemory:
                     _request_timeout=7,
                 )
             except urllib3.exceptions.TimeoutError:
-                out = self.pieces_client.os_api.os_permissions()
+                pass
 
-            missing_permissions.clear()
-            if out.processing:
-                if not out.processing.vision:
-                    missing_permissions.append("vision")
-                if not out.processing.accessibility:
-                    missing_permissions.append("accessibility")
+            missing_permissions = self.check_perms()
 
         if missing_permissions:
             raise PermissionError(
@@ -114,6 +98,17 @@ class LongTermMemory:
         self.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_activate(
             state
         )
+
+    def check_perms(self) -> List[str]:
+        missing_permissions = []
+        out = self.pieces_client.os_api.os_permissions()
+
+        if out.processing:
+            if not out.processing.vision:
+                missing_permissions.append("vision")
+            if not out.processing.accessibility:
+                missing_permissions.append("accessibility")
+        return missing_permissions
 
     def pause(self, until: Optional[datetime.datetime] = None):
         """
