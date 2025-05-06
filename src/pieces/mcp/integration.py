@@ -206,6 +206,8 @@ class Integration:
                         Settings.pieces_client.copilot.context.ltm.enable(True)
                     else:
                         time.sleep(3)  # 3 sec delay
+                except PermissionError:
+                    pass
                 except (
                     urllib3.exceptions.ProtocolError,
                     urllib3.exceptions.NewConnectionError,
