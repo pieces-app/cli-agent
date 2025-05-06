@@ -212,6 +212,7 @@ class Integration:
                     urllib3.exceptions.ProtocolError,
                     urllib3.exceptions.NewConnectionError,
                     urllib3.exceptions.ConnectionError,
+                    urllib3.exceptions.MaxRetryError,
                 ):  # Hope we did not forgot any exception
                     progress.update(
                         main_task,
