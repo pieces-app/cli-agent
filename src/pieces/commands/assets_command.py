@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 import pyperclip
 import subprocess
 
@@ -25,7 +25,7 @@ def check_assets_existence(func):
     """Decorator to ensure user has assets."""
 
     def wrapper(*args, **kwargs):
-        assets = Settings.pieces_client.assets  # Check if there is an asset
+        assets = Settings.pieces_client.assets()  # Check if there is an asset
         if not assets:
             return Settings.show_error(
                 "No materials found", "Please create an material first."
@@ -70,53 +70,62 @@ class AssetsCommands:
                 "Please choose from the list or use 'pieces list assets'",
             )
 
-        print_asset_details(cls.current_asset)
-
         code_content = cls.current_asset.raw_content
         open_in_editor = kwargs.get("editor")
 
         # Check if -e flag is used or open_in_editor is True
         if open_in_editor:
-            config = ConfigCommands.load_config()
-            editor = config.get("editor")
-            if editor:
-                file_extension = get_file_extension(
-                    cls.current_asset.classification)
+            check, editor = cls.check_editor()
+            if not check:
+                return
+            file_extension = get_file_extension(cls.current_asset.classification)
 
-                # Ensure the directory exists, create it if not
-                if not os.path.exists(Settings.open_snippet_dir):
-                    os.makedirs(Settings.open_snippet_dir)
+            # Ensure the directory exists, create it if not
+            if not os.path.exists(Settings.open_snippet_dir):
+                os.makedirs(Settings.open_snippet_dir)
 
-                file_path = os.path.join(
-                    Settings.open_snippet_dir, f"{cls.current_asset.id}{file_extension}"
-                )
+            file_path = os.path.join(
+                Settings.open_snippet_dir, f"{cls.current_asset.id}{file_extension}"
+            )
 
-                # Save the code to a file in the default directory
-                if isinstance(code_content, str):  # Code string raw
-                    with open(file_path, "w") as file:
-                        file.write(code_content)
-                else:  # Image bytes data
-                    with open(file_path, "wb") as file:
-                        file.write(bytes(code_content))
+            # Save the code to a file in the default directory
+            if isinstance(code_content, str):  # Code string raw
+                with open(file_path, "w") as file:
+                    file.write(code_content)
+            else:  # Image bytes data
+                with open(file_path, "wb") as file:
+                    file.write(bytes(code_content))
 
-                # Open the file with the configured editor
-                try:
-                    subprocess.run([editor, file_path])
-                except Exception as e:
-                    Settings.show_error("Error in opening", e)
+            # Open the file with the configured editor
+            try:
+                subprocess.run([editor, file_path])
+            except Exception as e:
+                Settings.show_error("Error in opening", e)
 
-            else:
-                Console().print(
-                    Markdown(
-                        "No editor configured. Use `pieces config --editor <editor_command>` to set an editor."
-                    )
-                )
         else:
             # Determine the lexer
             print("\nCode content:")
             cls.print_code(
                 cls.current_asset.raw_content, cls.current_asset.classification
             )
+
+    @classmethod
+    def check_editor(cls) -> Tuple[bool, str]:
+        if not cls.current_asset:
+            return False, ""
+        config = ConfigCommands.load_config()
+        editor = config.get("editor")
+
+        if editor:
+            return True, editor
+        else:
+            print_asset_details(cls.current_asset)
+            Console().print(
+                Markdown(
+                    "No editor configured. Use `pieces config --editor <editor_command>` to set an editor."
+                )
+            )
+            return False, ""
 
     @staticmethod
     def print_code(code_content, classification=None):
@@ -133,37 +142,31 @@ class AssetsCommands:
     @classmethod
     @check_asset_selected
     def save_asset(cls, asset: BasicAsset, **kwargs):
-        if not asset:
-            return
         console = Console()
+
+        if not cls.check_editor()[0]:
+            return
+
         file_path = os.path.join(
             Settings.open_snippet_dir,
             f"{(asset.id)}{get_file_extension(asset.classification)}",
         )
         data = None
-        found_file = False
         try:
-            found_file = True
             with open(file_path, "r") as f:
                 data = f.read()
         except FileNotFoundError:
-            res = console.input(
-                "Seems you did not open that material yet.\nDo you want to open it in your editor? (y/n): "
-            )
-            if res == "y":
-                cls.open_asset(asset.id, editor=True)
-                console.print(
-                    Markdown(
-                        "**Note:** Next time to open the material in your editor, use the `pieces list -e`"
-                    )
+            cls.open_asset(asset.id, editor=True)
+            console.print(
+                Markdown(
+                    "**Note:** Next time to open the material in your editor, use the `pieces list -e`"
                 )
+            )
 
         if data and asset.raw_content != data:
             console.print(Markdown(f"Saving `{asset.name}` material"))
             asset.raw_content = data
         else:
-            if found_file:
-                cls.open_asset(asset.id, editor=True)
             try:
                 input(
                     f"Content not changed.\n"
@@ -239,8 +242,7 @@ class AssetsCommands:
                 return
 
         if not text:
-            console.print(
-                "No content found in the clipboard to create a material.")
+            console.print("No content found in the clipboard to create a material.")
             return
 
         double_line("Content to save: ")

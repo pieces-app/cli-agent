@@ -53,7 +53,7 @@ class Settings:
     extensions_dir = os.path.join(BASE_DIR, "commands", "extensions.json")
 
     # open snippet directory
-    open_snippet_dir = os.path.join(os.getcwd(), "opened_snippets")
+    open_snippet_dir = os.path.join(pieces_data_dir, "opened_snippets")
 
     _model_name = None
 
