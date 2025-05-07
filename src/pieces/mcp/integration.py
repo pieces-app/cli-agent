@@ -119,7 +119,7 @@ class Integration:
         if Settings.pieces_client.copilot.context.ltm.is_enabled:
             return True
 
-        if Settings.logger.confirm(
+        if not Settings.logger.confirm(
             "Pieces LTM must be running, do you want to enable it?",
         ):
             return False
