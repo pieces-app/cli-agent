@@ -19,14 +19,14 @@ class ExecuteCommand:
         ]
 
         if not assets:
-            print("No shell or bash assets found")
+            Settings.logger.print("No shell or bash assets found")
             return
 
         def open_and_execute_asset(**kwargs):
             AssetsCommands.open_asset(**kwargs)
             cls.execute_asset(**kwargs)
 
-        select_menu = PiecesSelectMenu(assets, open_and_execute_asset)
+        select_menu = PiecesSelectMenu(assets, open_and_execute_asset, title="Select a material to execute")
         select_menu.run()
 
     @classmethod
@@ -45,12 +45,12 @@ class ExecuteCommand:
             else:
                 raise ValueError(
                     f"Unsupported classification {asset.classification}")
-            print(f"Executing {asset.classification.value} command:")
-            print(result.stdout)
+            Settings.logger.print(f"Executing {asset.classification.value} command:")
+            Settings.logger.print(result.stdout)
             if result.stderr:
-                print("Errors:")
-                print(result.stderr)
+                Settings.logger.print("Errors:")
+                Settings.logger.print(result.stderr)
         except subprocess.CalledProcessError as e:
-            print(f"Error executing command: {e}")
+            Settings.logger.print(f"Error executing command: {e}")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            Settings.logger.print(f"An error occurred: {e}")

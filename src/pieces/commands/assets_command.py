@@ -16,7 +16,6 @@ from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import TerminalFormatter
 
 from rich.markdown import Markdown
-from rich.console import Console
 
 from pieces_os_client.exceptions import NotFoundException
 
@@ -104,7 +103,7 @@ class AssetsCommands:
 
         else:
             # Determine the lexer
-            print("\nCode content:")
+            Settings.logger.print("\nCode content:")
             cls.print_code(
                 cls.current_asset.raw_content, cls.current_asset.classification
             )
@@ -120,7 +119,7 @@ class AssetsCommands:
             return True, editor
         else:
             print_asset_details(cls.current_asset)
-            Console().print(
+            Settings.logger.print(
                 Markdown(
                     "No editor configured. Use `pieces config --editor <editor_command>` to set an editor."
                 )
@@ -142,8 +141,6 @@ class AssetsCommands:
     @classmethod
     @check_asset_selected
     def save_asset(cls, asset: BasicAsset, **kwargs):
-        console = Console()
-
         if not cls.check_editor()[0]:
             return
 
@@ -157,18 +154,18 @@ class AssetsCommands:
                 data = f.read()
         except FileNotFoundError:
             cls.open_asset(asset.id, editor=True)
-            console.print(
+            Settings.logger.print(
                 Markdown(
                     "**Note:** Next time to open the material in your editor, use the `pieces list -e`"
                 )
             )
 
         if data and asset.raw_content != data:
-            console.print(Markdown(f"Saving `{asset.name}` material"))
+            Settings.logger.print(Markdown(f"Saving `{asset.name}` material"))
             asset.raw_content = data
         else:
             try:
-                input(
+                Settings.logger.input(
                     f"Content not changed.\n"
                     f"<Press enter when you finish editing {asset.name}>"
                 )
@@ -187,10 +184,10 @@ class AssetsCommands:
             not name and not classification
         ):  # If no name or no classification is provided
             # Ask the user for a new name
-            name = input(
+            name = Settings.logger.input(
                 "Enter the new name for the material[leave blank to keep the same]: "
             ).strip()
-            classification = input(
+            classification = Settings.logger.input(
                 "Enter the classification for the material[leave blank to keep the same]: "
             ).strip()
 
@@ -203,8 +200,7 @@ class AssetsCommands:
     @classmethod
     @check_asset_selected
     def share_asset(cls, asset: BasicAsset, **kwargs):
-        console = Console()
-        console.print("Generating shareable link")
+        Settings.logger.print("Generating shareable link")
         if asset.asset.shares:
             link = asset.asset.shares.iterable[0].link
         else:
@@ -214,12 +210,12 @@ class AssetsCommands:
             try:
                 share = asset.share()
             except PermissionError:
-                console.print(
+                Settings.logger.print(
                     "Please login using `pieces login` command and make sure you are connected to the Pieces cloud"
                 )
                 return
             link = share.iterable[0].link
-        console.print(f"Generated shareable link `{link}`")
+        Settings.logger.print(f"Generated shareable link `{link}`")
         if input("Do you want to open it in the browser? (y/n)") == "y":
             Settings.open_website(link)
 
@@ -228,29 +224,22 @@ class AssetsCommands:
     def delete_asset(cls, asset: BasicAsset, **kwargs):
         print_asset_details(asset)
 
-        confirm = (
-            input(
-                "Are you sure you really want to delete this material? This action cannot be undone. (y/n): "
-            )
-            .strip()
-            .lower()
+        confirm = Settings.logger.confirm(
+            "Are you sure you really want to delete this material? This action cannot be undone."
         )
-        if confirm == "y":
-            print("Deleting asset...")
+        if confirm:
+            Settings.logger.print("Deleting material...")
             asset.delete()
             cls.current_asset = None
             space_below("Material Deleted")
         elif confirm == "n":
-            print("Deletion cancelled.")
-        else:
-            print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")
+            Settings.logger.print("Deletion cancelled.")
 
     @classmethod
     def create_asset(cls, **kwargs):
         # TODO add more ways to create an asset such as an entire file
 
         # Save text copied to the clipboard as an asset
-        console = Console()
         text = None
 
         # Check if the content has the flag -c
@@ -265,7 +254,9 @@ class AssetsCommands:
                 return
 
         if not text:
-            console.print("No content found in the clipboard to create a material.")
+            Settings.logger.print(
+                "No content found in the clipboard to create a material."
+            )
             return
 
         double_line("Content to save: ")
@@ -273,19 +264,17 @@ class AssetsCommands:
 
         # Ask the user for confirmation to save
         try:
-            user_input = input("Do you want to save this content? (y/n): ")
+            user_input = Settings.logger.confirm("Do you want to save this content?")
         except EOFError:
-            user_input = "y"
+            user_input = True
 
-        if user_input == "y":
-            console.print("Saving...\n")
+        if user_input:
+            Settings.logger.print("Saving...\n")
             cls.current_asset = BasicAsset(
                 BasicAsset.create(raw_content=text, metadata=None)
             )
-            console.print(
+            Settings.logger.print(
                 Markdown("Material successfully saved. Use `pieces list` to view.")
             )
         elif user_input == "n":
             space_below("Save cancelled.")
-        else:
-            print("Invalid input. Please type 'y' to confirm or 'n' to cancel.")

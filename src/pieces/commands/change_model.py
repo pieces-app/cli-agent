@@ -9,6 +9,6 @@ def change_model(**kwargs):  # Change the model used in the ask command
         model_name = list(models.keys())[model_index-1]
         model_id = models[model_name]
         Settings.update_model(model_name=model_name, model_id=model_id)
-        print(f"Switched to {model_name}")
+        Settings.logger.print(f"Switched to {model_name}")
     else:
         raise Exception("Invalid model index or model index not provided.")

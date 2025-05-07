@@ -1,38 +1,182 @@
 import argparse
 import sys
-from pieces.settings import Settings
+from rich.console import Console
+from rich.text import Text
+from rich import print as rprint
 
 
-# subclassing the ArgumentParser class to modify the error messages
 class PiecesArgparser(argparse.ArgumentParser):
     parser: "PiecesArgparser"
 
+    def __init__(self, *args, **kwargs):
+        self.console = Console()
+        super().__init__(*args, **kwargs)
+
     def error(self, message):
-        if 'invalid choice' in message:
+        if "invalid choice" in message:
             try:
                 invalid_command = message.split("'")[1]
                 similar_command = self.find_most_similar_command(
                     list(self._subparsers._group_actions[0].choices.keys()),
-                    invalid_command)
-                suggestion_text = (
-                    f"Did you mean {similar_command}?"
+                    invalid_command,
                 )
-                # Custom error message for invalid command choices
-                print(f"Invalid command "
-                      f"'{invalid_command}'\n{suggestion_text}")
-            except IndexError:
-                suggestion_text = ""
-                invalid_command = "Unknown"
-                # Custom error message for invalid command choices
-                print(f"Invalid command "
-                      f"'{invalid_command}'\n{suggestion_text}")
-            except AttributeError:
-                Settings.show_error("Error occured", message)
 
+                rprint(
+                    f"[bold red]Invalid command:[/] [yellow]'{invalid_command}'[/]\n"
+                    + f"Did you mean [green][bold]{similar_command}[/bold][/]?"
+                    if similar_command
+                    else "",
+                )
+            except (IndexError, AttributeError):
+                rprint(
+                    "[bold red]Invalid command[/]",
+                )
         else:
-            # Default error message for other types of errors
-            Settings.show_error("Error occured", message)
+            rprint(
+                f"[bold red]{message}[/]",
+            )
         sys.exit(2)
+
+    def format_usage(self):
+        """Override the standard usage formatter to use Rich styling with bracket syntax."""
+        # Get the raw usage text from the parent's format_usage method
+        raw_usage = super().format_usage()
+
+        # Format the usage text with Rich styling using bracket syntax
+        usage_parts = raw_usage.split("usage: ", 1)
+        if len(usage_parts) > 1:
+            program_name, arguments = usage_parts[1].split(" ", 1)
+
+            # Create styled text using bracket syntax
+            styled_usage = "[bold yellow]usage:[/] [green]" + program_name + "[/] "
+
+            # Format different argument types
+            current_text = ""
+            in_optional = False
+            in_required = False
+
+            for char in arguments:
+                if char == "[":
+                    if current_text:
+                        styled_usage += current_text
+                        current_text = ""
+                    styled_usage += "[cyan]["
+                    in_optional = True
+                elif char == "]":
+                    styled_usage += "][/cyan]"
+                    in_optional = False
+                    current_text = ""
+                elif char == "{":
+                    if current_text:
+                        styled_usage += current_text
+                        current_text = ""
+                    styled_usage += "[magenta]{"
+                    in_required = True
+                elif char == "}":
+                    styled_usage += "}[/magenta]"
+                    in_required = False
+                    current_text = ""
+                else:
+                    if in_optional or in_required:
+                        styled_usage += char
+                    else:
+                        current_text += char
+
+            if current_text:
+                styled_usage += current_text
+
+            return styled_usage
+
+        return raw_usage
+
+    def print_help(self, file=None):
+        console = self.console
+
+        # HEADER
+        console.print(
+            f"[bold blue]{self.description or f'Pieces CLI {self.prog.split(" ")[-1].title()} Command'}[/]"
+        )
+
+        console.print(self.format_usage(), "\n")
+
+        # Collect all actions by type
+        pos_actions = [
+            action
+            for action in self._actions
+            if action.option_strings == [] and action.dest != "help"
+        ]
+
+        opt_actions = [
+            action
+            for action in self._actions
+            if action.option_strings != [] or action.dest == "help"
+        ]
+
+        # Find the maximum width for alignment
+        max_width = 4  # Minimum width
+        for action in pos_actions:
+            max_width = max(max_width, len(action.dest) + 4)  # +2 for the indentation
+
+        for action in opt_actions:
+            flags = ", ".join(action.option_strings)
+            max_width = max(max_width, len(flags) + 4)  # +2 for the indentation
+
+        if not self.prog == "pieces":
+            pos_text = "[bold cyan]Positional Arguments:[/]\n"
+            if pos_actions:
+                for action in pos_actions:
+                    arg_name = f"  {action.dest}"
+                    padding = " " * (max_width - len(arg_name))
+                    if action.choices:
+                        pos_text += f"[green bold]{arg_name}[/]{padding}- {', '.join(action.choices)}\n"
+                    elif action.help:
+                        pos_text += (
+                            f"[green bold]{arg_name}[/]{padding}- {action.help}\n"
+                        )
+            if len(pos_text.splitlines()) > 1:
+                console.print(pos_text)
+
+        if opt_actions:
+            console.print("[bold cyan]Optional Arguments:[/]")
+            for action in opt_actions:
+                flags = f"  {', '.join(action.option_strings)}"
+                padding = " " * (max_width - len(flags))
+                console.print(
+                    f"[green bold]{flags}[/]{padding}- {action.help or 'No description available'}"
+                )
+            console.print()
+
+        # Format subcommands if any
+        if hasattr(self, "_subparsers") and self._subparsers:
+            for action in self._actions:
+                if isinstance(action, argparse._SubParsersAction):
+                    console.print("[bold cyan]Available Commands:[/]")
+
+                    # Calculate maximum command width for proper alignment
+                    cmd_max_width = 4
+                    for choice in action.choices.keys():
+                        cmd_max_width = max(
+                            cmd_max_width, len(choice) + 4
+                        )  # +2 for indentation
+
+                    # Print aligned commands
+                    for choice in action.choices.keys():
+                        cmd_name = f"  {choice}"
+                        padding = " " * (cmd_max_width - len(cmd_name))
+                        help_text = None
+                        for subaction in action._choices_actions:
+                            if subaction.dest == choice:
+                                help_text = subaction.help
+                                break
+                        if not help_text:
+                            continue
+                        console.print(
+                            f"[green bold]{cmd_name}[/]{padding}- {help_text}"
+                        )
+
+        console.print(
+            "\n[dim]For detailed help on specific commands, use: [bold]pieces command --help[/][/]"
+        )
 
     @classmethod
     def levenshtein_distance(cls, s1, s2):
@@ -65,8 +209,9 @@ class PiecesArgparser(argparse.ArgumentParser):
     @classmethod
     def find_most_similar_command(cls, valid_commands, user_input):
         # Calculate the Levenshtein distance between the user input and each valid command
-        distances = {cmd: cls.levenshtein_distance(
-            user_input, cmd) for cmd in valid_commands}
+        distances = {
+            cmd: cls.levenshtein_distance(user_input, cmd) for cmd in valid_commands
+        }
         # Find the command with the smallest Levenshtein distance to the user input
         most_similar_command = min(distances, key=distances.get)
         return most_similar_command

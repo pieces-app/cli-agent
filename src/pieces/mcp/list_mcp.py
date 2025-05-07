@@ -1,5 +1,6 @@
-from rich.console import Console
 from rich.markdown import Markdown
+
+from pieces.settings import Settings
 
 from .handler import supported_mcps
 
@@ -20,7 +21,6 @@ def print_setup_status(integration, key):
 def handle_list(
     available_for_setup: bool = False, already_registered: bool = False, **kwargs
 ):
-    console = Console()
     text = []
     for key, integration in supported_mcps.items():
         if not available_for_setup and not already_registered:
@@ -34,4 +34,4 @@ def handle_list(
                     f"{integration}, Use `pieces mcp setup --{key}` to set it up"
                 )
     for t in text:
-        console.print(Markdown(t))
+        Settings.logger.print(Markdown(t))

@@ -2,7 +2,6 @@ from abc import ABC
 from typing import Callable
 import pyperclip
 from rich.markdown import Markdown
-from rich.console import Console
 from rich.panel import Panel
 from rich import box
 from rich.text import Text
@@ -42,9 +41,9 @@ print(response.text)
 
 class BasedOnboardingStep(ABC):
     @staticmethod
-    def click_to_continue(console: Console):
-        console.print("Press any key to proceed", style="dim")
-        input()
+    def click_to_continue():
+        Settings.logger.print("Press any key to proceed", style="dim")
+        Settings.logger.input()
 
 
 class OnboardingStep(BasedOnboardingStep):
@@ -52,17 +51,17 @@ class OnboardingStep(BasedOnboardingStep):
         self.text = text
         self.validation = validation
 
-    def run(self, console: Console):
-        console.print(Markdown(self.text))
-        self.click_to_continue(console)
+    def run(self):
+        Settings.logger.print(Markdown(self.text))
+        self.click_to_continue()
 
         while True:
             validation, message_failed = self.validation()
             if validation:
                 break  # Exit the loop if validation is successful
             else:
-                console.print(message_failed)
-                self.click_to_continue(console)
+                Settings.logger.print(message_failed)
+                self.click_to_continue()
 
         return True
 
@@ -72,15 +71,15 @@ class OnboardingCommandStep(BasedOnboardingStep):
         self.text = text
         self.predicted_text = predicted_text
 
-    def run(self, console: Console):
-        console.print(Markdown(self.text))
+    def run(self):
+        Settings.logger.print(Markdown(self.text))
         # self.click_to_continue(console)
 
         user_input = input(get_prompt()).strip()
         while user_input != self.predicted_text:
             if user_input == "exit":
                 sys.exit(1)
-            console.print(
+            Settings.logger.print(
                 Markdown(f"❌ Wrong command. Please use: `{self.predicted_text}`"))
             user_input = input(get_prompt()).strip()
 
@@ -102,7 +101,6 @@ def create_snippet_one_validation():
 
 
 def onboarding_command(**kwargs):
-    console = Console()
     step_number = 1
     steps = {
         "Step 1: Save a Material": [
@@ -154,16 +152,16 @@ def onboarding_command(**kwargs):
         ]
     }
 
-    console.print(Panel(
+    Settings.logger.print(Panel(
         Text("Welcome to the Pieces CLI", justify="center", style="bold") +
         Text("\nRemember Anything and Interact with Everything", style=Style(bold=False, dim=True)), box=box.HEAVY,
         style="markdown.h1.border"))
 
-    console.print("Whenever you want to exit the onboarding flow type `exit`.")
+    Settings.logger.print("Whenever you want to exit the onboarding flow type `exit`.")
 
     if not Settings.pieces_client.open_pieces_os():
-        console.print("❌ PiecesOS is not running")
-        console.print(
+        Settings.logger.print("❌ PiecesOS is not running")
+        Settings.logger.print(
             Markdown(
                 "**PiecesOS** is a **required** background service"
                 " that powers the Pieces CLI and all other Pieces Integrations such as:\n\n"
@@ -187,25 +185,25 @@ def onboarding_command(**kwargs):
         OnboardingCommandStep(
             "To install PiecesOS run `pieces install`",
             "pieces install"
-        ).run(console)
+        ).run()
 
     else:
-        console.print("✅ PiecesOS is running")
+        Settings.logger.print("✅ PiecesOS is running")
 
     Settings.startup()
 
     while step_number - 1 < len(steps):
         for step in steps:
-            console.print(step)
+            Settings.logger.print(step)
             for mini_step in steps[step]:
-                mini_step.run(console)
+                mini_step.run()
 
             step_number += 1
 
-    console.print("Thank you for using the Pieces CLI!")
-    console.print(
+    Settings.logger.print("Thank you for using the Pieces CLI!")
+    Settings.logger.print(
         Markdown("You are now a `10x` more productive developer with Pieces."))
-    console.print(
+    Settings.logger.print(
         "For more information visit https://docs.pieces.app/extensions-plugins/cli")
 
     config = ConfigCommands.load_config()

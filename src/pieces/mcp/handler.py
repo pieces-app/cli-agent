@@ -1,5 +1,4 @@
 from typing import Dict, Literal, cast
-from rich.console import Console
 from rich.markdown import Markdown
 import urllib.request
 import time
@@ -71,7 +70,7 @@ def handle_mcp_docs(
             )
         return
     integration = supported_mcps[ide]
-    Console().print(
+    Settings.logger.print(
         Markdown(f"**{integration.readable}**: `{integration.docs_no_css_selector}`")
     )
     if kwargs.get("open"):
@@ -89,22 +88,21 @@ def handle_repair(ide: Literal["vscode", "goose", "cursor", "all"], **kwargs):
 
 
 def handle_status(**kwargs):
-    console = Console()
     if supported_mcps["vscode"].check_ltm():
-        console.print("[green]LTM running[/green]")
+        Settings.logger.print("[green]LTM running[/green]")
     else:
-        console.print("[red]LTM is not running[/red]")
+        Settings.logger.print("[red]LTM is not running[/red]")
         return  # Do you we need to check the rest of integrations if the ltm is not running?
 
-    console.print("[bold]Checking integration[/bold]")
+    Settings.logger.print("[bold]Checking integration[/bold]")
 
     for key, integration in supported_mcps.items():
         if integration.need_repair():
-            response = console.input(
+            response = Settings.logger.input(
                 f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow] (y/n): ",
             )
             if response == "y":
                 handle_repair(cast(Literal["vscode", "goose", "cursor"], key))
 
     time.sleep(1)
-    console.print("[bold green]All integrations are checked[/bold green]")
+    Settings.logger.print("[bold green]All integrations are checked[/bold green]")

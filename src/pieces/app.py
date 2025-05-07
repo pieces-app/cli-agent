@@ -1,7 +1,7 @@
 import sys
-from pieces.gui import print_help
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.settings import Settings
+from pieces.logger import Logger
 
 from pieces.commands import (
     loop,
@@ -34,10 +34,10 @@ ask_stream = AskStream()
 
 
 class PiecesCLI:
+    # TODO: Add some examples for each command (to be more user friendly)
     def __init__(self):
         self.parser = PiecesArgparser(
             description="Pieces CLI for interacting with the PiecesOS",
-            add_help=False,
         )
         self.command_parser = self.parser.add_subparsers(dest="command")
         self.parser.add_argument(
@@ -71,14 +71,17 @@ class PiecesCLI:
 
         # Subparser for the 'lists' command
         list_parser = self.command_parser.add_parser(
-            "list", aliases=["drive"], help="List materials or apps or models"
+            "list",
+            aliases=["drive"],
+            help="List materials or apps or models",
+            description="Pieces CLI List (Alias for drive)",
         )
         list_parser.add_argument(
             "type",
             nargs="?",
             type=str,
             default="materials",
-            help="type of the list",
+            help="Type of the list",
             choices=["materials", "apps", "models"],
         )
         list_parser.add_argument(
@@ -153,7 +156,7 @@ class PiecesCLI:
             "--classification",
             "-c",
             dest="classification",
-            help="reclassify a material",
+            help="Reclassify a material",
             required=False,
         )
         edit_parser.set_defaults(func=AssetsCommands.edit_asset)
@@ -211,7 +214,7 @@ class PiecesCLI:
         help_parser = self.command_parser.add_parser(
             "help", help="Prints a list of available commands"
         )
-        help_parser.set_defaults(func=lambda **kwargs: print_help())
+        help_parser.set_defaults(func=lambda **kwargs: self.parser.print_help())
 
         # Subparser for the 'login' command
         login_parser = self.command_parser.add_parser("login", help="Login to PiecesOS")
@@ -225,7 +228,7 @@ class PiecesCLI:
 
         # Subparser for the 'conversations' command
         conversations_parser = self.command_parser.add_parser(
-            "chats", aliases=["conversations"], help="print all chats"
+            "chats", aliases=["conversations"], help="Print all chats"
         )
         conversations_parser.add_argument(
             "max_chats",
@@ -451,20 +454,20 @@ class PiecesCLI:
         mcp_setup_parser.set_defaults(func=handle_status)
 
     def run(self):
+        config = ConfigCommands.load_config()
+        Settings.logger = Logger(config.get("debug", False))
         try:
             arg = sys.argv[1]
             if arg == "--ignore-onboarding":
                 arg = sys.argv[2]
         except IndexError:  # No command provided
-            print_help()
+            self.parser.print_help()
             return
 
         ignore_onboarding = False
         for _arg in sys.argv:
             if _arg == "--ignore-onboarding":
                 ignore_onboarding = True
-
-        config = ConfigCommands.load_config()
 
         onboarded = config.get("onboarded", False)
 
@@ -473,9 +476,10 @@ class PiecesCLI:
             and not onboarded
             and not ignore_onboarding
         ):
-            res = input(
+            res = Settings.logger.prompt(
                 "It looks like this is your first time using the Pieces CLI."
-                "\nWould you like to start onboarding (y/n/skip)? "
+                "\nWould you like to start onboarding",
+                choices=["y", "n", "skip"],
             )
             if res.lower() == "y":
                 return onboarding_command()
@@ -497,12 +501,19 @@ class PiecesCLI:
             Settings.startup()
 
         args = self.parser.parse_args()
+        Settings.logger.debug(f"Running command {arg} using: {args}")
         args.func(**vars(args))
 
 
 def main():
-    cli = PiecesCLI()
-    cli.run()
+    try:
+        cli = PiecesCLI()
+        cli.run()
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        Settings.logger.critical(e)
+        Settings.show_error("UNKOWN EXCEPTION", e)
 
 
 if __name__ == "__main__":

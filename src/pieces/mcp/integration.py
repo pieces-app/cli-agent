@@ -2,7 +2,6 @@ import json
 import os
 from typing import Callable, Dict, List, Tuple, Optional
 from rich.markdown import Markdown
-from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 import time
 import urllib3
@@ -53,7 +52,7 @@ class Integration:
         self.loader = loader
         self.saver = saver
         self.url_property_name = url_property_name
-        self.console = Console()
+        self.console = Settings.logger.console
         self.id: str = id or self.readable.lower().replace(" ", "_")
 
     def handle_options(self, **kwargs):
@@ -120,14 +119,8 @@ class Integration:
         if Settings.pieces_client.copilot.context.ltm.is_enabled:
             return True
 
-        if (
-            self.console.input(
-                "Pieces LTM must be running, do you want to enable it? (y/n): ",
-                markup=True,
-            )
-            .lower()
-            .strip()
-            != "y"
+        if not Settings.logger.confirm(
+            "Pieces LTM must be running, do you want to enable it?",
         ):
             return False
         missing_permissions = Settings.pieces_client.copilot.context.ltm.check_perms()

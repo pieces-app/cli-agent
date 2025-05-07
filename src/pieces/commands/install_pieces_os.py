@@ -23,7 +23,7 @@ class PiecesInstaller():
         self.installer.start_download()
         m = self.queue.get()  # Block the thread until we recieve the first byte
         try:
-            print("Installing PiecesOS")
+            Settings.logger.print("Installing PiecesOS")
             with Progress(
                 BarColumn(),
                 DownloadColumn(),
@@ -39,17 +39,17 @@ class PiecesInstaller():
                     progress.update(task, total=model.total_bytes,
                                     completed=model.bytes_received)
                     if model.state == DownloadState.FAILED:
-                        print(
+                        Settings.logger.print(
                             "❌ Failed to install PiecesOS,"
                             " Opening in your webbrowser")
                         self.download_docs()
                     elif model.state == DownloadState.COMPLETED:
-                        print("✅ Installed PiecesOS successfully")
+                        Settings.logger.print("✅ Installed PiecesOS successfully")
                     progress.refresh()
         except KeyboardInterrupt:
             self.installer.cancel_download()
-            print("🚫 Installation cancelled")
-            self.lock - False
+            Settings.logger.print("🚫 Installation cancelled")
+            self.lock = False
 
     def iterator(self) -> Generator[DownloadModel, None, None]:
         while True:
@@ -63,7 +63,7 @@ class PiecesInstaller():
     def download_docs(self):
         if Settings.pieces_client.local_os == "WINDOWS":
             Settings.open_website(
-                f"https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller?product=PIECES_FOR_DEVELOPERS_CLI&download=true")
+                "https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller?product=PIECES_FOR_DEVELOPERS_CLI&download=true")
         elif Settings.pieces_client.local_os == "LINUX":
             Settings.open_website("https://snapcraft.io/pieces-os")
             return

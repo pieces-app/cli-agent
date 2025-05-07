@@ -46,8 +46,8 @@ def conversation_handler(**kwargs):
 
     # Delete the conversation
     if delete:
-        r = input(f"Are you sure you want to delete '{chat.name}'? (y/n) : ")
-        if r == "y":
+        r = Settings.logger.confirm(f"Are you sure you want to delete '{chat.name}'?")
+        if r:
             chat.delete()
             print("Chat deleted successfully")
         return

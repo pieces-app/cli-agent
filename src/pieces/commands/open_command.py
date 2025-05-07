@@ -12,7 +12,7 @@ def open_command(**kwargs):
     health = Settings.pieces_client.open_pieces_os()
 
     if (drive or copilot or settings) and not health:
-        print("PiecesOS is not running")
+        Settings.logger.print("PiecesOS is not running")
         return
 
     if copilot:
