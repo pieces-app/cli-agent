@@ -88,20 +88,43 @@ def run_command(user_input, command_name, command_args):
             Settings.logger.print("If you want to run the onboarding please exit the run command")
         return # Avoid running multiple instance in the same "loop"
     Settings.logger.debug(f"Running {user_input} with {command_name} and {command_args}")
+    # Find the main command first
     if command_name in PiecesArgparser.parser._subparsers._group_actions[0].choices:
-        subparser = PiecesArgparser.parser._subparsers._group_actions[0].choices[command_name]
-        command_func = subparser.get_default('func')
-        if command_func:
-            try:
-                args = subparser.parse_args(command_args)
-                command_func(**vars(args))
-            except SystemExit:
-                Settings.logger.print(f"Invalid arguments for command: {command_name}")
-            except Exception as e:
-                Settings.show_error(
-                    f"Error in command: {command_name}", str(e))
+        main_parser = PiecesArgparser.parser._subparsers._group_actions[0].choices[command_name]
+
+        if (hasattr(main_parser, '_subparsers') and main_parser._subparsers and 
+            command_args and command_args[0] in main_parser._subparsers._group_actions[0].choices):
+
+            subcommand = command_args[0]
+            subcommand_args = command_args[1:]
+            subparser = main_parser._subparsers._group_actions[0].choices[subcommand]
+            command_func = subparser.get_default('func')
+
+            if command_func:
+                try:
+                    args = subparser.parse_args(subcommand_args)
+                    command_func(**vars(args))
+                except SystemExit:
+                    Settings.logger.print(f"Invalid arguments for subcommand: {command_name} {subcommand}")
+                except Exception as e:
+                    Settings.show_error(
+                        f"Error in subcommand: {command_name} {subcommand}", str(e))
+            else:
+                Settings.logger.print(f"No function associated with subcommand: {command_name} {subcommand}")
         else:
-            Settings.logger.print(f"No function associated with command: {command_name}")
+            # Handle main command with no subcommands
+            command_func = main_parser.get_default('func')
+            if command_func:
+                try:
+                    args = main_parser.parse_args(command_args)
+                    command_func(**vars(args))
+                except SystemExit:
+                    Settings.logger.print(f"Invalid arguments for command: {command_name}")
+                except Exception as e:
+                    Settings.show_error(
+                        f"Error in command: {command_name}", str(e))
+            else:
+                Settings.logger.print(f"No function associated with command: {command_name}")
     else:
         Settings.logger.print(f"Unknown command: {command_name}")
         commands = list(
