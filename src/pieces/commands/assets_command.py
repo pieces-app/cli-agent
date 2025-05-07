@@ -119,7 +119,7 @@ class AssetsCommands:
             return True, editor
         else:
             print_asset_details(cls.current_asset)
-            Console().print(
+            Settings.logger.print(
                 Markdown(
                     "No editor configured. Use `pieces config --editor <editor_command>` to set an editor."
                 )
@@ -141,8 +141,6 @@ class AssetsCommands:
     @classmethod
     @check_asset_selected
     def save_asset(cls, asset: BasicAsset, **kwargs):
-        console = Console()
-
         if not cls.check_editor()[0]:
             return
 
@@ -156,7 +154,7 @@ class AssetsCommands:
                 data = f.read()
         except FileNotFoundError:
             cls.open_asset(asset.id, editor=True)
-            console.print(
+            Settings.logger.print(
                 Markdown(
                     "**Note:** Next time to open the material in your editor, use the `pieces list -e`"
                 )
@@ -202,8 +200,7 @@ class AssetsCommands:
     @classmethod
     @check_asset_selected
     def share_asset(cls, asset: BasicAsset, **kwargs):
-        console = Console()
-        console.print("Generating shareable link")
+        Settings.logger.print("Generating shareable link")
         if asset.asset.shares:
             link = asset.asset.shares.iterable[0].link
         else:
@@ -213,12 +210,12 @@ class AssetsCommands:
             try:
                 share = asset.share()
             except PermissionError:
-                console.print(
+                Settings.logger.print(
                     "Please login using `pieces login` command and make sure you are connected to the Pieces cloud"
                 )
                 return
             link = share.iterable[0].link
-        console.print(f"Generated shareable link `{link}`")
+        Settings.logger.print(f"Generated shareable link `{link}`")
         if input("Do you want to open it in the browser? (y/n)") == "y":
             Settings.open_website(link)
 
@@ -230,7 +227,7 @@ class AssetsCommands:
         confirm = Settings.logger.confirm(
             "Are you sure you really want to delete this material? This action cannot be undone."
         )
-        if confirm :
+        if confirm:
             Settings.logger.print("Deleting material...")
             asset.delete()
             cls.current_asset = None
@@ -258,7 +255,8 @@ class AssetsCommands:
 
         if not text:
             Settings.logger.print(
-                "No content found in the clipboard to create a material.")
+                "No content found in the clipboard to create a material."
+            )
             return
 
         double_line("Content to save: ")
