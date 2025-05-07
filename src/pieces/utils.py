@@ -1,4 +1,8 @@
 import shutil
+import json
+import threading
+import urllib3
+import socket
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout
@@ -135,7 +139,7 @@ class PiecesSelectMenu:
         @bindings.add("c-c")
         @bindings.add("q")
         def exit_app(event):
-            event.app.exit()
+            event.app.exit(result=False)
 
         self.menu_window = Window(
             content=FormattedTextControl(text=self.get_menu_text),
@@ -183,6 +187,8 @@ class PiecesSelectMenu:
         )
 
         args = self.app.run()
+        if args is False:
+            return False
 
         if isinstance(args, list):
             self.on_enter_callback(*args)
@@ -190,3 +196,5 @@ class PiecesSelectMenu:
             self.on_enter_callback(args)
         elif isinstance(args, dict):
             self.on_enter_callback(**args)
+
+        return True

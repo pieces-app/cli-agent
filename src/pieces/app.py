@@ -21,7 +21,13 @@ from pieces.commands import (
 )
 from pieces.autocommit import git_commit
 from pieces.copilot import AskStream, conversation_handler, get_conversations
-
+from pieces.mcp import (
+    handle_mcp,
+    handle_list,
+    handle_mcp_docs,
+    handle_repair,
+    handle_status,
+)
 from pieces import __version__
 
 ask_stream = AskStream()
@@ -119,6 +125,11 @@ class PiecesCLI:
             help="Specify the content of the material",
         )
         create_parser.set_defaults(func=AssetsCommands.create_asset)
+
+        share_parser = self.command_parser.add_parser(
+            "share", help="Share the current material"
+        )
+        share_parser.set_defaults(func=AssetsCommands.share_asset)
 
         # Subparser for the 'run' command
         run_parser = self.command_parser.add_parser("run", help="Runs CLI in a loop")
@@ -343,6 +354,104 @@ class PiecesCLI:
             help="Opens Pieces Settings",
         )
         open_parser.set_defaults(func=open_command)
+
+        mcp_parser = self.command_parser.add_parser(
+            "mcp",
+            help="setup the MCP server for an integration",
+        )
+
+        mcp_parser.set_defaults(func=lambda **kwargs: mcp_parser.print_help())
+
+        mcp_subparser = mcp_parser.add_subparsers(dest="mcp")
+
+        mcp_setup_parser = mcp_subparser.add_parser(
+            "setup", help="Sets up a integration"
+        )
+
+        mcp_setup_parser.add_argument(
+            "--vscode",
+            dest="vscode",
+            action="store_true",
+            help="Set up the MCP for VS Code",
+        )
+        mcp_setup_parser.add_argument(
+            "--globally",
+            dest="global",
+            action="store_true",
+            help="For VS Code or Cursor to set the Global MCP",
+        )
+        mcp_setup_parser.add_argument(
+            "--specific-workspace",
+            dest="local",
+            action="store_true",
+            help="For VS Code or Cursor to set the Local MCP",
+        )
+        mcp_setup_parser.add_argument(
+            "--cursor",
+            dest="cursor",
+            action="store_true",
+            help="Set up the MCP for Cursor",
+        )
+        mcp_setup_parser.add_argument(
+            "--goose",
+            dest="goose",
+            action="store_true",
+            help="Set up the MCP for Goose",
+        )
+        mcp_setup_parser.set_defaults(func=handle_mcp)
+
+        mcp_list_parser = mcp_subparser.add_parser("list", help="List all MCPs")
+        mcp_list_parser.add_argument(
+            "--already-registered",
+            dest="already_registered",
+            action="store_true",
+            help="Display the list of the registered MCPs",
+        )
+        mcp_list_parser.add_argument(
+            "--available-for-setup",
+            dest="available_for_setup",
+            action="store_true",
+            help="Display the list of the ready to be registered MCPs",
+        )
+        mcp_list_parser.set_defaults(func=handle_list)
+
+        mcp_docs_parser = mcp_subparser.add_parser(
+            "docs", help="Print the documentations for an integration"
+        )
+        mcp_docs_parser.add_argument(
+            "--ide",
+            dest="ide",
+            type=str,
+            choices=["vscode", "cursor", "goose", "current", "all"],
+            default="all",
+            help="The IDE to print its documentation",
+        )
+        mcp_docs_parser.add_argument(
+            "--open",
+            "-o",
+            dest="open",
+            action="store_true",
+            help="Open the queried docs in the browser",
+        )
+        mcp_docs_parser.set_defaults(func=handle_mcp_docs)
+
+        mcp_repair_parser = mcp_subparser.add_parser(
+            "repair", help="Repair an MCP config settings"
+        )
+        mcp_repair_parser.add_argument(
+            "--ide",
+            dest="ide",
+            type=str,
+            choices=["vscode", "cursor", "goose", "all"],
+            default="all",
+            help="The IDE to repair",
+        )
+        mcp_repair_parser.set_defaults(func=handle_repair)
+
+        mcp_setup_parser = mcp_subparser.add_parser(
+            "status", help="Show the Status of the LTM and the MCPs"
+        )
+        mcp_setup_parser.set_defaults(func=handle_status)
 
     def run(self):
         config = ConfigCommands.load_config()

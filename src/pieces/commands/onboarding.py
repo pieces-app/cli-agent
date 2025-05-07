@@ -94,6 +94,8 @@ def create_snippet_one_validation():
                               for line in text.strip().splitlines())
     normalized_s2 = '\n'.join(line.strip()
                               for line in demo_snippet.strip().splitlines())
+    if normalized_s1 == normalized_s2:
+        pyperclip.copy(demo_snippet) # Copy the normalized snippet
 
     return normalized_s1 == normalized_s2, "Looks like you haven't copied the material yet. Please copy the material to save it to Pieces."
 
@@ -203,8 +205,14 @@ def onboarding_command(**kwargs):
         Markdown("You are now a `10x` more productive developer with Pieces."))
     Settings.logger.print(
         "For more information visit https://docs.pieces.app/extensions-plugins/cli")
-    Settings.pieces_client.connector_api.onboarded(
-        Settings.pieces_client.application.id, True)
+
     config = ConfigCommands.load_config()
     config["onboarded"] = True
     ConfigCommands.save_config(config)
+
+    from pieces_os_client.exceptions import BadRequestException
+    try:
+        Settings.pieces_client.connector_api.onboarded(
+            Settings.pieces_client.application.id, True)
+    except BadRequestException:
+        pass

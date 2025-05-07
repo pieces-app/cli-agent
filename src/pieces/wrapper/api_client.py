@@ -27,6 +27,8 @@ class PiecesApiClient:
         self._website_api = None
         self._websites_api = None
         self._applications_api = None
+        self._model_context_protocol_api = None
+        self._work_stream_pattern_engine_api = None
 
     def init_host(self,host,reconnect_on_host_change=True):
         self.api_client = ApiClient(Configuration(host))
@@ -201,3 +203,17 @@ class PiecesApiClient:
             from pieces_os_client.api.applications_api import ApplicationsApi
             self._applications_api = ApplicationsApi(self.api_client)
         return self._applications_api
+
+    @property
+    def model_context_protocol_api(self):
+        if self._model_context_protocol_api is None:
+            from pieces_os_client.api.model_context_protocol_api import ModelContextProtocolApi
+            self._model_context_protocol_api = ModelContextProtocolApi(self.api_client)
+        return self._model_context_protocol_api
+
+    @property
+    def work_stream_pattern_engine_api(self):
+        if self._work_stream_pattern_engine_api is None:
+            from pieces_os_client.api.workstream_pattern_engine_api import WorkstreamPatternEngineApi
+            self._work_stream_pattern_engine_api = WorkstreamPatternEngineApi(self.api_client)
+        return self._work_stream_pattern_engine_api
