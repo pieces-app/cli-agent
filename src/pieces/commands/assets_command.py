@@ -202,6 +202,29 @@ class AssetsCommands:
 
     @classmethod
     @check_asset_selected
+    def share_asset(cls, asset: BasicAsset, **kwargs):
+        console = Console()
+        console.print("Generating shareable link")
+        if asset.asset.shares:
+            link = asset.asset.shares.iterable[0].link
+        else:
+            user = Settings.pieces_client.user_api.user_snapshot()
+            # Update the local cache because the websockets are not running
+            Settings.pieces_client.user.on_user_callback(user.user)
+            try:
+                share = asset.share()
+            except PermissionError:
+                console.print(
+                    "Please login using `pieces login` command and make sure you are connected to the Pieces cloud"
+                )
+                return
+            link = share.iterable[0].link
+        console.print(f"Generated shareable link `{link}`")
+        if input("Do you want to open it in the browser? (y/n)") == "y":
+            Settings.open_website(link)
+
+    @classmethod
+    @check_asset_selected
     def delete_asset(cls, asset: BasicAsset, **kwargs):
         print_asset_details(asset)
 
