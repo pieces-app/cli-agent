@@ -1,5 +1,4 @@
 from abc import ABC
-from logging import config
 from typing import Callable
 import pyperclip
 from rich.markdown import Markdown
@@ -208,8 +207,14 @@ def onboarding_command(**kwargs):
         Markdown("You are now a `10x` more productive developer with Pieces."))
     console.print(
         "For more information visit https://docs.pieces.app/extensions-plugins/cli")
-    Settings.pieces_client.connector_api.onboarded(
-        Settings.pieces_client.application.id, True)
+
     config = ConfigCommands.load_config()
     config["onboarded"] = True
     ConfigCommands.save_config(config)
+
+    from pieces_os_client.exceptions import BadRequestException
+    try:
+        Settings.pieces_client.connector_api.onboarded(
+            Settings.pieces_client.application.id, True)
+    except BadRequestException:
+        pass

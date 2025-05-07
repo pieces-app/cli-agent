@@ -53,26 +53,27 @@ class Copilot:
             QGPTStreamOutput: The streamed output from the QGPT model.
         """
         from pieces_os_client.models.qgpt_stream_input import QGPTStreamInput
-        from pieces_os_client.models.qgpt_question_input import QGPTQuestionInput
-        from pieces_os_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
-        relevant = self.context._relevance_api(query) if self.context._check_relevant_existence else RelevantQGPTSeeds(iterable=[])
+        from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
+        from pieces_os_client.models.qgpt_relevance_input_options import QGPTRelevanceInputOptions
         self.ask_stream_ws.send_message(
-            QGPTStreamInput(
-                question=QGPTQuestionInput(
-                    relevant=relevant,
-                    query=query,
-                    application=self.pieces_client.application.id,
-                    model=self.pieces_client.model_id,
-                    pipeline=pipeline
-                ),
-                conversation=self._chat_id,
-            )
-        )
-
+             QGPTStreamInput(
+                 conversation=self._chat_id,
+                 relevance=QGPTRelevanceInput(
+                     application=self.pieces_client.application.id,
+                     query=query,
+                     model=self.pieces_client.model_id,
+                     options=QGPTRelevanceInputOptions(
+                         pipeline=pipeline,
+                         question=True
+                     ),
+                     **self.context._get_relevant_dict()
+                 ),
+             )
+         )
 
     def question(self,
         query:str, 
-        relevant_qgpt_seeds: "RelevantQGPTSeeds" = None,
+        relevant_qgpt_seeds: Optional["RelevantQGPTSeeds"] = None,
         pipeline:Optional["QGPTPromptPipeline"]=None
         ) -> "QGPTQuestionOutput":
         """
