@@ -98,10 +98,10 @@ def handle_status(**kwargs):
 
     for key, integration in supported_mcps.items():
         if integration.need_repair():
-            response = Settings.logger.input(
-                f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow] (y/n): ",
+            response = Settings.logger.confirm(
+                f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow]",
             )
-            if response == "y":
+            if response:
                 handle_repair(cast(Literal["vscode", "goose", "cursor"], key))
 
     time.sleep(1)
