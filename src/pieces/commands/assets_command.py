@@ -201,7 +201,7 @@ class AssetsCommands:
     @check_asset_selected
     def share_asset(cls, asset: BasicAsset, **kwargs):
         console = Console()
-        console.print("Generating sharable link")
+        console.print("Generating shareable link")
         if asset.asset.shares:
             link = asset.asset.shares.iterable[0].link
         else:
@@ -216,7 +216,7 @@ class AssetsCommands:
                 )
                 return
             link = share.iterable[0].link
-        console.print(f"Generated Sharable link `{link}`")
+        console.print(f"Generated shareable link `{link}`")
         if input("Do you want to open it in the browser? (y/n)") == "y":
             Settings.open_website(link)
 
