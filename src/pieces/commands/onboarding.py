@@ -96,6 +96,8 @@ def create_snippet_one_validation():
                               for line in text.strip().splitlines())
     normalized_s2 = '\n'.join(line.strip()
                               for line in demo_snippet.strip().splitlines())
+    if normalized_s1 == normalized_s2:
+        pyperclip.copy(demo_snippet) # Copy the normalized snippet
 
     return normalized_s1 == normalized_s2, "Looks like you haven't copied the material yet. Please copy the material to save it to Pieces."
 
