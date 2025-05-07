@@ -211,12 +211,14 @@ class AssetsCommands:
                 share = asset.share()
             except PermissionError:
                 Settings.logger.print(
-                    "Please login using `pieces login` command and make sure you are connected to the Pieces cloud"
+                    Markdown(
+                        "Please login using `pieces login` command and make sure you are connected to the Pieces cloud"
+                    )
                 )
                 return
             link = share.iterable[0].link
-        Settings.logger.print(f"Generated shareable link `{link}`")
-        if input("Do you want to open it in the browser? (y/n)") == "y":
+        Settings.logger.print(f"Generated shareable link {link}")
+        if Settings.logger.confirm("Do you want to open it in the browser?"):
             Settings.open_website(link)
 
     @classmethod
