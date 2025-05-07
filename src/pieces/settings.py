@@ -22,7 +22,7 @@ class Settings:
     """Settings class for the PiecesCLI"""
 
     pieces_client = PiecesClient()
-    logger = Logger() # Will be set on the app startup
+    logger = Logger()  # Will be set on the app startup
 
     PIECES_OS_MIN_VERSION = "11.0.0"  # Minium version (11.0.0)
     PIECES_OS_MAX_VERSION = "12.0.0"  # Maxium version (12.0.0)

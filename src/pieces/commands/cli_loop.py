@@ -83,7 +83,9 @@ def run_cli(user_input: str, command_name: str, command_args: List[str]):
 
 
 def run_command(user_input, command_name, command_args):
-    if command_name == "run":
+    if command_name in ["run", "onboarding"] and Settings.run_in_loop:
+        if command_name == "onboarding":
+            Settings.logger.print("If you want to run the onboarding please exit the run command")
         return # Avoid running multiple instance in the same "loop"
     Settings.logger.debug(f"Running {user_input} with {command_name} and {command_args}")
     if command_name in PiecesArgparser.parser._subparsers._group_actions[0].choices:
@@ -106,6 +108,7 @@ def run_command(user_input, command_name, command_args):
             PiecesArgparser.parser._subparsers._group_actions[0].choices.keys())
         commands.append("exit")
         commands.remove("run")
+        commands.remove("onboarding")
         most_similar_command = PiecesArgparser.find_most_similar_command(
             commands, user_input)
         Settings.logger.print(f"Did you mean {most_similar_command}")
