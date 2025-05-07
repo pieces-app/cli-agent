@@ -23,6 +23,7 @@ pieces_os_client = "4.1.0"
 prompt-toolkit = "^3.0.43"
 rich = "^13.7.1"
 platformdirs = "^4.2.0"
+pyyaml = "^6.0.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

@@ -3,6 +3,7 @@ import platform
 import shlex
 from prompt_toolkit import PromptSession
 import os
+from typing import List
 from pieces import __version__
 from pieces.gui import welcome, print_instructions, double_space, double_line
 from pieces.pieces_argparser import PiecesArgparser
@@ -42,7 +43,7 @@ def loop(**kwargs):
             if run_cli(*add_input(session)):
                 break
         except KeyboardInterrupt:
-            run_cli("exit", "", "")
+            run_cli("exit", "", [])
             return False
 
 
@@ -62,7 +63,7 @@ def extract_text(user_input):
     return user_input, command_name, command_args
 
 
-def run_cli(user_input: str, command_name: str, command_args: str):
+def run_cli(user_input: str, command_name: str, command_args: List[str]):
     """Run the CLI loop, handling user input and routing to the appropriate functions."""
     if user_input.lower() == 'clear':
         clear_screen()
@@ -75,8 +76,8 @@ def run_cli(user_input: str, command_name: str, command_args: str):
         return True
 
     if command_name.isdigit():
-        command_name = 'list'
-        command_args = [command_name, "materials"]
+        command_name = "drive"
+        command_args = []
 
     run_command(user_input, command_name, command_args)
 

@@ -52,8 +52,10 @@ class Settings:
     # extensions_dir
     extensions_dir = os.path.join(BASE_DIR, "commands", "extensions.json")
 
+    mcp_config = os.path.join(pieces_data_dir, "mcp_config.json")
+
     # open snippet directory
-    open_snippet_dir = os.path.join(os.getcwd(), "opened_snippets")
+    open_snippet_dir = os.path.join(pieces_data_dir, "opened_snippets")
 
     _model_name = None
 
@@ -151,10 +153,8 @@ class Settings:
 
     @classmethod
     def show_error(cls, error, error_message=None):
-        print()
         print(f"\033[31m{error}\033[0m")
         print(f"\033[31m{error_message}\033[0m") if error_message else None
-        print()
         if not cls.run_in_loop:
             sys.exit(2)
 

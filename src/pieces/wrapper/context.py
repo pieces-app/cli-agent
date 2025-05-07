@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, List
 import os
-
+from .long_term_memory import LongTermMemory
 if TYPE_CHECKING:
 	from .basic_identifier.asset import BasicAsset
 	from .basic_identifier.message import BasicMessage
@@ -18,6 +18,7 @@ class Context:
 		self.paths = paths
 		self.assets = assets
 		self.messages = messages
+		self.ltm = LongTermMemory(pieces_client=pieces_client)
 
 	def clear(self):
 		self.raw_assets = []
