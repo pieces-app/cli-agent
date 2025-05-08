@@ -3,6 +3,7 @@ import sys
 from typing import Optional, Tuple
 import pyperclip
 import subprocess
+import shutil
 
 from pieces.utils import get_file_extension
 from pieces.gui import print_asset_details, space_below, double_line
@@ -96,8 +97,14 @@ class AssetsCommands:
                     file.write(bytes(code_content))
 
             # Open the file with the configured editor
+            editor_exe = shutil.which(editor)
+            if not editor_exe:
+                Settings.show_error(
+                    "Editor executable not Found please make sure it is added to the path"
+                )
+                return
             try:
-                subprocess.run([editor, file_path])
+                subprocess.run([editor_exe, file_path])
             except Exception as e:
                 Settings.show_error("Error in opening", e)
 

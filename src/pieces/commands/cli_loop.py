@@ -73,6 +73,7 @@ def run_cli(user_input: str, command_name: str, command_args: List[str]):
         from pieces.wrapper.websockets.base_websocket import BaseWebsocket
         double_space("Exiting...")
         BaseWebsocket.close_all()
+        Settings.run_in_loop = False
         return True
 
     if command_name.isdigit():
