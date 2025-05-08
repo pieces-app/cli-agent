@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 from pieces.settings import Settings
 import os
 import threading
@@ -41,6 +41,13 @@ class AskStream:
         except Exception as e:
             Settings.logger.print(f"Error processing message: {e}")
 
+    def validate_path(self, path) -> Tuple[bool, str]:
+        if not path or path.isspace():
+            return False, ""
+        path = os.path.abspath(os.path.expanduser(path))
+
+        return True, path
+
     def add_context(self, files, assets_index):
 
         context = Settings.pieces_client.copilot.context
@@ -48,16 +55,14 @@ class AskStream:
         # Files
         if files:
             for file in files:
-                if file == "/" or ".":
-                    context.paths.append(os.getcwd())
-                    continue
-                if os.path.exists(file):  # check if file exists
+                out, path = self.validate_path(file)
+                if not out:  # check if file exists
                     Settings.show_error(
                         f"{file} is not found", "Please enter a valid file path")
                     return
 
                 # Return the abs path
-                context.paths.append(os.path.abspath(file))
+                context.paths.append(os.path.abspath(path))
         # snippets
         if assets_index:
             for snippet in assets_index:
