@@ -58,6 +58,10 @@ class Logger:
         """Log an info message."""
         self.logger.info(message, *args, **kwargs)
 
+    def error(self, message, *args, **kwargs):
+        """Log an error message."""
+        self.logger.error(message, *args, **kwargs)
+
     def debug(self, message, *args, **kwargs):
         """Log a debug message (only visible in debug mode)."""
         self.logger.debug(message, *args, **kwargs)

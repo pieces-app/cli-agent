@@ -27,7 +27,9 @@ from pieces.mcp import (
     handle_mcp_docs,
     handle_repair,
     handle_status,
+    handle_gateway,
 )
+import asyncio
 from pieces import __version__
 
 ask_stream = AskStream()
@@ -434,6 +436,13 @@ class PiecesCLI:
             help="Open the queried docs in the browser",
         )
         mcp_docs_parser.set_defaults(func=handle_mcp_docs)
+
+        mcp_start_parser = mcp_subparser.add_parser(
+            "start", help="Start the stdio MCP server"
+        )
+        mcp_start_parser.set_defaults(
+            func=lambda **kwargs: asyncio.run(handle_gateway())
+        )
 
         mcp_repair_parser = mcp_subparser.add_parser(
             "repair", help="Repair an MCP config settings"
