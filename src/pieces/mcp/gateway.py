@@ -1,4 +1,5 @@
 import asyncio
+from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
 from mcp.client.sse import sse_client
 from mcp import ClientSession
@@ -142,7 +143,7 @@ class MCPGateway:
                     write_stream,
                     InitializationOptions(
                         server_name=self.server.name,
-                        server_version="0.1.0",
+                        server_version="0.1.0",  # Do we need to use the cli-agent version here? @mark-at-pieces
                         capabilities=self.server.get_capabilities(
                             notification_options=NotificationOptions(),
                             experimental_capabilities={},
@@ -161,7 +162,7 @@ async def main():
     # Create and run the gateway
     gateway = MCPGateway(
         server_name="pieces-stdio-mcp",
-        upstream_url="http://localhost:39300/model_context_protocol/2024-11-05/sse",
+        upstream_url=get_mcp_latest_url(),
     )
 
     await gateway.run()
