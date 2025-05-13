@@ -346,10 +346,10 @@ class Integration:
             Settings.show_error(f"Error in enabling the LTM: {e}")
 
     def repair(self):
-        for mcp_mcp_type in self.mcp_types:
-            paths_to_repair = self.need_repair(mcp_mcp_type)
+        for mcp_type in self.mcp_types:
+            paths_to_repair = self.need_repair(mcp_type)
             if paths_to_repair:
-                [self.on_select(p) for p in paths_to_repair]
+                [self.on_select(mcp_type, p) for p in paths_to_repair]
             else:
                 self.console.print(f"No issues detected in {self.readable}")
 
