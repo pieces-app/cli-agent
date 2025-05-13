@@ -163,4 +163,8 @@ async def main():
         upstream_url=get_mcp_latest_url(),
     )
 
+    # Enable LTM
+    Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
+    Settings.pieces_client.copilot.context.ltm.enable(True)
+
     await gateway.run()
