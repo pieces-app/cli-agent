@@ -159,8 +159,8 @@ cursor_integration = Integration(
     get_settings_path=get_cursor_path,
     mcp_properties=MCPProperties(
         stdio_property={},
-        stdio_path=["mcp_servers", "PiecesStdio"],
-        sse_path=["mcp_servers", "Pieces"],
+        stdio_path=["mcpServers", "PiecesStdio"],
+        sse_path=["mcpServers", "Pieces"],
         sse_property={},
     ),
 )
