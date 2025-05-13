@@ -37,10 +37,8 @@ class MCPLocalConfig:
     def migrate_json(self):
         if self.config.get("schema", None):
             return
-        print(self.config)
 
         for k, v in self.config.items():
-            print(k, v)
             if isinstance(v, Dict):
                 return
             if isinstance(v, list):
@@ -158,7 +156,7 @@ class Integration:
     def handle_options(self, stdio: bool, **kwargs):
         mcp_type = "stdio" if stdio else "sse"
         for option in range(len(self.options)):
-            self.options[option][1]["mcp_type"] = type
+            self.options[option][1]["mcp_type"] = mcp_type
 
         if self.options and not kwargs:
             return PiecesSelectMenu(self.options, self.on_select).run()
@@ -186,6 +184,7 @@ class Integration:
             pass
         except Exception as e:  # noqa: E722
             print(e)
+            Settings.logger.critical(e)
             self.console.print(Markdown(self.error_text))
 
     def check_ltm(self) -> bool:
