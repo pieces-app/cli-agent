@@ -4,7 +4,7 @@ import platform
 import os
 import json
 
-from .integration import Integration
+from .integration import Integration, MCPProperties
 from ..settings import Settings
 
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
@@ -157,8 +157,12 @@ cursor_integration = Integration(
     docs="https://docs.pieces.app/products/mcp/cursor#using-pieces-mcp-server-in-cursor",
     readable="Cursor",
     get_settings_path=get_cursor_path,
-    path_to_mcp_settings=["mcpServers", "Pieces"],
-    mcp_settings={},
+    mcp_properties=MCPProperties(
+        stdio_property={},
+        stdio_path=["mcp_servers", "PiecesStdio"],
+        sse_path=["mcpServers", "Pieces"],
+        sse_property={},
+    ),
 )
 vscode_integration = Integration(
     options=options,
@@ -166,10 +170,12 @@ vscode_integration = Integration(
     readable="VS Code",
     docs="https://docs.pieces.app/products/mcp/github-copilot#using-pieces-mcp-server-in-github-copilot",
     get_settings_path=get_vscode_path,
-    path_to_mcp_settings=["mcp", "servers", "Pieces"],
-    mcp_settings={
-        "type": "sse",
-    },
+    mcp_properties=MCPProperties(
+        stdio_property={"type": "stdio"},
+        stdio_path=["mcp", "servers", "PiecesStdio"],
+        sse_property={"type": "sse"},
+        sse_path=["mcp", "servers", "Pieces"],
+    ),
 )
 goose_integration = Integration(
     options=[],
@@ -177,18 +183,32 @@ goose_integration = Integration(
     readable="Goose",
     docs="https://docs.pieces.app/products/mcp/goose#using-pieces-mcp-with-goose",
     get_settings_path=lambda: goose_config_path,
-    mcp_settings={
-        "bundled": None,
-        "description": "Pieces MPC",
-        "enabled": True,
-        "env_keys": [],
-        "envs": {},
-        "name": "Pieces",
-        "timeout": 300,
-        "type": "sse",
-    },
+    mcp_properties=MCPProperties(
+        stdio_property={
+            "bundled": None,
+            "description": "Pieces for developers MPC stdio",
+            "enabled": True,
+            "env_keys": [],
+            "envs": {},
+            "name": "Pieces stdio",
+            "timeout": 3000,
+            "type": "stdio",
+        },
+        stdio_path=["extensions", "pieces-stdio"],
+        sse_property={
+            "bundled": None,
+            "description": "Pieces for developers MPC",
+            "enabled": True,
+            "env_keys": [],
+            "envs": {},
+            "name": "Pieces",
+            "timeout": 3000,
+            "type": "sse",
+        },
+        sse_path=["extensions", "pieces"],
+        url_property_name="uri",
+        command_property_name="cmd",
+    ),
     saver=yaml.dump,
     loader=yaml.safe_load,
-    path_to_mcp_settings=["extensions", "pieces"],
-    url_property_name="uri",
 )

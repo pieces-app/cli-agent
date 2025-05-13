@@ -22,6 +22,7 @@ def handle_mcp(
     vscode: bool = False,
     cursor: bool = False,
     goose: bool = False,
+    stdio: bool = False,
     **kwargs,
 ):
     # Let's check for the MCP server to see if it is running
@@ -43,13 +44,13 @@ def handle_mcp(
         args = {"option": "local"}
 
     if vscode:
-        supported_mcps["vscode"].run(**args)
+        supported_mcps["vscode"].run(stdio, **args)
 
     if goose:
-        supported_mcps["goose"].run()
+        supported_mcps["goose"].run(stdio)
 
     if cursor:
-        supported_mcps["cursor"].run(**args)
+        supported_mcps["cursor"].run(stdio, **args)
 
     if not goose and not vscode and not cursor:
         PiecesSelectMenu(
@@ -97,7 +98,7 @@ def handle_status(**kwargs):
     Settings.logger.print("[bold]Checking integration[/bold]")
 
     for key, integration in supported_mcps.items():
-        if integration.need_repair():
+        if integration.need_repair("sse") or integration.need_repair("stdio"):
             response = Settings.logger.confirm(
                 f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow]",
             )

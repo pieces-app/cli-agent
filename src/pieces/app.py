@@ -400,6 +400,13 @@ class PiecesCLI:
             action="store_true",
             help="Set up the MCP for Goose",
         )
+
+        mcp_setup_parser.add_argument(
+            "--stdio",
+            dest="stdio",
+            action="store_true",
+            help="Use the stdio MCP instead of sse",
+        )
         mcp_setup_parser.set_defaults(func=handle_mcp)
 
         mcp_list_parser = mcp_subparser.add_parser("list", help="List all MCPs")
@@ -464,7 +471,7 @@ class PiecesCLI:
 
     def run(self):
         config = ConfigCommands.load_config()
-        Settings.logger = Logger(config.get("debug", False))
+        Settings.logger = Logger(config.get("debug", False), Settings.pieces_data_dir)
         try:
             arg = sys.argv[1]
             if arg == "--ignore-onboarding":

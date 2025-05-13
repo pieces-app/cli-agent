@@ -10,8 +10,8 @@ from mcp.server.lowlevel import NotificationOptions
 from mcp.server.models import InitializationOptions
 
 
-class UpstreamConnection:
-    """Manages connection to the upstream MCP server and caches tools."""
+class PosMcpConnection:
+    """Manages connection to the Pieces MCP server."""
 
     def __init__(self, upstream_url):
         self.upstream_url = upstream_url
@@ -21,7 +21,7 @@ class UpstreamConnection:
         self.connection_lock = asyncio.Lock()
 
     async def connect(self):
-        """Ensures a connection to the upstream server exists and returns it."""
+        """Ensures a connection to the POS server exists and returns it."""
         async with self.connection_lock:
             # If we already have a connection, return it
             if self.session is not None:
@@ -78,7 +78,7 @@ class UpstreamConnection:
                 )
 
     async def call_tool(self, name, arguments):
-        """Calls a tool on the upstream server."""
+        """Calls a tool on the POS MCP server."""
         try:
             Settings.logger.debug(f"Calling upstream tool: {name}")
             session = await self.connect()
@@ -90,21 +90,19 @@ class UpstreamConnection:
             return result
 
         except Exception as e:
-            Settings.logger.error(f"Error calling tool {name}: {e}", exc_info=True)
+            Settings.logger.error(f"Error callign POS MCP {name}: {e}", exc_info=True)
             # @mark-at-pieces not sure if there is a better way to return an error
             return types.CallToolResult(
-                content=[
-                    types.TextContent(type="text", text=f"Error calling tool: {str(e)}")
-                ]
+                content=[types.TextContent(type="text", text=str(e))]
             )
 
 
 class MCPGateway:
-    """Gateway server that forwards requests to an upstream MCP server."""
+    """Gateway server between POS MCP server and stdio."""
 
     def __init__(self, server_name, upstream_url):
         self.server = Server(server_name)
-        self.upstream = UpstreamConnection(upstream_url)
+        self.upstream = PosMcpConnection(upstream_url)
         self.setup_handlers()
 
     def setup_handlers(self):
