@@ -12,7 +12,7 @@ from rich.prompt import Prompt
 class Logger:
     _instance: Optional[Self] = None
 
-    def __init__(self, debug_mode=False, log_dir=os.getcwd()):
+    def __init__(self, debug_mode=False, log_dir=None):
         """
         Initialize the logger.
 
@@ -32,7 +32,7 @@ class Logger:
             self.logger.removeHandler(handler)
 
         self.debug_mode = debug_mode
-        if debug_mode:
+        if debug_mode and log_dir:
             self._setup_file_logging(os.path.join(log_dir, "logs"), self.name)
             self.print("Running in debug mode")
 
