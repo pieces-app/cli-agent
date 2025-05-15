@@ -146,6 +146,7 @@ class MCPGateway:
                             experimental_capabilities={},
                         ),
                     ),
+                    raise_exceptions=True,
                 )
         except Exception as e:
             Settings.logger.error(f"Error running gateway server: {e}", exc_info=True)

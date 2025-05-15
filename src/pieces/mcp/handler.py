@@ -28,6 +28,7 @@ def handle_mcp(
     vscode: bool = False,
     cursor: bool = False,
     goose: bool = False,
+    claude: bool = False,
     stdio: bool = False,
     **kwargs,
 ):
@@ -58,7 +59,14 @@ def handle_mcp(
     if cursor:
         supported_mcps["cursor"].run(stdio, **args)
 
-    if not goose and not vscode and not cursor:
+    if claude:
+        if not stdio:
+            Settings.logger.print(
+                "[yellow]Warning: Using stdio instead of sse because sse connection is not supported"
+            )
+        supported_mcps["claude"].run(stdio=True)
+
+    if not goose and not vscode and not cursor and not claude:
         PiecesSelectMenu(
             [(val.readable, {key: True}) for key, val in supported_mcps.items()],
             handle_mcp,

@@ -262,7 +262,10 @@ claude_integration = Integration(
     mcp_properties=MCPProperties(
         stdio_property={},
         stdio_path=["mcpServers", "Pieces"],
-        sse_path=["mcpServers", "Pieces"],
+        sse_path=[
+            "mcpServers",
+            "Pieces",
+        ],  ## SSE Connection is not supported in claude!
         sse_property={},
     ),
     id="claude",

@@ -6,6 +6,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 import time
 import urllib3
 import yaml
+import shutil
 
 from pieces.settings import Settings
 
@@ -109,6 +110,7 @@ class MCPProperties:
         self.url_property_name = url_property_name
         self.command_property_name = command_property_name
         self.args_property_name = args_property_name
+        self.pieces_cli_bin_path = shutil.which("pieces")
 
     def mcp_settings(self, mcp_type: MCP_types):
         if mcp_type == "sse":
@@ -127,7 +129,7 @@ class MCPProperties:
         if mcp_type == "sse":
             mcp_settings[self.url_property_name] = get_mcp_latest_url()
         else:
-            mcp_settings[self.command_property_name] = "pieces"
+            mcp_settings[self.command_property_name] = self.pieces_cli_bin_path
             mcp_settings[self.args_property_name] = ["mcp", "start"]
         return mcp_settings
 
@@ -182,6 +184,10 @@ class Integration:
             return self.on_select(mcp_type, **kwargs)
 
     def run(self, stdio: bool, **kwargs):
+        if stdio and not self.mcp_properties.pieces_cli_bin_path:
+            raise ValueError(
+                "PiecesCli is not added to the path you can't setup the stdio servers please add it to the path"
+            )
         self.console.print(f"Attempting to update Global {self.readable} MCP Tooling")
         if not self.check_ltm():
             return
@@ -528,7 +534,7 @@ class Integration:
             else:
                 if (
                     config[k].get(self.mcp_properties.command_property_name, "")
-                    == "pieces"
+                    == self.mcp_properties.pieces_cli_bin_path
                 ):
                     return True, config[k]
 

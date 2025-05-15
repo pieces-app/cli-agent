@@ -34,7 +34,7 @@ class Logger:
         self.debug_mode = debug_mode
         if debug_mode and log_dir:
             self._setup_file_logging(os.path.join(log_dir, "logs"), self.name)
-            self.print("Running in debug mode")
+            # self.print("Running in debug mode") Sadly it leads to some issues wit the claude MCP
 
     def _setup_file_logging(self, log_dir, name):
         """Set up file logging to save logs to files."""
