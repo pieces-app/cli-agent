@@ -63,8 +63,6 @@ class MCPLocalConfig:
             return
 
         for k, v in self.config.items():
-            if isinstance(v, Dict):
-                return
             if isinstance(v, list):
                 self.config[k] = dict.fromkeys(v, "stdio")
         self.config["schema"] = "0.0.1"
@@ -181,8 +179,7 @@ class Integration:
         if self.options and not kwargs:
             return PiecesSelectMenu(self.options, self.on_select).run()
         else:
-            self.on_select(mcp_type, **kwargs)
-            return True
+            return self.on_select(mcp_type, **kwargs)
 
     def run(self, stdio: bool, **kwargs):
         self.console.print(f"Attempting to update Global {self.readable} MCP Tooling")
@@ -372,21 +369,21 @@ class Integration:
         else:
             self.console.print(f"No issues detected in {self.readable}")
 
-    def on_select(self, mcp_type: MCP_types, path=None, **kwargs):
+    def on_select(self, mcp_type: MCP_types, path=None, **kwargs) -> bool:
         mcp_settings = self.mcp_properties.mcp_modified_settings(mcp_type)
         mcp_path = self.mcp_properties.mcp_path(mcp_type)
         if not path:
             path = self.get_settings_path(**kwargs)
-        new_mcp_type = self.local_config.get_projects(self.id).get(path, mcp_type)
+        old_mcp_type = self.local_config.get_projects(self.id).get(path, mcp_type)
         if (
-            new_mcp_type != mcp_type
-            and self.search(path, mcp_type)[0]
+            old_mcp_type != mcp_type
+            and self.search(path, old_mcp_type)[0]  # the old set up and NOT removed
             and not Settings.logger.confirm(
                 f"{mcp_type} is already used as your {self.readable} MCP\n"
-                f"Do you want to replace the {mcp_type} mcp with the {new_mcp_type} mcp?"
+                f"Do you want to replace the {old_mcp_type} mcp with the {mcp_type} mcp?"
             )
         ):
-            return
+            return False
         dirname = os.path.dirname(path)
         settings = self.load_config(path, **kwargs)
         begin = settings
@@ -415,6 +412,7 @@ class Integration:
             print(f"Error writing {self.readable} {dirname}")
             raise e
         self.local_config.add_project(self.id, mcp_type, path)
+        return True
 
     def load_config(self, path: str = "", **kwargs) -> Dict:
         if not path:

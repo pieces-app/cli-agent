@@ -159,7 +159,7 @@ cursor_integration = Integration(
     get_settings_path=get_cursor_path,
     mcp_properties=MCPProperties(
         stdio_property={},
-        stdio_path=["mcpServers", "PiecesStdio"],
+        stdio_path=["mcpServers", "Pieces"],
         sse_path=["mcpServers", "Pieces"],
         sse_property={},
     ),
@@ -172,7 +172,7 @@ vscode_integration = Integration(
     get_settings_path=get_vscode_path,
     mcp_properties=MCPProperties(
         stdio_property={"type": "stdio"},
-        stdio_path=["mcp", "servers", "PiecesStdio"],
+        stdio_path=["mcp", "servers", "Pieces"],
         sse_property={"type": "sse"},
         sse_path=["mcp", "servers", "Pieces"],
     ),
@@ -194,7 +194,7 @@ goose_integration = Integration(
             "timeout": 3000,
             "type": "stdio",
         },
-        stdio_path=["extensions", "pieces-stdio"],
+        stdio_path=["extensions", "pieces"],
         sse_property={
             "bundled": None,
             "description": "Pieces for developers MPC",
