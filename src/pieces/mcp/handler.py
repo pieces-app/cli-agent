@@ -93,12 +93,12 @@ def handle_status(**kwargs):
         Settings.logger.print("[green]LTM running[/green]")
     else:
         Settings.logger.print("[red]LTM is not running[/red]")
-        return  # Do you we need to check the rest of integrations if the ltm is not running?
+        return  # Do you we need to check the rest of integration if the ltm is not running?
 
     Settings.logger.print("[bold]Checking integration[/bold]")
 
     for key, integration in supported_mcps.items():
-        if integration.need_repair("sse") or integration.need_repair("stdio"):
+        if integration.need_repair():
             response = Settings.logger.confirm(
                 f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow]",
             )

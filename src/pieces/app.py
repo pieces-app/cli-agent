@@ -503,20 +503,27 @@ class PiecesCLI:
                 config["skip_onboarding"] = True
                 ConfigCommands.save_config(config)
 
-        # Check if the command needs PiecesOS or not
-        if arg not in [
-            "help",
-            "-v",
-            "--version",
-            "install",
-            "onboarding",
-            "feedback",
-            "contribute",
-            "open",
-        ]:
-            Settings.startup()
-
         args = self.parser.parse_args()
+        command = args.command
+
+        mcp_subcommand = getattr(args, "mcp", None)
+
+        # Check if the command needs PiecesOS or not
+        if not (
+            command
+            in [
+                "help",
+                "-v",
+                "--version",
+                "install",
+                "onboarding",
+                "feedback",
+                "contribute",
+                "open",
+            ]
+            or (command == "mcp" and mcp_subcommand == "start")
+        ):
+            Settings.startup()
         Settings.logger.debug(f"Running command {arg} using: {args}")
         args.func(**vars(args))
 

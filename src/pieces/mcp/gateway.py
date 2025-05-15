@@ -156,6 +156,8 @@ class MCPGateway:
 
 
 async def main():
+    Settings.pieces_client.open_pieces_os()
+    Settings.startup()
     gateway = MCPGateway(
         server_name="pieces-stdio-mcp",
         upstream_url=get_mcp_latest_url(),

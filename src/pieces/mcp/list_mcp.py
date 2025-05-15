@@ -8,7 +8,7 @@ from .handler import supported_mcps
 
 def print_setup_status(integration: Integration, key):
     if integration.is_set_up():
-        if integration.need_repair("sse") or integration.need_repair("stdio"):
+        if integration.need_repair():
             return f"🔨 it looks like {integration} needs to be repaired use `pieces mcp repair --ide {key}` to repair"
         else:
             return f"✅ {integration} MCP is set up!"
