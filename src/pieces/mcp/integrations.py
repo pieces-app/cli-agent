@@ -96,6 +96,33 @@ def get_cursor_path(option: Literal["global", "local"] = "global"):
     return config_path
 
 
+def get_claude_path():
+    system = platform.system()
+
+    if system == "Windows":
+        settings_path = os.path.join(
+            os.environ["APPDATA"], "Claude", "claude_desktop_config.json"
+        )
+    elif system in "Darwin":
+        settings_path = os.path.expanduser(
+            "~/Library/Application Support/Claude/claude_desktop_config.json"
+        )
+    elif system == "Linux":
+        settings_path = os.path.expanduser(
+            "~/.config/Claude/claude_desktop_config.json"
+        )
+    else:
+        Settings.show_error(f"Unsupported platform {system}")
+        raise ValueError
+
+    settings_dir = os.path.dirname(settings_path)
+    if os.path.isdir(settings_dir):
+        if not os.path.isfile(settings_path):
+            with open(settings_path, "w") as f:
+                json.dump({}, f, indent=4)  # Create the json file if it does not exists
+    return settings_path
+
+
 text_success_vscode = """
 ### Using Pieces LTM in VS Code
 
@@ -143,6 +170,19 @@ text_success_cursor = """
 
 > Ensure PiecesOS is running & LTM is enabled
 """
+
+text_success_claude = """
+### Use Pieces LTM in Claude desktop
+
+1. Open Claude desktop
+2. **Ask a prompt:**
+
+        What I was wroking on yesterday?
+        Summarize it with 5 bullet points and timestamps.
+
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
 options = [
     (
         "Globally (Set the MCP to run globally for all your workspaces) ",
@@ -211,4 +251,19 @@ goose_integration = Integration(
     ),
     saver=yaml.dump,
     loader=yaml.safe_load,
+)
+
+claude_integration = Integration(
+    options=[],
+    text_success=text_success_claude,
+    readable="Claude Desktop",
+    get_settings_path=get_claude_path,
+    docs="https://modelcontextprotocol.io/quickstart/user#1-download-claude-for-desktop",
+    mcp_properties=MCPProperties(
+        stdio_property={},
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=["mcpServers", "Pieces"],
+        sse_property={},
+    ),
+    id="claude",
 )

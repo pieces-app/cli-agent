@@ -400,7 +400,12 @@ class PiecesCLI:
             action="store_true",
             help="Set up the MCP for Goose",
         )
-
+        mcp_setup_parser.add_argument(
+            "--claude",
+            dest="claude",
+            action="store_true",
+            help="Set up the MCP for Claude Desktop",
+        )
         mcp_setup_parser.add_argument(
             "--stdio",
             dest="stdio",
@@ -431,7 +436,7 @@ class PiecesCLI:
             "--ide",
             dest="ide",
             type=str,
-            choices=["vscode", "cursor", "goose", "current", "all"],
+            choices=["vscode", "cursor", "goose", "claude", "current", "all"],
             default="all",
             help="The IDE to print its documentation",
         )
@@ -458,7 +463,7 @@ class PiecesCLI:
             "--ide",
             dest="ide",
             type=str,
-            choices=["vscode", "cursor", "goose", "all"],
+            choices=["vscode", "cursor", "goose", "claude", "all"],
             default="all",
             help="The IDE to repair",
         )

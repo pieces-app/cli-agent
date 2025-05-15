@@ -7,7 +7,12 @@ from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
 
 from ..utils import PiecesSelectMenu
-from .integrations import vscode_integration, goose_integration, cursor_integration
+from .integrations import (
+    vscode_integration,
+    goose_integration,
+    cursor_integration,
+    claude_integration,
+)
 from .integration import Integration
 
 # NOTE: the key should be the same as the parameter name in the handle_mcp function
@@ -15,6 +20,7 @@ supported_mcps: Dict[str, Integration] = {
     "vscode": vscode_integration,
     "goose": goose_integration,
     "cursor": cursor_integration,
+    "claude": claude_integration,
 }
 
 
@@ -60,7 +66,7 @@ def handle_mcp(
 
 
 def handle_mcp_docs(
-    ide: Literal["vscode", "goose", "cursor", "all", "current"], **kwargs
+    ide: Literal["vscode", "goose", "claude", "cursor", "all", "current"], **kwargs
 ):
     if ide in ["all", "current"]:
         for mcp_name, mcp_integration in supported_mcps.items():
@@ -78,10 +84,12 @@ def handle_mcp_docs(
         Settings.open_website(integration.docs_no_css_selector)
 
 
-def handle_repair(ide: Literal["vscode", "goose", "cursor", "all"], **kwargs):
+def handle_repair(ide: Literal["vscode", "claude", "goose", "cursor", "all"], **kwargs):
     if ide == "all":
         [
-            handle_repair(cast(Literal["vscode", "goose", "cursor"], integration))
+            handle_repair(
+                cast(Literal["vscode", "claude", "goose", "cursor"], integration)
+            )
             for integration in supported_mcps
         ]
         return

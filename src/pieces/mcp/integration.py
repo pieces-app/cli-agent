@@ -34,7 +34,7 @@ class ConfigDict(TypedDict, total=False):
 
 class MCPLocalConfig:
     DEFAULT_SCHEMA = "0.0.1"
-    DEFAULT_INTEGRATIONS = ["vs_code", "cursor", "goose"]
+    DEFAULT_INTEGRATIONS = ["vs_code", "cursor", "goose", "claude"]
 
     def __init__(self) -> None:
         self.config: ConfigDict = self.load_config()
