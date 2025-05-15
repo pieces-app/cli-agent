@@ -1,11 +1,12 @@
 from rich.markdown import Markdown
 
+from pieces.mcp.integration import Integration
 from pieces.settings import Settings
 
 from .handler import supported_mcps
 
 
-def print_setup_status(integration, key):
+def print_setup_status(integration: Integration, key):
     if integration.is_set_up():
         if integration.need_repair():
             return f"🔨 it looks like {integration} needs to be repaired use `pieces mcp repair --ide {key}` to repair"

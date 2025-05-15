@@ -22,7 +22,6 @@ class Settings:
     """Settings class for the PiecesCLI"""
 
     pieces_client = PiecesClient()
-    logger = Logger()  # Will be set on the app startup
 
     PIECES_OS_MIN_VERSION = "11.0.0"  # Minium version (11.0.0)
     PIECES_OS_MAX_VERSION = "12.0.0"  # Maxium version (12.0.0)
@@ -37,6 +36,8 @@ class Settings:
     pieces_data_dir = user_data_dir(
         appauthor="pieces", appname="cli-agent", ensure_exists=True
     )
+
+    logger = Logger(log_dir=pieces_data_dir)  # Will be set on the app startup
 
     models_file = Path(
         pieces_data_dir,

@@ -188,13 +188,11 @@ class PiecesSelectMenu:
 
         args = self.app.run()
         if args is False:
-            return False
+            return None
 
         if isinstance(args, list):
-            self.on_enter_callback(*args)
+            return self.on_enter_callback(*args)
         elif isinstance(args, str):
-            self.on_enter_callback(args)
+            return self.on_enter_callback(args)
         elif isinstance(args, dict):
-            self.on_enter_callback(**args)
-
-        return True
+            return self.on_enter_callback(**args)

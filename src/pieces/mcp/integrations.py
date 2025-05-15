@@ -4,7 +4,7 @@ import platform
 import os
 import json
 
-from .integration import Integration
+from .integration import Integration, MCPProperties
 from ..settings import Settings
 
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
@@ -96,6 +96,33 @@ def get_cursor_path(option: Literal["global", "local"] = "global"):
     return config_path
 
 
+def get_claude_path():
+    system = platform.system()
+
+    if system == "Windows":
+        settings_path = os.path.join(
+            os.environ["APPDATA"], "Claude", "claude_desktop_config.json"
+        )
+    elif system in "Darwin":
+        settings_path = os.path.expanduser(
+            "~/Library/Application Support/Claude/claude_desktop_config.json"
+        )
+    elif system == "Linux":
+        settings_path = os.path.expanduser(
+            "~/.config/Claude/claude_desktop_config.json"
+        )
+    else:
+        Settings.show_error(f"Unsupported platform {system}")
+        raise ValueError
+
+    settings_dir = os.path.dirname(settings_path)
+    if os.path.isdir(settings_dir):
+        if not os.path.isfile(settings_path):
+            with open(settings_path, "w") as f:
+                json.dump({}, f, indent=4)  # Create the json file if it does not exists
+    return settings_path
+
+
 text_success_vscode = """
 ### Using Pieces LTM in VS Code
 
@@ -143,6 +170,19 @@ text_success_cursor = """
 
 > Ensure PiecesOS is running & LTM is enabled
 """
+
+text_success_claude = """
+### Use Pieces LTM in Claude desktop
+
+1. Open Claude desktop
+2. **Ask a prompt:**
+
+        What I was wroking on yesterday?
+        Summarize it with 5 bullet points and timestamps.
+
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
 options = [
     (
         "Globally (Set the MCP to run globally for all your workspaces) ",
@@ -157,8 +197,12 @@ cursor_integration = Integration(
     docs="https://docs.pieces.app/products/mcp/cursor#using-pieces-mcp-server-in-cursor",
     readable="Cursor",
     get_settings_path=get_cursor_path,
-    path_to_mcp_settings=["mcpServers", "Pieces"],
-    mcp_settings={},
+    mcp_properties=MCPProperties(
+        stdio_property={},
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=["mcpServers", "Pieces"],
+        sse_property={},
+    ),
 )
 vscode_integration = Integration(
     options=options,
@@ -166,10 +210,12 @@ vscode_integration = Integration(
     readable="VS Code",
     docs="https://docs.pieces.app/products/mcp/github-copilot#using-pieces-mcp-server-in-github-copilot",
     get_settings_path=get_vscode_path,
-    path_to_mcp_settings=["mcp", "servers", "Pieces"],
-    mcp_settings={
-        "type": "sse",
-    },
+    mcp_properties=MCPProperties(
+        stdio_property={"type": "stdio"},
+        stdio_path=["mcp", "servers", "Pieces"],
+        sse_property={"type": "sse"},
+        sse_path=["mcp", "servers", "Pieces"],
+    ),
 )
 goose_integration = Integration(
     options=[],
@@ -177,18 +223,50 @@ goose_integration = Integration(
     readable="Goose",
     docs="https://docs.pieces.app/products/mcp/goose#using-pieces-mcp-with-goose",
     get_settings_path=lambda: goose_config_path,
-    mcp_settings={
-        "bundled": None,
-        "description": "Pieces MPC",
-        "enabled": True,
-        "env_keys": [],
-        "envs": {},
-        "name": "Pieces",
-        "timeout": 300,
-        "type": "sse",
-    },
+    mcp_properties=MCPProperties(
+        stdio_property={
+            "bundled": None,
+            "description": "Pieces for developers MPC stdio",
+            "enabled": True,
+            "env_keys": [],
+            "envs": {},
+            "name": "Pieces stdio",
+            "timeout": 3000,
+            "type": "stdio",
+        },
+        stdio_path=["extensions", "pieces"],
+        sse_property={
+            "bundled": None,
+            "description": "Pieces for developers MPC",
+            "enabled": True,
+            "env_keys": [],
+            "envs": {},
+            "name": "Pieces",
+            "timeout": 3000,
+            "type": "sse",
+        },
+        sse_path=["extensions", "pieces"],
+        url_property_name="uri",
+        command_property_name="cmd",
+    ),
     saver=yaml.dump,
     loader=yaml.safe_load,
-    path_to_mcp_settings=["extensions", "pieces"],
-    url_property_name="uri",
+)
+
+claude_integration = Integration(
+    options=[],
+    text_success=text_success_claude,
+    readable="Claude Desktop",
+    get_settings_path=get_claude_path,
+    docs="https://modelcontextprotocol.io/quickstart/user#1-download-claude-for-desktop",
+    mcp_properties=MCPProperties(
+        stdio_property={},
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=[
+            "mcpServers",
+            "Pieces",
+        ],  ## SSE Connection is not supported in claude!
+        sse_property={},
+    ),
+    id="claude",
 )
