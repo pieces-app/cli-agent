@@ -186,7 +186,7 @@ class Integration:
     def run(self, stdio: bool, **kwargs):
         if stdio and not self.mcp_properties.pieces_cli_bin_path:
             raise ValueError(
-                "PiecesCli is not added to the path you can't setup the stdio servers please add it to the path"
+                "Pieces Cli is not added to the path you can't setup the stdio servers please add it to the path"
             )
         self.console.print(f"Attempting to update Global {self.readable} MCP Tooling")
         if not self.check_ltm():
