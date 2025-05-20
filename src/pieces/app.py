@@ -27,7 +27,9 @@ from pieces.mcp import (
     handle_mcp_docs,
     handle_repair,
     handle_status,
+    handle_gateway,
 )
+import asyncio
 from pieces import __version__
 
 ask_stream = AskStream()
@@ -398,9 +400,23 @@ class PiecesCLI:
             action="store_true",
             help="Set up the MCP for Goose",
         )
+        mcp_setup_parser.add_argument(
+            "--claude",
+            dest="claude",
+            action="store_true",
+            help="Set up the MCP for Claude Desktop",
+        )
+        mcp_setup_parser.add_argument(
+            "--stdio",
+            dest="stdio",
+            action="store_true",
+            help="Use the stdio MCP instead of sse",
+        )
         mcp_setup_parser.set_defaults(func=handle_mcp)
 
-        mcp_list_parser = mcp_subparser.add_parser("list", help="List all MCPs")
+        mcp_list_parser = mcp_subparser.add_parser(
+            "list", help="List all MCP integrations"
+        )
         mcp_list_parser.add_argument(
             "--already-registered",
             dest="already_registered",
@@ -422,7 +438,7 @@ class PiecesCLI:
             "--ide",
             dest="ide",
             type=str,
-            choices=["vscode", "cursor", "goose", "current", "all"],
+            choices=["vscode", "cursor", "goose", "claude", "current", "all"],
             default="all",
             help="The IDE to print its documentation",
         )
@@ -435,6 +451,13 @@ class PiecesCLI:
         )
         mcp_docs_parser.set_defaults(func=handle_mcp_docs)
 
+        mcp_start_parser = mcp_subparser.add_parser(
+            "start", help="Start the stdio MCP server"
+        )
+        mcp_start_parser.set_defaults(
+            func=lambda **kwargs: asyncio.run(handle_gateway())
+        )
+
         mcp_repair_parser = mcp_subparser.add_parser(
             "repair", help="Repair an MCP config settings"
         )
@@ -442,7 +465,7 @@ class PiecesCLI:
             "--ide",
             dest="ide",
             type=str,
-            choices=["vscode", "cursor", "goose", "all"],
+            choices=["vscode", "cursor", "goose", "claude", "all"],
             default="all",
             help="The IDE to repair",
         )
@@ -455,7 +478,7 @@ class PiecesCLI:
 
     def run(self):
         config = ConfigCommands.load_config()
-        Settings.logger = Logger(config.get("debug", False))
+        Settings.logger = Logger(config.get("debug", False), Settings.pieces_data_dir)
         try:
             arg = sys.argv[1]
             if arg == "--ignore-onboarding":
@@ -487,20 +510,27 @@ class PiecesCLI:
                 config["skip_onboarding"] = True
                 ConfigCommands.save_config(config)
 
-        # Check if the command needs PiecesOS or not
-        if arg not in [
-            "help",
-            "-v",
-            "--version",
-            "install",
-            "onboarding",
-            "feedback",
-            "contribute",
-            "open",
-        ]:
-            Settings.startup()
-
         args = self.parser.parse_args()
+        command = args.command
+
+        mcp_subcommand = getattr(args, "mcp", None)
+
+        # Check if the command needs PiecesOS or not
+        if not (
+            command
+            in [
+                "help",
+                "-v",
+                "--version",
+                "install",
+                "onboarding",
+                "feedback",
+                "contribute",
+                "open",
+            ]
+            or (command == "mcp" and mcp_subcommand == "start")
+        ):
+            Settings.startup()
         Settings.logger.debug(f"Running command {arg} using: {args}")
         args.func(**vars(args))
 

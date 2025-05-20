@@ -19,11 +19,14 @@ lint.ignore = [
 [tool.poetry.dependencies]
 python = ">=3.11,<3.14"
 pyperclip = ">=1.8.2"
-pieces_os_client = "4.2.0"
 prompt-toolkit = "^3.0.43"
 rich = "^13.7.1"
 platformdirs = "^4.2.0"
 pyyaml = "^6.0.2"
+mcp = "1.8.0"
+
+## POS dependencies
+pieces_os_client = { git = "https://github.com/pieces-app/pieces-os-client-sdk-for-python", branch = "cli-agent-pydantic-v2" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

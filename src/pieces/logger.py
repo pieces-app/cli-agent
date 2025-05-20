@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Self
+from typing import Optional, Self
 
 from rich import prompt
 from rich.console import Console
@@ -10,7 +10,7 @@ from rich.prompt import Prompt
 
 
 class Logger:
-    _instance: Self
+    _instance: Optional[Self] = None
 
     def __init__(self, debug_mode=False, log_dir=None):
         """
@@ -20,7 +20,6 @@ class Logger:
             debug_mode (bool): Whether to enable debug output
             log_dir (str, optional): Directory to store log files (only used in debug mode)
         """
-        Logger._instance = self
         self.name = "Pieces_CLI"
         self.console = Console()
         self._confirm = prompt.Confirm(console=self.console)
@@ -33,10 +32,9 @@ class Logger:
             self.logger.removeHandler(handler)
 
         self.debug_mode = debug_mode
-        if debug_mode:
-            log_dir = log_dir or os.path.join(os.getcwd(), "logs")
-            self._setup_file_logging(log_dir, self.name)
-            self.print("Running in debug mode")
+        if debug_mode and log_dir:
+            self._setup_file_logging(os.path.join(log_dir, "logs"), self.name)
+            # self.print("Running in debug mode") Sadly it leads to some issues wit the claude MCP
 
     def _setup_file_logging(self, log_dir, name):
         """Set up file logging to save logs to files."""
@@ -57,6 +55,10 @@ class Logger:
     def info(self, message, *args, **kwargs):
         """Log an info message."""
         self.logger.info(message, *args, **kwargs)
+
+    def error(self, message, *args, **kwargs):
+        """Log an error message."""
+        self.logger.error(message, *args, **kwargs)
 
     def debug(self, message, *args, **kwargs):
         """Log a debug message (only visible in debug mode)."""
