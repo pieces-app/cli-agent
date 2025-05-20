@@ -246,7 +246,7 @@ def get_issue_details(seeds):
                     QGPTRelevanceInput(
                         query=issue_prompt.format(issues=issue_markdown),
                         application=Settings.pieces_client.application.id,
-                        model=Settings.pieces_client.model_name,
+                        model=Settings.get_auto_commit_model(),
                         options=QGPTRelevanceInputOptions(question=True),
                         seeds=seeds,
                     )
@@ -299,22 +299,13 @@ def get_commit_message(changes_summary, seeds):
                 `The changed parts is provided in the context where if the line start with "+"  means that line is added or "-" if it is removed"""
 
     try:
-        Settings.logger.debug(
-            QGPTRelevanceInput(
-                query=message_prompt,
-                seeds=seeds,
-                application=Settings.pieces_client.application.id,
-                model=Settings.get_model_id(),
-                options=QGPTRelevanceInputOptions(question=True),
-            ).to_json()
-        )
         commit_message = (
             Settings.pieces_client.qgpt_api.relevance(
                 QGPTRelevanceInput(
                     query=message_prompt,
                     seeds=seeds,
                     application=Settings.pieces_client.application.id,
-                    model=Settings.get_model_id(),
+                    model=Settings.get_auto_commit_model(),
                     options=QGPTRelevanceInputOptions(question=True),
                 )
             )
