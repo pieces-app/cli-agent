@@ -1,8 +1,6 @@
 import argparse
 import sys
 from rich.console import Console
-from rich.text import Text
-from rich import print as rprint
 
 
 class PiecesArgparser(argparse.ArgumentParser):
@@ -10,6 +8,7 @@ class PiecesArgparser(argparse.ArgumentParser):
 
     def __init__(self, *args, **kwargs):
         self.console = Console()
+        self.err_console = Console(stderr=True)
         super().__init__(*args, **kwargs)
 
     def error(self, message):
@@ -21,18 +20,19 @@ class PiecesArgparser(argparse.ArgumentParser):
                     invalid_command,
                 )
 
-                rprint(
+                self.err_console.print(
                     f"[bold red]Invalid command:[/] [yellow]'{invalid_command}'[/]\n"
                     + f"Did you mean [green][bold]{similar_command}[/bold][/]?"
                     if similar_command
                     else "",
                 )
             except (IndexError, AttributeError):
-                rprint(
+                self.err_console.print(
                     "[bold red]Invalid command[/]",
                 )
+                self.err_console.print(message)
         else:
-            rprint(
+            self.err_console.print(
                 f"[bold red]{message}[/]",
             )
         sys.exit(2)

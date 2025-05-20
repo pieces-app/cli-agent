@@ -1,4 +1,4 @@
-from typing import Dict, Literal, cast
+from typing import Dict, Literal, Union, cast
 from rich.markdown import Markdown
 import urllib.request
 import time
@@ -12,11 +12,12 @@ from .integrations import (
     goose_integration,
     cursor_integration,
     claude_integration,
+    mcp_integration_types,
 )
 from .integration import Integration
 
 # NOTE: the key should be the same as the parameter name in the handle_mcp function
-supported_mcps: Dict[str, Integration] = {
+supported_mcps: Dict[mcp_integration_types, Integration] = {
     "vscode": vscode_integration,
     "goose": goose_integration,
     "cursor": cursor_integration,
@@ -66,7 +67,7 @@ def handle_mcp(
             )
         supported_mcps["claude"].run(stdio=True)
 
-    if not goose and not vscode and not cursor and not claude:
+    if not any([claude, cursor, vscode, cursor, goose]):
         PiecesSelectMenu(
             [(val.readable, {key: True}) for key, val in supported_mcps.items()],
             handle_mcp,
@@ -74,15 +75,13 @@ def handle_mcp(
 
 
 def handle_mcp_docs(
-    ide: Literal["vscode", "goose", "claude", "cursor", "all", "current"], **kwargs
+    ide: Union[mcp_integration_types, Literal["all", "current"]], **kwargs
 ):
-    if ide in ["all", "current"]:
+    if ide == "all" or ide == "current":
         for mcp_name, mcp_integration in supported_mcps.items():
             if ide == "current" and not mcp_integration.is_set_up():
                 continue
-            handle_mcp_docs(
-                cast(Literal["vscode", "goose", "cursor"], mcp_name), **kwargs
-            )
+            handle_mcp_docs(mcp_name, **kwargs)
         return
     integration = supported_mcps[ide]
     Settings.logger.print(
@@ -92,14 +91,9 @@ def handle_mcp_docs(
         Settings.open_website(integration.docs_no_css_selector)
 
 
-def handle_repair(ide: Literal["vscode", "claude", "goose", "cursor", "all"], **kwargs):
+def handle_repair(ide: Union[mcp_integration_types, Literal["all"]], **kwargs):
     if ide == "all":
-        [
-            handle_repair(
-                cast(Literal["vscode", "claude", "goose", "cursor"], integration)
-            )
-            for integration in supported_mcps
-        ]
+        [handle_repair(integration) for integration in supported_mcps]
         return
     supported_mcps[ide].repair()
 
