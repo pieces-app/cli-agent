@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, List
 import yaml
 import platform
 import os
@@ -8,6 +8,9 @@ from .integration import Integration, MCPProperties
 from ..settings import Settings
 
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
+
+mcp_integration_types = Literal["vscode", "goose", "cursor", "claude"]
+mcp_integrations: List[mcp_integration_types]
 
 
 def get_global_vs_settings():
