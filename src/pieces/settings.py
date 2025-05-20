@@ -92,6 +92,7 @@ class Settings:
 
     @classmethod
     def get_model_by_unique(cls, unique, save_to_cache=True) -> str:
+        cls.pieces_client.get_models()
         model = [
             model.id
             for model in cls.pieces_client.models_object
