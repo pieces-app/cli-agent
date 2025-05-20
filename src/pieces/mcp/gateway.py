@@ -89,7 +89,7 @@ class PosMcpConnection:
             return result
 
         except Exception as e:
-            Settings.logger.error(f"Error callign POS MCP {name}: {e}", exc_info=True)
+            Settings.logger.error(f"Error calling POS MCP {name}: {e}", exc_info=True)
             # @mark-at-pieces not sure if there is a better way to return an error
             return types.CallToolResult(
                 content=[types.TextContent(type="text", text=str(e))]
