@@ -2,7 +2,7 @@ import unittest
 import json
 import os
 from unittest.mock import patch, Mock, mock_open, PropertyMock
-from pieces.mcp.integration import Integration
+from pieces.mcp.integration import Integration, MCPProperties
 from pieces.settings import Settings
 from pieces_os_client.models.workstream_pattern_engine_status import WorkstreamPatternEngineStatus
 from pieces_os_client.api.workstream_pattern_engine_api import WorkstreamPatternEngineApi
@@ -79,6 +79,16 @@ class TestIntegrationPaths(unittest.TestCase):
         self.mock_api_client._work_stream_pattern_engine_api = self.mock_workstream_api
         self.mock_settings.pieces_client = self.mock_api_client
 
+        self.mcp_properties = MCPProperties(
+            stdio_property={"type": "stdio"},
+            stdio_path=["mcp", "servers", "Pieces"],
+            sse_property={"type": "sse"},
+            sse_path=["mcp", "servers", "Pieces"],
+            url_property_name="url",
+            command_property_name="command",
+            args_property_name="args"
+        )
+
     def tearDown(self):
         self.mock_api_client.reset_mock()
         self.mock_workstream_api.reset_mock()
@@ -92,8 +102,11 @@ class TestIntegrationPaths(unittest.TestCase):
                 readable="Test Integration",
                 docs="https://docs.example.com",
                 get_settings_path=lambda: "C:\\Users\\Test\\AppData\\Roaming\\test.json",
-                path_to_mcp_settings=["mcp", "servers", "Pieces"],
-                mcp_settings={"type": "sse"},
+                mcp_properties=self.mcp_properties,
+                error_text="Test error text",
+                loader=json.load,
+                saver=lambda x, y: json.dump(x, y, indent=4),
+                id="test_integration"
             )
             
             mock_config = {
@@ -108,7 +121,7 @@ class TestIntegrationPaths(unittest.TestCase):
             }
             
             with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-                found, config = integration.search("C:\\Users\\Test\\AppData\\Roaming\\test.json")
+                found, config = integration.search("C:\\Users\\Test\\AppData\\Roaming\\test.json", "sse")
                 self.assertTrue(found)
                 self.assertEqual(config["type"], "sse")
 
@@ -120,8 +133,11 @@ class TestIntegrationPaths(unittest.TestCase):
                 readable="Test Integration",
                 docs="https://docs.example.com",
                 get_settings_path=lambda: "/home/test/.config/test.json",
-                path_to_mcp_settings=["mcp", "servers", "Pieces"],
-                mcp_settings={"type": "sse"},
+                mcp_properties=self.mcp_properties,
+                error_text="Test error text",
+                loader=json.load,
+                saver=lambda x, y: json.dump(x, y, indent=4),
+                id="test_integration"
             )
             
             mock_config = {
@@ -136,7 +152,7 @@ class TestIntegrationPaths(unittest.TestCase):
             }
             
             with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-                found, config = integration.search("/home/test/.config/test.json")
+                found, config = integration.search("/home/test/.config/test.json", "sse")
                 self.assertTrue(found)
                 self.assertEqual(config["type"], "sse")
 
@@ -148,8 +164,11 @@ class TestIntegrationPaths(unittest.TestCase):
                 readable="Test Integration",
                 docs="https://docs.example.com",
                 get_settings_path=lambda: "/Users/test/Library/Application Support/test.json",
-                path_to_mcp_settings=["mcp", "servers", "Pieces"],
-                mcp_settings={"type": "sse"},
+                mcp_properties=self.mcp_properties,
+                error_text="Test error text",
+                loader=json.load,
+                saver=lambda x, y: json.dump(x, y, indent=4),
+                id="test_integration"
             )
             
             mock_config = {
@@ -164,7 +183,7 @@ class TestIntegrationPaths(unittest.TestCase):
             }
             
             with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-                found, config = integration.search("/Users/test/Library/Application Support/test.json")
+                found, config = integration.search("/Users/test/Library/Application Support/test.json", "sse")
                 self.assertTrue(found)
                 self.assertEqual(config["type"], "sse")
 
@@ -175,8 +194,11 @@ class TestIntegrationPaths(unittest.TestCase):
             readable="Test Integration",
             docs="https://docs.example.com",
             get_settings_path=lambda: "/path/with spaces/test.json",
-            path_to_mcp_settings=["mcp", "servers", "Pieces"],
-            mcp_settings={"type": "sse"},
+            mcp_properties=self.mcp_properties,
+            error_text="Test error text",
+            loader=json.load,
+            saver=lambda x, y: json.dump(x, y, indent=4),
+            id="test_integration"
         )
         
         mock_config = {
@@ -191,7 +213,7 @@ class TestIntegrationPaths(unittest.TestCase):
         }
         
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-            found, config = integration.search("/path/with spaces/test.json")
+            found, config = integration.search("/path/with spaces/test.json", "sse")
             self.assertTrue(found)
             self.assertEqual(config["type"], "sse")
 
@@ -202,8 +224,11 @@ class TestIntegrationPaths(unittest.TestCase):
             readable="Test Integration",
             docs="https://docs.example.com",
             get_settings_path=lambda: "/path/with@special#chars/test.json",
-            path_to_mcp_settings=["mcp", "servers", "Pieces"],
-            mcp_settings={"type": "sse"},
+            mcp_properties=self.mcp_properties,
+            error_text="Test error text",
+            loader=json.load,
+            saver=lambda x, y: json.dump(x, y, indent=4),
+            id="test_integration"
         )
         
         mock_config = {
@@ -218,7 +243,7 @@ class TestIntegrationPaths(unittest.TestCase):
         }
         
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-            found, config = integration.search("/path/with@special#chars/test.json")
+            found, config = integration.search("/path/with@special#chars/test.json", "sse")
             self.assertTrue(found)
             self.assertEqual(config["type"], "sse")
 
@@ -229,8 +254,11 @@ class TestIntegrationPaths(unittest.TestCase):
             readable="Test Integration",
             docs="https://docs.example.com",
             get_settings_path=lambda: "/path/with/unicode/测试.json",
-            path_to_mcp_settings=["mcp", "servers", "Pieces"],
-            mcp_settings={"type": "sse"},
+            mcp_properties=self.mcp_properties,
+            error_text="Test error text",
+            loader=json.load,
+            saver=lambda x, y: json.dump(x, y, indent=4),
+            id="test_integration"
         )
         
         mock_config = {
@@ -245,7 +273,7 @@ class TestIntegrationPaths(unittest.TestCase):
         }
         
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-            found, config = integration.search("/path/with/unicode/测试.json")
+            found, config = integration.search("/path/with/unicode/测试.json", "sse")
             self.assertTrue(found)
             self.assertEqual(config["type"], "sse")
 
