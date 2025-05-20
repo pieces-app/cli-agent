@@ -414,7 +414,9 @@ class PiecesCLI:
         )
         mcp_setup_parser.set_defaults(func=handle_mcp)
 
-        mcp_list_parser = mcp_subparser.add_parser("list", help="List all MCPs")
+        mcp_list_parser = mcp_subparser.add_parser(
+            "list", help="List all MCP integrations"
+        )
         mcp_list_parser.add_argument(
             "--already-registered",
             dest="already_registered",
