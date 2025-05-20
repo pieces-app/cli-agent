@@ -133,10 +133,13 @@ def git_commit(**kwargs):
         subprocess.run(["git", "add", "-A"], check=True)
 
     issue_flag = kwargs.get("issue_flag", False)
-    try:
-        changes_summary, seeds = get_current_working_changes()
-    except TypeError:
+    changes = get_current_working_changes()
+
+    if changes is None:
+        Settings.show_error("No changes found or error fetching changes.")
         return
+
+    changes_summary, seeds = changes
 
     commit_message = get_commit_message(changes_summary, seeds)
     if not commit_message:

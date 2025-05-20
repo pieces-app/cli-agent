@@ -100,7 +100,7 @@ class TestGitCommit(unittest.TestCase):
         )
         self.mock_settings.logger.prompt = prompt
 
-        self.mock_settings.get_model_id.return_value = "OUR_GREAT_MODEL_ID"
+        self.mock_settings.get_auto_commit_model.return_value = "OUR_GREAT_MODEL_ID"
         self.mock_settings.pieces_client.model_name = "MY_MODEL_NAME"
 
     def tearDown(self):
