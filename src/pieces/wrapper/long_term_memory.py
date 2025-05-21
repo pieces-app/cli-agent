@@ -1,9 +1,13 @@
 import datetime
 from typing import TYPE_CHECKING, Optional, List
 
+from pieces.wrapper.streamed_identifiers.range_snapshot import RangeSnapshot
+
+from .streamed_identifiers.conversations_snapshot import ConversationsSnapshot
+
 
 if TYPE_CHECKING:
-    from . import PiecesClient
+    from .context import Context
     from pieces_os_client.models.workstream_pattern_engine_vision_calibration import (
         WorkstreamPatternEngineVisionCalibration,
     )
@@ -20,8 +24,9 @@ QR_CODE_WIDTH = 50
 class LongTermMemory:
     ltm_status: Optional["WorkstreamPatternEngineStatus"] = None
 
-    def __init__(self, pieces_client: "PiecesClient"):
-        self.pieces_client = pieces_client
+    def __init__(self, context: "Context"):
+        self.pieces_client = context.pieces_client
+        self.context = context
 
     @property
     def is_enabled(self) -> bool:
@@ -175,3 +180,44 @@ class LongTermMemory:
             WorkstreamPatternEngineVisionCalibration: The Captured window details
         """
         return self.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_calibration_capture()
+
+    def chat_enable_ltm(self):
+        """
+        This will enable the chat LTM
+        """
+        from .basic_identifier.range import BasicRange
+
+        RangeSnapshot.pieces_client = self.pieces_client
+
+        chat = self.context.copilot.chat
+        if not chat:
+            chat = self.context.copilot.create_chat("New Conversation")
+        chat.associate_range(BasicRange.create())
+        conv = (
+            self.pieces_client.conversation_api.conversation_get_specific_conversation(
+                chat.id
+            )
+        )  # Update the local cache
+        ConversationsSnapshot.identifiers_snapshot[conv.id] = conv
+
+    def chat_disable_ltm(self):
+        """
+        This will disable the chat LTM
+        """
+        chat = self.context.copilot.chat
+        if not chat:
+            return
+        for range in chat.ranges:
+            range.disassociate_chat(chat)
+
+    @property
+    def is_chat_ltm_enabled(self) -> bool:
+        """
+        This will check if the chat LTM is enabled
+
+        Returns:
+            bool: True if the chat LTM is enabled
+        """
+        if not self.context.copilot.chat:
+            return False
+        return len(self.context.copilot.chat.ranges) > 0

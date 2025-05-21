@@ -29,6 +29,10 @@ class PiecesApiClient:
         self._applications_api = None
         self._model_context_protocol_api = None
         self._work_stream_pattern_engine_api = None
+        self._anchor_api = None
+        self._anchors_api = None
+        self._range_api = None
+        self._ranges_api = None
 
     def init_host(self,host,reconnect_on_host_change=True):
         self.api_client = ApiClient(Configuration(host))
@@ -217,3 +221,31 @@ class PiecesApiClient:
             from pieces_os_client.api.workstream_pattern_engine_api import WorkstreamPatternEngineApi
             self._work_stream_pattern_engine_api = WorkstreamPatternEngineApi(self.api_client)
         return self._work_stream_pattern_engine_api
+
+    @property
+    def anchor_api(self):
+        if self._anchor_api is None:
+            from pieces_os_client.api.anchor_api import AnchorApi
+            self._anchor_api = AnchorApi(self.api_client)
+        return self._anchor_api
+ 
+    @property
+    def anchors_api(self):
+        if self._anchors_api is None:
+            from pieces_os_client.api.anchors_api import AnchorsApi
+            self._anchors_api = AnchorsApi(self.api_client)
+        return self._anchors_api
+
+    @property
+    def range_api(self):
+        if self._range_api is None:
+            from pieces_os_client.api.range_api import RangeApi
+            self._range_api = RangeApi(self.api_client)
+        return self._range_api
+ 
+    @property
+    def ranges_api(self):
+        if self._ranges_api is None:
+            from pieces_os_client.api.ranges_api import RangesApi
+            self._ranges_api = RangesApi(self.api_client)
+        return self._ranges_api

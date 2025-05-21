@@ -17,7 +17,7 @@ class Basic(ABC):
 
 	def _from_indices(self, indices: Dict[str, Any], object_call: Callable[[str], Any]) -> List[Any]:
 		return [object_call(id)
-             for id in indices.keys()]
+             for id,v in indices.items() if v != -1]
 
 	def __repr__(self):
 		"""
