@@ -186,6 +186,12 @@ class PiecesCLI:
             dest="materials",
             help="Materials of the question to be asked to the model check list materials",
         )
+        ask_parser.add_argument(
+            "--ltm",
+            action="store_true",
+            dest="ltm",
+            help="Enable LTM for the current chat",
+        )
         ask_parser.set_defaults(func=ask_stream.ask)
 
         # Subparser for the 'version' command

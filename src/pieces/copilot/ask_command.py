@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Tuple
+from pieces.copilot.ltm import enable_ltm
 from pieces.settings import Settings
 import os
 import threading
@@ -76,6 +77,8 @@ class AskStream:
     def ask(self, query, **kwargs):
         Settings.pieces_client.copilot.ask_stream_ws.on_message_callback = self.on_message
         Settings.get_model()  # Ensure the model is loaded
+        if kwargs.get("ltm", False) and not enable_ltm():
+            return
         files = kwargs.get("files", None)
         assets_index = kwargs.get("materials", None)
         self.add_context(files, assets_index)
