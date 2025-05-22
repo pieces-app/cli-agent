@@ -36,10 +36,10 @@ QR_CODE_ASCII = """
 
 
 def get_padding(columns_count: int) -> str:
-    return style_padding(("█" * columns_count))
+    return style_content((" " * columns_count), bg="white", fg="black")
 
 
-def style_padding(content: str, bg="default", fg="white") -> str:
+def style_content(content: str, bg="default", fg="white") -> str:
     return f"<style bg='{bg}' fg='{fg}'>" + content + "</style>"
 
 
@@ -59,7 +59,7 @@ def add_qrcodes() -> "WorkstreamPatternEngineVisionCalibration":
     for i, line in enumerate(qr_lines):
         output_lines[i + 1] = (
             get_padding(1)
-            + line.replace("█", style_padding(" ", "black"))
+            + line.replace("█", style_content(" ", "black"))
             + get_padding(1)
         )
     output_lines[qr_num_lines + 1] = get_padding(qr_num_columns + 2)
@@ -68,17 +68,19 @@ def add_qrcodes() -> "WorkstreamPatternEngineVisionCalibration":
     if start_line < qr_num_lines:
         start_line = qr_num_lines
 
-    output_lines[start_line - 2] = style_padding(
-        " " * (terminal_width - qr_num_columns - 2)
-    ) + " " * (qr_num_columns + 2)
+    spaces = " " * (terminal_width - 2 * qr_num_columns - 4)
+    if qr_num_lines + 1 != start_line - 2:
+        output_lines[start_line - 2] = " " * (qr_num_lines + 2)
+
+    output_lines[start_line - 2] += style_content(spaces) + " " * (qr_num_columns + 2)
 
     for i, line in enumerate(qr_lines):
-        spaces = style_padding(" " * (terminal_width - qr_num_columns - 2)) + " "
+        spaces = style_content(" " * (terminal_width - qr_num_columns - 2)) + " "
         output_lines[start_line + i - 1] = (
-            spaces + line.replace("█", style_padding(" ", "black")) + " "
+            spaces + line.replace("█", style_content(" ", "black")) + " "
         )
     output_lines[-1] = (
-        style_padding(" " * (terminal_width - qr_num_columns - 2))
+        style_content(" " * (terminal_width - qr_num_columns - 2))
         + (qr_num_columns + 2) * " "
     )
 
@@ -103,6 +105,10 @@ def add_qrcodes() -> "WorkstreamPatternEngineVisionCalibration":
 def capture(application):
     s = Settings.pieces_client.copilot.context.ltm.capture()
     application.exit(result=s if s.dimensions else None)
+
+
+Settings.startup()
+print(add_qrcodes())
 
 
 def check_ltm(docs=None) -> bool:
