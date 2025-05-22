@@ -168,7 +168,11 @@ class PiecesCLI:
             "ask", help="Ask a question to the Copilot"
         )
         ask_parser.add_argument(
-            "query", type=str, help="Question to be asked to the Copilot"
+            "query",
+            type=str,
+            help="Question to be asked to the Copilot",
+            nargs="?",
+            default=None,
         )
         ask_parser.add_argument(
             "--files",

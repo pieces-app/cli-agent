@@ -82,6 +82,8 @@ class AskStream:
         files = kwargs.get("files", None)
         assets_index = kwargs.get("materials", None)
         self.add_context(files, assets_index)
+        if not query:
+            query = Settings.logger.input("prompt: ")
 
         self.final_answer = ""
         self.live = Live()
