@@ -107,10 +107,6 @@ def capture(application):
     application.exit(result=s if s.dimensions else None)
 
 
-Settings.startup()
-print(add_qrcodes())
-
-
 def check_ltm(docs=None) -> bool:
     # Update the local cache
     Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
