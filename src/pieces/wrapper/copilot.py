@@ -32,7 +32,7 @@ class Copilot:
         self.pieces_client = pieces_client
         self._on_message_queue = queue.Queue()
         self.ask_stream_ws = AskStreamWS(self.pieces_client, self._on_message_queue.put)
-        self.context = Context(pieces_client)
+        self.context = Context(pieces_client, self)
         self._chat = None
         self._chat_id = None
 

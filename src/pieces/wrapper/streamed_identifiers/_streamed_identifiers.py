@@ -20,40 +20,41 @@ Example:
     class AssetSnapshot(StreamedIdentifiersCache,_api_call=AssetApi(PiecesSettings.api_client).asset_snapshot):
         pass
 """
+
 import queue
-from typing import Dict, List, Union, Callable, TYPE_CHECKING
+from typing import List, Union, Callable, TYPE_CHECKING
 from abc import ABC, abstractmethod
 import threading
-
-
-
 
 
 if TYPE_CHECKING:
     from ..client import PiecesClient
     from pieces_os_client.models.streamed_identifiers import StreamedIdentifiers
-    from pieces_os_client.models.conversation import Conversation
-    from pieces_os_client.models.asset import Asset
+
 
 class StreamedIdentifiersCache(ABC):
     """
     This class is made for caching Streamed Identifiers.
     Please use this class only as a parent class.
     """
+
     pieces_client: "PiecesClient"
+    _initialized: threading.Event
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.on_update_list: List[Callable] = []
         cls.on_remove_list: List[Callable] = []
-        cls.identifiers_snapshot: Dict[str, Union["Asset", "Conversation", None]] = {}  # Map id:return from the _api_call
+        cls.identifiers_snapshot = {}  # Map id:return from the _api_call
         cls.identifiers_queue = queue.Queue()  # Queue for ids to be processed
         cls.identifiers_set = set()  # Set for ids in the queue
         cls.block = True  # to wait for the queue to receive the first id
         cls.first_shot = True  # First time to open the websocket or not
         cls._lock = threading.Lock()  # Lock for thread safety
         cls._worker_thread = threading.Thread(target=cls.worker)
-        cls._worker_thread.daemon = True  # Ensure the thread exits when the main program does
+        cls._worker_thread.daemon = (
+            True  # Ensure the thread exits when the main program does
+        )
 
     @classmethod
     def on_update(cls, obj):
@@ -66,7 +67,7 @@ class StreamedIdentifiersCache(ABC):
             remove(obj)
 
     @abstractmethod
-    def _api_call(cls, id: str) -> Union["Asset", "Conversation"]:
+    def _api_call(cls, id: str):
         pass
 
     @abstractmethod
@@ -74,6 +75,10 @@ class StreamedIdentifiersCache(ABC):
         """
         Sorting algorithm in the first shot
         """
+        pass
+
+    @abstractmethod
+    def _name() -> str:
         pass
 
     @classmethod
@@ -88,22 +93,27 @@ class StreamedIdentifiersCache(ABC):
             except queue.Empty:  # queue is empty and the block is false
                 if cls.block:
                     continue  # if there are more ids to load
-                
+
                 if cls.first_shot:
                     cls.first_shot = False
                     cls._initialized.set()
                     cls._sort_first_shot()
-                
+
                 return  # End the worker
             except Exception as e:
                 print(f"Error in worker: {e}")
 
     @classmethod
     def update_identifier(cls, identifier: str):
-        id_value = cls._api_call(identifier)
-        cls.identifiers_snapshot[identifier] = id_value
-        cls.on_update(id_value)
-        return id_value
+        try:
+            id_value = cls._api_call(identifier)
+            with cls._lock:
+                cls.identifiers_snapshot[identifier] = id_value
+                cls.on_update(id_value)
+            return id_value
+        except Exception as e:
+            print(f"Error updating identifier {identifier}: {e}")
+            return None
 
     @classmethod
     def streamed_identifiers_callback(cls, ids: "StreamedIdentifiers"):
@@ -113,9 +123,9 @@ class StreamedIdentifiersCache(ABC):
             cls._worker_thread = threading.Thread(target=cls.worker)
             cls._worker_thread.daemon = True
             cls._worker_thread.start()
-        
+
         for item in ids.iterable:
-            reference_id = item.asset.id if item.asset else item.conversation.id  # Get either the conversation or the asset
+            reference_id = getattr(item, cls._name()).id
 
             with cls._lock:
                 if reference_id not in cls.identifiers_set:
@@ -123,8 +133,14 @@ class StreamedIdentifiersCache(ABC):
                         # Asset deleted
                         cls.on_remove(cls.identifiers_snapshot.pop(reference_id, None))
                     else:
-                        if reference_id not in cls.identifiers_snapshot and not cls.first_shot:
-                            cls.identifiers_snapshot = {reference_id: None, **cls.identifiers_snapshot}
+                        if (
+                            reference_id not in cls.identifiers_snapshot
+                            and not cls.first_shot
+                        ):
+                            cls.identifiers_snapshot = {
+                                reference_id: None,
+                                **cls.identifiers_snapshot,
+                            }
                         cls.identifiers_queue.put(reference_id)  # Add id to the queue
                         cls.identifiers_set.add(reference_id)  # Add id to the set
 

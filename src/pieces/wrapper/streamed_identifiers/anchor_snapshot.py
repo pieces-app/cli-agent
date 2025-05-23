@@ -4,25 +4,25 @@ from typing import TYPE_CHECKING, Dict
 from ._streamed_identifiers import StreamedIdentifiersCache
 
 if TYPE_CHECKING:
-    from pieces_os_client.models.asset import Asset
+    from pieces_os_client.models.anchor import Anchor
 
 
-class AssetSnapshot(StreamedIdentifiersCache):
+class AnchorSnapshot(StreamedIdentifiersCache):
     """
     A class to represent a snapshot of all the cached Assets.
     """
 
     _initialized: threading.Event
-    identifiers_snapshot: Dict[str, "Asset"] = {}  # Map id:return from the _api_call
+    identifiers_snapshot: Dict[str, "Anchor"] = {}  # Map id:return from the _api_call
 
     @staticmethod
     def _name() -> str:
-        return "asset"
+        return "anchor"
 
     @classmethod
     def _api_call(cls, id):
-        asset = cls.pieces_client.asset_api.asset_snapshot(id)
-        return asset
+        anchor = cls.pieces_client.anchor_api.anchor_specific_anchor_snapshot(id)
+        return anchor
 
     @staticmethod
     def _sort_first_shot():

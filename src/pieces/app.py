@@ -168,7 +168,11 @@ class PiecesCLI:
             "ask", help="Ask a question to the Copilot"
         )
         ask_parser.add_argument(
-            "query", type=str, help="Question to be asked to the Copilot"
+            "query",
+            type=str,
+            help="Question to be asked to the Copilot",
+            nargs="?",
+            default=None,
         )
         ask_parser.add_argument(
             "--files",
@@ -185,6 +189,12 @@ class PiecesCLI:
             type=int,
             dest="materials",
             help="Materials of the question to be asked to the model check list materials",
+        )
+        ask_parser.add_argument(
+            "--ltm",
+            action="store_true",
+            dest="ltm",
+            help="Enable LTM for the current chat",
         )
         ask_parser.set_defaults(func=ask_stream.ask)
 
