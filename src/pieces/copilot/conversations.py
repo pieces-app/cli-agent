@@ -8,6 +8,7 @@ from rich.markdown import Markdown
 
 from pieces.wrapper.basic_identifier.chat import BasicChat
 from pieces.settings import Settings
+from pieces.utils import PiecesSelectMenu
 
 
 def conversation_handler(**kwargs):
@@ -72,43 +73,44 @@ def conversation_handler(**kwargs):
 
 
 def get_conversations(max_chats, **kwargs):
-    """This function is used to print all conversations available"""
-    console = Console()
+    """This function is used to print all conversations available interactively"""
     conversations = Settings.pieces_client.copilot.chats()
 
     if not conversations:
-        console.print("No chat available.", style="bold red")
+        print("No chat available.")
         return
 
-    readable = conversations[0].updated_at
-    output = Text(f"            {readable}\n", style="bold")
-
     try:
-        copilot_chat = Settings.pieces_client.copilot.chat
-        copilot_chat.name  # This will throw an exception if the chat is not found
+        current_chat = Settings.pieces_client.copilot.chat
+        current_chat.name  # validate
     except (pieces_os_client.exceptions.NotFoundException, AttributeError):
         Settings.pieces_client.copilot.chat = None
-        copilot_chat = None
+        current_chat = None
+
+    options = []
 
     for idx, conversation in enumerate(conversations[:max_chats], 1):
-        conversation_str = f"{idx}. {conversation.name}"
-        summary_str = conversation.summary
-
-        if copilot_chat == conversation:
-            output.append(f"  * {conversation_str}\n", style="bold green")
+        prefix = "*" if conversation == current_chat else " "
+        name = f"{idx}. {conversation.name}"
+        if conversation.summary:
+            summary = (
+                conversation.summary[:57] + "..."
+                if len(conversation.summary) > 60
+                else conversation.summary
+            )
+            display = f"{prefix} {name} — {summary}"
         else:
-            output.append(f"  {conversation_str}\n")
-        if summary_str:
-            if len(summary_str) > 60:
-                truncated_summary = summary_str[:57] + "..."
-            else:
-                # If the string is 20 characters or less, use it as is
-                truncated_summary = summary_str
-            summary = "\n  ".join(truncated_summary.split("\n")) + "\n"
-            output.append(f'  {summary}', style="dim")
+            display = f"{prefix} {name}"
+        options.append((display, {"chat": conversation}))
 
-    console.print(output)
+    def on_select(**kwargs):
+        selected = kwargs.get("chat")
+        if selected:
+            Settings.pieces_client.copilot.chat = selected
+            print(f"Switched to chat: {selected.name}")
 
+    menu = PiecesSelectMenu(options, on_select, title="Select a Chat")
+    menu.run()
 
 def get_conversation_messages(idx: Optional[int] = None, conversation: Optional[BasicChat] = None):
     """Print a conversation messages. you need to pass the index of the conversation or the conversation id"""
