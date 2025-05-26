@@ -210,7 +210,11 @@ class PiecesCLI:
             help="Perform a search for materials using the specified query string",
         )
         search_parser.add_argument(
-            "query", type=str, nargs="+", help="Query string for the search"
+            "query",
+            type=str,
+            nargs="?",
+            default=None,
+            help="Query string for the search",
         )
         search_parser.add_argument(
             "--mode",
