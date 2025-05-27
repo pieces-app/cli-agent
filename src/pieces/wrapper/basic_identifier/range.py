@@ -65,8 +65,7 @@ class BasicRange(Basic):
 
     @staticmethod
     def create(
-        from_: Optional[datetime.datetime] = datetime.datetime.now()
-        - datetime.timedelta(minutes=15),
+        from_: Optional[datetime.datetime] = None,
         to: Optional[datetime.datetime] = datetime.datetime.now(),
     ) -> "BasicRange":
         """
@@ -81,6 +80,8 @@ class BasicRange(Basic):
         """
         from pieces_os_client.models.seeded_range import SeededRange
         from pieces_os_client.models.grouped_timestamp import GroupedTimestamp
+        if not from_:
+            from_ = datetime.datetime.now() - datetime.timedelta(minutes=15)
 
         r = RangeSnapshot.pieces_client.ranges_api.ranges_create_new_range(
             SeededRange(

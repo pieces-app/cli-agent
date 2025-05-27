@@ -203,8 +203,8 @@ class LongTermMemory:
         chat = self.context.copilot.chat
         if not chat:
             return
-        for range in chat.ranges:
-            range.disassociate_chat(chat)
+        for ltm_range in chat.ranges:
+            ltm_range.disassociate_chat(chat)
 
     @property
     def is_chat_ltm_enabled(self) -> bool:
