@@ -85,6 +85,27 @@ class Settings:
         return cls._model_name
 
     @classmethod
+    def get_auto_commit_model(cls) -> str:
+        cls.pieces_client.model_name
+        return cls.get_from_pickle(
+            cls.models_file, "gemini-2.0-flash-lite-001"
+        ) or cls.get_model_by_unique("gemini-2.0-flash-lite-001")
+
+    @classmethod
+    def get_model_by_unique(cls, unique, save_to_cache=True) -> str:
+        cls.pieces_client.get_models()
+        model = [
+            model.id
+            for model in cls.pieces_client.models_object
+            if model.unique == unique
+        ][0]
+        if save_to_cache:
+            cls.file_cache[unique] = model
+            cls.dump_pickle(cls.models_file)
+
+        return model
+
+    @classmethod
     def get_model_id(cls):
         """
         Retrives the model id from the saved file
@@ -107,16 +128,17 @@ class Settings:
         except FileNotFoundError:
             return None
 
-    @staticmethod
-    def dump_pickle(file, **data):
+    @classmethod
+    def dump_pickle(cls, file):
         """Store data in a pickle file."""
         with open(file, "wb") as f:
-            pickle.dump(data, f)
+            pickle.dump(cls.file_cache, f)
 
     @classmethod
     def update_model(cls, model_name, model_id):
         cls._model_name = model_name
-        cls.dump_pickle(file=cls.models_file, model_id=model_id)
+        cls.file_cache["model_id"] = model_id
+        cls.dump_pickle(file=cls.models_file)
         cls.pieces_client.model_name = model_name
 
     @classmethod
