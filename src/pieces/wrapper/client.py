@@ -15,8 +15,8 @@ from .. import __version__
 from .copilot import Copilot
 from .basic_identifier.user import BasicUser
 from .basic_identifier.asset import BasicAsset
-from .streamed_identifiers import AssetSnapshot, ConversationsSnapshot
 from .installation import PosInstaller, DownloadModel
+from .streamed_identifiers._streamed_identifiers import StreamedIdentifiersCache
 import time
 
 if TYPE_CHECKING:
@@ -31,8 +31,7 @@ class PiecesClient(PiecesApiClient):
         self.is_pos_stream_running = False
         self._reconnect_on_host_change = kwargs.get(
             "reconnect_on_host_change", True)
-        AssetSnapshot.pieces_client = self
-        ConversationsSnapshot.pieces_client = self
+        StreamedIdentifiersCache.pieces_client = self
         self._application = None
         self._copilot = None
         self.models: Dict[str, str] = {}  # Maps model_name to the model_id

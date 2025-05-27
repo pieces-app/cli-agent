@@ -21,7 +21,7 @@ class BasicAnchor(Basic):
     """
 
     @property
-    def anchor(self) -> Anchor:
+    def anchor(self) -> "Anchor":
         """
         Gets the Anchor instance of the anchor.
 

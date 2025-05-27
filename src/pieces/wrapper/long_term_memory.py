@@ -1,8 +1,6 @@
 import datetime
 from typing import TYPE_CHECKING, Optional, List
 
-from pieces.wrapper.streamed_identifiers.range_snapshot import RangeSnapshot
-
 from .streamed_identifiers.conversations_snapshot import ConversationsSnapshot
 
 
@@ -186,8 +184,6 @@ class LongTermMemory:
         This will enable the chat LTM
         """
         from .basic_identifier.range import BasicRange
-
-        RangeSnapshot.pieces_client = self.pieces_client
 
         chat = self.context.copilot.chat
         if not chat:

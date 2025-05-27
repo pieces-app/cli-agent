@@ -28,18 +28,17 @@ class AskStream:
                     text = answer.text
                     self.final_answer += text
                     if text:
-                        self.live.update(
-                            Markdown(self.final_answer), refresh=True)
+                        self.live.update(Markdown(self.final_answer), refresh=True)
 
-            if response.status == 'COMPLETED':
+            if response.status == "COMPLETED":
                 self.live.update(Markdown(self.final_answer), refresh=True)
                 self.live.stop()
 
                 self.message_compeleted.set()
-                Settings.pieces_client.copilot.chat = BasicChat(
-                    response.conversation)
+                Settings.pieces_client.copilot.chat = BasicChat(response.conversation)
 
         except Exception as e:
+            Settings.logger.critical(e)
             Settings.logger.print(f"Error processing message: {e}")
 
     def validate_path(self, path) -> Tuple[bool, str]:
@@ -50,7 +49,6 @@ class AskStream:
         return True, path
 
     def add_context(self, files, assets_index):
-
         context = Settings.pieces_client.copilot.context
 
         # Files
@@ -59,7 +57,8 @@ class AskStream:
                 out, path = self.validate_path(file)
                 if not out:  # check if file exists
                     Settings.show_error(
-                        f"{file} is not found", "Please enter a valid file path")
+                        f"{file} is not found", "Please enter a valid file path"
+                    )
                     return
 
                 # Return the abs path
@@ -69,13 +68,17 @@ class AskStream:
             for snippet in assets_index:
                 try:
                     # we began enumerating from 1
-                    asset = Settings.pieces_client.assets()[snippet-1]
+                    asset = Settings.pieces_client.assets()[snippet - 1]
                 except KeyError:
-                    return Settings.show_error("Asset not found", "Enter a vaild asset index")
+                    return Settings.show_error(
+                        "Asset not found", "Enter a vaild asset index"
+                    )
                 context.assets.append(asset)
 
     def ask(self, query, **kwargs):
-        Settings.pieces_client.copilot.ask_stream_ws.on_message_callback = self.on_message
+        Settings.pieces_client.copilot.ask_stream_ws.on_message_callback = (
+            self.on_message
+        )
         Settings.get_model()  # Ensure the model is loaded
         if kwargs.get("ltm", False) and not enable_ltm():
             return

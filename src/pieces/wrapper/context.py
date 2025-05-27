@@ -189,9 +189,9 @@ class Context:
 
         if not isinstance(message, BasicMessage):
             raise ValueError("Message should be BasicMessage type")
-        self._messages.iterable.append(message.message)
         if not self.copilot.chat:
             self.copilot.create_chat()
+        self._messages.iterable.append(message.message)
         self.copilot.chat.associate_message(message)
 
     def _remove_message(self, index: int):
@@ -205,9 +205,9 @@ class Context:
 
         if not isinstance(asset, BasicAsset):
             raise ValueError("Snippet content should be BasicAsset type")
-        self._assets.iterable.append(asset.asset)
         if not self.copilot.chat:
             self.copilot.create_chat()
+        self._assets.iterable.append(asset.asset)
         self.copilot.chat.associate_asset(asset)
 
     def _remove_asset(self, index: int):
@@ -221,10 +221,10 @@ class Context:
 
         if not os.path.exists(path):
             raise ValueError("Invalid path in the context")
-        anchor = BasicAnchor.from_raw_content(path)
-        self._paths.iterable.append(anchor.anchor)
         if not self.copilot.chat:
             self.copilot.create_chat()
+        anchor = BasicAnchor.from_raw_content(path)
+        self._paths.iterable.append(anchor.anchor)
         self.copilot.chat.associate_anchor(anchor)
 
     def _remove_path(self, index: int):
