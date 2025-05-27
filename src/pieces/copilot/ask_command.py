@@ -71,7 +71,7 @@ class AskStream:
                     asset = Settings.pieces_client.assets()[snippet - 1]
                 except KeyError:
                     return Settings.show_error(
-                        "Asset not found", "Enter a vaild asset index"
+                        "Asset not found", "Enter a valid asset index"
                     )
                 context.assets.append(asset)
 

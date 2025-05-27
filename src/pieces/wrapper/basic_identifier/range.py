@@ -32,7 +32,7 @@ class BasicRange(Basic):
         return self.range.id
 
     @classmethod
-    def get_leatest(cls) -> "BasicRange":
+    def get_latest(cls) -> "BasicRange":
         """Returns the latest range"""
         range = list(RangeSnapshot.identifiers_snapshot.keys())
         if range:
