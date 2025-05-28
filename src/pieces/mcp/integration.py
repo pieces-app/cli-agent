@@ -202,7 +202,7 @@ class Integration:
 
     def check_ltm(self):
         css_selector = "#installing-piecesos--configuring-permissions"
-        check_ltm(self.docs_no_css_selector + css_selector)
+        return check_ltm(self.docs_no_css_selector + css_selector)
 
     def repair(self):
         paths_to_repair = self.need_repair()
