@@ -12,8 +12,8 @@ from pieces.settings import Settings
 
 def loop(**kwargs):
     """Run the CLI loop."""
-    from pieces.wrapper.websockets.conversations_ws import ConversationWS
-    from pieces.wrapper.websockets.assets_identifiers_ws import AssetsIdentifiersWS
+    from pieces_os_client.wrapper.websockets.conversations_ws import ConversationWS
+    from pieces_os_client.wrapper.websockets.assets_identifiers_ws import AssetsIdentifiersWS
 
     Settings.run_in_loop = True
 
