@@ -49,24 +49,24 @@ def add_qrcodes() -> "WorkstreamPatternEngineVisionCalibration":
 
     output_lines = [""] * terminal_height
 
-    output_lines[0] = get_padding(qr_num_columns + 2)
+    output_lines[0] = get_padding(qr_num_columns + QR_PADDING)
     for i, line in enumerate(qr_lines):
         output_lines[i + 1] = (
             get_padding(1)
             + line.replace("█", style_content(" ", "black"))
             + get_padding(1)
         )
-    output_lines[qr_num_lines + 1] = get_padding(qr_num_columns + 2)
+    output_lines[qr_num_lines + 1] = get_padding(qr_num_columns + QR_PADDING)
 
     start_line = terminal_height - qr_num_lines
     if start_line < qr_num_lines:
         start_line = qr_num_lines
 
     spaces = " " * (terminal_width - 2 * qr_num_columns - 4)
-    if qr_num_lines + 1 != start_line - 2:
-        output_lines[start_line - 2] = " " * (qr_num_lines + 2)
+    if qr_num_lines + 1 != start_line - LINE_OFFSET:
+        output_lines[start_line - LINE_OFFSET] = " " * (qr_num_lines + QR_PADDING)
 
-    output_lines[start_line - 2] += style_content(spaces) + " " * (qr_num_columns + 2)
+    output_lines[start_line - LINE_OFFSET] += style_content(spaces) + " " * (qr_num_columns + QR_PADDING)
 
     for i, line in enumerate(qr_lines):
         spaces = style_content(" " * (terminal_width - qr_num_columns - 2)) + " "
