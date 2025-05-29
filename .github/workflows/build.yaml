@@ -122,29 +122,6 @@ jobs:
           }
         shell: pwsh
 
-      - name: Test Windows Executable Basic Commands
-        if: runner.os == 'Windows'
-        run: |
-          Get-ChildItem -Recurse
-          Write-Host "--- Testing 'pieces.exe --help' command ---"
-          try {
-              # Run the --version command and capture its output
-              # 2>&1 redirects stderr to stdout, so we capture all messages.
-              $versionOutput = (.\pieces.exe --help 2>&1)
-              Write-Host "Output for --version:`n$versionOutput"
-
-              # Check if the command executed successfully (exit code 0)
-              # In PowerShell, a non-zero exit code usually throws an error if $ErrorActionPreference is 'Stop'.
-              # If it didn't throw, it likely succeeded.
-              Write-Host "SUCCESS: 'pieces.exe --version' executed without error."
-          } catch {
-              Write-Error "FAILURE: 'pieces.exe --version' threw an error: $($_.Exception.Message)"
-              exit 1 # Fail the step if an error occurred
-          }
-
-          Write-Host "Basic executable functionality tests passed."
-        shell: powershell
-
       ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
       - name: Write staging version to file
         shell: bash
@@ -181,6 +158,31 @@ jobs:
               --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" `
               --paths="${{ steps.venv_path.outputs.VENV_SITE_PACKAGES_PATH }}"
         shell: powershell
+
+      - name: Test Windows Executable Basic Commands
+        if: runner.os == 'Windows'
+        run: |
+          Get-ChildItem -Recurse
+          Set-Location dist 
+          Write-Host "--- Testing 'pieces.exe --help' command ---"
+          try {
+              # Run the --version command and capture its output
+              # 2>&1 redirects stderr to stdout, so we capture all messages.
+              $versionOutput = (.\pieces.exe --help 2>&1)
+              Write-Host "Output for --version:`n$versionOutput"
+
+              # Check if the command executed successfully (exit code 0)
+              # In PowerShell, a non-zero exit code usually throws an error if $ErrorActionPreference is 'Stop'.
+              # If it didn't throw, it likely succeeded.
+              Write-Host "SUCCESS: 'pieces.exe --version' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe --version' threw an error: $($_.Exception.Message)"
+              exit 1 # Fail the step if an error occurred
+          }
+
+          Write-Host "Basic executable functionality tests passed."
+        shell: powershell
+
 
       ### Package binary to zip file for macOS
       - name: Mac Binary to Zip File
