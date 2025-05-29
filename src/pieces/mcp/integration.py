@@ -200,7 +200,7 @@ class Integration:
             Settings.logger.critical(e)
             self.console.print(Markdown(self.error_text))
 
-    def check_ltm(self):
+    def check_ltm(self) -> bool:
         css_selector = "#installing-piecesos--configuring-permissions"
         return check_ltm(self.docs_no_css_selector + css_selector)
 

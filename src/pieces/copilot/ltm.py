@@ -1,7 +1,7 @@
 import os
 import threading
 from typing import TYPE_CHECKING
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import Progress,  TextColumn
 import time
 import urllib3
 
@@ -11,18 +11,12 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import Window
 from prompt_toolkit.layout.controls import FormattedTextControl
+from pieces.utils import ConditionalSpinnerColumn
 
 if TYPE_CHECKING:
     from pieces_os_client.models.workstream_pattern_engine_vision_calibration import (
         WorkstreamPatternEngineVisionCalibration,
     )
-
-
-class ConditionalSpinnerColumn(SpinnerColumn):
-    def render(self, task):
-        if task.completed:
-            return ""
-        return super().render(task)
 
 
 QR_CODE_ASCII = """
