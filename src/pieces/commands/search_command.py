@@ -1,4 +1,4 @@
-from pieces.wrapper.basic_identifier.asset import BasicAsset
+from pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
 from ..settings import Settings
 from .list_command import ListCommand
 

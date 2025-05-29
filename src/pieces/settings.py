@@ -5,8 +5,8 @@ import sys
 from platformdirs import user_data_dir
 
 from pieces.logger import Logger
-from .wrapper import PiecesClient
-from .wrapper.version_compatibility import VersionChecker, UpdateEnum
+from pieces_os_client.wrapper import PiecesClient
+from pieces_os_client.wrapper.version_compatibility import VersionChecker, UpdateEnum
 from pieces import __version__
 from pieces.gui import (
     server_startup_failed,

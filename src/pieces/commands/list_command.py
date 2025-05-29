@@ -3,7 +3,7 @@ import threading
 
 from pieces.settings import Settings
 from pieces.utils import PiecesSelectMenu
-from pieces.wrapper.basic_identifier.asset import BasicAsset
+from pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
 
 from .change_model import change_model
 from .assets_command import check_assets_existence, AssetsCommands

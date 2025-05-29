@@ -1,8 +1,4 @@
 import shutil
-import json
-import threading
-import urllib3
-import socket
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout
