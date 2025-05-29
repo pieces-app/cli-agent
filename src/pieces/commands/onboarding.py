@@ -204,7 +204,7 @@ def onboarding_command(**kwargs):
     Settings.logger.print(
         Markdown("You are now a `10x` more productive developer with Pieces."))
     Settings.logger.print(
-        "For more information visit https://docs.pieces.app/extensions-plugins/cli")
+        "For more information visit https://docs.pieces.app/products/cli")
 
     config = ConfigCommands.load_config()
     config["onboarded"] = True
