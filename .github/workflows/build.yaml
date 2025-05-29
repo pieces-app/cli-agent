@@ -30,12 +30,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ macos-14-large, macos-latest ]
+        os: [ macos-14-large, macos-latest, windows-latest ]
         include:
           - os: macos-14-large
             zipFileName: pieces-cli-mac_x86_64
           - os: macos-latest
             zipFileName: pieces-cli-mac_arm64
+          - os: windows-latest
+            zipFileName: pieces-cli-win_x86_64
     steps:
       ### Checking out our Repo
       - uses: actions/checkout@v3
@@ -76,6 +78,7 @@ jobs:
         env:
           MATCH_PASSWORD: ${{ secrets.match_password }}
           FASTLANE_PASSWORD: ${{ secrets.fastlane_password }}
+        if: runner.os != 'Windows'
 
       ### Installing our dependencies
       - name: Install dependencies
@@ -86,20 +89,19 @@ jobs:
       ### Setting the version in the pyproject.toml for unix builds
       - name: Set Version Shell Script
         run: |
-          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-          then
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]; then
                 echo "This is a tagged build"
-                export RELEASE_VERSION='${{ steps.get_version.outputs.VERSION }}'
+                RELEASE_VERSION='${{ steps.get_version.outputs.VERSION }}'
                 RELEASE_VERSION="${RELEASE_VERSION#v}"
-                echo $RELEASE_VERSION
                 poetry version $RELEASE_VERSION
                 sed -i "" "s/__version__ = .*/__version__ = '${RELEASE_VERSION}'/" src/pieces/__init__.py
           else
                 echo "This is not a tagged build"
-                export STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
+                STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
                 poetry version $STAGING_VERSION
                 sed -i "" "s/__version__ = .*/__version__ = '${STAGING_VERSION}'/" src/pieces/__init__.py
           fi
+        shell: bash
 
       ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
       - name: Write staging version to file
@@ -107,37 +109,40 @@ jobs:
         run: echo "${{ steps.staging_version.outputs.STAGING_VERSION }}" > staging_version$GITHUB_RUN_NUMBER.txt
         if: ${{ inputs.deploy == false && inputs.beta == false }}
 
-      ### Building the Library and Wheel files
-      - name: Build library
-        run: poetry build
-
-      ### Building Standalone Package
-      ### Note, this is also how it should be code-signed. Code-signing the Binary after it is built breaks it as I think it overwrites signatures on Python Libs
-      - name: Build stand alone
+      # Build stand alone step for macOS (keeping codesigning)
+      - name: Build stand alone (macOS)
+        if: runner.os != 'Windows'
         run: |
-          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
+          poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
 
-      ### Binary to Zip file
+      # Build stand alone step for Windows (build .exe)
+      - name: Build stand alone (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pyinstaller --onefile src/pieces/app.py --hidden-import=pydantic_core --name pieces.exe
+
+      # Package binary to zip file for macOS
       - name: Mac Binary to Zip File
+        if: runner.os != 'Windows'
         run: |
-          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-          then
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]; then
               ditto -c -k --sequesterRsrc "dist/pieces" dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip
           else
               ditto -c -k --sequesterRsrc "dist/pieces" dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
           fi
 
-      ### Submission to apple notary
-      - name: Submit Zip to apple notary
+      # Package binary to zip file for Windows using PowerShell
+      - name: Windows Binary to Zip File
+        if: runner.os == 'Windows'
+        shell: powershell
         run: |
-          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-          then
-              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-          else
-              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-          fi
+          if ($env:VERSION -match "\d+\.\d+\.\d+$") {
+            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${env:zipFileName}-$env:VERSION.zip"
+          }
+          else {
+            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${env:zipFileName}-$(${{ steps.staging_version.outputs.STAGING_VERSION }}).zip"
+          }
 
-      ### Upload build artifact for pushing
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
