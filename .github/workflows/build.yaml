@@ -143,7 +143,6 @@ jobs:
               exit 1 # Fail the step if an error occurred
           }
 
-
           Write-Host "Basic executable functionality tests passed."
         shell: powershell
 
@@ -158,7 +157,7 @@ jobs:
         run: poetry build
 
       - name: Get virtual environment site-packages path
-        if: runner.os == "Windows"
+        if: runner.os == 'Windows'
         id: venv_path
         run: |
           poetry shell # Activate the virtual environment
