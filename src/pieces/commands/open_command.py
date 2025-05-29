@@ -1,9 +1,9 @@
 from ..settings import Settings
-from pieces_os_client.models.inactive_os_server_applet import InactiveOSServerApplet
-from pieces_os_client.models.os_applet_enum import OSAppletEnum
 
 
 def open_command(**kwargs):
+    from pieces_os_client.models.inactive_os_server_applet import InactiveOSServerApplet
+    from pieces_os_client.models.os_applet_enum import OSAppletEnum
     copilot = kwargs.get("copilot", False)
     drive = kwargs.get("drive", False,)
     settings = kwargs.get("settings", False)
