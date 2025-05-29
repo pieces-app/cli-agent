@@ -108,7 +108,7 @@ jobs:
       - name: Set Version PowerShell Script (Windows)
         if: runner.os == 'Windows'
         run: |
-          if ("${{ steps.get_version.outputs.VERSION }}" -match "\d+\.\d+\.\d+$") {
+          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
             Write-Output "This is a tagged build"
             $RELEASE_VERSION = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
             poetry version $RELEASE_VERSION
@@ -128,19 +128,23 @@ jobs:
         run: echo "${{ steps.staging_version.outputs.STAGING_VERSION }}" > staging_version$GITHUB_RUN_NUMBER.txt
         if: ${{ inputs.deploy == false && inputs.beta == false }}
 
-      # Build stand alone step for macOS (keeping codesigning)
+      ### Building the Library and Wheel files
+      - name: Build library
+        run: poetry build
+
+      ### Build stand-alone step for macOS (keeping codesigning)
       - name: Build stand alone (macOS)
         if: runner.os != 'Windows'
         run: |
           poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
 
-      # Build stand alone step for Windows (build .exe)
+      ### Build stand-alone step for Windows (build .exe)
       - name: Build stand alone (Windows)
         if: runner.os == 'Windows'
         run: |
-          poetry run pyinstaller --onefile src/pieces/app.py --hidden-import=pydantic_core --name pieces.exe
+          poetry run pyinstaller --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces
 
-      # Package binary to zip file for macOS
+      ### Package binary to zip file for macOS
       - name: Mac Binary to Zip File
         if: runner.os != 'Windows'
         run: |
@@ -150,18 +154,19 @@ jobs:
               ditto -c -k --sequesterRsrc "dist/pieces" dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
           fi
 
-      # Package binary to zip file for Windows using PowerShell
+      ### Package binary to zip file for Windows using PowerShell
       - name: Windows Binary to Zip File
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          if ($env:VERSION -match "\d+\.\d+\.\d+$") {
-            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${env:zipFileName}-$env:VERSION.zip"
+          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
+            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
           }
           else {
-            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${env:zipFileName}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
+            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
           }
 
+      ### Upload to github artifacts
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
