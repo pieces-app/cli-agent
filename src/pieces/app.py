@@ -144,7 +144,7 @@ class PiecesCLI:
         # Subparser for the 'execute' command
         execute_parser = self.command_parser.add_parser(
             "execute",
-            help="Execute shell or bash materials",
+            help="Execute a pieces material",
             epilog="Example: pieces execute --py python3 -c {content}",
         )
         for classification in ClassificationSpecificEnum:
