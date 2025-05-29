@@ -50,6 +50,10 @@ class Settings:
 
     config_file = Path(pieces_data_dir, "pieces_config.json")
 
+    execute_command_extensions_map = Path(
+        pieces_data_dir, "commands_extension_map.json"
+    )
+
     run_in_loop = False  # is CLI looping?
 
     # some useful directories

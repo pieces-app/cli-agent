@@ -1,4 +1,8 @@
 import sys
+
+from pieces_os_client.models.classification_specific_enum import (
+    ClassificationSpecificEnum,
+)
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.settings import Settings
 from pieces.logger import Logger
@@ -139,9 +143,19 @@ class PiecesCLI:
 
         # Subparser for the 'execute' command
         execute_parser = self.command_parser.add_parser(
-            "execute", help="Execute shell or bash materials"
+            "execute",
+            help="Execute shell or bash materials",
+            epilog="Example: pieces execute --py python3 -c {content}",
         )
-        execute_parser.set_defaults(func=ExecuteCommand.execute_command)
+        for classification in ClassificationSpecificEnum:
+            execute_parser.add_argument(
+                f"--{classification.value}",
+                type=str,
+                dest=f"{classification.value}_handler",
+                required=False,
+                help=f"Specify the command to handle materials classified as '{classification.value}'.",
+            )
+            execute_parser.set_defaults(func=ExecuteCommand.handle_execute)
 
         # Subparser for the 'edit' command
         edit_parser = self.command_parser.add_parser(

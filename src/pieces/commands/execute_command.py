@@ -1,56 +1,122 @@
+import os
+import shlex
+import sys
+from typing import TYPE_CHECKING, Dict, Iterable, Optional
+import json
 from pieces.settings import Settings
-from .assets_command import check_assets_existence, AssetsCommands
+from .assets_command import AssetsCommands, check_asset_selected, check_assets_existence
+from pathlib import Path
 import subprocess
-from pieces.utils import PiecesSelectMenu
-from pieces_os_client.models.classification_specific_enum import ClassificationSpecificEnum
+
+if TYPE_CHECKING:
+    from pieces.wrapper.basic_identifier.asset import BasicAsset
+
+
+class SafeDict(dict):
+    def __missing__(self, key):
+        return "{" + key + "}"
 
 
 class ExecuteCommand:
     @classmethod
-    @check_assets_existence
-    def execute_command(cls, **kwargs):
+    def handle_execute(cls, **kwargs):
+        # parse the args manually for better performance
+        passed_args = set()
+        for i, arg in enumerate(sys.argv[1:]):
+            if arg.startswith("--"):
+                passed_args.add(arg.lstrip("--").split("=")[0] + "_handler")
 
-        assets = [
-            (f"{asset.name}", {"asset_id": asset.id,  "asset": asset})
-            for i, asset in enumerate(list(Settings.pieces_client.assets()),
-                                      start=1)
-            if asset.classification in (ClassificationSpecificEnum.SH,
-                                        ClassificationSpecificEnum.BAT)
-        ]
-
-        if not assets:
-            Settings.logger.print("No shell or bash assets found")
+        if passed_args:
+            cls.save_commands_map(passed_args, kwargs)
             return
-
-        def open_and_execute_asset(**kwargs):
-            AssetsCommands.open_asset(**kwargs)
-            cls.execute_asset(**kwargs)
-
-        select_menu = PiecesSelectMenu(assets, open_and_execute_asset, title="Select a material to execute")
-        select_menu.run()
+        cls.execute_command(**kwargs)
 
     @classmethod
-    def execute_asset(cls, **kwargs):
-        asset = kwargs["asset"]
-
+    @check_asset_selected
+    @check_assets_existence
+    def execute_command(cls, asset: Optional["BasicAsset"], **kwargs):
+        if not asset:
+            return
         try:
-            if asset.classification == ClassificationSpecificEnum.BASH:
+            if not asset.raw_content:
+                return Settings.show_error("Couldn't get the material content")
+            if not asset.classification:
+                return Settings.show_error(
+                    "Couldn't extract the material classification"
+                )
+            map = cls.get_command_map()
+            if asset.classification.value not in map:
+                return Settings.show_error(
+                    f"No matching command found for material type: '{asset.classification.value}'.",
+                    f"Tip: Use `pieces execute --{asset.classification.value}` to configure a handler for this material type.",
+                )
+            file = AssetsCommands.create_asset_file(asset)
+            file_no_extension = Path(file).with_suffix("")
+            commands = (
+                map[asset.classification.value]
+                .format_map(
+                    SafeDict(
+                        {
+                            "content": asset.raw_content,
+                            "file": file,
+                            "file_no_extension": file_no_extension,
+                        }
+                    )
+                )
+                .split("&&")
+            )
+            stderr = ""
+            stdout = ""
+            for command in commands:
+                out = shlex.split(command)
                 result = subprocess.run(
-                    ['bash', '-c', asset.raw_content], capture_output=True,
-                    text=True)
-            elif asset.classification == ClassificationSpecificEnum.SH:
-                result = subprocess.run(
-                    asset.raw_content, shell=True, capture_output=True,
-                    text=True)
-            else:
-                raise ValueError(
-                    f"Unsupported classification {asset.classification}")
+                    out,
+                    capture_output=True,
+                    text=True,
+                )
+                stdout += result.stdout
+                if result.stderr:
+                    stderr += result.stderr
             Settings.logger.print(f"Executing {asset.classification.value} command:")
-            Settings.logger.print(result.stdout)
-            if result.stderr:
+            Settings.logger.print(stdout)
+            if stderr:
                 Settings.logger.print("Errors:")
-                Settings.logger.print(result.stderr)
+                Settings.logger.print(stderr)
         except subprocess.CalledProcessError as e:
             Settings.logger.print(f"Error executing command: {e}")
         except Exception as e:
             Settings.logger.print(f"An error occurred: {e}")
+
+    @staticmethod
+    def get_command_map() -> Dict[str, str]:
+        map: dict = {}
+        if os.path.exists(Settings.execute_command_extensions_map):
+            with open(Settings.execute_command_extensions_map, "r") as f:
+                map = json.load(f)
+
+        map.setdefault("py", "python '{file}'")
+        map.setdefault("bash", "bash -c {content}")
+        map.setdefault("sh", "sh -c {content}")
+        map.setdefault("js", "node -e {content}")
+        map.setdefault("ts", "ts-node -e {content}")
+        map.setdefault("rb", "ruby -e {content}")
+        map.setdefault("lua", "lua -e {content}")
+        map.setdefault("perl", "perl -e {content}")
+        map.setdefault("php", "php -r {content}")
+        map.setdefault("r", "Rscript -e {content}")
+        map.setdefault("clj", "clojure -e {content}")
+        map.setdefault("groovy", "groovy -e {content}")
+        map.setdefault("scala", "scala -e {content}")
+        map.setdefault(
+            "rs", "rustc '{file}' -o '{file_no_extension}' && '{file_no_extension}'"
+        )
+        map.setdefault("dart", "dart '{file}'")
+        return map
+
+    @classmethod
+    def save_commands_map(cls, commands: Iterable[str], default: Dict[str, str]):
+        data = cls.get_command_map()
+        for command in commands:
+            data[command.removesuffix("_handler")] = default[command]
+        with open(Settings.execute_command_extensions_map, "w") as f:
+            json.dump(data, f)

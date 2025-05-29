@@ -70,7 +70,6 @@ class AssetsCommands:
                 "Please choose from the list or use 'pieces list assets'",
             )
 
-        code_content = cls.current_asset.raw_content
         open_in_editor = kwargs.get("editor")
 
         # Check if -e flag is used or open_in_editor is True
@@ -78,24 +77,7 @@ class AssetsCommands:
             check, editor = cls.check_editor()
             if not check:
                 return
-            file_extension = get_file_extension(cls.current_asset.classification)
-
-            # Ensure the directory exists, create it if not
-            if not os.path.exists(Settings.open_snippet_dir):
-                os.makedirs(Settings.open_snippet_dir)
-
-            file_path = os.path.join(
-                Settings.open_snippet_dir, f"{cls.current_asset.id}{file_extension}"
-            )
-
-            # Save the code to a file in the default directory
-            if isinstance(code_content, str):  # Code string raw
-                with open(file_path, "w") as file:
-                    file.write(code_content)
-            else:  # Image bytes data
-                with open(file_path, "wb") as file:
-                    file.write(bytes(code_content))
-
+            file_path = cls.create_asset_file(cls.current_asset)
             # Open the file with the configured editor
             editor_exe = shutil.which(editor)
             if not editor_exe:
@@ -114,6 +96,28 @@ class AssetsCommands:
             cls.print_code(
                 cls.current_asset.raw_content, cls.current_asset.classification
             )
+
+    @classmethod
+    def create_asset_file(cls, asset: BasicAsset):
+        code_content = asset.raw_content
+        file_extension = get_file_extension(asset.classification)
+
+        # Ensure the directory exists, create it if not
+        if not os.path.exists(Settings.open_snippet_dir):
+            os.makedirs(Settings.open_snippet_dir)
+
+        file_path = os.path.join(
+            Settings.open_snippet_dir, f"{asset.id}{file_extension}"
+        )
+
+        # Save the code to a file in the default directory
+        if isinstance(code_content, str):  # Code string raw
+            with open(file_path, "w") as file:
+                file.write(code_content)
+        else:  # Image bytes data
+            with open(file_path, "wb") as file:
+                file.write(bytes(code_content))
+        return file_path
 
     @classmethod
     def check_editor(cls) -> Tuple[bool, str]:
