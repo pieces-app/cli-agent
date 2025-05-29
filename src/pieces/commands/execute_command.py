@@ -103,14 +103,15 @@ class ExecuteCommand:
         map.setdefault("lua", "lua -e {content}")
         map.setdefault("perl", "perl -e {content}")
         map.setdefault("php", "php -r {content}")
-        map.setdefault("r", "Rscript -e {content}")
-        map.setdefault("clj", "clojure -e {content}")
         map.setdefault("groovy", "groovy -e {content}")
         map.setdefault("scala", "scala -e {content}")
         map.setdefault(
             "rs", "rustc '{file}' -o '{file_no_extension}' && '{file_no_extension}'"
         )
         map.setdefault("dart", "dart '{file}'")
+        map.setdefault("c", "gcc '{file}' -o '{file_no_extension}' && '{file_no_extension}'")
+        map.setdefault("cpp", "g++ '{file}' -o '{file_no_extension}' && '{file_no_extension}'")
+        map.setdefault("go", "go run '{file}'")
         return map
 
     @classmethod
