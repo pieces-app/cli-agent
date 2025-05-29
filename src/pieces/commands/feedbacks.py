@@ -1,4 +1,4 @@
-from rich.markdown import Markdown
+import webbrowser
 from ..settings import Settings
 
 
@@ -16,7 +16,7 @@ def feedback(**kwargs):
     )
 
     if res:
-        Settings.open_website("https://github.com/pieces-app/cli-agent/discussions/194")
+        webbrowser.open("https://github.com/pieces-app/cli-agent/discussions/194")
 
 
 def contribute(**kwargs):
@@ -27,4 +27,4 @@ def contribute(**kwargs):
     )
 
     if res:
-        Settings.open_website("https://github.com/pieces-app/cli-agent")
+        webbrowser.open("https://github.com/pieces-app/cli-agent")
