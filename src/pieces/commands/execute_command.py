@@ -89,30 +89,34 @@ class ExecuteCommand:
 
     @staticmethod
     def get_command_map() -> Dict[str, str]:
-        map: dict = {}
+        commands_map: dict = {}
         if os.path.exists(Settings.execute_command_extensions_map):
             with open(Settings.execute_command_extensions_map, "r") as f:
-                map = json.load(f)
+                commands_map = json.load(f)
 
-        map.setdefault("py", "python '{file}'")
-        map.setdefault("bash", "bash -c {content}")
-        map.setdefault("sh", "sh -c {content}")
-        map.setdefault("js", "node -e {content}")
-        map.setdefault("ts", "ts-node -e {content}")
-        map.setdefault("rb", "ruby -e {content}")
-        map.setdefault("lua", "lua -e {content}")
-        map.setdefault("perl", "perl -e {content}")
-        map.setdefault("php", "php -r {content}")
-        map.setdefault("groovy", "groovy -e {content}")
-        map.setdefault("scala", "scala -e {content}")
-        map.setdefault(
+        commands_map.setdefault("py", "python '{file}'")
+        commands_map.setdefault("bash", "bash -c {content}")
+        commands_map.setdefault("sh", "sh -c {content}")
+        commands_map.setdefault("js", "node -e {content}")
+        commands_map.setdefault("ts", "ts-node -e {content}")
+        commands_map.setdefault("rb", "ruby -e {content}")
+        commands_map.setdefault("lua", "lua -e {content}")
+        commands_map.setdefault("perl", "perl -e {content}")
+        commands_map.setdefault("php", "php -r {content}")
+        commands_map.setdefault("groovy", "groovy -e {content}")
+        commands_map.setdefault("scala", "scala -e {content}")
+        commands_map.setdefault(
             "rs", "rustc '{file}' -o '{file_no_extension}' && '{file_no_extension}'"
         )
-        map.setdefault("dart", "dart '{file}'")
-        map.setdefault("c", "gcc '{file}' -o '{file_no_extension}' && '{file_no_extension}'")
-        map.setdefault("cpp", "g++ '{file}' -o '{file_no_extension}' && '{file_no_extension}'")
-        map.setdefault("go", "go run '{file}'")
-        return map
+        commands_map.setdefault("dart", "dart '{file}'")
+        commands_map.setdefault(
+            "c", "gcc '{file}' -o '{file_no_extension}' && '{file_no_extension}'"
+        )
+        commands_map.setdefault(
+            "cpp", "g++ '{file}' -o '{file_no_extension}' && '{file_no_extension}'"
+        )
+        commands_map.setdefault("go", "go run '{file}'")
+        return commands_map
 
     @classmethod
     def save_commands_map(cls, commands: Iterable[str], default: Dict[str, str]):

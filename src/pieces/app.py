@@ -155,7 +155,7 @@ class PiecesCLI:
                 required=False,
                 help=f"Specify the command to handle materials classified as '{classification.value}'.",
             )
-            execute_parser.set_defaults(func=ExecuteCommand.handle_execute)
+        execute_parser.set_defaults(func=ExecuteCommand.handle_execute)
 
         # Subparser for the 'edit' command
         edit_parser = self.command_parser.add_parser(
