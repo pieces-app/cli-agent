@@ -87,21 +87,40 @@ jobs:
           poetry install 
 
       ### Setting the version in the pyproject.toml for unix builds
-      - name: Set Version Shell Script
+      - name: Set Version Shell Script (Unix)
+        if: runner.os != 'Windows'
         run: |
           if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]; then
-                echo "This is a tagged build"
-                RELEASE_VERSION='${{ steps.get_version.outputs.VERSION }}'
-                RELEASE_VERSION="${RELEASE_VERSION#v}"
-                poetry version $RELEASE_VERSION
-                sed -i "" "s/__version__ = .*/__version__ = '${RELEASE_VERSION}'/" src/pieces/__init__.py
+            echo "This is a tagged build"
+            RELEASE_VERSION='${{ steps.get_version.outputs.VERSION }}'
+            RELEASE_VERSION="${RELEASE_VERSION#v}"
+            poetry version $RELEASE_VERSION
+            sed -i "" "s/__version__ = .*/__version__ = '${RELEASE_VERSION}'/" src/pieces/__init__.py
           else
-                echo "This is not a tagged build"
-                STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
-                poetry version $STAGING_VERSION
-                sed -i "" "s/__version__ = .*/__version__ = '${STAGING_VERSION}'/" src/pieces/__init__.py
+            echo "This is not a tagged build"
+            STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
+            poetry version $STAGING_VERSION
+            sed -i "" "s/__version__ = .*/__version__ = '${STAGING_VERSION}'/" src/pieces/__init__.py
           fi
         shell: bash
+
+      ### Setting the version in the pyproject.toml for Windows builds
+      - name: Set Version PowerShell Script (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          if ("${{ steps.get_version.outputs.VERSION }}" -match "\d+\.\d+\.\d+$") {
+            Write-Output "This is a tagged build"
+            $RELEASE_VERSION = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
+            poetry version $RELEASE_VERSION
+            (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$RELEASE_VERSION'" | Set-Content src\pieces\__init__.py
+          }
+          else {
+            Write-Output "This is not a tagged build"
+            $STAGING_VERSION = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
+            poetry version $STAGING_VERSION
+            (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$STAGING_VERSION'" | Set-Content src\pieces\__init__.py
+          }
+        shell: pwsh
 
       ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
       - name: Write staging version to file
