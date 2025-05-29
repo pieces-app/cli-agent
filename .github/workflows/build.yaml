@@ -159,7 +159,7 @@ jobs:
             Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${env:zipFileName}-$env:VERSION.zip"
           }
           else {
-            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${env:zipFileName}-$(${{ steps.staging_version.outputs.STAGING_VERSION }}).zip"
+            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${env:zipFileName}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
           }
 
       - uses: actions/upload-artifact@v4
