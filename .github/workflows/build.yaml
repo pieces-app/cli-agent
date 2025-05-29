@@ -125,8 +125,7 @@ jobs:
       - name: Test Windows Executable Basic Commands
         if: runner.os == 'Windows'
         run: |
-          Set-Location dist 
-
+          Get-ChildItem -Recurse
           Write-Host "--- Testing 'pieces.exe --help' command ---"
           try {
               # Run the --version command and capture its output
