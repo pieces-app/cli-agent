@@ -44,8 +44,8 @@ class ExecuteCommand:
                 return Settings.show_error(
                     "Couldn't extract the material classification"
                 )
-            map = cls.get_command_map()
-            if asset.classification.value not in map:
+            commands_map = cls.get_command_map()
+            if asset.classification.value not in commands_map:
                 return Settings.show_error(
                     f"No matching command found for material type: '{asset.classification.value}'.",
                     f"Tip: Use `pieces execute --{asset.classification.value}` to configure a handler for this material type.",
@@ -53,7 +53,7 @@ class ExecuteCommand:
             file = AssetsCommands.create_asset_file(asset)
             file_no_extension = Path(file).with_suffix("")
             commands = (
-                map[asset.classification.value]
+                commands_map[asset.classification.value]
                 .format_map(
                     SafeDict(
                         {
