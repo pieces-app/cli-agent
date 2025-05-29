@@ -5,7 +5,7 @@ from rich.progress import (Progress,
                            BarColumn,
                            DownloadColumn,
                            TransferSpeedColumn)
-from ..wrapper.installation import (DownloadModel,
+from pieces_os_client.wrapper.installation import (DownloadModel,
                                     DownloadState)
 from ..settings import Settings
 

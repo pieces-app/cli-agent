@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.text import Text
 from rich.markdown import Markdown
 
-from pieces.wrapper.basic_identifier.chat import BasicChat
+from pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 from pieces.settings import Settings
 
 

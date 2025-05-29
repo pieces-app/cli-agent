@@ -9,7 +9,7 @@ from pieces.utils import get_file_extension
 from pieces.gui import print_asset_details, space_below, double_line
 from pieces.settings import Settings
 from pieces.commands.config_command import ConfigCommands
-from pieces.wrapper.basic_identifier.asset import BasicAsset
+from pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
 
 from pygments import highlight
 from pygments.util import ClassNotFound
