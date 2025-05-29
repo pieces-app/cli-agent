@@ -138,7 +138,7 @@ jobs:
       - name: Build stand alone (Windows)
         if: runner.os == 'Windows'
         run: |
-          pyinstaller --onefile src/pieces/app.py --hidden-import=pydantic_core --name pieces.exe
+          poetry run pyinstaller --onefile src/pieces/app.py --hidden-import=pydantic_core --name pieces.exe
 
       # Package binary to zip file for macOS
       - name: Mac Binary to Zip File
