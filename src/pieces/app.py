@@ -554,7 +554,7 @@ def main():
         pass
     except Exception as e:
         Settings.logger.critical(e)
-        Settings.show_error("UNKOWN EXCEPTION", e)
+        Settings.show_error("UNKNOWN EXCEPTION", e)
 
 
 if __name__ == "__main__":
