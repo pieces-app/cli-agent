@@ -2,12 +2,11 @@ import shutil
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.containers import HSplit, Window 
+from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.widgets import Box
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import Any, List, Tuple, Callable, Optional
-from rich.progress import SpinnerColumn
 from .commands.extensions import extensions_dict
 
 
@@ -17,13 +16,6 @@ def get_file_extension(language):
 
     # Return the corresponding file extension or default to '.txt' if not found
     return extensions_dict.get(language, ".txt")
-
-
-class ConditionalSpinnerColumn(SpinnerColumn):
-    def render(self, task):
-        if task.completed:
-            return ""
-        return super().render(task)
 
 
 class PiecesSelectMenu:

@@ -2,6 +2,7 @@ import json
 import os
 from typing import Callable, Dict, List, Literal, Tuple, Optional, TypedDict
 from rich.markdown import Markdown
+from rich.progress import SpinnerColumn
 import yaml
 import shutil
 
@@ -14,6 +15,13 @@ from ..utils import PiecesSelectMenu
 MCP_types = Literal["sse", "stdio"]
 
 IntegrationDict = Dict[str, MCP_types]
+
+
+class ConditionalSpinnerColumn(SpinnerColumn):
+    def render(self, task):
+        if task.completed:
+            return ""
+        return super().render(task)
 
 
 class ConfigDict(TypedDict, total=False):

@@ -1,7 +1,8 @@
 import os
 import threading
 from typing import TYPE_CHECKING
-from rich.progress import Progress,  TextColumn
+from rich.progress import Progress, TextColumn
+from rich.progress import SpinnerColumn
 import time
 import urllib3
 
@@ -11,12 +12,18 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import Window
 from prompt_toolkit.layout.controls import FormattedTextControl
-from pieces.utils import ConditionalSpinnerColumn
 
 if TYPE_CHECKING:
     from pieces_os_client.models.workstream_pattern_engine_vision_calibration import (
         WorkstreamPatternEngineVisionCalibration,
     )
+
+
+class ConditionalSpinnerColumn(SpinnerColumn):
+    def render(self, task):
+        if task.completed:
+            return ""
+        return super().render(task)
 
 
 QR_CODE_ASCII = """
@@ -35,6 +42,10 @@ def get_padding(columns_count: int) -> str:
 
 def style_content(content: str, bg="default", fg="white") -> str:
     return f"<style bg='{bg}' fg='{fg}'>" + content + "</style>"
+
+
+QR_PADDING = 2
+LINE_OFFSET = 2
 
 
 def add_qrcodes() -> "WorkstreamPatternEngineVisionCalibration":
@@ -66,7 +77,9 @@ def add_qrcodes() -> "WorkstreamPatternEngineVisionCalibration":
     if qr_num_lines + 1 != start_line - LINE_OFFSET:
         output_lines[start_line - LINE_OFFSET] = " " * (qr_num_lines + QR_PADDING)
 
-    output_lines[start_line - LINE_OFFSET] += style_content(spaces) + " " * (qr_num_columns + QR_PADDING)
+    output_lines[start_line - LINE_OFFSET] += style_content(spaces) + " " * (
+        qr_num_columns + QR_PADDING
+    )
 
     for i, line in enumerate(qr_lines):
         spaces = style_content(" " * (terminal_width - qr_num_columns - 2)) + " "
