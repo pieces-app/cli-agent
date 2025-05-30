@@ -186,7 +186,7 @@ def check_ltm(docs=None) -> bool:
                 if not missing_permissions:
                     progress.update(
                         main_task,
-                        description="[green]All permissions are activiated",
+                        description="[green]All permissions are activated",
                         completed=True,
                     )
                     break
