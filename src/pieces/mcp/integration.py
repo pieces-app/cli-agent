@@ -21,6 +21,7 @@ class ConfigDict(TypedDict, total=False):
     vs_code: IntegrationDict
     cursor: IntegrationDict
     goose: IntegrationDict
+    claude: IntegrationDict
 
 
 class MCPLocalConfig:

@@ -555,6 +555,9 @@ def main():
     except Exception as e:
         Settings.logger.critical(e)
         Settings.show_error("UNKNOWN EXCEPTION", e)
+    finally:
+        from pieces_os_client.wrapper.websockets.base_websocket import BaseWebsocket
+        BaseWebsocket.close_all()
 
 
 if __name__ == "__main__":
