@@ -279,7 +279,7 @@ def enable_ltm():
         # if not window:
         #     Settings.show_error(
         #         "Couldn't enable ltm for this chat",
-        #         f"Please use another terminal and report this issue\n{issues_link()}",
+        #         f"Please use another terminal and report this issue\n{URLs.PIECES_CLI_ISSUES.value}",
         #     )
         #     return False
         Settings.pieces_client.copilot.context.ltm.chat_enable_ltm()

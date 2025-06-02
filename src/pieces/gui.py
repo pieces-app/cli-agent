@@ -50,17 +50,10 @@ def server_startup_failed():
     print()
 
 
-def issues_link():
-    return "https://github.com/pieces-app/cli-agent/issues"
-
-
 def print_version_details(pos_version, cli_version):
     print(Markdown(f"`PiecesOS Version:` {pos_version}"))
     print(Markdown(f"`CLI Version:` {cli_version}"))
 
-
-def print_pieces_os_link():
-    print("https://docs.pieces.app/products/meet-pieces/fundamentals")
 
 
 def double_space(text):

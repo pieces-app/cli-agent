@@ -14,7 +14,7 @@ import sys
 from pieces.commands.cli_loop import run_command, extract_text
 from pieces.commands.config_command import ConfigCommands
 from pieces.settings import Settings
-
+from pieces.urls import URLs
 
 def get_prompt():
     username = getpass.getuser()
@@ -33,8 +33,8 @@ def get_prompt():
     return prompt
 
 
-demo_snippet = """import requests
-response = requests.get("https://docs.pieces.app")
+demo_snippet = f"""import requests
+response = requests.get("{URLs.PIECES_APP_WEBSITE.value}")
 print(response.text)
 """
 
@@ -171,7 +171,7 @@ def onboarding_command(**kwargs):
                 "- **Visual Studio**\n"
                 "and web browser extensions for Google Chrome and Firefox and more.\n\n"
 
-                "for more information about the integrations check out the **documentation** https://docs.pieces.app/#ides-and-editors. \n\n"
+                "for more information about the integrations check out the **documentation** https://docs.pieces.app/#ides-and-editors. \n\n" # TODO: Add a link to the documentation extensions like the old website
 
                 "### Key Functionalities\n"
 
@@ -204,7 +204,7 @@ def onboarding_command(**kwargs):
     Settings.logger.print(
         Markdown("You are now a `10x` more productive developer with Pieces."))
     Settings.logger.print(
-        "For more information visit https://docs.pieces.app/extensions-plugins/cli")
+        "For more information visit " + URLs.DOCS_CLI.value)
 
     config = ConfigCommands.load_config()
     config["onboarded"] = True

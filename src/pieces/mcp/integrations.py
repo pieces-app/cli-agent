@@ -39,11 +39,11 @@ def validate_project_path(path, dot_file=".vscode", readable: str = "VS Code"):
     path = os.path.abspath(os.path.expanduser(path))
 
     # Check if directory exists
-    if not os.path.isdir(path):
+    if not os.path.isdir(abs_path):
         return False, "The specified path is not a directory"
 
     # Check for .vscode folder or specific VS Code files
-    dot_dir = os.path.join(path, dot_file)
+    dot_dir = os.path.join(abs_path, dot_file)
     if not os.path.isdir(dot_dir):
         return (
             False,
@@ -197,7 +197,7 @@ options = [
 cursor_integration = Integration(
     options=options,
     text_success=text_success_cursor,
-    docs="https://docs.pieces.app/products/mcp/cursor#using-pieces-mcp-server-in-cursor",
+    docs=URLs.CURSOR_DOCS.value,
     readable="Cursor",
     get_settings_path=get_cursor_path,
     mcp_properties=MCPProperties(
@@ -211,7 +211,7 @@ vscode_integration = Integration(
     options=options,
     text_success=text_success_vscode,
     readable="VS Code",
-    docs="https://docs.pieces.app/products/mcp/github-copilot#using-pieces-mcp-server-in-github-copilot",
+    docs=URLs.VS_CODE_DOCS.value,
     get_settings_path=get_vscode_path,
     mcp_properties=MCPProperties(
         stdio_property={"type": "stdio"},
@@ -224,7 +224,7 @@ goose_integration = Integration(
     options=[],
     text_success=text_success_goose,
     readable="Goose",
-    docs="https://docs.pieces.app/products/mcp/goose#using-pieces-mcp-with-goose",
+    docs=URLs.GOOSE_DOCS.value,
     get_settings_path=lambda: goose_config_path,
     mcp_properties=MCPProperties(
         stdio_property={
@@ -261,7 +261,7 @@ claude_integration = Integration(
     text_success=text_success_claude,
     readable="Claude Desktop",
     get_settings_path=get_claude_path,
-    docs="https://modelcontextprotocol.io/quickstart/user#1-download-claude-for-desktop",
+    docs=URLs.CLAUDE_DOCS.value,
     mcp_properties=MCPProperties(
         stdio_property={},
         stdio_path=["mcpServers", "Pieces"],
