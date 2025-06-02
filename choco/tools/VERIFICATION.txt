@@ -1,0 +1,19 @@
+﻿
+Note: Include this file if including binaries you have the right to distribute.
+Otherwise delete. this file. If you are the software author, you can mention
+this.
+
+===DELETE ABOVE THIS LINE AND THIS LINE===
+
+VERIFICATION
+Verification is intended to assist the Chocolatey moderators and community
+in verifying that this package's contents are trustworthy.
+
+The embedded binaries are the official Pieces CLI tool, built and distributed by pieces.app.
+
+The binaries are embedded directly in the package to ensure reliable installation and to avoid external dependencies.
+
+The package is maintained by the official pieces.app team.
+
+<Include details of how to verify checksum contents>
+<If software vendor, explain that here>

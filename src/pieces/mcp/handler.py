@@ -6,7 +6,7 @@ import time
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
 
-from ..utils import PiecesSelectMenu
+from pieces.utils import PiecesSelectMenu
 from .integrations import (
     vscode_integration,
     goose_integration,

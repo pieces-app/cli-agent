@@ -24,6 +24,8 @@ on:
         required: false
       match_password:
         required: false
+      chocolatey_api_key:
+        required: false
 
 jobs:
   build:
@@ -331,3 +333,107 @@ jobs:
           cp macos-latest/*.tar.gz macos-latest/*.whl ./dist/
           python3 -m pip install --upgrade twine
           python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
+
+  ### Build and publish Chocolatey package
+  chocolatey-package:
+    runs-on: windows-latest
+    needs: [build, push-build]
+    if: inputs.deploy == true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-latest
+          path: dist
+
+      - name: Check if zip file exists
+        run: |
+          ls -la dist
+          if (Test-Path "dist/pieces-cli-win_x86_64-*.zip") {
+            Write-Output "Zip file exists"
+          } else {
+            Write-Output "Zip file does not exist"
+          }
+
+      - name: Setup Chocolatey
+        uses: chocolatey/setup-chocolatey@v1
+
+      - name: Install Chocolatey Package Builder
+        run: choco install chocolatey-package-builder -y
+
+      - name: Get the version
+        shell: bash
+        id: get_version
+        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+      - name: Get Release Notes
+        id: release_notes
+        run: |
+          $version = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
+          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/v$version" -Headers @{
+            "Accept" = "application/vnd.github.v3+json"
+            "Authorization" = "token ${{ secrets.GITHUB_TOKEN }}"
+          }
+          $releaseNotes = $response.body
+          # Escape any special characters that might break the nuspec XML
+          $releaseNotes = [System.Security.SecurityElement]::Escape($releaseNotes)
+          echo "RELEASE_NOTES=$releaseNotes" >> $env:GITHUB_OUTPUT
+
+      - name: Copy Exe to Package
+        run: |
+          Copy-Item -Path "dist/pieces-cli-win_x86_64-*.zip" -Destination "choco/tools/pieces-cli.zip" -Force
+          Expand-Archive -Path "choco/tools/pieces-cli.zip" -DestinationPath "choco/tools" -Force
+          Remove-Item "choco/tools/pieces-cli.zip" -Force
+
+      - name: Copy LICENSE
+        run: |
+          Copy-Item -Path "LICENSE" -Destination "choco/tools/LICENSE.txt" -Force
+          Write-Output "Copied LICENSE to package"
+
+      - name: Update Package Version
+        shell: pwsh
+        run: |
+          cd choco
+          $nuspec = Get-Content pieces-cli.nuspec
+          $newVersion = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
+          
+          # Update version in nuspec
+          $nuspec = $nuspec -replace '<version>.*?</version>', "<version>$newVersion</version>"
+          
+          # Update release notes with the actual GitHub release notes
+          # Should we add the release notes to the nuspec?
+          # $releaseNotes = "${{ steps.release_notes.outputs.RELEASE_NOTES }}"
+          # $nuspec = $nuspec -replace '<releaseNotes>.*?</releaseNotes>', "<releaseNotes>$releaseNotes</releaseNotes>"
+          
+          $nuspec | Set-Content pieces-cli.nuspec
+          
+          Write-Output "Updated nuspec version to $newVersion"
+
+      - name: Build Chocolatey Package
+        run: |
+          cd choco
+          choco pack
+
+      - name: Test Package
+        run: |
+          choco install pieces-cli -s . -y
+          pieces --version
+          choco uninstall pieces-cli -y
+
+      - name: Publish to Chocolatey
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
+        run: |
+          choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
+          choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
+
+      ### We might remove this setup later after testing!
+      - name: Upload Chocolatey Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: chocolatey-package
+          path: choco/
+          if-no-files-found: error
