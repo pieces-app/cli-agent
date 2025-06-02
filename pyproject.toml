@@ -31,7 +31,6 @@ pieces_os_client = { git = "https://github.com/pieces-app/pieces-os-client-sdk-f
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
 pyinstaller = "^6.13.0"
-nuitka = "^2.7.5"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

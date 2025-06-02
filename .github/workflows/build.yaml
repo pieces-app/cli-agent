@@ -155,10 +155,11 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           Invoke-Expression (poetry env activate)
-          poetry run pyinstaller -c --onefile src/pieces/app.py `
+           pyinstaller -c --onefile src/pieces/app.py `
               --name=pieces `
-              --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" `
-              --paths="${{ steps.venv_path.outputs.VENV_SITE_PACKAGES_PATH }}"
+              --hidden-import=pieces.pieces_argparser `
+              --paths="${{ steps.venv_path.outputs.VENV_SITE_PACKAGES_PATH }}" `
+              --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
         shell: powershell
 
 
