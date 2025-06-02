@@ -70,7 +70,7 @@ def run_cli(user_input: str, command_name: str, command_args: List[str]):
         return
 
     if user_input == 'exit':
-        from pieces.wrapper.websockets.base_websocket import BaseWebsocket
+        from pieces_os_client.wrapper.websockets.base_websocket import BaseWebsocket
         double_space("Exiting...")
         BaseWebsocket.close_all()
         Settings.run_in_loop = False

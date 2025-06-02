@@ -168,7 +168,11 @@ class PiecesCLI:
             "ask", help="Ask a question to the Copilot"
         )
         ask_parser.add_argument(
-            "query", type=str, help="Question to be asked to the Copilot"
+            "query",
+            type=str,
+            help="Question to be asked to the Copilot",
+            nargs="?",
+            default=None,
         )
         ask_parser.add_argument(
             "--files",
@@ -186,6 +190,12 @@ class PiecesCLI:
             dest="materials",
             help="Materials of the question to be asked to the model check list materials",
         )
+        ask_parser.add_argument(
+            "--ltm",
+            action="store_true",
+            dest="ltm",
+            help="Enable LTM for the current chat",
+        )
         ask_parser.set_defaults(func=ask_stream.ask)
 
         # Subparser for the 'version' command
@@ -200,7 +210,11 @@ class PiecesCLI:
             help="Perform a search for materials using the specified query string",
         )
         search_parser.add_argument(
-            "query", type=str, nargs="+", help="Query string for the search"
+            "query",
+            type=str,
+            nargs="?",
+            default=None,
+            help="Query string for the search",
         )
         search_parser.add_argument(
             "--mode",
@@ -512,24 +526,21 @@ class PiecesCLI:
 
         args = self.parser.parse_args()
         command = args.command
+        if not command and args.version:
+            command = "--version"
 
         mcp_subcommand = getattr(args, "mcp", None)
 
         # Check if the command needs PiecesOS or not
-        if not (
-            command
-            in [
-                "help",
-                "-v",
-                "--version",
-                "install",
-                "onboarding",
-                "feedback",
-                "contribute",
-                "open",
-            ]
-            or (command == "mcp" and mcp_subcommand == "start")
-        ):
+        if command not in [
+            "help",
+            "--version",
+            "install",
+            "onboarding",
+            "feedback",
+            "contribute",
+            "open",
+        ] and not (command == "mcp" and mcp_subcommand == "start"):
             Settings.startup()
         Settings.logger.debug(f"Running command {arg} using: {args}")
         args.func(**vars(args))
@@ -543,7 +554,7 @@ def main():
         pass
     except Exception as e:
         Settings.logger.critical(e)
-        Settings.show_error("UNKOWN EXCEPTION", e)
+        Settings.show_error("UNKNOWN EXCEPTION", e)
 
 
 if __name__ == "__main__":

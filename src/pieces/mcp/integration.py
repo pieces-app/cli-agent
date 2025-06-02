@@ -2,26 +2,16 @@ import json
 import os
 from typing import Callable, Dict, List, Literal, Tuple, Optional, TypedDict
 from rich.markdown import Markdown
-from rich.progress import Progress, SpinnerColumn, TextColumn
-import time
-import urllib3
 import yaml
 import shutil
 
+from pieces.copilot.ltm import check_ltm
 from pieces.settings import Settings
 
 from .utils import get_mcp_latest_url, get_mcp_urls
 from ..utils import PiecesSelectMenu
 
 MCP_types = Literal["sse", "stdio"]
-
-
-class ConditionalSpinnerColumn(SpinnerColumn):
-    def render(self, task):
-        if task.completed:
-            return ""
-        return super().render(task)
-
 
 IntegrationDict = Dict[str, MCP_types]
 
@@ -211,162 +201,8 @@ class Integration:
             self.console.print(Markdown(self.error_text))
 
     def check_ltm(self) -> bool:
-        # Update the local cache
-        Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
-        if Settings.pieces_client.copilot.context.ltm.is_enabled:
-            return True
-
-        if not Settings.logger.confirm(
-            "Pieces LTM must be running, do you want to enable it?",
-        ):
-            return False
-        missing_permissions = Settings.pieces_client.copilot.context.ltm.check_perms()
-        if not missing_permissions:
-            self._open_ltm()
-            return True
-
-        with Progress(
-            ConditionalSpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=self.console,
-            transient=False,
-        ) as progress:
-            css_selector = "#installing-piecesos--configuring-permissions"
-            self.console.print(self.docs_no_css_selector + css_selector)
-            vision_task = progress.add_task(
-                "[cyan]Vision permission: checking...",
-            )
-            accessibility_task = progress.add_task(
-                "[cyan]Accessibility permission: checking...",
-            )
-            main_task = progress.add_task(
-                "[cyan]Checking PiecesOS permissions...", total=None
-            )
-            permissions_len = 100
-
-            while True:
-                try:
-                    missing_permissions = (
-                        Settings.pieces_client.copilot.context.ltm.check_perms()
-                    )
-                    if len(missing_permissions) < permissions_len:
-                        # at least there is a progress here let's show the message again
-                        show_message = True
-                    else:
-                        show_message = False
-
-                    permissions_len = len(missing_permissions)
-                    if "vision" not in missing_permissions:
-                        progress.update(
-                            vision_task,
-                            description="[green]Vision permission: enabled",
-                            completed=True,
-                        )
-                    else:
-                        progress.update(
-                            vision_task,
-                            description="[yellow]Vision permission: enabling...",
-                        )
-                    if "accessibility" not in missing_permissions:
-                        progress.update(
-                            accessibility_task,
-                            description="[green]Accessibility permission: enabled",
-                            completed=True,
-                        )
-                    else:
-                        progress.update(
-                            accessibility_task,
-                            description="[yellow]Accessibility permission: enabling...",
-                        )
-
-                    if not missing_permissions:
-                        progress.update(
-                            main_task,
-                            description="[green]All permissions are activiated",
-                            completed=True,
-                        )
-                        break
-
-                    progress.update(
-                        main_task,
-                        description=f"[yellow]Found {permissions_len} missing permissions",
-                    )
-
-                    if show_message:
-                        Settings.pieces_client.copilot.context.ltm.enable(True)
-                    else:
-                        time.sleep(3)  # 3 sec delay
-                except PermissionError:
-                    pass
-                except (
-                    urllib3.exceptions.ProtocolError,
-                    urllib3.exceptions.NewConnectionError,
-                    urllib3.exceptions.ConnectionError,
-                    urllib3.exceptions.MaxRetryError,
-                ):  # Hope we did not forgot any exception
-                    progress.update(
-                        main_task,
-                        description="[yellow]PiecesOS is restarting...",
-                    )
-
-                    progress.update(vision_task, visible=False)
-                    progress.update(accessibility_task, visible=False)
-
-                    if Settings.pieces_client.is_pieces_running(maxium_retries=10):
-                        missing_permissions = (
-                            Settings.pieces_client.copilot.context.ltm.check_perms()
-                        )
-                        if not missing_permissions:
-                            progress.update(
-                                main_task,
-                                description="[green]All permissions are enabled!",
-                                completed=True,
-                            )
-                            time.sleep(0.5)
-                            break
-                        else:
-                            progress.update(vision_task, visible=True)
-                            progress.update(accessibility_task, visible=True)
-                    else:
-                        progress.update(
-                            main_task,
-                            description="[red]Failed to open PiecesOS",
-                            completed=True,
-                        )
-                        time.sleep(1)
-                        return False
-                except KeyboardInterrupt:
-                    progress.update(vision_task, visible=False)
-                    progress.update(accessibility_task, visible=False)
-
-                    progress.update(
-                        main_task,
-                        description="[red]Operation cancelled by user",
-                        completed=True,
-                    )
-                    return False
-                except Exception as e:
-                    progress.update(vision_task, visible=False)
-                    progress.update(accessibility_task, visible=False)
-
-                    progress.update(
-                        main_task,
-                        description=f"[red]Unexpected error: {str(e)}",
-                        completed=True,
-                    )
-                    return False
-            self._open_ltm()
-
-            return True
-
-    @staticmethod
-    def _open_ltm():
-        try:
-            Settings.pieces_client.copilot.context.ltm.enable(
-                False
-            )  # Don't show any permission notification/pop up
-        except Exception as e:
-            Settings.show_error(f"Error in enabling the LTM: {e}")
+        css_selector = "#installing-piecesos--configuring-permissions"
+        return check_ltm(self.docs_no_css_selector + css_selector)
 
     def repair(self):
         paths_to_repair = self.need_repair()
