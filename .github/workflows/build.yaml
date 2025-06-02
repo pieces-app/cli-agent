@@ -138,7 +138,7 @@ jobs:
         if: runner.os == 'Windows'
         id: venv_path
         run: |
-          poetry shell # Activate the virtual environment
+          Invoke-Expression (poetry env activate)
           $sitePackagesPath = (python -c "import site; print(site.getsitepackages()[0])").Trim()
           Write-Host "Site-packages path: $sitePackagesPath"
           echo "VENV_SITE_PACKAGES_PATH=$sitePackagesPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
@@ -154,6 +154,7 @@ jobs:
       - name: Build stand alone (Windows)
         if: runner.os == 'Windows'
         run: |
+          Invoke-Expression (poetry env activate)
           poetry run pyinstaller -c --onefile src/pieces/app.py `
               --name=pieces `
               --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" `
