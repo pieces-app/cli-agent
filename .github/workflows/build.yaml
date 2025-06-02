@@ -159,7 +159,8 @@ jobs:
               --name=pieces `
               --hidden-import=pieces.pieces_argparser `
               --paths="${{ steps.venv_path.outputs.VENV_SITE_PACKAGES_PATH }}" `
-              --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
+              --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" `
+              --python-option="W ignore" # Ignore all warnings 
         shell: powershell
 
 
