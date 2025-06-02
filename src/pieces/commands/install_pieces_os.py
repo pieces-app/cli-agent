@@ -1,4 +1,3 @@
-import os
 import queue
 from typing import Generator
 from rich.progress import Progress, BarColumn, DownloadColumn, TransferSpeedColumn
@@ -29,7 +28,7 @@ class PiecesInstaller:
                 transient=True,
             ) as progress:
                 task = progress.add_task(
-                    description="Installion PiecesOS",
+                    description="Installation PiecesOS",
                     total=m.total_bytes,
                 )
                 for model in self.iterator():
