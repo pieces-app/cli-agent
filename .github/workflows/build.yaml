@@ -157,7 +157,7 @@ jobs:
           Invoke-Expression (poetry env activate)
            pyinstaller -c --onefile src/pieces/app.py `
               --name=pieces `
-              --hidden-import=pieces.pieces_argparser `
+              --hidden-import="pieces.pieces_argparser" `
               --paths="${{ steps.venv_path.outputs.VENV_SITE_PACKAGES_PATH }}" `
               --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" `
               --python-option="W ignore" # Ignore all warnings 
