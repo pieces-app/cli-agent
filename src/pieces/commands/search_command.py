@@ -18,6 +18,9 @@ def search(query, **kwargs):
         search_phrase = Settings.logger.input("prompt: ")
     else:
         search_phrase = " ".join(query)
+    if not search_phrase:
+        Settings.logger.print("No search query provided.")
+        return
 
     asset_details = BasicAsset.search(search_phrase, search_type)
 

@@ -6,6 +6,7 @@ import json
 
 from .integration import Integration, MCPProperties
 from ..settings import Settings
+from ..urls import URLs
 
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
 
@@ -33,10 +34,23 @@ def get_global_vs_settings():
 
 
 def validate_project_path(path, dot_file=".vscode", readable: str = "VS Code"):
-    """Validate that the path is a legitimate VS Code or cursor project."""
+    """Validate that the path is a legitimate VS Code or cursor project with security checks."""
     if not path or path.isspace():
         return False, ""
-    path = os.path.abspath(os.path.expanduser(path))
+
+    # Expand user home and convert to absolute path
+    abs_path = os.path.abspath(os.path.expanduser(path))
+
+    # Security check: Ensure path doesn't escape allowed directories
+    # Allow paths within current working directory or user's home directory
+    current_dir = os.getcwd()
+    home_dir = os.path.expanduser("~")
+
+    if not (abs_path.startswith(current_dir) or abs_path.startswith(home_dir)):
+        return (
+            False,
+            f"Path '{path}' is outside allowed directories. Projects must be within your home directory or current working directory",
+        )
 
     # Check if directory exists
     if not os.path.isdir(abs_path):
