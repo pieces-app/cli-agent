@@ -160,9 +160,6 @@ jobs:
               --paths="${{ steps.venv_path.outputs.VENV_SITE_PACKAGES_PATH }}"
         shell: powershell
 
-        if: runner.os == 'Windows'
-        run: |
-        shell: powershell
 
 
       ### Package binary to zip file for macOS
@@ -173,6 +170,17 @@ jobs:
               ditto -c -k --sequesterRsrc "dist/pieces" dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip
           else
               ditto -c -k --sequesterRsrc "dist/pieces" dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
+          fi
+
+      ### Submission to apple notary
+      - name: Submit Zip to apple notary
+        if: runner.os != 'Windows'
+        run: |
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          then
+              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+          else
+              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
           fi
 
       ### Package binary to zip file for Windows using PowerShell
