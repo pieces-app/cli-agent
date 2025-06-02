@@ -160,28 +160,8 @@ jobs:
               --paths="${{ steps.venv_path.outputs.VENV_SITE_PACKAGES_PATH }}"
         shell: powershell
 
-      - name: Test Windows Executable Basic Commands
         if: runner.os == 'Windows'
         run: |
-          Get-ChildItem src/pieces
-          Set-Location dist 
-          Write-Host "--- Testing 'pieces.exe --help' command ---"
-          try {
-              # Run the --version command and capture its output
-              # 2>&1 redirects stderr to stdout, so we capture all messages.
-              $versionOutput = (.\pieces.exe --help 2>&1)
-              Write-Host "Output for --version:`n$versionOutput"
-
-              # Check if the command executed successfully (exit code 0)
-              # In PowerShell, a non-zero exit code usually throws an error if $ErrorActionPreference is 'Stop'.
-              # If it didn't throw, it likely succeeded.
-              Write-Host "SUCCESS: 'pieces.exe --version' executed without error."
-          } catch {
-              Write-Error "FAILURE: 'pieces.exe --version' threw an error: $($_.Exception.Message)"
-              exit 1 # Fail the step if an error occurred
-          }
-
-          Write-Host "Basic executable functionality tests passed."
         shell: powershell
 
 
@@ -220,6 +200,29 @@ jobs:
           path: "*.txt"
         if: inputs.deploy == false
 
+      - name: Test Windows Executable Basic Commands
+        if: runner.os == 'Windows'
+        run: |
+          Get-ChildItem src/pieces
+          Set-Location dist 
+          Write-Host "--- Testing 'pieces.exe --version' command ---"
+          try {
+              # Run the --version command and capture its output
+              # 2>&1 redirects stderr to stdout, so we capture all messages.
+              $versionOutput = (.\pieces.exe --version 2>&1)
+              Write-Host "Output for --version:`n$versionOutput"
+
+              # Check if the command executed successfully (exit code 0)
+              # In PowerShell, a non-zero exit code usually throws an error if $ErrorActionPreference is 'Stop'.
+              # If it didn't throw, it likely succeeded.
+              Write-Host "SUCCESS: 'pieces.exe --version' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe --version' threw an error: $($_.Exception.Message)"
+              exit 1 # Fail the step if an error occurred
+          }
+
+          Write-Host "Basic executable functionality tests passed."
+        shell: powershell
 
   ### Pushing the built packages to GCP and GitHub
   push-build:
