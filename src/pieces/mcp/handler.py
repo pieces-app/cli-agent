@@ -5,6 +5,7 @@ import time
 
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
+from pieces.urls import URLs
 
 from ..utils import PiecesSelectMenu
 from .integrations import (
@@ -88,7 +89,7 @@ def handle_mcp_docs(
         Markdown(f"**{integration.readable}**: `{integration.docs_no_css_selector}`")
     )
     if kwargs.get("open"):
-        Settings.open_website(integration.docs_no_css_selector)
+        URLs.open_website(integration.docs_no_css_selector)
 
 
 def handle_repair(ide: Union[mcp_integration_types, Literal["all"]], **kwargs):

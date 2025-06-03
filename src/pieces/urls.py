@@ -33,10 +33,13 @@ class URLs(Enum):
         "https://modelcontextprotocol.io/quickstart/user#1-download-claude-for-desktop"
     )
 
-    def open_website(self):
+    def open(self):
+        self.open_website(self.value)
+
+    @staticmethod
+    def open_website(url: str):
         from pieces.settings import Settings
 
-        url = self.value
         if hasattr(Settings.pieces_client, "user_api"):
             user_profile = Settings.pieces_client.user_api.user_snapshot().user
             if (not Settings.pieces_client.is_pieces_running) or (
