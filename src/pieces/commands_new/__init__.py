@@ -5,11 +5,11 @@ from .list_command import ListCommand
 from .auth_commands import LoginCommand, LogoutCommand
 from .search_command import SearchCommand
 from .asset_commands import (
-    SaveCommand, 
-    DeleteCommand, 
-    CreateCommand, 
+    SaveCommand,
+    DeleteCommand,
+    CreateCommand,
     ShareCommand,
-    EditCommand
+    EditCommand,
 )
 from .simple_commands import (
     ExecuteCommand,
@@ -17,7 +17,7 @@ from .simple_commands import (
     FeedbackCommand,
     ContributeCommand,
     InstallCommand,
-    OnboardingCommand
+    OnboardingCommand,
 )
 from .ask_command import AskCommand
 from .conversation_commands import ChatsCommand, ChatCommand
@@ -26,27 +26,28 @@ from .open_command import OpenCommand
 from .mcp_command_group import MCPCommandGroup
 
 __all__ = [
-    'VersionCommand',
-    'ConfigCommand', 
-    'ListCommand',
-    'LoginCommand',
-    'LogoutCommand',
-    'SearchCommand',
-    'SaveCommand',
-    'DeleteCommand',
-    'CreateCommand',
-    'ShareCommand',
-    'EditCommand',
-    'ExecuteCommand',
-    'RunCommand',
-    'AskCommand',
-    'ChatsCommand',
-    'ChatCommand',
-    'CommitCommand',
-    'OnboardingCommand',
-    'FeedbackCommand',
-    'ContributeCommand',
-    'InstallCommand',
-    'OpenCommand',
-    'MCPCommandGroup',
-] 
+    "VersionCommand",
+    "ConfigCommand",
+    "ListCommand",
+    "LoginCommand",
+    "LogoutCommand",
+    "SearchCommand",
+    "SaveCommand",
+    "DeleteCommand",
+    "CreateCommand",
+    "ShareCommand",
+    "EditCommand",
+    "ExecuteCommand",
+    "RunCommand",
+    "AskCommand",
+    "ChatsCommand",
+    "ChatCommand",
+    "CommitCommand",
+    "OnboardingCommand",
+    "FeedbackCommand",
+    "ContributeCommand",
+    "InstallCommand",
+    "OpenCommand",
+    "MCPCommandGroup",
+]
+

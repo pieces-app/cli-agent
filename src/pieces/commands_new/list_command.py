@@ -65,4 +65,3 @@ class ListCommand(BaseCommand):
             kwargs["max_assets"] = kwargs.pop("max_snippets")
         OldListCommand.list_command(**kwargs)
         return 0
-

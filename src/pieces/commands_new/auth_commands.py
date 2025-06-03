@@ -64,4 +64,3 @@ class LogoutCommand(BaseCommand):
         except:
             pass
         return 0
-

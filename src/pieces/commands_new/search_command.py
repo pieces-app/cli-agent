@@ -7,27 +7,27 @@ from pieces.commands.search_command import search
 
 class SearchCommand(BaseCommand):
     """Command to search for materials."""
-    
+
     def get_name(self) -> str:
         return "search"
-    
+
     def get_help(self) -> str:
         return "Perform a search for materials using the specified query string"
-    
+
     def get_description(self) -> str:
         return "Search through your materials using various search modes including fuzzy search, neural code search, and full text search"
-    
+
     def get_examples(self) -> list[str]:
         return [
             "pieces search",
             "pieces search 'python function'",
             "pieces search --mode ncs 'async await'",
-            "pieces search --mode fts 'TODO comments'"
+            "pieces search --mode fts 'TODO comments'",
         ]
-    
+
     def get_docs(self) -> str:
         return URLs.CLI_SEARCH_DOCS.value
-    
+
     def add_arguments(self, parser: argparse.ArgumentParser):
         """Add search-specific arguments."""
         parser.add_argument(
@@ -35,7 +35,7 @@ class SearchCommand(BaseCommand):
             type=str,
             nargs="?",
             default=None,
-            help="Query string for the search"
+            help="Query string for the search",
         )
         parser.add_argument(
             "--mode",
@@ -43,14 +43,15 @@ class SearchCommand(BaseCommand):
             dest="search_type",
             default="fuzzy",
             choices=["fuzzy", "ncs", "fts"],
-            help="Type of search"
+            help="Type of search",
         )
-    
+
     def execute(self, **kwargs) -> int:
         """Execute the search command."""
-        query = kwargs.get('query')
+        query = kwargs.get("query")
         # Convert single query string to list format expected by search function
         if query:
             query = [query]
         search(query, **kwargs)
-        return 0 
+        return 0
+
