@@ -103,8 +103,7 @@ class CommandGroup(BaseCommand):
 
     def add_arguments(self, parser: argparse.ArgumentParser):
         """Add subparsers for command groups."""
-        from pieces.pieces_argparser import PiecesArgparser
-
+        self.parser = parser
         subparsers = parser.add_subparsers(dest=self.name)
 
         for cmd_name, command in self.subcommands.items():
@@ -117,9 +116,7 @@ class CommandGroup(BaseCommand):
                 aliases=command.aliases,
                 help=command.help,
                 description=command.description,
-                parser_class=lambda prog, command=command: PiecesArgparser(
-                    prog=prog, command=command
-                ),
+                command_object=command,
             )
 
             command.add_arguments(subparser)

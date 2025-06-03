@@ -294,13 +294,14 @@ class MCPCommandGroup(CommandGroup):
 
     def _register_subcommands(self):
         """Register all MCP subcommands."""
-        self.add_subcommand(MCPSetupCommand.instance)
-        self.add_subcommand(MCPListCommand.instance)
-        self.add_subcommand(MCPDocsCommand.instance)
-        self.add_subcommand(MCPStartCommand.instance)
-        self.add_subcommand(MCPRepairCommand.instance)
-        self.add_subcommand(MCPStatusCommand.instance)
+        self.add_subcommand(MCPSetupCommand())
+        self.add_subcommand(MCPListCommand())
+        self.add_subcommand(MCPDocsCommand())
+        self.add_subcommand(MCPStartCommand())
+        self.add_subcommand(MCPRepairCommand())
+        self.add_subcommand(MCPStatusCommand())
 
     def execute(self, **kwargs) -> int:
         """When no subcommand is provided, show help."""
+        self.parser.print_help()
         return 0
