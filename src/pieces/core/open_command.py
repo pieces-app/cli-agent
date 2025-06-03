@@ -1,5 +1,5 @@
-from ..settings import Settings
-
+from pieces.urls import URLs
+from pieces.settings import Settings
 
 def open_command(**kwargs):
     from pieces_os_client.models.inactive_os_server_applet import InactiveOSServerApplet
@@ -16,7 +16,7 @@ def open_command(**kwargs):
         return
 
     if copilot:
-        Settings.open_website(
+        URLs.open_website(
             "localhost:"
             + str(
                 Settings.pieces_client.os_api.os_applet_launch(
@@ -25,7 +25,7 @@ def open_command(**kwargs):
             )
         )
     if drive:
-        Settings.open_website(
+        URLs.open_website(
             "localhost:"
             + str(
                 Settings.pieces_client.os_api.os_applet_launch(
@@ -34,7 +34,7 @@ def open_command(**kwargs):
             )
         )
     if settings:
-        Settings.open_website(
+        URLs.open_website(
             "localhost:"
             + str(
                 Settings.pieces_client.os_api.os_applet_launch(

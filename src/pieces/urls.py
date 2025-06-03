@@ -53,7 +53,9 @@ class URLs(Enum):
     CLI_RUN_DOCS = "https://docs.pieces.app/products/cli/commands#run"
     CLI_EXECUTE_DOCS = "https://docs.pieces.app/products/cli/commands#execute"
     CLI_EDIT_DOCS = "https://docs.pieces.app/products/cli/commands#edit"
-    CLI_ASK_DOCS = "https://docs.pieces.app/products/cli/commands#ask-your_question_here"
+    CLI_ASK_DOCS = (
+        "https://docs.pieces.app/products/cli/commands#ask-your_question_here"
+    )
     CLI_SEARCH_DOCS = "https://docs.pieces.app/products/cli/commands#search"
     CLI_LOGIN_DOCS = "https://docs.pieces.app/products/cli/commands#login"
     CLI_LOGOUT_DOCS = "https://docs.pieces.app/products/cli/commands#logout"
@@ -67,10 +69,13 @@ class URLs(Enum):
     CLI_OPEN_DOCS = "https://docs.pieces.app/products/cli/commands#open"
     CLI_HELP_DOCS = "https://docs.pieces.app/products/cli/troubleshooting"
 
-    def open_website(self):
+    def open(self):
+        self.open_website(self.value)
+
+    @staticmethod
+    def open_website(url: str):
         from pieces.settings import Settings
 
-        url = self.value
         if hasattr(Settings.pieces_client, "user_api"):
             user_profile = Settings.pieces_client.user_api.user_snapshot().user
             if (not Settings.pieces_client.is_pieces_running) or (
@@ -95,4 +100,5 @@ class URLs(Enum):
         try:
             webbrowser.open(new_url)
         except Exception as e:
-            Settings.logger.print(f"Failed to open link: {e}")
+            Settings.logger.critical(f"Failed to open a url {e}")
+            Settings.logger.print(f"Failed to open {url}")

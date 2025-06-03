@@ -65,7 +65,7 @@ class CommandRegistry:
 
 ## How to Add a New Command
 
-1. Create a new file in `src/pieces/commands_new/`
+1. Create a new file in `src/pieces/command_interface/`
 2. Import and extend `BaseCommand`:
 
 ```python

@@ -5,6 +5,7 @@ import pyperclip
 import subprocess
 import shutil
 
+from pieces.urls import URLs
 from pieces.utils import get_file_extension
 from pieces.gui import print_asset_details, space_below, double_line
 from pieces.settings import Settings
@@ -226,7 +227,7 @@ class AssetsCommands:
             link = share.iterable[0].link
         Settings.logger.print(f"Generated shareable link {link}")
         if Settings.logger.confirm("Do you want to open it in the browser?"):
-            Settings.open_website(link)
+            URLs.open_website(link)
 
     @classmethod
     @check_asset_selected

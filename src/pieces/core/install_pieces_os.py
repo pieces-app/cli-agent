@@ -59,13 +59,13 @@ class PiecesInstaller:
 
     def download_docs(self):
         if platform.system() == "Windows":
-            URLs.PIECES_OS_DOWNLOAD_WINDOWS.open_website()
+            URLs.PIECES_OS_DOWNLOAD_WINDOWS.open()
         elif platform.system() == "Linux":
-            URLs.PIECES_OS_DOWNLOAD_LINUX.open_website()
+            URLs.PIECES_OS_DOWNLOAD_LINUX.open()
         elif platform.system() == "Darwin":
             if platform.machine() == "arm64":
-                URLs.PIECES_OS_DOWNLOAD_MACOS_ARM64.open_website()
+                URLs.PIECES_OS_DOWNLOAD_MACOS_ARM64.open()
             else:
-                URLs.PIECES_OS_DOWNLOAD_MACOS_X86.open_website()
+                URLs.PIECES_OS_DOWNLOAD_MACOS_X86.open()
         else:
             raise ValueError("Invalid platform")
