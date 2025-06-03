@@ -9,6 +9,7 @@ class PiecesArgparser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         self.console = Console()
         self.err_console = Console(stderr=True)
+        self.command = kwargs.pop("command_object", None)
         super().__init__(*args, **kwargs)
 
     def error(self, message):
@@ -174,9 +175,24 @@ class PiecesArgparser(argparse.ArgumentParser):
                             f"[green bold]{cmd_name}[/]{padding}- {help_text}"
                         )
 
-        console.print(
-            "\n[dim]For detailed help on specific commands, use: [bold]pieces command --help[/][/]"
-        )
+        # Add examples if this is a specific command and has examples
+        if self.command and hasattr(self.command, "examples") and self.command.examples:
+            console.print("\n[bold cyan]Examples:[/]")
+            for example in self.command.examples:
+                console.print(f"  [yellow]{example}[/]")
+
+        # Add documentation link if this is a specific command and has docs
+        if self.command and hasattr(self.command, "docs") and self.command.docs:
+            console.print(f"\n[bold cyan]Documentation:[/]")
+            console.print(f"  [blue underline]{self.command.docs}[/]")
+
+        # Footer message
+        if self.prog == "pieces":
+            console.print(
+                "\n[dim]For detailed help on specific commands, use: [bold]pieces command --help[/][/]"
+            )
+        else:
+            console.print("\n[dim]For more help, use: [bold]pieces --help[/][/]")
 
     @classmethod
     def levenshtein_distance(cls, s1, s2):

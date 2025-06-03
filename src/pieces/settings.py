@@ -160,7 +160,9 @@ class Settings:
                 "Please update your cli-agent tool. It is not compatible with the current PiecesOS version"
             )
             print()
-            print(URLs.DOCS_CLI.value)  # TODO: We might need to add a link a better link here
+            print(
+                URLs.DOCS_CLI.value
+            )  # TODO: We might need to add a link a better link here
             print()
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)

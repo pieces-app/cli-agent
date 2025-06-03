@@ -33,6 +33,40 @@ class URLs(Enum):
         "https://modelcontextprotocol.io/quickstart/user#1-download-claude-for-desktop"
     )
 
+    # MCP Command Documentation URLs
+    CLI_MCP_DOCS = "https://docs.pieces.app/products/mcp"
+    CLI_MCP_SETUP_DOCS = "https://docs.pieces.app/products/mcp#setup"
+    CLI_MCP_LIST_DOCS = "https://docs.pieces.app/products/mcp#list"
+    CLI_MCP_DOCS_COMMAND = "https://docs.pieces.app/products/mcp#docs"
+    CLI_MCP_START_DOCS = "https://docs.pieces.app/products/mcp#start"
+    CLI_MCP_REPAIR_DOCS = "https://docs.pieces.app/products/mcp#repair"
+    CLI_MCP_STATUS_DOCS = "https://docs.pieces.app/products/mcp#status"
+
+    # CLI Command Documentation URLs
+    CLI_VERSION_DOCS = "https://docs.pieces.app/products/cli#version"
+    CLI_LIST_DOCS = "https://docs.pieces.app/products/cli#list"
+    CLI_CONFIG_DOCS = "https://docs.pieces.app/products/cli#config"
+    CLI_SAVE_DOCS = "https://docs.pieces.app/products/cli#save"
+    CLI_DELETE_DOCS = "https://docs.pieces.app/products/cli#delete"
+    CLI_CREATE_DOCS = "https://docs.pieces.app/products/cli#create"
+    CLI_SHARE_DOCS = "https://docs.pieces.app/products/cli#share"
+    CLI_RUN_DOCS = "https://docs.pieces.app/products/cli#run"
+    CLI_EXECUTE_DOCS = "https://docs.pieces.app/products/cli#execute"
+    CLI_EDIT_DOCS = "https://docs.pieces.app/products/cli#edit"
+    CLI_ASK_DOCS = "https://docs.pieces.app/products/cli#ask"
+    CLI_SEARCH_DOCS = "https://docs.pieces.app/products/cli#search"
+    CLI_LOGIN_DOCS = "https://docs.pieces.app/products/cli#login"
+    CLI_LOGOUT_DOCS = "https://docs.pieces.app/products/cli#logout"
+    CLI_CHATS_DOCS = "https://docs.pieces.app/products/cli#chats"
+    CLI_CHAT_DOCS = "https://docs.pieces.app/products/cli#chat"
+    CLI_COMMIT_DOCS = "https://docs.pieces.app/products/cli#commit"
+    CLI_ONBOARDING_DOCS = "https://docs.pieces.app/products/cli#onboarding"
+    CLI_FEEDBACK_DOCS = "https://docs.pieces.app/products/cli#feedback"
+    CLI_CONTRIBUTE_DOCS = "https://docs.pieces.app/products/cli#contribute"
+    CLI_INSTALL_DOCS = "https://docs.pieces.app/products/cli#install"
+    CLI_OPEN_DOCS = "https://docs.pieces.app/products/cli#open"
+    CLI_HELP_DOCS = "https://docs.pieces.app/products/cli#help"
+
     def open_website(self):
         from pieces.settings import Settings
 
