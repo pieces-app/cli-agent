@@ -149,29 +149,16 @@ jobs:
       - name: Build stand alone (macOS)
         if: runner.os != 'Windows'
         run: |
-          poetry run pyinstaller -c --onefile src/pieces/app.py  --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
+          poetry run pyinstaller pieces.spec
 
       ### Build stand-alone step for Windows (build .exe)
       - name: Build stand alone (Windows)
         if: runner.os == 'Windows'
         run: |
-          Invoke-Expression (poetry env activate)
-           pyinstaller -c --onefile src/pieces/app.py `
-              --name=pieces `
-              --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" `
-              --python-option="W ignore" `
-              --hidden-import=pieces.pieces_argparser `
-              --hidden-import=pieces.settings `
-              --hidden-import=pieces.logger `
-              --hidden-import=pieces.commands `
-              --hidden-import=pieces.autocommit `
-              --hidden-import=pieces.copilot `
-              --hidden-import=pieces.mcp `
-              --hidden-import=pieces.core `
-              --hidden-import=pieces.command_interface `
-              --hidden-import=pieces.utils `
-              --hidden-import=pieces.gui `
-              --exclude-module=tkinter
+          # Ensure we're in the poetry environment
+          poetry install
+          # Run PyInstaller through poetry to ensure all dependencies are available
+          poetry run pyinstaller pieces.spec --clean
         shell: powershell
 
       ### Package binary to zip file for macOS
@@ -201,10 +188,10 @@ jobs:
         shell: powershell
         run: |
           if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
-            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
+            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
           }
           else {
-            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
+            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
           }
 
       ### Upload to github artifacts
@@ -225,23 +212,40 @@ jobs:
         run: |
           Get-ChildItem dist
           Set-Location dist 
+          
           Write-Host "--- Testing 'pieces.exe --version' command ---"
           try {
               # Run the --version command and capture its output
-              # 2>&1 redirects stderr to stdout, so we capture all messages.
-              $versionOutput = (.\pieces.exe --version 2>&1)
+              $versionOutput = (.\pieces\pieces.exe --version 2>&1)
               Write-Host "Output for --version:`n$versionOutput"
-
-              # Check if the command executed successfully (exit code 0)
-              # In PowerShell, a non-zero exit code usually throws an error if $ErrorActionPreference is 'Stop'.
-              # If it didn't throw, it likely succeeded.
               Write-Host "SUCCESS: 'pieces.exe --version' executed without error."
           } catch {
               Write-Error "FAILURE: 'pieces.exe --version' threw an error: $($_.Exception.Message)"
-              exit 1 # Fail the step if an error occurred
+              exit 1
+          }
+          
+          Write-Host "`n--- Testing 'pieces.exe help' command ---"
+          try {
+              # Test the help command to ensure basic functionality works
+              $helpOutput = (.\pieces\pieces.exe help 2>&1)
+              Write-Host "Output for help (first 10 lines):`n$($helpOutput | Select-Object -First 10)"
+              Write-Host "SUCCESS: 'pieces.exe help' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe help' threw an error: $($_.Exception.Message)"
+              exit 1
+          }
+          
+          Write-Host "`n--- Testing 'pieces.exe --ignore-onboarding help' command ---"
+          try {
+              # Test with ignore-onboarding flag to bypass any interactive prompts
+              $helpOutput2 = (.\pieces\pieces.exe --ignore-onboarding help 2>&1)
+              Write-Host "SUCCESS: 'pieces.exe --ignore-onboarding help' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe --ignore-onboarding help' threw an error: $($_.Exception.Message)"
+              exit 1
           }
 
-          Write-Host "Basic executable functionality tests passed."
+          Write-Host "`nBasic executable functionality tests passed."
         shell: powershell
 
   ### Pushing the built packages to GCP and GitHub
