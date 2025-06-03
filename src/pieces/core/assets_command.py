@@ -5,10 +5,11 @@ import pyperclip
 import subprocess
 import shutil
 
+from pieces.urls import URLs
 from pieces.utils import get_file_extension
 from pieces.gui import print_asset_details, space_below, double_line
 from pieces.settings import Settings
-from pieces.commands.config_command import ConfigCommands
+from pieces.core.config_command import ConfigCommands
 from pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
 
 from pygments import highlight
@@ -42,7 +43,7 @@ def check_asset_selected(func):
     """
 
     def wrapper(*args, **kwargs):
-        from pieces.commands.list_command import ListCommand
+        from pieces.core.list_command import ListCommand
 
         try:
             if AssetsCommands.current_asset is None:
@@ -226,7 +227,7 @@ class AssetsCommands:
             link = share.iterable[0].link
         Settings.logger.print(f"Generated shareable link {link}")
         if Settings.logger.confirm("Do you want to open it in the browser?"):
-            Settings.open_website(link)
+            URLs.open_website(link)
 
     @classmethod
     @check_asset_selected

@@ -1,16 +1,17 @@
-from typing import Literal, List
+from typing import Literal, List, get_args
 import yaml
 import platform
 import os
 import json
 
 from .integration import Integration, MCPProperties
-from pieces.settings import Settings
+from ..settings import Settings
+from ..urls import URLs
 
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
 
 mcp_integration_types = Literal["vscode", "goose", "cursor", "claude"]
-mcp_integrations: List[mcp_integration_types]
+mcp_integrations: List[mcp_integration_types] = list(get_args(mcp_integration_types))
 
 
 def get_global_vs_settings():
@@ -33,17 +34,30 @@ def get_global_vs_settings():
 
 
 def validate_project_path(path, dot_file=".vscode", readable: str = "VS Code"):
-    """Validate that the path is a legitimate VS Code or cursor project."""
+    """Validate that the path is a legitimate VS Code or cursor project with security checks."""
     if not path or path.isspace():
         return False, ""
-    path = os.path.abspath(os.path.expanduser(path))
+
+    # Expand user home and convert to absolute path
+    abs_path = os.path.abspath(os.path.expanduser(path))
+
+    # Security check: Ensure path doesn't escape allowed directories
+    # Allow paths within current working directory or user's home directory
+    current_dir = os.getcwd()
+    home_dir = os.path.expanduser("~")
+
+    if not (abs_path.startswith(current_dir) or abs_path.startswith(home_dir)):
+        return (
+            False,
+            f"Path '{path}' is outside allowed directories. Projects must be within your home directory or current working directory",
+        )
 
     # Check if directory exists
-    if not os.path.isdir(path):
+    if not os.path.isdir(abs_path):
         return False, "The specified path is not a directory"
 
     # Check for .vscode folder or specific VS Code files
-    dot_dir = os.path.join(path, dot_file)
+    dot_dir = os.path.join(abs_path, dot_file)
     if not os.path.isdir(dot_dir):
         return (
             False,
@@ -197,7 +211,7 @@ options = [
 cursor_integration = Integration(
     options=options,
     text_success=text_success_cursor,
-    docs="https://docs.pieces.app/products/mcp/cursor#using-pieces-mcp-server-in-cursor",
+    docs=URLs.CURSOR_DOCS.value,
     readable="Cursor",
     get_settings_path=get_cursor_path,
     mcp_properties=MCPProperties(
@@ -211,7 +225,7 @@ vscode_integration = Integration(
     options=options,
     text_success=text_success_vscode,
     readable="VS Code",
-    docs="https://docs.pieces.app/products/mcp/github-copilot#using-pieces-mcp-server-in-github-copilot",
+    docs=URLs.VS_CODE_DOCS.value,
     get_settings_path=get_vscode_path,
     mcp_properties=MCPProperties(
         stdio_property={"type": "stdio"},
@@ -224,7 +238,7 @@ goose_integration = Integration(
     options=[],
     text_success=text_success_goose,
     readable="Goose",
-    docs="https://docs.pieces.app/products/mcp/goose#using-pieces-mcp-with-goose",
+    docs=URLs.GOOSE_DOCS.value,
     get_settings_path=lambda: goose_config_path,
     mcp_properties=MCPProperties(
         stdio_property={
@@ -261,7 +275,7 @@ claude_integration = Integration(
     text_success=text_success_claude,
     readable="Claude Desktop",
     get_settings_path=get_claude_path,
-    docs="https://modelcontextprotocol.io/quickstart/user#1-download-claude-for-desktop",
+    docs=URLs.CLAUDE_DOCS.value,
     mcp_properties=MCPProperties(
         stdio_property={},
         stdio_path=["mcpServers", "Pieces"],

@@ -13,10 +13,6 @@ class ListCommand:
     @classmethod
     def list_command(cls, **kwargs):
         type = kwargs.get("type", "materials")
-        max_assets = kwargs.get("max_assets", 10)
-        if max_assets < 1:
-            Settings.logger.print("Max assets must be greater than 0")
-            max_assets = 10
 
         if type == "materials":
             cls.list_assets(**kwargs)

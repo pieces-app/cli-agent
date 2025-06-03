@@ -10,12 +10,9 @@ from pieces_os_client.wrapper.version_compatibility import VersionChecker, Updat
 from pieces import __version__
 from pieces.gui import (
     server_startup_failed,
-    print_pieces_os_link,
     print_version_details,
 )
-
-import webbrowser
-from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+from pieces.urls import URLs
 
 
 class Settings:
@@ -163,7 +160,9 @@ class Settings:
                 "Please update your cli-agent tool. It is not compatible with the current PiecesOS version"
             )
             print()
-            print("https://pypi.org/project/pieces-cli/")
+            print(
+                URLs.DOCS_CLI.value
+            )  # TODO: We might need to add a link a better link here
             print()
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
@@ -172,7 +171,7 @@ class Settings:
                 "Please update PiecesOS. It is not compatible with the current cli-agent version"
             )
             print()
-            print_pieces_os_link()
+            print(URLs.DOCS_INSTALLATION.value)
             print()
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
@@ -194,23 +193,3 @@ class Settings:
             if app.name == ApplicationNameEnum.OS_SERVER:
                 cls._os_id = app.id
                 return app.id
-
-    @classmethod
-    def open_website(cls, url: str):
-        user_profile = cls.pieces_client.user_api.user_snapshot().user
-        if (not cls.pieces_client.is_pieces_running) or ("pieces.app" not in url):
-            return webbrowser.open(url)
-        para = {}
-        if user_profile:
-            para["user"] = user_profile.id
-        _id = cls.get_os_id()
-        if _id:
-            para["os"] = _id
-
-        url_parts = list(urlparse(url))
-        query = dict(parse_qsl(url_parts[4]))
-        query.update(para)
-
-        url_parts[4] = urlencode(query)
-        new_url = urlunparse(url_parts)
-        webbrowser.open(new_url)

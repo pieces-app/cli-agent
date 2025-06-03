@@ -7,7 +7,9 @@ from tests.conftest import SCRIPT_NAME
 def run_main_with_args(args, main_func):
     args.insert(0, SCRIPT_NAME)
     with patch("sys.argv", args):
-        main_func()
+        with patch("sys.exit") as mock_exit:
+            main_func()
+            return mock_exit
 
 
 def capture_stderr():

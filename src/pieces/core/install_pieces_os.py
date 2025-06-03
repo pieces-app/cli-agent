@@ -1,16 +1,13 @@
-import os
 import queue
 from typing import Generator
-from rich.progress import (Progress,
-                           BarColumn,
-                           DownloadColumn,
-                           TransferSpeedColumn)
-from pieces_os_client.wrapper.installation import (DownloadModel,
-                                    DownloadState)
+from rich.progress import Progress, BarColumn, DownloadColumn, TransferSpeedColumn
+from pieces_os_client.wrapper.installation import DownloadModel, DownloadState
 from ..settings import Settings
+from pieces.urls import URLs
+import platform
 
 
-class PiecesInstaller():
+class PiecesInstaller:
     lock = False
 
     def run(self):
@@ -18,8 +15,7 @@ class PiecesInstaller():
         if self.lock:
             return
         self.lock = True
-        self.installer = Settings.pieces_client.pieces_os_installer(
-            self.queue.put)
+        self.installer = Settings.pieces_client.pieces_os_installer(self.queue.put)
         self.installer.start_download()
         m = self.queue.get()  # Block the thread until we recieve the first byte
         try:
@@ -29,19 +25,20 @@ class PiecesInstaller():
                 DownloadColumn(),
                 TransferSpeedColumn(),
                 auto_refresh=False,
-                transient=True
+                transient=True,
             ) as progress:
                 task = progress.add_task(
-                    description="Installion PiecesOS",
+                    description="Installation PiecesOS",
                     total=m.total_bytes,
                 )
                 for model in self.iterator():
-                    progress.update(task, total=model.total_bytes,
-                                    completed=model.bytes_received)
+                    progress.update(
+                        task, total=model.total_bytes, completed=model.bytes_received
+                    )
                     if model.state == DownloadState.FAILED:
                         Settings.logger.print(
-                            "❌ Failed to install PiecesOS,"
-                            " Opening in your webbrowser")
+                            "❌ Failed to install PiecesOS, Opening in your webbrowser"
+                        )
                         self.download_docs()
                     elif model.state == DownloadState.COMPLETED:
                         Settings.logger.print("✅ Installed PiecesOS successfully")
@@ -61,21 +58,14 @@ class PiecesInstaller():
             yield m
 
     def download_docs(self):
-        if Settings.pieces_client.local_os == "WINDOWS":
-            Settings.open_website(
-                "https://builds.pieces.app/stages/production/appinstaller/os_server.appinstaller?product=PIECES_FOR_DEVELOPERS_CLI&download=true")
-        elif Settings.pieces_client.local_os == "LINUX":
-            Settings.open_website("https://snapcraft.io/pieces-os")
-            return
-
-        elif Settings.pieces_client.local_os == "MACOS":
-            arch = os.uname().machine
-            pkg_url = (
-                "https://builds.pieces.app/stages/production/macos_packaging/pkg-pos-launch-only"
-                f"{'-arm64' if arch == 'arm64' else ''}"
-                f"/download?product=PIECES_FOR_DEVELOPERS_CLI&download=true"
-            )
-            Settings.open_website(pkg_url)
-
+        if platform.system() == "Windows":
+            URLs.PIECES_OS_DOWNLOAD_WINDOWS.open()
+        elif platform.system() == "Linux":
+            URLs.PIECES_OS_DOWNLOAD_LINUX.open()
+        elif platform.system() == "Darwin":
+            if platform.machine() == "arm64":
+                URLs.PIECES_OS_DOWNLOAD_MACOS_ARM64.open()
+            else:
+                URLs.PIECES_OS_DOWNLOAD_MACOS_X86.open()
         else:
             raise ValueError("Invalid platform")

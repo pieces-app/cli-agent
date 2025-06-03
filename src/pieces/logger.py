@@ -22,6 +22,7 @@ class Logger:
         """
         self.name = "Pieces_CLI"
         self.console = Console()
+        self.console_error = Console(stderr=True)
         self._confirm = prompt.Confirm(console=self.console)
         self._prompt = Prompt(console=self.console)
 
@@ -58,7 +59,8 @@ class Logger:
 
     def error(self, message, *args, **kwargs):
         """Log an error message."""
-        self.logger.error(message, *args, **kwargs)
+        exc_info = kwargs.pop("exc_info", True)
+        self.logger.error(message, exc_info=exc_info, *args, **kwargs)
 
     def debug(self, message, *args, **kwargs):
         """Log a debug message (only visible in debug mode)."""

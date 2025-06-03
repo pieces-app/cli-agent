@@ -4,10 +4,10 @@ from tests.utils import capture_stderr, restore_stderr, mock_select_menus, SCRIP
 from unittest.mock import patch, Mock
 from pieces.settings import Settings
 import sys
-from pieces.commands.assets_command import AssetsCommands
+from pieces.core.assets_command import AssetsCommands
 
-MODULE_NAME = "pieces.commands.list_command"
-OPEN_MODULE_NAME = "pieces.commands.assets_command"
+MODULE_NAME = "pieces.core.list_command"
+OPEN_MODULE_NAME = "pieces.core.assets_command"
 
 
 @pytest.fixture
