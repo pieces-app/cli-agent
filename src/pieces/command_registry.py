@@ -28,7 +28,7 @@ class CommandRegistry:
             aliases=command.aliases,
             command_object=command,
         )
-        command_parser.set_defaults(func=command.execute)
+        command_parser.set_defaults(func=command.command_func)
         command.add_arguments(command_parser)
 
     def get_command(self, name: str) -> Optional[BaseCommand]:

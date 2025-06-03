@@ -10,8 +10,6 @@ from pieces.core import ConfigCommands
 
 
 class PiecesCLI:
-    """Refactored Pieces CLI using command registry pattern."""
-
     def __init__(self):
         self.parser = PiecesArgparser(
             description="Pieces CLI for interacting with the PiecesOS",

@@ -1,7 +1,7 @@
 import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
-from pieces.core.list_command import ListCommand as OldListCommand
+from pieces.commands.list_command import ListCommand as OldListCommand
 
 
 class ListCommand(BaseCommand):
@@ -55,7 +55,7 @@ class ListCommand(BaseCommand):
             dest="editor",
             action="store_true",
             default=False,
-            help="Open the choosen material in the editor",
+            help="Open the chosen material in the editor",
         )
 
     def execute(self, **kwargs) -> int:

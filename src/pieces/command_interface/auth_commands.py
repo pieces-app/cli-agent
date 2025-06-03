@@ -30,8 +30,8 @@ class LoginCommand(BaseCommand):
         """Execute the login command."""
         try:
             Settings.pieces_client.user.login()
-        except:
-            pass
+        except Exception as e:
+            Settings.logger.error(f"Logout failed: {e}")
         return 0
 
 
@@ -61,6 +61,6 @@ class LogoutCommand(BaseCommand):
         """Execute the logout command."""
         try:
             Settings.pieces_client.user.logout()
-        except:
-            pass
+        except Exception as e:
+            Settings.logger.error(f"Logout failed: {e}")
         return 0

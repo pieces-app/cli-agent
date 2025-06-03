@@ -62,7 +62,7 @@ class ChatCommand(BaseCommand):
             "pieces chat 1",
             "pieces chat --new",
             "pieces chat --rename 'New Title'",
-            "pieces chat --renamepieces chat --delete",
+            "pieces chat --delete",
         ]
 
     def get_docs(self) -> str:

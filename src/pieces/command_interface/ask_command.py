@@ -25,7 +25,7 @@ class AskCommand(BaseCommand):
             "pieces ask 'how to implement a REST API'",
             "pieces ask 'debug the main function' -f main.py utils.py",
             "pieces ask 'What are these snippets about' -m 1 2 3",
-            "pieces ask 'What I was wroking on yesterday' --ltm",
+            "pieces ask 'What I was working on yesterday' --ltm",
         ]
 
     def get_docs(self) -> str:
