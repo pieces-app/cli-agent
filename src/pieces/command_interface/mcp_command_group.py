@@ -12,6 +12,7 @@ from pieces.mcp import (
 )
 from pieces.mcp.integrations import mcp_integrations
 from pieces.mcp.handler import supported_mcps
+from pieces.settings import Settings
 
 
 class MCPSetupCommand(BaseCommand):
@@ -184,8 +185,25 @@ class MCPStartCommand(BaseCommand):
         pass
 
     def execute(self, **kwargs) -> int:
-        asyncio.run(handle_gateway())
-        return 0
+        """Execute the start command."""
+        try:
+            # Check if event loop is already running
+            try:
+                loop = asyncio.get_running_loop()
+                Settings.logger.error("Cannot start MCP server: Event loop already running")
+                return 1
+            except RuntimeError:
+                # No event loop running, safe to proceed
+                pass
+            
+            asyncio.run(handle_gateway())
+            return 0
+        except KeyboardInterrupt:
+            return 0
+        except Exception as e:
+            Settings.logger.error(f"Failed to start MCP server: {e}")
+            Settings.logger.console_error.print(f"Failed to start MCP server")
+            return 1
 
 
 class MCPRepairCommand(BaseCommand):

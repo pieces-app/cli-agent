@@ -10,7 +10,7 @@ search_type_map = {
 }
 
 
-def search(query, **kwargs):
+def search(query, **kwargs) -> int:
     search_type = kwargs.get("search_type", "fuzzy")
 
     # Join the list of strings into a single search phrase
@@ -20,7 +20,7 @@ def search(query, **kwargs):
         search_phrase = " ".join(query)
     if not search_phrase:
         Settings.logger.print("No search query provided.")
-        return
+        return 1
 
     asset_details = BasicAsset.search(search_phrase, search_type)
 
@@ -35,3 +35,4 @@ def search(query, **kwargs):
         )
     else:
         Settings.logger.print("No matches found.")
+    return 0

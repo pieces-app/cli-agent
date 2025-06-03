@@ -49,8 +49,6 @@ class SearchCommand(BaseCommand):
     def execute(self, **kwargs) -> int:
         """Execute the search command."""
         query = kwargs.get("query")
-        # Convert single query string to list format expected by search function
         if query:
             query = [query]
-        search(query, **kwargs)
-        return 0
+        return search(query, **kwargs)

@@ -2,6 +2,7 @@ import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
 from pieces.autocommit import git_commit
+from pieces.settings import Settings
 
 
 class CommitCommand(BaseCommand):
@@ -54,5 +55,12 @@ class CommitCommand(BaseCommand):
 
     def execute(self, **kwargs) -> int:
         """Execute the commit command."""
-        git_commit(**kwargs)
-        return 0
+        try:
+            git_commit(**kwargs)
+            return 0
+        except ConnectionError as e:
+            Settings.logger.console_error.print(f"Failed to connect to PiecesOS: {e}")
+            return 1
+        except Exception as e:
+            Settings.logger.console_error.print(f"Unexpected error during commit: {e}")
+            return 3
