@@ -132,7 +132,7 @@ class EditCommand(BaseCommand):
         return "edit"
 
     def get_help(self) -> str:
-        return "Edit an existing materials"
+        return "Edit an existing material"
 
     def get_description(self) -> str:
         return "Edit properties of an existing material including its name, language classification, and other metadata"

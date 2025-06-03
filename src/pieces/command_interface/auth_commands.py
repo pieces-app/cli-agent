@@ -31,7 +31,7 @@ class LoginCommand(BaseCommand):
         try:
             Settings.pieces_client.user.login()
         except Exception as e:
-            Settings.logger.error(f"Logout failed: {e}")
+            Settings.logger.error(f"Login failed: {e}")
         return 0
 
 
