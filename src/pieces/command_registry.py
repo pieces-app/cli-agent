@@ -11,16 +11,13 @@ class CommandRegistry:
     def __init__(self, parser: PiecesArgparser):
         self.commands: Dict[str, BaseCommand] = {}
         self.parser: PiecesArgparser = parser
-        self.command_objects: Dict[str, BaseCommand] = {}
         self.command_subparser: _SubParsersAction[PiecesArgparser]
 
     def register(self, command: BaseCommand):
         """Register a command and its aliases."""
         self.commands[command.name] = command
-        self.command_objects[command.name] = command
         for alias in command.aliases:
             self.commands[alias] = command
-            self.command_objects[alias] = command
 
         command_parser = self.command_subparser.add_parser(
             command.name,
@@ -35,10 +32,6 @@ class CommandRegistry:
     def get_command(self, name: str) -> Optional[BaseCommand]:
         """Get a command by name or alias."""
         return self.commands.get(name)
-
-    def get_command_object(self, name: str) -> Optional[BaseCommand]:
-        """Get a command object by name or alias for parser use."""
-        return self.command_objects.get(name)
 
     def get_all_commands(self) -> List[BaseCommand]:
         """Get all unique commands (excluding aliases)."""
@@ -71,8 +64,9 @@ class CommandRegistry:
         self.command_subparser = parser.add_subparsers(dest="command")
         for command in BaseCommand.commands:
             self.register(command)
+
         # Add the groups manually for now
-        self.register(MCPCommandGroup())
+        # self.register(MCPCommandGroup())
 
         parser.set_defaults(
             func=lambda **kwargs: print(version)

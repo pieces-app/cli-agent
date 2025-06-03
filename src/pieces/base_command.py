@@ -18,7 +18,8 @@ class BaseCommand(ABC):
 
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls)
-        cls.commands.append(instance)
+        if not getattr(instance, "_is_command_group", False):
+            cls.commands.append(instance)
         return instance
 
     def __init__(self):
@@ -80,6 +81,12 @@ class CommandGroup(BaseCommand):
     """Base class for commands that have subcommands."""
 
     _is_command_group = True
+    instance: Self = None
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.instance = cls()
+        cls.commands.append(cls.instance)
 
     def __init__(self):
         super().__init__()
