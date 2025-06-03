@@ -2,7 +2,7 @@ import argparse
 from typing import Optional
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
-from pieces.commands.search_command import search
+from pieces.core.search_command import search
 
 
 class SearchCommand(BaseCommand):

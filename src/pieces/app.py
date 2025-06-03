@@ -5,8 +5,8 @@ from pieces.settings import Settings
 from pieces.logger import Logger
 from pieces import __version__
 
-from pieces.commands_new import *  # noqa: F403
-from pieces.commands import ConfigCommands
+from pieces.command_interface import *  # noqa: F403
+from pieces.core import ConfigCommands
 
 
 class PiecesCLI:

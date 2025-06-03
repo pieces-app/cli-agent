@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, Mock
 
-from pieces.commands.assets_command import AssetsCommands
+from pieces.core.assets_command import AssetsCommands
 from pieces_os_client.models.classification_specific_enum import (
     ClassificationSpecificEnum,
 )
@@ -19,13 +19,13 @@ def mock_input():
 
 @pytest.fixture
 def mock_basic_asset():
-    with patch("pieces.commands.assets_command.BasicAsset") as mock:
+    with patch("pieces.core.assets_command.BasicAsset") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_pyperclip_paste():
-    with patch("pieces.commands.assets_command.pyperclip.paste") as mock:
+    with patch("pieces.core.assets_command.pyperclip.paste") as mock:
         yield mock
 
 

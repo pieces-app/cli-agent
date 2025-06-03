@@ -1,7 +1,7 @@
 import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
-from pieces.commands import open_command
+from pieces.core import open_command
 
 
 class OpenCommand(BaseCommand):

@@ -11,8 +11,8 @@ import getpass
 import platform
 import sys
 
-from pieces.commands.cli_loop import run_command, extract_text
-from pieces.commands.config_command import ConfigCommands
+from pieces.core.cli_loop import run_command, extract_text
+from pieces.core.config_command import ConfigCommands
 from pieces.settings import Settings
 from pieces.urls import URLs
 

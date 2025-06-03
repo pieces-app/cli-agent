@@ -1,7 +1,7 @@
 import pytest
 from pieces.app import main
 from tests.utils import run_main_with_args
-from pieces.commands.assets_command import AssetsCommands
+from pieces.core.assets_command import AssetsCommands
 
 
 def assert_asset_deleted(mocked_asset):

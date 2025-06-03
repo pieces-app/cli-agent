@@ -1,7 +1,7 @@
 import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
-from pieces.commands.config_command import ConfigCommands
+from pieces.core.config_command import ConfigCommands
 
 
 class ConfigCommand(BaseCommand):

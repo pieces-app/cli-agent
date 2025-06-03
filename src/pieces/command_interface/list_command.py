@@ -1,7 +1,7 @@
 import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
-from pieces.commands.list_command import ListCommand as OldListCommand
+from pieces.core.list_command import ListCommand as OldListCommand
 
 
 class ListCommand(BaseCommand):

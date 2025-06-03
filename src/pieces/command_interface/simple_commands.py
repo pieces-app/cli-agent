@@ -1,14 +1,14 @@
 import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
-from pieces.commands import (
+from pieces.core import (
     loop,
     feedback as feedback_func,
     contribute as contribute_func,
     onboarding_command,
     PiecesInstaller,
 )
-from pieces.commands.execute_command import ExecuteCommand as OldExecuteCommand
+from pieces.core.execute_command import ExecuteCommand as OldExecuteCommand
 
 
 class RunCommand(BaseCommand):
