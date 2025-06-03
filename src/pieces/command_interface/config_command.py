@@ -14,13 +14,15 @@ class ConfigCommand(BaseCommand):
         return "Configure settings"
 
     def get_description(self) -> str:
-        return "Configure various Pieces CLI settings including default editor, API endpoints, and other preferences"
+        return "Configure various Pieces CLI settings including default editor and other preferences"
 
     def get_examples(self) -> list[str]:
         return [
             "pieces config",
-            "pieces config --editor vscode",
-            "pieces config --editor 'code --wait'",
+            "pieces config --editor subl",
+            "pieces config --editor nvim",
+            "pieces config --editor vim",
+            "pieces config --editor code",
         ]
 
     def get_docs(self) -> str:

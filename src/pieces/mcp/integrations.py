@@ -1,4 +1,4 @@
-from typing import Literal, List
+from typing import Literal, List, get_args
 import yaml
 import platform
 import os
@@ -11,7 +11,7 @@ from ..urls import URLs
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
 
 mcp_integration_types = Literal["vscode", "goose", "cursor", "claude"]
-mcp_integrations: List[mcp_integration_types]
+mcp_integrations: List[mcp_integration_types] = list(get_args(mcp_integration_types))
 
 
 def get_global_vs_settings():

@@ -10,6 +10,8 @@ from pieces.mcp import (
     handle_status,
     handle_gateway,
 )
+from pieces.mcp.integrations import mcp_integrations
+from pieces.mcp.handler import supported_mcps
 
 
 class MCPSetupCommand(BaseCommand):
@@ -37,12 +39,13 @@ class MCPSetupCommand(BaseCommand):
         return URLs.CLI_MCP_SETUP_DOCS.value
 
     def add_arguments(self, parser: argparse.ArgumentParser):
-        parser.add_argument(
-            "--vscode",
-            dest="vscode",
-            action="store_true",
-            help="Set up the MCP for VS Code",
-        )
+        for mcp_integration in mcp_integrations:
+            parser.add_argument(
+                f"--{mcp_integration}",
+                dest=mcp_integration,
+                action="store_true",
+                help=f"Set up the MCP for {supported_mcps[mcp_integration].readable}",
+            )
         parser.add_argument(
             "--globally",
             dest="global",
@@ -54,24 +57,6 @@ class MCPSetupCommand(BaseCommand):
             dest="local",
             action="store_true",
             help="For VS Code or Cursor to set the Local MCP",
-        )
-        parser.add_argument(
-            "--cursor",
-            dest="cursor",
-            action="store_true",
-            help="Set up the MCP for Cursor",
-        )
-        parser.add_argument(
-            "--goose",
-            dest="goose",
-            action="store_true",
-            help="Set up the MCP for Goose",
-        )
-        parser.add_argument(
-            "--claude",
-            dest="claude",
-            action="store_true",
-            help="Set up the MCP for Claude Desktop",
         )
         parser.add_argument(
             "--stdio",
@@ -145,8 +130,8 @@ class MCPDocsCommand(BaseCommand):
     def get_examples(self) -> list[str]:
         return [
             "pieces mcp docs",
-            "pieces mcp docs --ide vscode",
-            "pieces mcp docs --ide cursor --open",
+            "pieces mcp docs --integration vscode",
+            "pieces mcp docs --integration cursor --open",
         ]
 
     def get_docs(self) -> str:
@@ -154,12 +139,13 @@ class MCPDocsCommand(BaseCommand):
 
     def add_arguments(self, parser: argparse.ArgumentParser):
         parser.add_argument(
-            "--ide",
+            "--integration",
+            "-i",
             dest="ide",
             type=str,
-            choices=["vscode", "cursor", "goose", "claude", "current", "all"],
+            choices=mcp_integrations + ["all", "current"],
             default="all",
-            help="The IDE to print its documentation",
+            help="The integration to print its documentation",
         )
         parser.add_argument(
             "--open",
@@ -219,8 +205,8 @@ class MCPRepairCommand(BaseCommand):
     def get_examples(self) -> list[str]:
         return [
             "pieces mcp repair",
-            "pieces mcp repair --ide vscode",
-            "pieces mcp repair --ide all",
+            "pieces mcp repair --integration vscode",
+            "pieces mcp repair --integration all",
         ]
 
     def get_docs(self) -> str:
@@ -228,12 +214,13 @@ class MCPRepairCommand(BaseCommand):
 
     def add_arguments(self, parser: argparse.ArgumentParser):
         parser.add_argument(
-            "--ide",
+            "--integration",
+            "-i",
             dest="ide",
             type=str,
-            choices=["vscode", "cursor", "goose", "claude", "all"],
+            choices=mcp_integrations + ["all"],
             default="all",
-            help="The IDE to repair",
+            help="The integration to repair",
         )
 
     def execute(self, **kwargs) -> int:
