@@ -20,7 +20,7 @@ def feedback(**kwargs):
     )
 
     if res:
-        link.open_website()
+        link.open()
 
 
 def contribute(**kwargs):
@@ -35,4 +35,4 @@ def contribute(**kwargs):
     )
 
     if res:
-        link.open_website()
+        link.open()

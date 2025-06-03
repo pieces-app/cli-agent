@@ -7,7 +7,7 @@ from prompt_toolkit.widgets import Box
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import Any, List, Tuple, Callable, Optional
-from .commands.extensions import extensions_dict
+from .core.extensions import extensions_dict
 
 
 def get_file_extension(language):

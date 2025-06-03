@@ -22,6 +22,7 @@ class Logger:
         """
         self.name = "Pieces_CLI"
         self.console = Console()
+        self.console_error = Console(stderr=True)
         self._confirm = prompt.Confirm(console=self.console)
         self._prompt = Prompt(console=self.console)
 

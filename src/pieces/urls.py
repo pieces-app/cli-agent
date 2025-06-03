@@ -33,6 +33,42 @@ class URLs(Enum):
         "https://modelcontextprotocol.io/quickstart/user#1-download-claude-for-desktop"
     )
 
+    # MCP Command Documentation URLs
+    CLI_MCP_DOCS = "https://docs.pieces.app/products/cli/copilot/chat#pieces-mcp"
+    CLI_MCP_SETUP_DOCS = "https://docs.pieces.app/products/cli/copilot/chat#setup"
+    CLI_MCP_LIST_DOCS = "https://docs.pieces.app/products/cli/copilot/chat#list"
+    CLI_MCP_DOCS_COMMAND = "https://docs.pieces.app/products/cli/copilot/chat#docs"
+    CLI_MCP_START_DOCS = ""
+    CLI_MCP_REPAIR_DOCS = "https://docs.pieces.app/products/cli/copilot/chat#repair"
+    CLI_MCP_STATUS_DOCS = "https://docs.pieces.app/products/cli/copilot/chat#status"
+
+    # CLI Command Documentation URLs
+    CLI_VERSION_DOCS = "https://docs.pieces.app/products/cli/commands#version"
+    CLI_LIST_DOCS = "https://docs.pieces.app/products/cli/commands#list"
+    CLI_CONFIG_DOCS = "https://docs.pieces.app/products/cli/configuration"
+    CLI_SAVE_DOCS = "https://docs.pieces.app/products/cli/drive/saving-materials"
+    CLI_DELETE_DOCS = "https://docs.pieces.app/products/cli/commands#delete"
+    CLI_CREATE_DOCS = "https://docs.pieces.app/products/cli/commands#create"
+    CLI_SHARE_DOCS = "https://docs.pieces.app/products/cli/commands#share"
+    CLI_RUN_DOCS = "https://docs.pieces.app/products/cli/commands#run"
+    CLI_EXECUTE_DOCS = "https://docs.pieces.app/products/cli/commands#execute"
+    CLI_EDIT_DOCS = "https://docs.pieces.app/products/cli/commands#edit"
+    CLI_ASK_DOCS = (
+        "https://docs.pieces.app/products/cli/commands#ask-your_question_here"
+    )
+    CLI_SEARCH_DOCS = "https://docs.pieces.app/products/cli/commands#search"
+    CLI_LOGIN_DOCS = "https://docs.pieces.app/products/cli/commands#login"
+    CLI_LOGOUT_DOCS = "https://docs.pieces.app/products/cli/commands#logout"
+    CLI_CHATS_DOCS = "https://docs.pieces.app/products/cli/commands#chats"
+    CLI_CHAT_DOCS = "https://docs.pieces.app/products/cli/commands#chat"
+    CLI_COMMIT_DOCS = "https://docs.pieces.app/products/cli/commands#commit"
+    CLI_ONBOARDING_DOCS = "https://docs.pieces.app/products/cli/commands#onboarding"
+    CLI_FEEDBACK_DOCS = "https://docs.pieces.app/products/cli/commands#feedback"
+    CLI_CONTRIBUTE_DOCS = "https://docs.pieces.app/products/cli/commands#contribute"
+    CLI_INSTALL_DOCS = "https://docs.pieces.app/products/cli/commands#install"
+    CLI_OPEN_DOCS = "https://docs.pieces.app/products/cli/commands#open"
+    CLI_HELP_DOCS = "https://docs.pieces.app/products/cli/troubleshooting"
+
     def open(self):
         self.open_website(self.value)
 
@@ -64,4 +100,5 @@ class URLs(Enum):
         try:
             webbrowser.open(new_url)
         except Exception as e:
-            Settings.logger.print(f"Failed to open link: {e}")
+            Settings.logger.critical(f"Failed to open a url {e}")
+            Settings.logger.print(f"Failed to open {url}")

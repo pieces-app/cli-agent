@@ -25,7 +25,7 @@ class ConfigDict(TypedDict, total=False):
 
 
 class MCPLocalConfig:
-    DEFAULT_SCHEMA = "0.0.1"
+    DEFAULT_SCHEMA = "0.0.0"
     DEFAULT_INTEGRATIONS = ["vs_code", "cursor", "goose", "claude"]
 
     def __init__(self) -> None:
@@ -51,7 +51,7 @@ class MCPLocalConfig:
         return config
 
     def migrate_json(self):
-        if self.config.get("schema", None):
+        if self.config.get("schema", None) == "0.0.1":
             return
 
         for k, v in self.config.items():

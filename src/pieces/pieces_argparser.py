@@ -1,6 +1,7 @@
 import argparse
 import sys
 from rich.console import Console
+from pieces.urls import URLs
 
 
 class PiecesArgparser(argparse.ArgumentParser):
@@ -9,6 +10,7 @@ class PiecesArgparser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         self.console = Console()
         self.err_console = Console(stderr=True)
+        self.command = kwargs.pop("command_object", None)
         super().__init__(*args, **kwargs)
 
     def error(self, message):
@@ -174,9 +176,25 @@ class PiecesArgparser(argparse.ArgumentParser):
                             f"[green bold]{cmd_name}[/]{padding}- {help_text}"
                         )
 
-        console.print(
-            "\n[dim]For detailed help on specific commands, use: [bold]pieces command --help[/][/]"
-        )
+        if self.command and hasattr(self.command, "examples") and self.command.examples:
+            console.print("\n[bold cyan]Examples:[/]")
+            for example in self.command.examples:
+                console.print(f"  [yellow]{example}[/]")
+
+        if self.prog == "pieces":
+            docs = URLs.DOCS_CLI.value
+        else:
+            docs = self.command.docs if self.command else None
+        if docs:
+            console.print("\n[bold cyan]Documentation:[/]")
+            console.print(f"  [blue underline]{docs}[/]")
+
+        if self.prog == "pieces":
+            console.print(
+                "\n[dim]For detailed help on specific commands, use: [bold]pieces command --help[/][/]"
+            )
+        else:
+            console.print("\n[dim]For more help, use: [bold]pieces --help[/][/]")
 
     @classmethod
     def levenshtein_distance(cls, s1, s2):
