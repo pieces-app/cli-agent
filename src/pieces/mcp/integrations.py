@@ -191,7 +191,7 @@ text_success_cursor = """
 text_success_claude = """
 ### Use Pieces LTM in Claude desktop
 
-1. Open Claude desktop
+1. Open Claude desktop (make sure to restart it if it was running)
 2. **Ask a prompt:**
 
         What I was wroking on yesterday?
