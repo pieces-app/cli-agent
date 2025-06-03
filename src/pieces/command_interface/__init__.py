@@ -1,5 +1,3 @@
-# Export all refactored commands
-from .version_command import VersionCommand
 from .config_command import ConfigCommand
 from .list_command import ListCommand
 from .auth_commands import LoginCommand, LogoutCommand
@@ -26,7 +24,6 @@ from .open_command import OpenCommand
 from .mcp_command_group import MCPCommandGroup
 
 __all__ = [
-    "VersionCommand",
     "ConfigCommand",
     "ListCommand",
     "LoginCommand",
@@ -50,4 +47,3 @@ __all__ = [
     "OpenCommand",
     "MCPCommandGroup",
 ]
-

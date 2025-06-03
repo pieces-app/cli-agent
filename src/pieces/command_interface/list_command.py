@@ -1,7 +1,7 @@
 import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
-from pieces.commands.list_command import ListCommand as OldListCommand
+from pieces.core.list_command import ListCommand as ListCore
 
 
 class ListCommand(BaseCommand):
@@ -43,13 +43,6 @@ class ListCommand(BaseCommand):
             choices=["materials", "apps", "models"],
         )
         parser.add_argument(
-            "max_snippets",
-            nargs="?",
-            type=int,
-            default=10,
-            help="Max number of materials",
-        )
-        parser.add_argument(
             "--editor",
             "-e",
             dest="editor",
@@ -60,8 +53,5 @@ class ListCommand(BaseCommand):
 
     def execute(self, **kwargs) -> int:
         """Execute the list command."""
-        # Fix parameter name mapping
-        if "max_snippets" in kwargs:
-            kwargs["max_assets"] = kwargs.pop("max_snippets")
-        OldListCommand.list_command(**kwargs)
+        ListCore.list_command(**kwargs)
         return 0

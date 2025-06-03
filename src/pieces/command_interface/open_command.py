@@ -59,4 +59,3 @@ class OpenCommand(BaseCommand):
         """Execute the open command."""
         open_command(**kwargs)
         return 0
-

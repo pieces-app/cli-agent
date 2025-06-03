@@ -54,4 +54,3 @@ class SearchCommand(BaseCommand):
             query = [query]
         search(query, **kwargs)
         return 0
-
