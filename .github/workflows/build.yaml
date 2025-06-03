@@ -139,6 +139,7 @@ jobs:
         id: venv_path
         run: |
           Invoke-Expression (poetry env activate)
+          poetry install
           $sitePackagesPath = (python -c "import site; print(site.getsitepackages()[0])").Trim()
           Write-Host "Site-packages path: $sitePackagesPath"
           echo "VENV_SITE_PACKAGES_PATH=$sitePackagesPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
@@ -148,7 +149,7 @@ jobs:
       - name: Build stand alone (macOS)
         if: runner.os != 'Windows'
         run: |
-          poetry run pyinstaller -c --onefile src/pieces/app.py --hidden-import=pydantic_core --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
+          poetry run pyinstaller -c --onefile src/pieces/app.py  --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
 
       ### Build stand-alone step for Windows (build .exe)
       - name: Build stand alone (Windows)
@@ -157,13 +158,21 @@ jobs:
           Invoke-Expression (poetry env activate)
            pyinstaller -c --onefile src/pieces/app.py `
               --name=pieces `
-              --hidden-import="pieces.pieces_argparser" `
-              --paths="${{ steps.venv_path.outputs.VENV_SITE_PACKAGES_PATH }}" `
               --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" `
-              --python-option="W ignore" # Ignore all warnings 
+              --python-option="W ignore" `
+              --hidden-import=pieces.pieces_argparser `
+              --hidden-import=pieces.settings `
+              --hidden-import=pieces.logger `
+              --hidden-import=pieces.commands `
+              --hidden-import=pieces.autocommit `
+              --hidden-import=pieces.copilot `
+              --hidden-import=pieces.mcp `
+              --hidden-import=pieces.core `
+              --hidden-import=pieces.command_interface `
+              --hidden-import=pieces.utils `
+              --hidden-import=pieces.gui `
+              --exclude-module=tkinter
         shell: powershell
-
-
 
       ### Package binary to zip file for macOS
       - name: Mac Binary to Zip File
@@ -214,7 +223,7 @@ jobs:
       - name: Test Windows Executable Basic Commands
         if: runner.os == 'Windows'
         run: |
-          Get-ChildItem src/pieces
+          Get-ChildItem dist
           Set-Location dist 
           Write-Host "--- Testing 'pieces.exe --version' command ---"
           try {
