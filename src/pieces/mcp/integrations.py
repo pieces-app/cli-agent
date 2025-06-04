@@ -9,8 +9,18 @@ from ..settings import Settings
 from ..urls import URLs
 
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
+windsurf_config_path = os.path.expanduser("~/.codeium/windsurf/mcp_config.json")
+# TODO: We might need to add local config like vscode and cursor for local projects
+# Link: https://zed.dev/docs/configuring-zed#settings-files
+zed_config_path = os.path.join(
+    os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")),
+    "zed",
+    "settings.json",
+)
 
-mcp_integration_types = Literal["vscode", "goose", "cursor", "claude"]
+mcp_integration_types = Literal[
+    "vscode", "goose", "cursor", "claude", "windsurf", "zed"
+]
 mcp_integrations: List[mcp_integration_types] = list(get_args(mcp_integration_types))
 
 
@@ -194,10 +204,70 @@ text_success_claude = """
 1. Open Claude desktop (make sure to restart it if it was running)
 2. **Ask a prompt:**
 
-        What I was wroking on yesterday?
+        What I was working on yesterday?
         Summarize it with 5 bullet points and timestamps.
 
 > Ensure PiecesOS is running & LTM is enabled
+"""
+
+text_success_zed = """
+### Use Pieces LTM in Zed
+
+1. Open Zed
+2. **Ask a prompt:**
+
+        What I was working on yesterday?
+        Summarize it with 5 bullet points and timestamps.
+
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
+text_success_windsurf = """
+### Use Pieces LTM in Windsurf 
+
+1. Open Windsurf
+2. **Ask a prompt:**
+
+        What I was working on yesterday?
+        Summarize it with 5 bullet points and timestamps.
+
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
+wrap_instructions = """
+### Use Pieces LTM in Wrap
+
+1. From `Settings > AI > Manage MCP servers`
+
+2. Click on the add button
+
+3. Then paste the following Json
+
+```json
+{json}
+```
+
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
+wrap_stdio_json = """
+{
+    "Pieces": {
+        "command": "pieces",
+        "args": ["mcp", "start"],
+        "env": {},
+        "working_directory": null,
+        "start_on_launch": true
+    }
+}
+"""
+
+wrap_sse_json = """
+{{
+    "Pieces": {{
+        "serverUrl": "{url}"
+    }}
+}}
 """
 
 options = [
@@ -211,7 +281,7 @@ options = [
 cursor_integration = Integration(
     options=options,
     text_success=text_success_cursor,
-    docs=URLs.CURSOR_DOCS.value,
+    docs=URLs.CURSOR_MCP_DOCS.value,
     readable="Cursor",
     get_settings_path=get_cursor_path,
     mcp_properties=MCPProperties(
@@ -225,7 +295,7 @@ vscode_integration = Integration(
     options=options,
     text_success=text_success_vscode,
     readable="VS Code",
-    docs=URLs.VS_CODE_DOCS.value,
+    docs=URLs.VS_CODE_MCP_DOCS.value,
     get_settings_path=get_vscode_path,
     mcp_properties=MCPProperties(
         stdio_property={"type": "stdio"},
@@ -238,7 +308,7 @@ goose_integration = Integration(
     options=[],
     text_success=text_success_goose,
     readable="Goose",
-    docs=URLs.GOOSE_DOCS.value,
+    docs=URLs.GOOSE_MCP_DOCS.value,
     get_settings_path=lambda: goose_config_path,
     mcp_properties=MCPProperties(
         stdio_property={
@@ -275,7 +345,7 @@ claude_integration = Integration(
     text_success=text_success_claude,
     readable="Claude Desktop",
     get_settings_path=get_claude_path,
-    docs=URLs.CLAUDE_DOCS.value,
+    docs=URLs.CLAUDE_MCP_DOCS.value,
     mcp_properties=MCPProperties(
         stdio_property={},
         stdio_path=["mcpServers", "Pieces"],
@@ -286,4 +356,39 @@ claude_integration = Integration(
         sse_property={},
     ),
     id="claude",
+)
+
+windsurf_integration = Integration(
+    options=[],
+    text_success=text_success_windsurf,
+    readable="Windsurf",
+    get_settings_path=lambda: windsurf_config_path,
+    docs=URLs.WINDSURF_MCP_DOCS.value,
+    mcp_properties=MCPProperties(
+        stdio_property={},
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=[
+            "mcpServers",
+            "Pieces",
+        ],
+        sse_property={},
+        url_property_name="serverUrl",
+    ),
+)
+
+zed_integration = Integration(
+    options=[],
+    text_success=text_success_zed,
+    readable="Zed",
+    get_settings_path=lambda: zed_config_path,
+    docs=URLs.ZED_MCP_DOCS.value,
+    mcp_properties=MCPProperties(
+        stdio_path=["context_servers", "Pieces", "command"],
+        sse_path=["context_servers", "Pieces", "command"],
+        sse_property={},
+        stdio_property={},
+        command_property_name="path",
+    ),
+    # We might need to add better abstraction for all the MCPs that do not support SSE.
+    # As far as I know, SSE is not supported on Zed. We are going to use stdio only like Claude
 )
