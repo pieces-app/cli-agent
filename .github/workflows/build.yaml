@@ -24,18 +24,22 @@ on:
         required: false
       match_password:
         required: false
+      chocolatey_api_key:
+        required: false
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ macos-14-large, macos-latest ]
+        os: [ macos-14-large, macos-latest, windows-latest ]
         include:
           - os: macos-14-large
             zipFileName: pieces-cli-mac_x86_64
           - os: macos-latest
             zipFileName: pieces-cli-mac_arm64
+          - os: windows-latest
+            zipFileName: pieces-cli-win_x86_64
     steps:
       ### Checking out our Repo
       - uses: actions/checkout@v3
@@ -76,6 +80,7 @@ jobs:
         env:
           MATCH_PASSWORD: ${{ secrets.match_password }}
           FASTLANE_PASSWORD: ${{ secrets.fastlane_password }}
+        if: runner.os != 'Windows'
 
       ### Installing our dependencies
       - name: Install dependencies
@@ -84,22 +89,40 @@ jobs:
           poetry install 
 
       ### Setting the version in the pyproject.toml for unix builds
-      - name: Set Version Shell Script
+      - name: Set Version Shell Script (Unix)
+        if: runner.os != 'Windows'
         run: |
-          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-          then
-                echo "This is a tagged build"
-                export RELEASE_VERSION='${{ steps.get_version.outputs.VERSION }}'
-                RELEASE_VERSION="${RELEASE_VERSION#v}"
-                echo $RELEASE_VERSION
-                poetry version $RELEASE_VERSION
-                sed -i "" "s/__version__ = .*/__version__ = '${RELEASE_VERSION}'/" src/pieces/__init__.py
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]; then
+            echo "This is a tagged build"
+            RELEASE_VERSION='${{ steps.get_version.outputs.VERSION }}'
+            RELEASE_VERSION="${RELEASE_VERSION#v}"
+            poetry version $RELEASE_VERSION
+            sed -i "" "s/__version__ = .*/__version__ = '${RELEASE_VERSION}'/" src/pieces/__init__.py
           else
-                echo "This is not a tagged build"
-                export STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
-                poetry version $STAGING_VERSION
-                sed -i "" "s/__version__ = .*/__version__ = '${STAGING_VERSION}'/" src/pieces/__init__.py
+            echo "This is not a tagged build"
+            STAGING_VERSION='${{ steps.staging_version.outputs.STAGING_VERSION }}'
+            poetry version $STAGING_VERSION
+            sed -i "" "s/__version__ = .*/__version__ = '${STAGING_VERSION}'/" src/pieces/__init__.py
           fi
+        shell: bash
+
+      ### Setting the version in the pyproject.toml for Windows builds
+      - name: Set Version PowerShell Script (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
+            Write-Output "This is a tagged build"
+            $RELEASE_VERSION = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
+            poetry version $RELEASE_VERSION
+            (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$RELEASE_VERSION'" | Set-Content src\pieces\__init__.py
+          }
+          else {
+            Write-Output "This is not a tagged build"
+            $STAGING_VERSION = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
+            poetry version $STAGING_VERSION
+            (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$STAGING_VERSION'" | Set-Content src\pieces\__init__.py
+          }
+        shell: pwsh
 
       ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
       - name: Write staging version to file
@@ -111,33 +134,67 @@ jobs:
       - name: Build library
         run: poetry build
 
-      ### Building Standalone Package
-      ### Note, this is also how it should be code-signed. Code-signing the Binary after it is built breaks it as I think it overwrites signatures on Python Libs
-      - name: Build stand alone
+      - name: Get virtual environment site-packages path
+        if: runner.os == 'Windows'
+        id: venv_path
         run: |
-          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
+          Invoke-Expression (poetry env activate)
+          poetry install
+          $sitePackagesPath = (python -c "import site; print(site.getsitepackages()[0])").Trim()
+          Write-Host "Site-packages path: $sitePackagesPath"
+          echo "VENV_SITE_PACKAGES_PATH=$sitePackagesPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        shell: powershell
 
-      ### Binary to Zip file
-      - name: Mac Binary to Zip File
+      ### Build stand-alone step for macOS (keeping codesigning)
+      - name: Build stand alone (macOS)
+        if: runner.os != 'Windows'
         run: |
-          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-          then
+          poetry run pyinstaller pieces.spec
+
+      ### Build stand-alone step for Windows (build .exe)
+      - name: Build stand alone (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Ensure we're in the poetry environment
+          poetry install
+          # Run PyInstaller through poetry to ensure all dependencies are available
+          poetry run pyinstaller pieces.spec --clean
+        shell: powershell
+
+      ### Package binary to zip file for macOS
+      - name: Mac Binary to Zip File
+        if: runner.os != 'Windows'
+        run: |
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]; then
               ditto -c -k --sequesterRsrc "dist/pieces" dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip
           else
               ditto -c -k --sequesterRsrc "dist/pieces" dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip
           fi
 
       ### Submission to apple notary
-      - name: Submit Zip to apple notary
-        run: |
-          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-          then
-              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-          else
-              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-          fi
+      # - name: Submit Zip to apple notary
+      #   if: runner.os != 'Windows'
+      #   run: |
+      #     if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+      #     then
+      #         xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+      #     else
+      #         xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+      #     fi
 
-      ### Upload build artifact for pushing
+      ### Package binary to zip file for Windows using PowerShell
+      - name: Windows Binary to Zip File
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
+            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
+          }
+          else {
+            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
+          }
+
+      ### Upload to github artifacts
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
@@ -150,6 +207,46 @@ jobs:
           path: "*.txt"
         if: inputs.deploy == false
 
+      - name: Test Windows Executable Basic Commands
+        if: runner.os == 'Windows'
+        run: |
+          Get-ChildItem dist
+          Set-Location dist 
+          
+          Write-Host "--- Testing 'pieces.exe --version' command ---"
+          try {
+              # Run the --version command and capture its output
+              $versionOutput = (.\pieces\pieces.exe --version 2>&1)
+              Write-Host "Output for --version:`n$versionOutput"
+              Write-Host "SUCCESS: 'pieces.exe --version' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe --version' threw an error: $($_.Exception.Message)"
+              exit 1
+          }
+          
+          Write-Host "`n--- Testing 'pieces.exe help' command ---"
+          try {
+              # Test the help command to ensure basic functionality works
+              $helpOutput = (.\pieces\pieces.exe help 2>&1)
+              Write-Host "Output for help (first 10 lines):`n$($helpOutput | Select-Object -First 10)"
+              Write-Host "SUCCESS: 'pieces.exe help' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe help' threw an error: $($_.Exception.Message)"
+              exit 1
+          }
+          
+          Write-Host "`n--- Testing 'pieces.exe --ignore-onboarding help' command ---"
+          try {
+              # Test with ignore-onboarding flag to bypass any interactive prompts
+              $helpOutput2 = (.\pieces\pieces.exe --ignore-onboarding help 2>&1)
+              Write-Host "SUCCESS: 'pieces.exe --ignore-onboarding help' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe --ignore-onboarding help' threw an error: $($_.Exception.Message)"
+              exit 1
+          }
+
+          Write-Host "`nBasic executable functionality tests passed."
+        shell: powershell
 
   ### Pushing the built packages to GCP and GitHub
   push-build:
@@ -263,3 +360,107 @@ jobs:
           cp macos-latest/*.tar.gz macos-latest/*.whl ./dist/
           python3 -m pip install --upgrade twine
           python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
+
+  ### Build and publish Chocolatey package
+  chocolatey-package:
+    runs-on: windows-latest
+    needs: [build, push-build]
+    if: inputs.deploy == true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-latest
+          path: dist
+
+      - name: Check if zip file exists
+        run: |
+          ls -la dist
+          if (Test-Path "dist/pieces-cli-win_x86_64-*.zip") {
+            Write-Output "Zip file exists"
+          } else {
+            Write-Output "Zip file does not exist"
+          }
+
+      - name: Setup Chocolatey
+        uses: chocolatey/setup-chocolatey@v1
+
+      - name: Install Chocolatey Package Builder
+        run: choco install chocolatey-package-builder -y
+
+      - name: Get the version
+        shell: bash
+        id: get_version
+        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+      - name: Get Release Notes
+        id: release_notes
+        run: |
+          $version = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
+          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/v$version" -Headers @{
+            "Accept" = "application/vnd.github.v3+json"
+            "Authorization" = "token ${{ secrets.GITHUB_TOKEN }}"
+          }
+          $releaseNotes = $response.body
+          # Escape any special characters that might break the nuspec XML
+          $releaseNotes = [System.Security.SecurityElement]::Escape($releaseNotes)
+          echo "RELEASE_NOTES=$releaseNotes" >> $env:GITHUB_OUTPUT
+
+      - name: Copy Exe to Package
+        run: |
+          Copy-Item -Path "dist/pieces-cli-win_x86_64-*.zip" -Destination "choco/tools/pieces-cli.zip" -Force
+          Expand-Archive -Path "choco/tools/pieces-cli.zip" -DestinationPath "choco/tools" -Force
+          Remove-Item "choco/tools/pieces-cli.zip" -Force
+
+      - name: Copy LICENSE
+        run: |
+          Copy-Item -Path "LICENSE" -Destination "choco/tools/LICENSE.txt" -Force
+          Write-Output "Copied LICENSE to package"
+
+      - name: Update Package Version
+        shell: pwsh
+        run: |
+          cd choco
+          $nuspec = Get-Content pieces-cli.nuspec
+          $newVersion = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
+          
+          # Update version in nuspec
+          $nuspec = $nuspec -replace '<version>.*?</version>', "<version>$newVersion</version>"
+          
+          # Update release notes with the actual GitHub release notes
+          # Should we add the release notes to the nuspec?
+          # $releaseNotes = "${{ steps.release_notes.outputs.RELEASE_NOTES }}"
+          # $nuspec = $nuspec -replace '<releaseNotes>.*?</releaseNotes>', "<releaseNotes>$releaseNotes</releaseNotes>"
+          
+          $nuspec | Set-Content pieces-cli.nuspec
+          
+          Write-Output "Updated nuspec version to $newVersion"
+
+      - name: Build Chocolatey Package
+        run: |
+          cd choco
+          choco pack
+
+      - name: Test Package
+        run: |
+          choco install pieces-cli -s . -y
+          pieces --version
+          choco uninstall pieces-cli -y
+
+      - name: Publish to Chocolatey
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
+        run: |
+          choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
+          choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
+
+      ### We might remove this setup later after testing!
+      - name: Upload Chocolatey Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: chocolatey-package
+          path: choco/
+          if-no-files-found: error
