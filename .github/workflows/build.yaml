@@ -362,212 +362,228 @@ jobs:
           python3 -m pip install --upgrade twine
           python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
 
-  ### Build and publish Chocolatey package
-  chocolatey-package:
-    runs-on: windows-latest
-    needs: [ build ]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    ### Build and publish Chocolatey package
+    chocolatey-package:
+      runs-on: windows-latest
+      needs: [ build ]
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
 
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-latest
-          path: dist
+        - name: Download Windows Artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: windows-latest
+            path: dist
 
-      ### Download staging version file if it exists
-      - name: Download Staging Version File
-        if: inputs.deploy == false
-        uses: actions/download-artifact@v4
-        with:
-          name: staging_version-windows-latest
-          path: staging_version_files
-        continue-on-error: true
+        ### Download staging version file if it exists
+        - name: Download Staging Version File
+          if: inputs.deploy == false
+          uses: actions/download-artifact@v4
+          with:
+            name: staging_version-windows-latest
+            path: staging_version_files
+          continue-on-error: true
 
-      #      - name: Install Chocolatey Package Builder
-      #        run: choco install chocolatey-package-builder -y
+        #      - name: Install Chocolatey Package Builder
+        #        run: choco install chocolatey-package-builder -y
 
-      - name: Get the version
-        shell: bash
-        id: get_version
-        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+        - name: Get the version
+          shell: bash
+          id: get_version
+          run: |
+            VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
+            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+            echo "Extracted version from GITHUB_REF ($GITHUB_REF): $VERSION"
 
-      ### Get staging version if not a tagged build
-      - name: Get staging version
-        shell: bash
-        id: staging_version
-        run: |
-          if [[ -f staging_version_files/*.txt ]]; then
-            STAGING_VERSION=$(cat staging_version_files/*.txt)
-            echo "STAGING_VERSION=$STAGING_VERSION" >> $GITHUB_OUTPUT
-            echo "Found staging version: $STAGING_VERSION"
-          else
-            echo "No staging version file found"
-          fi
-        if: inputs.deploy == false
+        ### Get staging version if not a tagged build
+        - name: Get staging version
+          shell: bash
+          id: staging_version
+          run: |
+            echo "Checking for staging version files..."
+            ls -la staging_version_files/ || echo "staging_version_files directory not found"
+            
+            # Find any .txt file in the staging_version_files directory
+            if find staging_version_files -name "*.txt" -type f | head -1 | read txtfile; then
+              STAGING_VERSION=$(cat "$txtfile")
+              echo "STAGING_VERSION=$STAGING_VERSION" >> $GITHUB_OUTPUT
+              echo "Found staging version: $STAGING_VERSION from file: $txtfile"
+            else
+              echo "No staging version file found"
+              echo "STAGING_VERSION=" >> $GITHUB_OUTPUT
+            fi
+          if: inputs.deploy == false
 
-      ### Determine final version to use
-      - name: Set Final Version
-        shell: pwsh
-        id: final_version
-        run: |
-          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
-            # This is a tagged build
-            $finalVersion = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
-            Write-Output "Using tag version: $finalVersion"
-          } elseif ("${{ steps.staging_version.outputs.STAGING_VERSION }}" -ne "") {
-            # This is a staging build
-            $finalVersion = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
-            Write-Output "Using staging version: $finalVersion"
-          } else {
-            # Fallback to branch name
-            $finalVersion = "${{ steps.get_version.outputs.VERSION }}"
-            Write-Output "Using fallback version: $finalVersion"
-          }
-          echo "FINAL_VERSION=$finalVersion" >> $env:GITHUB_OUTPUT
-
-      - name: Get Release Notes
-        id: release_notes
-        run: |
-          $version = "${{ steps.final_version.outputs.FINAL_VERSION }}"
-          try {
-            $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/v$version" -Headers @{
-              "Accept" = "application/vnd.github.v3+json"
-              "Authorization" = "token ${{ secrets.GITHUB_TOKEN }}"
+        ### Determine final version to use
+        - name: Set Final Version
+          shell: pwsh
+          id: final_version
+          run: |
+            $gitVersion = "${{ steps.get_version.outputs.VERSION }}"
+            $stagingVersion = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
+            
+            Write-Output "Git version: '$gitVersion'"
+            Write-Output "Staging version: '$stagingVersion'"
+            
+            if ($gitVersion -match "^\d+\.\d+\.\d+$") {
+              # This is a tagged build
+              $finalVersion = $gitVersion.TrimStart("v")
+              Write-Output "Using tag version: $finalVersion"
+            } elseif (![string]::IsNullOrEmpty($stagingVersion)) {
+              # This is a staging build with staging version
+              $finalVersion = $stagingVersion
+              Write-Output "Using staging version: $finalVersion"
+            } else {
+              # Fallback: create a version based on branch name and timestamp
+              $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+              $branchName = $gitVersion -replace '[^a-zA-Z0-9]', ''
+              $finalVersion = "0.0.1-$branchName-$timestamp"
+              Write-Output "Using generated fallback version: $finalVersion"
             }
-            $releaseNotes = $response.body
-            # Escape any special characters that might break the nuspec XML
-            $releaseNotes = [System.Security.SecurityElement]::Escape($releaseNotes)
-            echo "RELEASE_NOTES=$releaseNotes" >> $env:GITHUB_OUTPUT
-          } catch {
-            Write-Output "No release notes found for version $version"
-            echo "RELEASE_NOTES=No release notes available" >> $env:GITHUB_OUTPUT
-          }
+            echo "FINAL_VERSION=$finalVersion" >> $env:GITHUB_OUTPUT
 
-      - name: Copy Exe to Package
-        run: |
-          # Find the zip file - use final version to determine which zip to look for
-          $finalVersion = "${{ steps.final_version.outputs.FINAL_VERSION }}"
-          $zipPattern = "pieces-cli-win_x86_64-$finalVersion.zip"
-          Write-Output "Looking for zip file with pattern: $zipPattern"
-          
-          $zipFile = Get-ChildItem -Path "dist" -Filter $zipPattern | Select-Object -First 1
-          if (-not $zipFile) {
-            # Fallback: try to find any zip file
-            $zipFile = Get-ChildItem -Path "dist" -Filter "pieces-cli-win_x86_64-*.zip" | Select-Object -First 1
+        - name: Get Release Notes
+          id: release_notes
+          run: |
+            $version = "${{ steps.final_version.outputs.FINAL_VERSION }}"
+            try {
+              $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/v$version" -Headers @{
+                "Accept" = "application/vnd.github.v3+json"
+                "Authorization" = "token ${{ secrets.GITHUB_TOKEN }}"
+              }
+              $releaseNotes = $response.body
+              # Escape any special characters that might break the nuspec XML
+              $releaseNotes = [System.Security.SecurityElement]::Escape($releaseNotes)
+              echo "RELEASE_NOTES=$releaseNotes" >> $env:GITHUB_OUTPUT
+            } catch {
+              Write-Output "No release notes found for version $version"
+              echo "RELEASE_NOTES=No release notes available" >> $env:GITHUB_OUTPUT
+            }
+
+        - name: Copy Exe to Package
+          run: |
+            # Find the zip file - use final version to determine which zip to look for
+            $finalVersion = "${{ steps.final_version.outputs.FINAL_VERSION }}"
+            $zipPattern = "pieces-cli-win_x86_64-$finalVersion.zip"
+            Write-Output "Looking for zip file with pattern: $zipPattern"
+            
+            $zipFile = Get-ChildItem -Path "dist" -Filter $zipPattern | Select-Object -First 1
             if (-not $zipFile) {
-              throw "pieces-cli-win_x86_64-*.zip not found in dist directory"
+              # Fallback: try to find any zip file
+              $zipFile = Get-ChildItem -Path "dist" -Filter "pieces-cli-win_x86_64-*.zip" | Select-Object -First 1
+              if (-not $zipFile) {
+                throw "pieces-cli-win_x86_64-*.zip not found in dist directory"
+              }
             }
-          }
-
-          Write-Output "Found zip file: $($zipFile.FullName)"
-
-          # Copy and extract
-          Copy-Item -Path $zipFile.FullName -Destination "choco/tools/pieces-cli.zip" -Force
-
-          # Extract the zip (this should create choco/tools/pieces.exe)
-          Expand-Archive -Path "choco/tools/pieces-cli.zip" -DestinationPath "choco/tools/temp" -Force
-
-          # Move the pieces.exe to the correct location
-          if (Test-Path "choco/tools/temp/pieces.exe") {
-            # If exe is directly in temp, create pieces directory and move it
-            New-Item -ItemType Directory -Path "choco/tools/pieces" -Force
-            Move-Item "choco/tools/temp/pieces.exe" "choco/tools/pieces/" -Force
-            # Move _internal directory if it exists
-            if (Test-Path "choco/tools/temp/_internal") {
-              Move-Item "choco/tools/temp/_internal" "choco/tools/pieces/" -Force
+            
+            Write-Output "Found zip file: $($zipFile.FullName)"
+            
+            # Copy and extract
+            Copy-Item -Path $zipFile.FullName -Destination "choco/tools/pieces-cli.zip" -Force
+            
+            # Extract the zip (this should create choco/tools/pieces.exe)
+            Expand-Archive -Path "choco/tools/pieces-cli.zip" -DestinationPath "choco/tools/temp" -Force
+            
+            # Move the pieces.exe to the correct location
+            if (Test-Path "choco/tools/temp/pieces.exe") {
+              # If exe is directly in temp, create pieces directory and move it
+              New-Item -ItemType Directory -Path "choco/tools/pieces" -Force
+              Move-Item "choco/tools/temp/pieces.exe" "choco/tools/pieces/" -Force
+              # Move _internal directory if it exists
+              if (Test-Path "choco/tools/temp/_internal") {
+                Move-Item "choco/tools/temp/_internal" "choco/tools/pieces/" -Force
+              }
+            } elseif (Test-Path "choco/tools/temp/pieces") {
+              # If pieces directory exists, move it directly
+              Move-Item "choco/tools/temp/pieces" "choco/tools/" -Force
+            } else {
+              throw "pieces.exe not found in extracted zip"
             }
-          } elseif (Test-Path "choco/tools/temp/pieces") {
-            # If pieces directory exists, move it directly
-            Move-Item "choco/tools/temp/pieces" "choco/tools/" -Force
-          } else {
-            throw "pieces.exe not found in extracted zip"
-          }
+            
+            # Clean up
+            Remove-Item "choco/tools/pieces-cli.zip" -Force
+            Remove-Item "choco/tools/temp" -Recurse -Force -ErrorAction SilentlyContinue
+            
+            # Verify the final structure
+            Write-Output "Final structure:"
+            Get-ChildItem "choco/tools/pieces" -Recurse | Select-Object Name, FullName
 
-          # Clean up
-          Remove-Item "choco/tools/pieces-cli.zip" -Force
-          Remove-Item "choco/tools/temp" -Recurse -Force -ErrorAction SilentlyContinue
+        - name: Copy LICENSE
+          run: |
+            Copy-Item -Path "LICENSE" -Destination "choco/tools/LICENSE.txt" -Force
+            Write-Output "Copied LICENSE to package"
 
-          # Verify the final structure
-          Write-Output "Final structure:"
-          Get-ChildItem "choco/tools/pieces" -Recurse | Select-Object Name, FullName
+        - name: Update Package Version
+          shell: pwsh
+          run: |
+            cd choco
+            $nuspec = Get-Content pieces-cli.nuspec
+            $newVersion = "${{ steps.final_version.outputs.FINAL_VERSION }}"
+            
+            # Update version in nuspec
+            $nuspec = $nuspec -replace '<version>.*?</version>', "<version>$newVersion</version>"
+            
+            # Update release notes with the actual GitHub release notes
+            # Should we add the release notes to the nuspec?
+            # $releaseNotes = "${{ steps.release_notes.outputs.RELEASE_NOTES }}"
+            # $nuspec = $nuspec -replace '<releaseNotes>.*?</releaseNotes>', "<releaseNotes>$releaseNotes</releaseNotes>"
+            
+            $nuspec | Set-Content pieces-cli.nuspec
+            
+            Write-Output "Updated nuspec version to $newVersion"
 
-      - name: Copy LICENSE
-        run: |
-          Copy-Item -Path "LICENSE" -Destination "choco/tools/LICENSE.txt" -Force
-          Write-Output "Copied LICENSE to package"
+        - name: Build Chocolatey Package
+          run: |
+            cd choco
+            choco pack
 
-      - name: Update Package Version
-        shell: pwsh
-        run: |
-          cd choco
-          $nuspec = Get-Content pieces-cli.nuspec
-          $newVersion = "${{ steps.final_version.outputs.FINAL_VERSION }}"
-          
-          # Update version in nuspec
-          $nuspec = $nuspec -replace '<version>.*?</version>', "<version>$newVersion</version>"
-          
-          # Update release notes with the actual GitHub release notes
-          # Should we add the release notes to the nuspec?
-          # $releaseNotes = "${{ steps.release_notes.outputs.RELEASE_NOTES }}"
-          # $nuspec = $nuspec -replace '<releaseNotes>.*?</releaseNotes>', "<releaseNotes>$releaseNotes</releaseNotes>"
-          
-          $nuspec | Set-Content pieces-cli.nuspec
-          
-          Write-Output "Updated nuspec version to $newVersion"
+        - name: Test Package
+          run: |
+            Write-Output "Installing pieces-cli package for testing..."
+            choco install pieces-cli -s . -y
+            
+            Write-Output "Testing pieces command availability..."
+            if (Get-Command pieces -ErrorAction SilentlyContinue) {
+              Write-Output "✓ pieces command is available in PATH"
+            } else {
+              throw "✗ pieces command not found in PATH"
+            }
+            
+            Write-Output "Testing pieces --version..."
+            $versionOutput = pieces --version 2>&1
+            Write-Output "Version output: $versionOutput"
+            
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "✓ pieces --version executed successfully"
+            } else {
+              throw "✗ pieces --version failed with exit code $LASTEXITCODE"
+            }
+            
+            Write-Output "Testing pieces help..."
+            $helpOutput = pieces help 2>&1
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "✓ pieces help executed successfully"
+            } else {
+              Write-Output "⚠ pieces help failed, but continuing..."
+            }
+            
+            Write-Output "Uninstalling test package..."
+            choco uninstall pieces-cli -y
 
-      - name: Build Chocolatey Package
-        run: |
-          cd choco
-          choco pack
+        ### Always upload artifacts regardless of deploy status
+        - name: Upload Chocolatey Package
+          uses: actions/upload-artifact@v4
+          with:
+            name: chocolatey-package
+            path: choco/
+            if-no-files-found: error
 
-      - name: Test Package
-        run: |
-          Write-Output "Installing pieces-cli package for testing..."
-          choco install pieces-cli -s . -y
-
-          Write-Output "Testing pieces command availability..."
-          if (Get-Command pieces -ErrorAction SilentlyContinue) {
-            Write-Output "✓ pieces command is available in PATH"
-          } else {
-            throw "✗ pieces command not found in PATH"
-          }
-
-          Write-Output "Testing pieces --version..."
-          $versionOutput = pieces --version 2>&1
-          Write-Output "Version output: $versionOutput"
-
-          if ($LASTEXITCODE -eq 0) {
-            Write-Output "✓ pieces --version executed successfully"
-          } else {
-            throw "✗ pieces --version failed with exit code $LASTEXITCODE"
-          }
-
-          Write-Output "Testing pieces help..."
-          $helpOutput = pieces help 2>&1
-          if ($LASTEXITCODE -eq 0) {
-            Write-Output "✓ pieces help executed successfully"
-          } else {
-            Write-Output "⚠ pieces help failed, but continuing..."
-          }
-
-          Write-Output "Uninstalling test package..."
-          choco uninstall pieces-cli -y
-
-      ### Always upload artifacts regardless of deploy status
-      - name: Upload Chocolatey Package
-        uses: actions/upload-artifact@v4
-        with:
-          name: chocolatey-package
-          path: choco/
-          if-no-files-found: error
-
-      ### Publish to Chocolatey
-      - name: Publish to Chocolatey
-        if: inputs.deploy == true  # Only publish when deploying
-        env:
-          CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
-        run: |
-          choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
-          choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
+        ### Publish to Chocolatey
+        - name: Publish to Chocolatey
+          if: inputs.deploy == true  # Only publish when deploying
+          env:
+            CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
+          run: |
+            choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
+            choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
