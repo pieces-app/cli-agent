@@ -376,8 +376,8 @@ jobs:
           name: windows-latest
           path: dist
 
-      - name: Install Chocolatey Package Builder
-        run: choco install chocolatey-package-builder -y
+#      - name: Install Chocolatey Package Builder
+#        run: choco install chocolatey-package-builder -y
 
       - name: Get the version
         shell: bash
