@@ -364,7 +364,7 @@ jobs:
   ### Build and publish Chocolatey package
   chocolatey-package:
     runs-on: windows-latest
-    needs: [build, push-build]
+    needs: [ build, push-build ]
     if: inputs.deploy == true
     steps:
       - name: Checkout repository
@@ -411,9 +411,43 @@ jobs:
 
       - name: Copy Exe to Package
         run: |
-          Copy-Item -Path "dist/pieces-cli-win_x86_64-*.zip" -Destination "choco/tools/pieces-cli.zip" -Force
-          Expand-Archive -Path "choco/tools/pieces-cli.zip" -DestinationPath "choco/tools" -Force
+          # Find the zip file
+          $zipFile = Get-ChildItem -Path "dist" -Filter "pieces-cli-win_x86_64-*.zip" | Select-Object -First 1
+          if (-not $zipFile) {
+            throw "pieces-cli-win_x86_64-*.zip not found in dist directory"
+          }
+
+          Write-Output "Found zip file: $($zipFile.FullName)"
+
+          # Copy and extract
+          Copy-Item -Path $zipFile.FullName -Destination "choco/tools/pieces-cli.zip" -Force
+
+          # Extract the zip (this should create choco/tools/pieces.exe)
+          Expand-Archive -Path "choco/tools/pieces-cli.zip" -DestinationPath "choco/tools/temp" -Force
+
+          # Move the pieces.exe to the correct location
+          if (Test-Path "choco/tools/temp/pieces.exe") {
+            # If exe is directly in temp, create pieces directory and move it
+            New-Item -ItemType Directory -Path "choco/tools/pieces" -Force
+            Move-Item "choco/tools/temp/pieces.exe" "choco/tools/pieces/" -Force
+            # Move _internal directory if it exists
+            if (Test-Path "choco/tools/temp/_internal") {
+              Move-Item "choco/tools/temp/_internal" "choco/tools/pieces/" -Force
+            }
+          } elseif (Test-Path "choco/tools/temp/pieces") {
+            # If pieces directory exists, move it directly
+            Move-Item "choco/tools/temp/pieces" "choco/tools/" -Force
+          } else {
+            throw "pieces.exe not found in extracted zip"
+          }
+
+          # Clean up
           Remove-Item "choco/tools/pieces-cli.zip" -Force
+          Remove-Item "choco/tools/temp" -Recurse -Force -ErrorAction SilentlyContinue
+
+          # Verify the final structure
+          Write-Output "Final structure:"
+          Get-ChildItem "choco/tools/pieces" -Recurse | Select-Object Name, FullName
 
       - name: Copy LICENSE
         run: |
@@ -446,8 +480,35 @@ jobs:
 
       - name: Test Package
         run: |
+          Write-Output "Installing pieces-cli package for testing..."
           choco install pieces-cli -s . -y
-          pieces --version
+
+          Write-Output "Testing pieces command availability..."
+          if (Get-Command pieces -ErrorAction SilentlyContinue) {
+            Write-Output "✓ pieces command is available in PATH"
+          } else {
+            throw "✗ pieces command not found in PATH"
+          }
+
+          Write-Output "Testing pieces --version..."
+          $versionOutput = pieces --version 2>&1
+          Write-Output "Version output: $versionOutput"
+
+          if ($LASTEXITCODE -eq 0) {
+            Write-Output "✓ pieces --version executed successfully"
+          } else {
+            throw "✗ pieces --version failed with exit code $LASTEXITCODE"
+          }
+
+          Write-Output "Testing pieces help..."
+          $helpOutput = pieces help 2>&1
+          if ($LASTEXITCODE -eq 0) {
+            Write-Output "✓ pieces help executed successfully"
+          } else {
+            Write-Output "⚠ pieces help failed, but continuing..."
+          }
+
+          Write-Output "Uninstalling test package..."
           choco uninstall pieces-cli -y
 
       - name: Publish to Chocolatey

@@ -94,10 +94,10 @@ class PiecesArgparser(argparse.ArgumentParser):
     def print_help(self, file=None):
         console = self.console
 
-        # HEADER
-        console.print(
-            f"[bold blue]{self.description or f'Pieces CLI {self.prog.split(" ")[-1].title()} Command'}[/]"
-        )
+        # HEADER - Fixed f-string syntax
+        prog_title = self.prog.split(" ")[-1].title()
+        description_text = self.description or f'Pieces CLI {prog_title} Command'
+        console.print(f"[bold blue]{description_text}[/]")
 
         console.print(self.format_usage(), "\n")
 

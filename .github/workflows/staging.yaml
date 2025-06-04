@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - windows-support
+      - choco-package
 
 jobs:
   build:

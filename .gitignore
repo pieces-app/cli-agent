@@ -172,3 +172,4 @@ cython_debug/
 cli-agent.iml
 macos/notes.txt
 logs
+/choco/tools/pieces
