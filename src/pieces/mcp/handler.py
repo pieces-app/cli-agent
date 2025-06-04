@@ -19,6 +19,9 @@ from .integrations import (
     mcp_integration_types,
     windsurf_integration,
     zed_integration,
+    wrap_instructions,
+    wrap_sse_json,
+    wrap_stdio_json,
 )
 from .integration import Integration
 
@@ -41,6 +44,7 @@ def handle_mcp(
     zed: bool = False,
     windsurf: bool = False,
     raycast: bool = False,
+    wrap: bool = False,
     stdio: bool = False,
     **kwargs,
 ):
@@ -84,9 +88,17 @@ def handle_mcp(
     if windsurf:
         supported_mcps["windsurf"].run(stdio)
 
-    if not any([claude, cursor, vscode, cursor, goose, zed, windsurf, raycast]):
+    if wrap:
+        jsn = (
+            wrap_stdio_json if stdio else wrap_sse_json.format(url=get_mcp_latest_url())
+        )
+        text = wrap_instructions.format(json=jsn)
+        Settings.logger.print(Markdown(text))
+
+    if not any([claude, cursor, vscode, goose, zed, windsurf, raycast, wrap]):
         menu = [(val.readable, {key: True}) for key, val in supported_mcps.items()]
         menu.append(("Raycast", {"raycast": True}))  # append raycast
+        menu.append(("Wrap", {"wrap": True}))  # append warp
         PiecesSelectMenu(
             menu,
             handle_mcp,
@@ -108,7 +120,8 @@ def handle_raycast():
 
 
 def handle_mcp_docs(
-    ide: Union[mcp_integration_types, Literal["all", "current", "raycast"]], **kwargs
+    ide: Union[mcp_integration_types, Literal["all", "current", "raycast", "wrap"]],
+    **kwargs,
 ):
     if ide == "all" or ide == "current":
         for mcp_name, mcp_integration in supported_mcps.items():
@@ -119,6 +132,9 @@ def handle_mcp_docs(
     if ide == "raycast":
         readable = "Raycast"
         docs = URLs.RAYCAST_MCP_DOCS.value
+    elif ide == "wrap":
+        readable = "Wrap"
+        docs = URLs.WRAP_MCP_DOCS.value
     else:
         integration = supported_mcps[ide]
         readable = integration.readable

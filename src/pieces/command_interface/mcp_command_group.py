@@ -58,6 +58,13 @@ class MCPSetupCommand(BaseCommand):
         )
 
         parser.add_argument(
+            "--wrap",
+            dest="wrap",
+            action="store_true",
+            help="Set up the MCP for Wrap",
+        )
+
+        parser.add_argument(
             "--globally",
             dest="global",
             action="store_true",
@@ -154,7 +161,7 @@ class MCPDocsCommand(BaseCommand):
             "-i",
             dest="ide",
             type=str,
-            choices=mcp_integrations + ["all", "current", "raycast"],
+            choices=mcp_integrations + ["all", "current", "raycast", "wrap"],
             default="all",
             help="The integration to print its documentation",
         )
