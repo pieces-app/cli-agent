@@ -2,6 +2,9 @@ from typing import Dict, Literal, Union, cast
 from rich.markdown import Markdown
 import urllib.request
 import time
+import json
+import urllib.parse
+import webbrowser
 
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
@@ -14,6 +17,8 @@ from .integrations import (
     cursor_integration,
     claude_integration,
     mcp_integration_types,
+    windsurf_integration,
+    zed_integration,
 )
 from .integration import Integration
 
@@ -23,6 +28,8 @@ supported_mcps: Dict[mcp_integration_types, Integration] = {
     "goose": goose_integration,
     "cursor": cursor_integration,
     "claude": claude_integration,
+    "windsurf": windsurf_integration,
+    "zed": zed_integration,
 }
 
 
@@ -31,6 +38,9 @@ def handle_mcp(
     cursor: bool = False,
     goose: bool = False,
     claude: bool = False,
+    zed: bool = False,
+    windsurf: bool = False,
+    raycast: bool = False,
     stdio: bool = False,
     **kwargs,
 ):
@@ -61,22 +71,44 @@ def handle_mcp(
     if cursor:
         supported_mcps["cursor"].run(stdio, **args)
 
-    if claude:
+    if claude or zed or raycast:
         if not stdio:
             Settings.logger.print(
                 "[yellow]Warning: Using stdio instead of sse because sse connection is not supported"
             )
-        supported_mcps["claude"].run(stdio=True)
+        if raycast:
+            handle_raycast()
+            return
+        supported_mcps["zed" if zed else "claude"].run(stdio=True)
 
-    if not any([claude, cursor, vscode, cursor, goose]):
+    if windsurf:
+        supported_mcps["windsurf"].run(stdio)
+
+    if not any([claude, cursor, vscode, cursor, goose, zed, windsurf, raycast]):
+        menu = [(val.readable, {key: True}) for key, val in supported_mcps.items()]
+        menu.append(("Raycast", {"raycast": True}))  # append raycast
         PiecesSelectMenu(
-            [(val.readable, {key: True}) for key, val in supported_mcps.items()],
+            menu,
             handle_mcp,
         ).run()
 
 
+def handle_raycast():
+    config = {
+        "name": "Pieces",
+        "type": "stdio",
+        "command": "pieces",
+        "args": ["mcp", "start"],
+    }
+    config_json = json.dumps(config)
+    encoded_config = urllib.parse.quote(config_json)
+    raycast_url = f"raycast://mcp/install?{encoded_config}"
+    webbrowser.open(raycast_url)
+    print("Deeplink opened follow up in Raycast")
+
+
 def handle_mcp_docs(
-    ide: Union[mcp_integration_types, Literal["all", "current"]], **kwargs
+    ide: Union[mcp_integration_types, Literal["all", "current", "raycast"]], **kwargs
 ):
     if ide == "all" or ide == "current":
         for mcp_name, mcp_integration in supported_mcps.items():
@@ -84,12 +116,16 @@ def handle_mcp_docs(
                 continue
             handle_mcp_docs(mcp_name, **kwargs)
         return
-    integration = supported_mcps[ide]
-    Settings.logger.print(
-        Markdown(f"**{integration.readable}**: `{integration.docs_no_css_selector}`")
-    )
+    if ide == "raycast":
+        readable = "Raycast"
+        docs = URLs.RAYCAST_MCP_DOCS.value
+    else:
+        integration = supported_mcps[ide]
+        readable = integration.readable
+        docs = integration.docs_no_css_selector
+    Settings.logger.print(Markdown(f"**{readable}**: `{docs}`"))
     if kwargs.get("open"):
-        URLs.open_website(integration.docs_no_css_selector)
+        URLs.open_website(docs)
 
 
 def handle_repair(ide: Union[mcp_integration_types, Literal["all"]], **kwargs):

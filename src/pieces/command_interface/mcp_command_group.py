@@ -47,6 +47,16 @@ class MCPSetupCommand(BaseCommand):
                 action="store_true",
                 help=f"Set up the MCP for {supported_mcps[mcp_integration].readable}",
             )
+
+        # Raycast does not allow checking for the mcp stuff only adding mcp and only via deeplinks
+        # So we won't include it in the rest commands as a normal mcp because we can't access the json config
+        parser.add_argument(
+            "--raycast",
+            dest="raycast",
+            action="store_true",
+            help="Set up the MCP for Raycast",
+        )
+
         parser.add_argument(
             "--globally",
             dest="global",
@@ -144,7 +154,7 @@ class MCPDocsCommand(BaseCommand):
             "-i",
             dest="ide",
             type=str,
-            choices=mcp_integrations + ["all", "current"],
+            choices=mcp_integrations + ["all", "current", "raycast"],
             default="all",
             help="The integration to print its documentation",
         )
