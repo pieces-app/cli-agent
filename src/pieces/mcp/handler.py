@@ -96,9 +96,9 @@ def handle_mcp(
         Settings.logger.print(Markdown(text))
 
     if not any([claude, cursor, vscode, goose, zed, windsurf, raycast, wrap]):
-        menu = [(val.readable, {key: True}) for key, val in supported_mcps.items()]
-        menu.append(("Raycast", {"raycast": True}))  # append raycast
-        menu.append(("Wrap", {"wrap": True}))  # append warp
+        menu = [(val.readable, {key: True, "stdio": stdio}) for key, val in supported_mcps.items()]
+        menu.append(("Raycast", {"raycast": True, "stdio": stdio}))  # append raycast
+        menu.append(("Wrap", {"wrap": True, "stdio": stdio}))  # append warp
         PiecesSelectMenu(
             menu,
             handle_mcp,
