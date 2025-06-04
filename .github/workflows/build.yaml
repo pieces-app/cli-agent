@@ -30,7 +30,6 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    if: github.ref == 'refs/heads/main'
     strategy:
       matrix:
         os: [ macos-14-large, macos-latest, windows-latest ]
@@ -252,6 +251,7 @@ jobs:
   ### Pushing the built packages to GCP and GitHub
   push-build:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     needs:
       - build
     steps:
@@ -365,7 +365,7 @@ jobs:
   ### Build and publish Chocolatey package
   chocolatey-package:
     runs-on: windows-latest
-    #    needs: [ build, push-build ]
+    needs: [ build ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
