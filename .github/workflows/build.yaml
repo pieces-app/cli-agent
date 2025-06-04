@@ -365,7 +365,6 @@ jobs:
   chocolatey-package:
     runs-on: windows-latest
     needs: [ build, push-build ]
-    if: inputs.deploy == true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -511,17 +510,19 @@ jobs:
           Write-Output "Uninstalling test package..."
           choco uninstall pieces-cli -y
 
-      - name: Publish to Chocolatey
-        env:
-          CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
-        run: |
-          choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
-          choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
-
-      ### We might remove this setup later after testing!
+      ### Always upload artifacts regardless of deploy status
       - name: Upload Chocolatey Package
         uses: actions/upload-artifact@v4
         with:
           name: chocolatey-package
           path: choco/
           if-no-files-found: error
+
+      ### Publish to Chocolatey
+      - name: Publish to Chocolatey
+        if: inputs.deploy == true  # Only publish when deploying
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
+        run: |
+          choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
+          choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
