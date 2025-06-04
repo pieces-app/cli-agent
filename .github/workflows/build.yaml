@@ -376,15 +376,6 @@ jobs:
           name: windows-latest
           path: dist
 
-      - name: Check if zip file exists
-        run: |
-          ls -la dist
-          if (Test-Path "dist/pieces-cli-win_x86_64-*.zip") {
-            Write-Output "Zip file exists"
-          } else {
-            Write-Output "Zip file does not exist"
-          }
-
       - name: Install Chocolatey Package Builder
         run: choco install chocolatey-package-builder -y
 
