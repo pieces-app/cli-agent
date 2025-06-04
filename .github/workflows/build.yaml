@@ -376,33 +376,89 @@ jobs:
           name: windows-latest
           path: dist
 
-#      - name: Install Chocolatey Package Builder
-#        run: choco install chocolatey-package-builder -y
+      ### Download staging version file if it exists
+      - name: Download Staging Version File
+        if: inputs.deploy == false
+        uses: actions/download-artifact@v4
+        with:
+          name: staging_version-windows-latest
+          path: staging_version_files
+        continue-on-error: true
+
+      #      - name: Install Chocolatey Package Builder
+      #        run: choco install chocolatey-package-builder -y
 
       - name: Get the version
         shell: bash
         id: get_version
         run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
 
+      ### Get staging version if not a tagged build
+      - name: Get staging version
+        shell: bash
+        id: staging_version
+        run: |
+          if [[ -f staging_version_files/*.txt ]]; then
+            STAGING_VERSION=$(cat staging_version_files/*.txt)
+            echo "STAGING_VERSION=$STAGING_VERSION" >> $GITHUB_OUTPUT
+            echo "Found staging version: $STAGING_VERSION"
+          else
+            echo "No staging version file found"
+          fi
+        if: inputs.deploy == false
+
+      ### Determine final version to use
+      - name: Set Final Version
+        shell: pwsh
+        id: final_version
+        run: |
+          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
+            # This is a tagged build
+            $finalVersion = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
+            Write-Output "Using tag version: $finalVersion"
+          } elseif ("${{ steps.staging_version.outputs.STAGING_VERSION }}" -ne "") {
+            # This is a staging build
+            $finalVersion = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
+            Write-Output "Using staging version: $finalVersion"
+          } else {
+            # Fallback to branch name
+            $finalVersion = "${{ steps.get_version.outputs.VERSION }}"
+            Write-Output "Using fallback version: $finalVersion"
+          }
+          echo "FINAL_VERSION=$finalVersion" >> $env:GITHUB_OUTPUT
+
       - name: Get Release Notes
         id: release_notes
         run: |
-          $version = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
-          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/v$version" -Headers @{
-            "Accept" = "application/vnd.github.v3+json"
-            "Authorization" = "token ${{ secrets.GITHUB_TOKEN }}"
+          $version = "${{ steps.final_version.outputs.FINAL_VERSION }}"
+          try {
+            $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/v$version" -Headers @{
+              "Accept" = "application/vnd.github.v3+json"
+              "Authorization" = "token ${{ secrets.GITHUB_TOKEN }}"
+            }
+            $releaseNotes = $response.body
+            # Escape any special characters that might break the nuspec XML
+            $releaseNotes = [System.Security.SecurityElement]::Escape($releaseNotes)
+            echo "RELEASE_NOTES=$releaseNotes" >> $env:GITHUB_OUTPUT
+          } catch {
+            Write-Output "No release notes found for version $version"
+            echo "RELEASE_NOTES=No release notes available" >> $env:GITHUB_OUTPUT
           }
-          $releaseNotes = $response.body
-          # Escape any special characters that might break the nuspec XML
-          $releaseNotes = [System.Security.SecurityElement]::Escape($releaseNotes)
-          echo "RELEASE_NOTES=$releaseNotes" >> $env:GITHUB_OUTPUT
 
       - name: Copy Exe to Package
         run: |
-          # Find the zip file
-          $zipFile = Get-ChildItem -Path "dist" -Filter "pieces-cli-win_x86_64-*.zip" | Select-Object -First 1
+          # Find the zip file - use final version to determine which zip to look for
+          $finalVersion = "${{ steps.final_version.outputs.FINAL_VERSION }}"
+          $zipPattern = "pieces-cli-win_x86_64-$finalVersion.zip"
+          Write-Output "Looking for zip file with pattern: $zipPattern"
+          
+          $zipFile = Get-ChildItem -Path "dist" -Filter $zipPattern | Select-Object -First 1
           if (-not $zipFile) {
-            throw "pieces-cli-win_x86_64-*.zip not found in dist directory"
+            # Fallback: try to find any zip file
+            $zipFile = Get-ChildItem -Path "dist" -Filter "pieces-cli-win_x86_64-*.zip" | Select-Object -First 1
+            if (-not $zipFile) {
+              throw "pieces-cli-win_x86_64-*.zip not found in dist directory"
+            }
           }
 
           Write-Output "Found zip file: $($zipFile.FullName)"
@@ -447,7 +503,7 @@ jobs:
         run: |
           cd choco
           $nuspec = Get-Content pieces-cli.nuspec
-          $newVersion = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
+          $newVersion = "${{ steps.final_version.outputs.FINAL_VERSION }}"
           
           # Update version in nuspec
           $nuspec = $nuspec -replace '<version>.*?</version>', "<version>$newVersion</version>"
