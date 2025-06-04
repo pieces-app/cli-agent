@@ -405,7 +405,8 @@ jobs:
           ls -la staging_version_files/ || echo "staging_version_files directory not found"
           
           # Find any .txt file in the staging_version_files directory
-          if find staging_version_files -name "*.txt" -type f | head -1 | read txtfile; then
+          txtfile=$(find staging_version_files -name "*.txt" -type f | head -1)
+          if [[ -n "$txtfile" && -f "$txtfile" ]]; then
             STAGING_VERSION=$(cat "$txtfile")
             echo "STAGING_VERSION=$STAGING_VERSION" >> $GITHUB_OUTPUT
             echo "Found staging version: $STAGING_VERSION from file: $txtfile"
@@ -476,15 +477,15 @@ jobs:
               throw "pieces-cli-win_x86_64-*.zip not found in dist directory"
             }
           }
-          
+
           Write-Output "Found zip file: $($zipFile.FullName)"
-          
+
           # Copy and extract
           Copy-Item -Path $zipFile.FullName -Destination "choco/tools/pieces-cli.zip" -Force
-          
+
           # Extract the zip (this should create choco/tools/pieces.exe)
           Expand-Archive -Path "choco/tools/pieces-cli.zip" -DestinationPath "choco/tools/temp" -Force
-          
+
           # Move the pieces.exe to the correct location
           if (Test-Path "choco/tools/temp/pieces.exe") {
             # If exe is directly in temp, create pieces directory and move it
@@ -500,11 +501,11 @@ jobs:
           } else {
             throw "pieces.exe not found in extracted zip"
           }
-          
+
           # Clean up
           Remove-Item "choco/tools/pieces-cli.zip" -Force
           Remove-Item "choco/tools/temp" -Recurse -Force -ErrorAction SilentlyContinue
-          
+
           # Verify the final structure
           Write-Output "Final structure:"
           Get-ChildItem "choco/tools/pieces" -Recurse | Select-Object Name, FullName
@@ -542,24 +543,24 @@ jobs:
         run: |
           Write-Output "Installing pieces-cli package for testing..."
           choco install pieces-cli -s . -y
-          
+
           Write-Output "Testing pieces command availability..."
           if (Get-Command pieces -ErrorAction SilentlyContinue) {
             Write-Output "✓ pieces command is available in PATH"
           } else {
             throw "✗ pieces command not found in PATH"
           }
-          
+
           Write-Output "Testing pieces --version..."
           $versionOutput = pieces --version 2>&1
           Write-Output "Version output: $versionOutput"
-          
+
           if ($LASTEXITCODE -eq 0) {
             Write-Output "✓ pieces --version executed successfully"
           } else {
             throw "✗ pieces --version failed with exit code $LASTEXITCODE"
           }
-          
+
           Write-Output "Testing pieces help..."
           $helpOutput = pieces help 2>&1
           if ($LASTEXITCODE -eq 0) {
@@ -567,7 +568,7 @@ jobs:
           } else {
             Write-Output "⚠ pieces help failed, but continuing..."
           }
-          
+
           Write-Output "Uninstalling test package..."
           choco uninstall pieces-cli -y
 
