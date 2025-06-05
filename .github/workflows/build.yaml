@@ -655,7 +655,7 @@ jobs:
       - name: Publish to Chocolatey
 #        if: inputs.deploy == true  # Only publish when deploying
         env:
-          CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
         run: |
           cd choco
           if ([string]::IsNullOrEmpty($env:CHOCOLATEY_API_KEY)) {
