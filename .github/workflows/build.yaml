@@ -623,7 +623,7 @@ jobs:
           }
           
           Write-Output "Testing pieces --version..."
-          $versionOutput = pieces --version 2>&1
+          $versionOutput = pieces --ignore-onboarding --version 2>&1
           Write-Output "Version output: $versionOutput"
           
           if ($LASTEXITCODE -eq 0) {
@@ -633,7 +633,7 @@ jobs:
           }
           
           Write-Output "Testing pieces help..."
-          $helpOutput = pieces help 2>&1
+          $helpOutput = pieces --ignore-onboarding help 2>&1
           if ($LASTEXITCODE -eq 0) {
             Write-Output "✓ pieces help executed successfully"
           } else {
