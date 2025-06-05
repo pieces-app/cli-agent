@@ -653,9 +653,27 @@ jobs:
 
       ### Publish to Chocolatey
       - name: Publish to Chocolatey
-        #        if: inputs.deploy == true  # Only publish when deploying
+        if: inputs.deploy == true  # Only publish when deploying
         env:
           CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
         run: |
+          cd choco
+          if ([string]::IsNullOrEmpty($env:CHOCOLATEY_API_KEY)) {
+            throw "CHOCOLATEY_API_KEY secret is not set or is empty"
+          }
+          
+          Write-Output "Setting Chocolatey API key..."
           choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
+          
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to set Chocolatey API key"
+          }
+          
+          Write-Output "Publishing package to Chocolatey..."
           choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
+          
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to publish package to Chocolatey"
+          }
+          
+          Write-Output "✓ Package successfully published to Chocolatey"
