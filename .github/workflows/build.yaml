@@ -669,8 +669,18 @@ jobs:
             throw "Failed to set Chocolatey API key"
           }
           
+          Write-Output "Finding .nupkg file to publish..."
+          $nupkgFile = Get-ChildItem -Filter "pieces-cli.*.nupkg" | Select-Object -First 1
+          
+          if (-not $nupkgFile) {
+            Write-Output "Available files in current directory:"
+            Get-ChildItem | Select-Object Name
+            throw "No .nupkg file found matching pattern 'pieces-cli.*.nupkg'"
+          }
+          
+          Write-Output "Found package: $($nupkgFile.Name)"
           Write-Output "Publishing package to Chocolatey..."
-          choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
+          choco push "$($nupkgFile.Name)" --source https://push.chocolatey.org/ --force
           
           if ($LASTEXITCODE -ne 0) {
             throw "Failed to publish package to Chocolatey"
