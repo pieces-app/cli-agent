@@ -140,15 +140,34 @@ jobs:
       - name: Build library
         run: poetry build
 
-      - name: Get virtual environment site-packages path
+      - name: Get poetry python exe
+        id: poetry_setup_venv
         if: runner.os == 'Windows'
-        id: venv_path
         run: |
-          Invoke-Expression (poetry env activate)
-          poetry install
-          $sitePackagesPath = (python -c "import site; print(site.getsitepackages()[0])").Trim()
-          Write-Host "Site-packages path: $sitePackagesPath"
-          echo "VENV_SITE_PACKAGES_PATH=$sitePackagesPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          pip install poetry
+
+          # Get the path to the virtual environment's Python executable
+          $python_exe_path = poetry env info --executable
+          Write-Host "Virtual environment Python executable: $python_exe_path"
+          echo "POETRY_PYTHON_EXE=$python_exe_path" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        shell: powershell
+
+      ### Install dependencies globally for Nuitka on Windows
+      - name: Install dependencies globally for Nuitka (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Write-Host "Installing dependencies globally for Nuitka compilation..."
+          
+          # Export requirements from Poetry
+          poetry export -f requirements.txt --output requirements.txt --without-hashes
+          
+          # Install dependencies globally using pip
+          pip install -r requirements.txt
+          
+          # Also install the package itself in editable mode
+          pip install -e .
+          
+          Write-Host "Dependencies installed globally for Nuitka"
         shell: powershell
 
       ### Build stand-alone step for macOS (keeping codesigning)
@@ -157,26 +176,17 @@ jobs:
         run: |
           poetry run pyinstaller pieces.spec
 
-      - name: Adding nuitka as a dev dependency
-        run: poetry add nuitka -D
 
-      ### Build stand-alone step for Windows (build .exe)
-      - name: Build stand alone (Windows)
+      - name: Calculate Product Version
+        id: calculate_version
         if: runner.os == 'Windows'
         run: |
-          # Ensure we're in the poetry environment
-          poetry install
-
-          # Determine the correct version to use
           $get_version_output = "${{ steps.get_version.outputs.VERSION }}"
           if ($get_version_output -match "^\d+\.\d+\.\d+$") {
-            # This is a tagged build - use the version as is
             $productVersion = $get_version_output
             Write-Host "Using release version for product: $productVersion"
           } else {
-            # This is not a tagged build - use staging version
             $productVersion = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
-            # Remove .dev suffix and just keep the number because nuitka doesn't support .dev suffixes
             if ($productVersion -match "^(\d+\.\d+\.\d+)\.dev(\d+)$") {
               $productVersion = "$($matches[1]).$($matches[2])"
               Write-Host "Converted staging version to: $productVersion"
@@ -184,24 +194,30 @@ jobs:
             Write-Host "Using staging version for product: $productVersion"
           }
 
-          $nuitkaArgs = @(
-              "--onefile",
-              "--output-dir=dist",
-              "--company-name=Pieces",
-              "--product-name=pieces-cli",
-              "--product-version=$productVersion",
-              "--file-description=Pieces CLI for interacting with Pieces OS",
-              "--deployment",
-              "--output-filename=pieces",
-              "--enable-plugin=anti-bloat",
-              "src/pieces/app.py"
-          )
+          echo "::set-output name=PRODUCT_VERSION::$productVersion"
+        shell: powershell
 
-          poetry run nuitka $nuitkaArgs
+      - name: Build stand alone (Windows) with Nuitka Action
+        if: runner.os == 'Windows'
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          script-name: src/pieces/app.py
+          mode: onefile
+          output-dir: dist
+          output-file: pieces
+          deployment: true
+          company-name: Pieces
+          product-name: pieces-cli
+          product-version: ${{ steps.calculate_version.outputs.PRODUCT_VERSION }}
+          file-description: "Pieces CLI for interacting with Pieces OS"
+          enable-plugins: anti-bloat
+
+      - name: List Compiled Files
+        if: runner.os == 'Windows'
+        run: |
           cd dist
           Get-ChildItem -Recurse
         shell: powershell
-
       ### Package binary to zip file for macOS
       - name: Mac Binary to Zip File
         if: runner.os != 'Windows'
@@ -269,38 +285,12 @@ jobs:
         run: |
           Get-ChildItem dist
           Set-Location dist 
-          
+
           Write-Host "--- Testing 'pieces.exe --version' command ---"
-          try {
-              # Run the --version command and capture its output
-              $versionOutput = (.\pieces\pieces.exe --version 2>&1)
-              Write-Host "Output for --version:`n$versionOutput"
-              Write-Host "SUCCESS: 'pieces.exe --version' executed without error."
-          } catch {
-              Write-Error "FAILURE: 'pieces.exe --version' threw an error: $($_.Exception.Message)"
-              exit 1
-          }
-          
-          Write-Host "`n--- Testing 'pieces.exe help' command ---"
-          try {
-              # Test the help command to ensure basic functionality works
-              $helpOutput = (.\pieces\pieces.exe help 2>&1)
-              Write-Host "Output for help (first 10 lines):`n$($helpOutput | Select-Object -First 10)"
-              Write-Host "SUCCESS: 'pieces.exe help' executed without error."
-          } catch {
-              Write-Error "FAILURE: 'pieces.exe help' threw an error: $($_.Exception.Message)"
-              exit 1
-          }
-          
-          Write-Host "`n--- Testing 'pieces.exe --ignore-onboarding help' command ---"
-          try {
-              # Test with ignore-onboarding flag to bypass any interactive prompts
-              $helpOutput2 = (.\pieces\pieces.exe --ignore-onboarding help 2>&1)
-              Write-Host "SUCCESS: 'pieces.exe --ignore-onboarding help' executed without error."
-          } catch {
-              Write-Error "FAILURE: 'pieces.exe --ignore-onboarding help' threw an error: $($_.Exception.Message)"
-              exit 1
-          }
+          ./pieces.exe --version --ignore-onboarding
+
+          Write-Host "--- Testing 'pieces.exe --ignore-onboarding help' command ---"
+          ./pieces.exe --help --ignore-onboarding
 
           Write-Host "`nBasic executable functionality tests passed."
         shell: powershell
