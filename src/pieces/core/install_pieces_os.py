@@ -1,7 +1,7 @@
 import queue
 from typing import Generator
 from rich.progress import Progress, BarColumn, DownloadColumn, TransferSpeedColumn
-from pieces_os_client.wrapper.installation import DownloadModel, DownloadState
+from pieces._vendor.pieces_os_client.wrapper.installation import DownloadModel, DownloadState
 from ..settings import Settings
 from pieces.urls import URLs
 import platform

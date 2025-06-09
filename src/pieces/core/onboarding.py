@@ -217,7 +217,7 @@ def onboarding_command(**kwargs):
     config["onboarded"] = True
     ConfigCommands.save_config(config)
 
-    from pieces_os_client.exceptions import BadRequestException
+    from pieces._vendor.pieces_os_client.exceptions import BadRequestException
 
     try:
         Settings.pieces_client.connector_api.onboarded(
