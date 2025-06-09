@@ -5,8 +5,8 @@ import os
 import json
 
 from .integration import Integration, MCPProperties
-from ..settings import Settings
-from ..urls import URLs
+from pieces.settings import Settings
+from pieces.urls import URLs
 
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
 

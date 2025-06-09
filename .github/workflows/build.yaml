@@ -30,6 +30,8 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    env:
+      NUITKA_AUTO_UPDATE: yes
     strategy:
       matrix:
         os: [ macos-14-large, macos-latest, windows-latest ]
@@ -190,6 +192,7 @@ jobs:
               "--product-version=$productVersion",
               "--file-description=Pieces CLI for interacting with Pieces OS",
               "--deployment",
+              "--output-filename=pieces",
               "--enable-plugin=anti-bloat",
               "src/pieces/app.py"
           )
@@ -210,26 +213,42 @@ jobs:
           fi
 
       ### Submission to apple notary
-      # - name: Submit Zip to apple notary
-      #   if: runner.os != 'Windows'
-      #   run: |
-      #     if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-      #     then
-      #         xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-      #     else
-      #         xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-      #     fi
+      - name: Submit Zip to apple notary
+        if: runner.os != 'Windows'
+        run: |
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          then
+              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+          else
+              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+          fi
 
-      ### Package binary to zip file for Windows using PowerShell
+      - name: Find pieces.exe
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $exePath = Get-ChildItem -Path . -Filter "pieces.exe" -Recurse -File | Select-Object -First 1
+          if ($null -eq $exePath) {
+            Write-Error "pieces.exe not found in the repository."
+            exit 1
+          } else {
+            echo "Found pieces.exe at: $($exePath.FullName)"
+            echo "##[set-output name=exe_path]$($exePath.FullName)"
+          }
+        id: find_pieces
+
       - name: Windows Binary to Zip File
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
-            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
+          $exePath = "${{ steps.find_pieces.outputs.exe_path }}"
+          $version = "${{ steps.get_version.outputs.VERSION }}"
+          $staging = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
+          if ($version -match "^\d+\.\d+\.\d+$") {
+            Compress-Archive -Path $exePath -DestinationPath ".\dist\${{ matrix.zipFileName }}-$version.zip"
           }
           else {
-            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
+            Compress-Archive -Path $exePath -DestinationPath ".\dist\${{ matrix.zipFileName }}-$staging.zip"
           }
 
       ### Upload to github artifacts

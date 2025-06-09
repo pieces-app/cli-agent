@@ -2,7 +2,7 @@ import queue
 from typing import Generator
 from rich.progress import Progress, BarColumn, DownloadColumn, TransferSpeedColumn
 from pieces_os_client.wrapper.installation import DownloadModel, DownloadState
-from ..settings import Settings
+from pieces.settings import Settings
 from pieces.urls import URLs
 import platform
 
@@ -17,7 +17,7 @@ class PiecesInstaller:
         self.lock = True
         self.installer = Settings.pieces_client.pieces_os_installer(self.queue.put)
         self.installer.start_download()
-        m = self.queue.get()  # Block the thread until we recieve the first byte
+        m = self.queue.get()  # Block the thread until we receive the first byte
         try:
             Settings.logger.print("Installing PiecesOS")
             with Progress(
