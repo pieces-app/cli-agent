@@ -8,7 +8,7 @@ from .git_api import get_repo_issues, get_git_repo_name
 from pieces.settings import Settings
 
 if TYPE_CHECKING:
-    from pieces_os_client.models.seeds import Seeds
+    from pieces._vendor.pieces_os_client.models.seeds import Seeds
 
 
 def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
@@ -20,15 +20,15 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
             A string summarizing the detailed changes in a format suitable for generating commit messages.
             List of seeded asset to be input to the relevance
     """
-    from pieces_os_client.models.seed import Seed
-    from pieces_os_client.models.seeds import Seeds
-    from pieces_os_client.models.seeded_asset import SeededAsset
-    from pieces_os_client.models.seeded_asset_metadata import SeededAssetMetadata
-    from pieces_os_client.models.seeded_format import SeededFormat
-    from pieces_os_client.models.seeded_fragment import SeededFragment
-    from pieces_os_client.models.transferable_string import TransferableString
-    from pieces_os_client.models.anchor_type_enum import AnchorTypeEnum
-    from pieces_os_client.models.seeded_anchor import SeededAnchor
+    from pieces._vendor.pieces_os_client.models.seed import Seed
+    from pieces._vendor.pieces_os_client.models.seeds import Seeds
+    from pieces._vendor.pieces_os_client.models.seeded_asset import SeededAsset
+    from pieces._vendor.pieces_os_client.models.seeded_asset_metadata import SeededAssetMetadata
+    from pieces._vendor.pieces_os_client.models.seeded_format import SeededFormat
+    from pieces._vendor.pieces_os_client.models.seeded_fragment import SeededFragment
+    from pieces._vendor.pieces_os_client.models.transferable_string import TransferableString
+    from pieces._vendor.pieces_os_client.models.anchor_type_enum import AnchorTypeEnum
+    from pieces._vendor.pieces_os_client.models.seeded_anchor import SeededAnchor
 
     try:
         result = subprocess.run(
@@ -227,8 +227,8 @@ def handle_issue_markdown(commit_message: str, issue_markdown: str) -> str:
 
 
 def get_issue_details(seeds):
-    from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
-    from pieces_os_client.models.qgpt_relevance_input_options import (
+    from pieces._vendor.pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
+    from pieces._vendor.pieces_os_client.models.qgpt_relevance_input_options import (
         QGPTRelevanceInputOptions,
     )
 
@@ -286,8 +286,8 @@ def format_issues_markdown(issues: list) -> str:
 
 
 def get_commit_message(changes_summary, seeds):
-    from pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
-    from pieces_os_client.models.qgpt_relevance_input_options import (
+    from pieces._vendor.pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
+    from pieces._vendor.pieces_os_client.models.qgpt_relevance_input_options import (
         QGPTRelevanceInputOptions,
     )
 

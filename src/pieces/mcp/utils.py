@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, List
 from pieces.settings import Settings
 
 if TYPE_CHECKING:
-    from pieces_os_client.models.model_context_protocol_schema_version import (
+    from pieces._vendor.pieces_os_client.models.model_context_protocol_schema_version import (
         ModelContextProtocolSchemaVersion,
     )
 

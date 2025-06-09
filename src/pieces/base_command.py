@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Self
+from typing import List, Dict, Self, Type
 import argparse
 from pieces.settings import Settings
 import sys
@@ -8,19 +8,13 @@ import sys
 class BaseCommand(ABC):
     """Base class for all CLI commands with enhanced metadata support."""
 
-    commands: List[Self] = []
+    commands: List[Type['BaseCommand']] = []
     _is_command_group = False
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if not getattr(cls, "_is_command_group", False):
-            cls.instance = cls()
-
-    def __new__(cls, *args, **kwargs):
-        instance = super().__new__(cls)
-        if not getattr(instance, "_is_command_group", False):
-            cls.commands.append(instance)
-        return instance
+            cls.commands.append(cls)
 
     def __init__(self):
         self.name: str = self.get_name()
@@ -29,6 +23,10 @@ class BaseCommand(ABC):
         self.description: str = self.get_description()
         self.examples: List[str] = self.get_examples()
         self.docs: str = self.get_docs()
+
+    @classmethod
+    def get_commands_to_register(cls) -> List["BaseCommand"]:
+        return [c() for c in cls.commands]
 
     def command_func(self, *args, **kwargs):
         return_code = self.execute(*args, **kwargs)
@@ -85,8 +83,7 @@ class CommandGroup(BaseCommand):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.instance = cls()
-        cls.commands.append(cls.instance)
+        cls.commands.append(cls)
 
     def __init__(self):
         super().__init__()

@@ -7,11 +7,11 @@ import threading
 from rich.live import Live
 from rich.markdown import Markdown
 
-from pieces_os_client.wrapper.basic_identifier.chat import BasicChat
-from pieces_os_client.wrapper.websockets.ask_ws import AskStreamWS
+from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
+from pieces._vendor.pieces_os_client.wrapper.websockets.ask_ws import AskStreamWS
 
 if TYPE_CHECKING:
-    from pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
+    from pieces._vendor.pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
 
 
 class AskStream:

@@ -62,11 +62,8 @@ class CommandRegistry:
 
         # Create subparsers for commands
         self.command_subparser = parser.add_subparsers(dest="command")
-        for command in BaseCommand.commands:
+        for command in BaseCommand.get_commands_to_register():
             self.register(command)
-
-        # Add the groups manually for now
-        # self.register(MCPCommandGroup())
 
         parser.set_defaults(
             func=lambda **kwargs: print(version)
