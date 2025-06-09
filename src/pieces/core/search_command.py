@@ -1,5 +1,5 @@
-from pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
 from pieces.settings import Settings
+from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
 from .list_command import ListCommand
 
 # Map search_type to descriptive text
@@ -36,4 +36,3 @@ def search(query, **kwargs) -> int:
     else:
         Settings.logger.print("No matches found.")
     return 0
-

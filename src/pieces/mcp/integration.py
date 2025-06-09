@@ -264,8 +264,10 @@ class Integration:
             with open(path, "r") as f:
                 settings = self.loader(f)
         except FileNotFoundError as e:
-            raise e
+            raise e  # @tsavo-at-pieces Do we need to create the file? or just raise the error?
         except (json.JSONDecodeError, yaml.YAMLError):
+            if os.path.getsize(path) == 0:
+                return {}
             print(f"Failed in prasing {self.readable}, {path} - it may be malformed")
             raise ValueError
 

@@ -8,13 +8,13 @@ class SaveCommand(BaseCommand):
     """Command to save/update the current material."""
 
     def get_name(self) -> str:
-        return "save"
+        return "modify"
 
     def get_aliases(self) -> list[str]:
-        return ["modify"]
+        return ["save"]
 
     def get_help(self) -> str:
-        return "Updates the current material"
+        return "Updates the current material content"
 
     def get_description(self) -> str:
         return "Save or update changes to the currently selected material. Use this after making modifications to persist your changes"
@@ -73,10 +73,10 @@ class CreateCommand(BaseCommand):
         return "Create a new material"
 
     def get_description(self) -> str:
-        return "Create a new code snippet or material in your Pieces database. You can specify content directly or enter it interactively"
+        return "Create a new code snippet or material in your Pieces database. You can create a snippet from clipboard content or enter it manually."
 
     def get_examples(self) -> list[str]:
-        return ["pieces create", "pieces create -c"]
+        return ["pieces create", "cat main.py | pieces create -c"]
 
     def get_docs(self) -> str:
         return URLs.CLI_CREATE_DOCS.value
@@ -88,7 +88,7 @@ class CreateCommand(BaseCommand):
             "--content",
             dest="content",
             action="store_true",
-            help="Specify the content of the material",
+            help="Enter snippet content manually in the terminal or via stdin",
         )
 
     def execute(self, **kwargs) -> int:
@@ -132,7 +132,7 @@ class EditCommand(BaseCommand):
         return "edit"
 
     def get_help(self) -> str:
-        return "Edit an existing material"
+        return "Edit an existing material's metadata"
 
     def get_description(self) -> str:
         return "Edit properties of an existing material including its name, language classification, and other metadata"
@@ -154,14 +154,14 @@ class EditCommand(BaseCommand):
             "--name",
             "-n",
             dest="name",
-            help="New name for the materials",
+            help="Set a new name for the material",
             required=False,
         )
         parser.add_argument(
             "--classification",
             "-c",
             dest="classification",
-            help="Reclassify a material",
+            help="Reclassify a material (eg. py, js)",
             required=False,
         )
 
