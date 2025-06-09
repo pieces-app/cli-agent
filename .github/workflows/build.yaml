@@ -107,22 +107,26 @@ jobs:
         shell: bash
 
       ### Setting the version in the pyproject.toml for Windows builds
-      - name: Set Version PowerShell Script (Windows)
+      - name: Set Version Shell Script (Windows)
         if: runner.os == 'Windows'
         run: |
-          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
-            Write-Output "This is a tagged build"
-            $RELEASE_VERSION = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
+          $get_version_output = "${{ steps.get_version.outputs.VERSION }}"
+          if ($get_version_output -match "^\d+\.\d+\.\d+$") {
+            Write-Host "This is a tagged build"
+            $RELEASE_VERSION = $get_version_output.TrimStart('v')
             poetry version $RELEASE_VERSION
-            (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$RELEASE_VERSION'" | Set-Content src\pieces\__init__.py
-          }
-          else {
-            Write-Output "This is not a tagged build"
+            # Replace __version__ in src/pieces/__init__.py
+            $filePath = "src/pieces/__init__.py"
+            (Get-Content $filePath) -replace "__version__ = .*", "__version__ = '$RELEASE_VERSION'" | Set-Content $filePath
+          } else {
+            Write-Host "This is not a tagged build"
             $STAGING_VERSION = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
             poetry version $STAGING_VERSION
-            (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$STAGING_VERSION'" | Set-Content src\pieces\__init__.py
+            # Replace __version__ in src/pieces/__init__.py
+            $filePath = "src/pieces/__init__.py"
+            (Get-Content $filePath) -replace "__version__ = .*", "__version__ = '$STAGING_VERSION'" | Set-Content $filePath
           }
-        shell: pwsh
+        shell: powershell
 
       ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
       - name: Write staging version to file
@@ -151,14 +155,48 @@ jobs:
         run: |
           poetry run pyinstaller pieces.spec
 
+      - name: Adding nuitka as a dev dependency
+        run: poetry add nuitka -D
+
       ### Build stand-alone step for Windows (build .exe)
       - name: Build stand alone (Windows)
         if: runner.os == 'Windows'
         run: |
           # Ensure we're in the poetry environment
           poetry install
-          # Run PyInstaller through poetry to ensure all dependencies are available
-          poetry run pyinstaller pieces.spec --clean
+
+          # Determine the correct version to use
+          $get_version_output = "${{ steps.get_version.outputs.VERSION }}"
+          if ($get_version_output -match "^\d+\.\d+\.\d+$") {
+            # This is a tagged build - use the version as is
+            $productVersion = $get_version_output
+            Write-Host "Using release version for product: $productVersion"
+          } else {
+            # This is not a tagged build - use staging version
+            $productVersion = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
+            # Remove .dev suffix and just keep the number because nuitka doesn't support .dev suffixes
+            if ($productVersion -match "^(\d+\.\d+\.\d+)\.dev(\d+)$") {
+              $productVersion = "$($matches[1]).$($matches[2])"
+              Write-Host "Converted staging version to: $productVersion"
+            }
+            Write-Host "Using staging version for product: $productVersion"
+          }
+
+          $nuitkaArgs = @(
+              "--onefile",
+              "--output-dir=dist",
+              "--company-name=Pieces",
+              "--product-name=pieces-cli",
+              "--product-version=$productVersion",
+              "--file-description=Pieces CLI for interacting with Pieces OS",
+              "--deployment",
+              "--enable-plugin=anti-bloat",
+              "src/pieces/app.py"
+          )
+
+          poetry run nuitka $nuitkaArgs
+          cd dist
+          Get-ChildItem -Recurse
         shell: powershell
 
       ### Package binary to zip file for macOS
