@@ -10,7 +10,7 @@ from pieces.utils import get_file_extension
 from pieces.gui import print_asset_details, space_below, double_line
 from pieces.settings import Settings
 from pieces.core.config_command import ConfigCommands
-from pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
+from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
 
 from pygments import highlight
 from pygments.util import ClassNotFound
@@ -19,7 +19,7 @@ from pygments.formatters import TerminalFormatter
 
 from rich.markdown import Markdown
 
-from pieces_os_client.exceptions import NotFoundException
+from pieces._vendor.pieces_os_client.exceptions import NotFoundException
 
 
 def check_assets_existence(func):
