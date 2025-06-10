@@ -2,7 +2,7 @@ import argparse
 import asyncio
 from pieces.base_command import BaseCommand, CommandGroup
 from pieces.urls import URLs
-from pieces.mcp import (
+from pieces.mcp_core import (
     handle_mcp,
     handle_list,
     handle_mcp_docs,
@@ -10,8 +10,8 @@ from pieces.mcp import (
     handle_status,
     handle_gateway,
 )
-from pieces.mcp.integrations import mcp_integrations
-from pieces.mcp.handler import supported_mcps
+from pieces.mcp_core.integrations import mcp_integrations
+from pieces.mcp_core.handler import supported_mcps
 from pieces.settings import Settings
 
 

@@ -1,6 +1,6 @@
 from rich.markdown import Markdown
 
-from pieces.mcp.integration import Integration
+from pieces.mcp_core.integration import Integration
 from pieces.settings import Settings
 
 from .handler import supported_mcps

@@ -1,7 +1,7 @@
 import unittest
 import json
 from unittest.mock import patch, Mock, mock_open, PropertyMock
-from pieces.mcp.integration import Integration, MCPProperties
+from pieces.mcp_core.integration import Integration, MCPProperties
 from pieces.settings import Settings
 from pieces_os_client.models.workstream_pattern_engine_status import (
     WorkstreamPatternEngineStatus,

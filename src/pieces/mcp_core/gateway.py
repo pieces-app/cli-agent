@@ -1,5 +1,5 @@
 import asyncio
-from pieces.mcp.utils import get_mcp_latest_url
+from pieces.mcp_core.utils import get_mcp_latest_url
 from pieces.settings import Settings
 from mcp.client.sse import sse_client
 from mcp import ClientSession

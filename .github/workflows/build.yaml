@@ -206,7 +206,9 @@ jobs:
           output-dir: dist
           output-file: pieces
           deployment: true
-          include-package: pygments, mcp
+          include-package: |
+            pygments
+            mcp
           company-name: Pieces
           product-name: pieces-cli
           product-version: ${{ steps.calculate_version.outputs.PRODUCT_VERSION }}
