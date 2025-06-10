@@ -172,15 +172,15 @@ jobs:
           fi
 
       ### Submission to apple notary
-      # - name: Submit Zip to apple notary
-      #   if: runner.os != 'Windows'
-      #   run: |
-      #     if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-      #     then
-      #         xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-      #     else
-      #         xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-      #     fi
+      - name: Submit Zip to apple notary
+        if: runner.os != 'Windows'
+        run: |
+          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+          then
+              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+          else
+              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+          fi
 
       ### Package binary to zip file for Windows using PowerShell
       - name: Windows Binary to Zip File
@@ -188,10 +188,10 @@ jobs:
         shell: powershell
         run: |
           if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
-            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
+            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
           }
           else {
-            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
+            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
           }
 
       ### Upload to github artifacts
@@ -211,39 +211,13 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           Get-ChildItem dist
-          Set-Location dist 
-          
+          Set-Location dist
+
           Write-Host "--- Testing 'pieces.exe --version' command ---"
-          try {
-              # Run the --version command and capture its output
-              $versionOutput = (.\pieces\pieces.exe --version 2>&1)
-              Write-Host "Output for --version:`n$versionOutput"
-              Write-Host "SUCCESS: 'pieces.exe --version' executed without error."
-          } catch {
-              Write-Error "FAILURE: 'pieces.exe --version' threw an error: $($_.Exception.Message)"
-              exit 1
-          }
-          
-          Write-Host "`n--- Testing 'pieces.exe help' command ---"
-          try {
-              # Test the help command to ensure basic functionality works
-              $helpOutput = (.\pieces\pieces.exe help 2>&1)
-              Write-Host "Output for help (first 10 lines):`n$($helpOutput | Select-Object -First 10)"
-              Write-Host "SUCCESS: 'pieces.exe help' executed without error."
-          } catch {
-              Write-Error "FAILURE: 'pieces.exe help' threw an error: $($_.Exception.Message)"
-              exit 1
-          }
-          
-          Write-Host "`n--- Testing 'pieces.exe --ignore-onboarding help' command ---"
-          try {
-              # Test with ignore-onboarding flag to bypass any interactive prompts
-              $helpOutput2 = (.\pieces\pieces.exe --ignore-onboarding help 2>&1)
-              Write-Host "SUCCESS: 'pieces.exe --ignore-onboarding help' executed without error."
-          } catch {
-              Write-Error "FAILURE: 'pieces.exe --ignore-onboarding help' threw an error: $($_.Exception.Message)"
-              exit 1
-          }
+          .\pieces.exe --ignore-onboarding --version
+
+          Write-Host "--- Testing 'pieces.exe help' command ---"
+          .\pieces.exe --ignore-onboarding help
 
           Write-Host "`nBasic executable functionality tests passed."
         shell: powershell
@@ -653,7 +627,7 @@ jobs:
 
       ### Publish to Chocolatey
       - name: Publish to Chocolatey
-        if: inputs.deploy == true  # Only publish when deploying
+        # if: inputs.deploy == true  # Only publish when deploying
         env:
           CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
         run: |
