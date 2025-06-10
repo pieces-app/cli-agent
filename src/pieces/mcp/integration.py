@@ -121,7 +121,7 @@ class MCPProperties:
             mcp_settings[self.url_property_name] = get_mcp_latest_url()
         else:
             mcp_settings[self.command_property_name] = self.pieces_cli_bin_path
-            mcp_settings[self.args_property_name] = ["mcp", "start"]
+            mcp_settings[self.args_property_name] = ["--ignore-onboarding", "mcp", "start"]
         return mcp_settings
 
 
