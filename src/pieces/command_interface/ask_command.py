@@ -46,7 +46,7 @@ class AskCommand(BaseCommand):
             nargs="*",
             type=str,
             dest="files",
-            help="Provide one or more files or folders as context (absolute or relative path)",
+            help="Folder or file as a context you can enter an absolute or relative path",
         )
         parser.add_argument(
             "--materials",
@@ -54,13 +54,13 @@ class AskCommand(BaseCommand):
             nargs="*",
             type=int,
             dest="materials",
-            help="Use one or more saved materials as context (provide material's index).",
+            help="Materials of the question to be asked to the model check list materials",
         )
         parser.add_argument(
             "--ltm",
             action="store_true",
             dest="ltm",
-            help="Enable Long-Term Memory (LTM) to include prior context",
+            help="Enable LTM for the current chat",
         )
 
     def execute(self, **kwargs) -> int:

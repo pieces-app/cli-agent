@@ -406,6 +406,29 @@ files = [
 ]
 
 [[package]]
+name = "pieces-os-client"
+version = "4.2.0"
+description = "A powerful code engine package for writing applications on top of PiecesOS"
+optional = false
+python-versions = "^3.8"
+groups = ["main"]
+files = []
+develop = false
+
+[package.dependencies]
+aenum = ">=3.1.11"
+pydantic = ">=2"
+python-dateutil = ">=2.8.2"
+urllib3 = ">= 1.25.3"
+websocket-client = "^1.8.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/pieces-app/pieces-os-client-sdk-for-python"
+reference = "cli-agent-pydantic-v2"
+resolved_reference = "e6aae18e828ca08f68052414bec4e418ccb196ab"
+
+[[package]]
 name = "platformdirs"
 version = "4.3.8"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
@@ -1048,4 +1071,4 @@ test = ["websockets"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "5a5fa50ce6e110063681dd35d8b57f78021570ecf05758102b3fc70fa37c3bde"
+content-hash = "6527b58a3a1dc9c56ad9a5c313c061958d4b9cd0fa52062f00d81c7e6e17fc64"

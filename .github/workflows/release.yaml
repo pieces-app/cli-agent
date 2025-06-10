@@ -19,4 +19,4 @@ jobs:
       apple_app_specific_password: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
       fastlane_password: ${{ secrets.FASTLANE_PASSWORD }}
       match_password: ${{ secrets.MATCH_PASSWORD }}
-      chocolatey_api_key : ${{ secrets.CHOCOLATEY_API_KEY }}
+      choco_token: ${{ secrets.CHOCO_TOKEN }} # @nathan-courtney-pieces: TODO: Add this to the repo secrets

@@ -13,8 +13,8 @@ from pieces.settings import Settings
 
 def loop(**kwargs):
     """Run the CLI loop."""
-    from pieces._vendor.pieces_os_client.wrapper.websockets.conversations_ws import ConversationWS
-    from pieces._vendor.pieces_os_client.wrapper.websockets.assets_identifiers_ws import (
+    from pieces_os_client.wrapper.websockets.conversations_ws import ConversationWS
+    from pieces_os_client.wrapper.websockets.assets_identifiers_ws import (
         AssetsIdentifiersWS,
     )
 
@@ -90,7 +90,7 @@ def run_cli(user_input: str, command_name: str, command_args: List[str]):
         return
 
     if user_input == "exit":
-        from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import BaseWebsocket
+        from pieces_os_client.wrapper.websockets.base_websocket import BaseWebsocket
 
         double_space("Exiting...")
         BaseWebsocket.close_all()

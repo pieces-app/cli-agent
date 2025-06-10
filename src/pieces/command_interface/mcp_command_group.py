@@ -2,7 +2,7 @@ import argparse
 import asyncio
 from pieces.base_command import BaseCommand, CommandGroup
 from pieces.urls import URLs
-from pieces.mcp_core import (
+from pieces.mcp import (
     handle_mcp,
     handle_list,
     handle_mcp_docs,
@@ -10,8 +10,8 @@ from pieces.mcp_core import (
     handle_status,
     handle_gateway,
 )
-from pieces.mcp_core.integrations import mcp_integrations
-from pieces.mcp_core.handler import supported_mcps
+from pieces.mcp.integrations import mcp_integrations
+from pieces.mcp.handler import supported_mcps
 from pieces.settings import Settings
 
 
@@ -47,23 +47,6 @@ class MCPSetupCommand(BaseCommand):
                 action="store_true",
                 help=f"Set up the MCP for {supported_mcps[mcp_integration].readable}",
             )
-
-        # Raycast does not allow checking for the mcp stuff only adding mcp and only via deeplinks
-        # So we won't include it in the rest commands as a normal mcp because we can't access the json config
-        parser.add_argument(
-            "--raycast",
-            dest="raycast",
-            action="store_true",
-            help="Set up the MCP for Raycast",
-        )
-
-        parser.add_argument(
-            "--wrap",
-            dest="wrap",
-            action="store_true",
-            help="Set up the MCP for Wrap",
-        )
-
         parser.add_argument(
             "--globally",
             dest="global",
@@ -161,7 +144,7 @@ class MCPDocsCommand(BaseCommand):
             "-i",
             dest="ide",
             type=str,
-            choices=mcp_integrations + ["all", "current", "raycast", "wrap"],
+            choices=mcp_integrations + ["all", "current"],
             default="all",
             help="The integration to print its documentation",
         )

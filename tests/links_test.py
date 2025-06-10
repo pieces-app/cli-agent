@@ -15,19 +15,16 @@ def get_urls() -> List[Tuple[str, str]]:
 @pytest.mark.parametrize("url_name,url", get_urls())
 def test_url_accessibility(url_name: str, url: str):
     """Test that each URL is accessible.
-
+    
     Args:
         url_name: Name of the URL constant
         url: The actual URL to test
     """
-    if not url:
-        return
-
     try:
         # Use GET with stream=True instead of HEAD as some servers don't support HEAD
         response = requests.get(url, timeout=10, allow_redirects=True, stream=True)
         response.close()  # Close the stream immediately
-
+        
         # Assert that the status code indicates success (2xx or 3xx)
         assert response.status_code < 400, (
             f"{url_name} ({url}) returned status code {response.status_code}"
@@ -58,15 +55,13 @@ def test_all_urls_are_strings():
     """Test that all URL values are strings."""
     for name, member in URLs.__members__.items():
         assert isinstance(member.value, str), f"{name} value should be a string"
+        assert len(member.value) > 0, f"{name} value should not be empty"
 
 
 def test_all_urls_start_with_http():
     """Test that all URLs start with http:// or https://."""
     for name, member in URLs.__members__.items():
         url = member.value
-        if not url:
-            continue
-
         assert url.startswith(("http://", "https://")), (
             f"{name} URL should start with http:// or https://, got: {url}"
         )

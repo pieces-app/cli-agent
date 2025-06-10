@@ -5,8 +5,8 @@ import sys
 from platformdirs import user_data_dir
 
 from pieces.logger import Logger
-from pieces._vendor.pieces_os_client.wrapper import PiecesClient
-from pieces._vendor.pieces_os_client.wrapper.version_compatibility import VersionChecker, UpdateEnum
+from pieces_os_client.wrapper import PiecesClient
+from pieces_os_client.wrapper.version_compatibility import VersionChecker, UpdateEnum
 from pieces import __version__
 from pieces.gui import (
     server_startup_failed,
@@ -185,7 +185,7 @@ class Settings:
 
     @classmethod
     def get_os_id(cls):
-        from pieces._vendor.pieces_os_client.models.application_name_enum import ApplicationNameEnum
+        from pieces_os_client.models.application_name_enum import ApplicationNameEnum
 
         if cls._os_id:
             return cls._os_id

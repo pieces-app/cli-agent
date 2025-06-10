@@ -14,7 +14,7 @@ from prompt_toolkit.layout.containers import Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 
 if TYPE_CHECKING:
-    from pieces._vendor.pieces_os_client.models.workstream_pattern_engine_vision_calibration import (
+    from pieces_os_client.models.workstream_pattern_engine_vision_calibration import (
         WorkstreamPatternEngineVisionCalibration,
     )
 

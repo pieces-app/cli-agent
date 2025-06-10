@@ -22,22 +22,16 @@ class URLs(Enum):
         "https://builds.pieces.app/stages/production/macos_packaging/pkg-pos-launch-only-arm64"
         "/download?product=PIECES_FOR_DEVELOPERS_CLI&download=true"
     )
-    CURSOR_MCP_DOCS = (
+    CURSOR_DOCS = (
         "https://docs.pieces.app/products/mcp/cursor#using-pieces-mcp-server-in-cursor"
     )
-    VS_CODE_MCP_DOCS = "https://docs.pieces.app/products/mcp/github-copilot#using-pieces-mcp-server-in-github-copilot"
-    GOOSE_MCP_DOCS = (
+    VS_CODE_DOCS = "https://docs.pieces.app/products/mcp/github-copilot#using-pieces-mcp-server-in-github-copilot"
+    GOOSE_DOCS = (
         "https://docs.pieces.app/products/mcp/goose#using-pieces-mcp-server-in-goose"
     )
-    CLAUDE_MCP_DOCS = (
+    CLAUDE_DOCS = (
         "https://modelcontextprotocol.io/quickstart/user#1-download-claude-for-desktop"
     )
-    WINDSURF_MCP_DOCS = (
-        "https://docs.windsurf.com/windsurf/cascade/mcp#model-context-protocol-mcp"
-    )
-    ZED_MCP_DOCS = "https://zed.dev/docs/ai/mcp"
-    RAYCAST_MCP_DOCS = "https://manual.raycast.com/model-context-protocol"
-    WRAP_MCP_DOCS = "https://docs.warp.dev/knowledge-and-collaboration/mcp"
 
     # MCP Command Documentation URLs
     CLI_MCP_DOCS = "https://docs.pieces.app/products/cli/copilot/chat#pieces-mcp"

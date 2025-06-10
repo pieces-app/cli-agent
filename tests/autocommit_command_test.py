@@ -2,7 +2,7 @@ import sys
 import unittest
 from unittest.mock import patch, MagicMock, call, ANY
 
-from pieces._vendor.pieces_os_client.models.application import Application
+from pieces_os_client.models.application import Application
 from pieces.autocommit.autocommit import (
     git_commit,
     get_current_working_changes,
@@ -10,19 +10,15 @@ from pieces.autocommit.autocommit import (
 )
 from pieces.settings import Settings
 
-from pieces._vendor.pieces_os_client.models.seed import Seed
-from pieces._vendor.pieces_os_client.models.seeds import Seeds
-from pieces._vendor.pieces_os_client.models.seeded_asset import SeededAsset
-from pieces._vendor.pieces_os_client.models.seeded_asset_metadata import (
-    SeededAssetMetadata,
-)
-from pieces._vendor.pieces_os_client.models.seeded_format import SeededFormat
-from pieces._vendor.pieces_os_client.models.seeded_fragment import SeededFragment
-from pieces._vendor.pieces_os_client.models.transferable_string import (
-    TransferableString,
-)
-from pieces._vendor.pieces_os_client.models.anchor_type_enum import AnchorTypeEnum
-from pieces._vendor.pieces_os_client.models.seeded_anchor import SeededAnchor
+from pieces_os_client.models.seed import Seed
+from pieces_os_client.models.seeds import Seeds
+from pieces_os_client.models.seeded_asset import SeededAsset
+from pieces_os_client.models.seeded_asset_metadata import SeededAssetMetadata
+from pieces_os_client.models.seeded_format import SeededFormat
+from pieces_os_client.models.seeded_fragment import SeededFragment
+from pieces_os_client.models.transferable_string import TransferableString
+from pieces_os_client.models.anchor_type_enum import AnchorTypeEnum
+from pieces_os_client.models.seeded_anchor import SeededAnchor
 
 
 class TestGitCommit(unittest.TestCase):

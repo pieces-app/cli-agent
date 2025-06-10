@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock, mock_open
 import json
-from pieces.mcp_core.integration import Integration, MCPProperties
+from pieces.mcp.integration import Integration, MCPProperties
 
 
 class TestMCPHandler(unittest.TestCase):

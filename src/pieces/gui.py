@@ -5,7 +5,7 @@ from .logger import Logger
 
 
 if TYPE_CHECKING:
-    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
+    from pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
 
 
 def print(*args, **kwargs):

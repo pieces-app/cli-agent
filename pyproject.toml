@@ -26,10 +26,7 @@ pyyaml = "^6.0.2"
 mcp = "1.8.0"
 
 ## POS dependencies
-urllib3 = ">= 1.25.3"
-python-dateutil = ">=2.8.2"
-aenum = ">=3.1.11"
-websocket-client = "^1.8.0"
+pieces_os_client = { git = "https://github.com/pieces-app/pieces-os-client-sdk-for-python", branch = "cli-agent-pydantic-v2" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

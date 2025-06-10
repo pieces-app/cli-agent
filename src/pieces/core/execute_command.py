@@ -2,7 +2,7 @@ from pieces.settings import Settings
 from .assets_command import check_assets_existence, AssetsCommands
 import subprocess
 from pieces.utils import PiecesSelectMenu
-from pieces._vendor.pieces_os_client.models.classification_specific_enum import ClassificationSpecificEnum
+from pieces_os_client.models.classification_specific_enum import ClassificationSpecificEnum
 
 
 class ExecuteCommand:

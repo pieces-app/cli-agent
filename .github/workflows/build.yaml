@@ -30,8 +30,6 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    env:
-      NUITKA_AUTO_UPDATE: yes
     strategy:
       matrix:
         os: [ macos-14-large, macos-latest, windows-latest ]
@@ -109,26 +107,22 @@ jobs:
         shell: bash
 
       ### Setting the version in the pyproject.toml for Windows builds
-      - name: Set Version Shell Script (Windows)
+      - name: Set Version PowerShell Script (Windows)
         if: runner.os == 'Windows'
         run: |
-          $get_version_output = "${{ steps.get_version.outputs.VERSION }}"
-          if ($get_version_output -match "^\d+\.\d+\.\d+$") {
-            Write-Host "This is a tagged build"
-            $RELEASE_VERSION = $get_version_output.TrimStart('v')
+          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
+            Write-Output "This is a tagged build"
+            $RELEASE_VERSION = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
             poetry version $RELEASE_VERSION
-            # Replace __version__ in src/pieces/__init__.py
-            $filePath = "src/pieces/__init__.py"
-            (Get-Content $filePath) -replace "__version__ = .*", "__version__ = '$RELEASE_VERSION'" | Set-Content $filePath
-          } else {
-            Write-Host "This is not a tagged build"
+            (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$RELEASE_VERSION'" | Set-Content src\pieces\__init__.py
+          }
+          else {
+            Write-Output "This is not a tagged build"
             $STAGING_VERSION = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
             poetry version $STAGING_VERSION
-            # Replace __version__ in src/pieces/__init__.py
-            $filePath = "src/pieces/__init__.py"
-            (Get-Content $filePath) -replace "__version__ = .*", "__version__ = '$STAGING_VERSION'" | Set-Content $filePath
+            (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$STAGING_VERSION'" | Set-Content src\pieces\__init__.py
           }
-        shell: powershell
+        shell: pwsh
 
       ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
       - name: Write staging version to file
@@ -140,34 +134,15 @@ jobs:
       - name: Build library
         run: poetry build
 
-      - name: Get poetry python exe
-        id: poetry_setup_venv
+      - name: Get virtual environment site-packages path
         if: runner.os == 'Windows'
+        id: venv_path
         run: |
-          pip install poetry
-
-          # Get the path to the virtual environment's Python executable
-          $python_exe_path = poetry env info --executable
-          Write-Host "Virtual environment Python executable: $python_exe_path"
-          echo "POETRY_PYTHON_EXE=$python_exe_path" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-        shell: powershell
-
-      ### Install dependencies globally for Nuitka on Windows
-      - name: Install dependencies globally for Nuitka (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          Write-Host "Installing dependencies globally for Nuitka compilation..."
-          
-          # Export requirements from Poetry
-          poetry export -f requirements.txt --output requirements.txt --without-hashes
-          
-          # Install dependencies globally using pip
-          pip install -r requirements.txt
-          
-          # Also install the package itself in editable mode
-          pip install -e .
-          
-          Write-Host "Dependencies installed globally for Nuitka"
+          Invoke-Expression (poetry env activate)
+          poetry install
+          $sitePackagesPath = (python -c "import site; print(site.getsitepackages()[0])").Trim()
+          Write-Host "Site-packages path: $sitePackagesPath"
+          echo "VENV_SITE_PACKAGES_PATH=$sitePackagesPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         shell: powershell
 
       ### Build stand-alone step for macOS (keeping codesigning)
@@ -176,51 +151,16 @@ jobs:
         run: |
           poetry run pyinstaller pieces.spec
 
-
-      - name: Calculate Product Version
-        id: calculate_version
+      ### Build stand-alone step for Windows (build .exe)
+      - name: Build stand alone (Windows)
         if: runner.os == 'Windows'
         run: |
-          $get_version_output = "${{ steps.get_version.outputs.VERSION }}"
-          if ($get_version_output -match "^\d+\.\d+\.\d+$") {
-            $productVersion = $get_version_output
-            Write-Host "Using release version for product: $productVersion"
-          } else {
-            $productVersion = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
-            if ($productVersion -match "^(\d+\.\d+\.\d+)\.dev(\d+)$") {
-              $productVersion = "$($matches[1]).$($matches[2])"
-              Write-Host "Converted staging version to: $productVersion"
-            }
-            Write-Host "Using staging version for product: $productVersion"
-          }
-
-          echo "::set-output name=PRODUCT_VERSION::$productVersion"
+          # Ensure we're in the poetry environment
+          poetry install
+          # Run PyInstaller through poetry to ensure all dependencies are available
+          poetry run pyinstaller pieces.spec --clean
         shell: powershell
 
-      - name: Build stand alone (Windows) with Nuitka Action
-        if: runner.os == 'Windows'
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          script-name: src/pieces/app.py
-          mode: onefile
-          output-dir: dist
-          output-file: pieces
-          deployment: true
-          include-package: |
-            pygments
-            mcp
-          company-name: Pieces
-          product-name: pieces-cli
-          product-version: ${{ steps.calculate_version.outputs.PRODUCT_VERSION }}
-          file-description: "Pieces CLI for interacting with Pieces OS"
-          enable-plugins: anti-bloat
-
-      - name: List Compiled Files
-        if: runner.os == 'Windows'
-        run: |
-          cd dist
-          Get-ChildItem -Recurse
-        shell: powershell
       ### Package binary to zip file for macOS
       - name: Mac Binary to Zip File
         if: runner.os != 'Windows'
@@ -232,42 +172,26 @@ jobs:
           fi
 
       ### Submission to apple notary
-      - name: Submit Zip to apple notary
-        if: runner.os != 'Windows'
-        run: |
-          if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
-          then
-              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-          else
-              xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
-          fi
+      # - name: Submit Zip to apple notary
+      #   if: runner.os != 'Windows'
+      #   run: |
+      #     if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+$ ]]
+      #     then
+      #         xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+      #     else
+      #         xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
+      #     fi
 
-      - name: Find pieces.exe
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          $exePath = Get-ChildItem -Path . -Filter "pieces.exe" -Recurse -File | Select-Object -First 1
-          if ($null -eq $exePath) {
-            Write-Error "pieces.exe not found in the repository."
-            exit 1
-          } else {
-            echo "Found pieces.exe at: $($exePath.FullName)"
-            echo "##[set-output name=exe_path]$($exePath.FullName)"
-          }
-        id: find_pieces
-
+      ### Package binary to zip file for Windows using PowerShell
       - name: Windows Binary to Zip File
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          $exePath = "${{ steps.find_pieces.outputs.exe_path }}"
-          $version = "${{ steps.get_version.outputs.VERSION }}"
-          $staging = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
-          if ($version -match "^\d+\.\d+\.\d+$") {
-            Compress-Archive -Path $exePath -DestinationPath ".\dist\${{ matrix.zipFileName }}-$version.zip"
+          if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
+            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
           }
           else {
-            Compress-Archive -Path $exePath -DestinationPath ".\dist\${{ matrix.zipFileName }}-$staging.zip"
+            Compress-Archive -Path ".\dist\pieces\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
           }
 
       ### Upload to github artifacts
@@ -288,12 +212,38 @@ jobs:
         run: |
           Get-ChildItem dist
           Set-Location dist 
-
+          
           Write-Host "--- Testing 'pieces.exe --version' command ---"
-          ./pieces.exe --version --ignore-onboarding
-
-          Write-Host "--- Testing 'pieces.exe --ignore-onboarding help' command ---"
-          ./pieces.exe --help --ignore-onboarding
+          try {
+              # Run the --version command and capture its output
+              $versionOutput = (.\pieces\pieces.exe --version 2>&1)
+              Write-Host "Output for --version:`n$versionOutput"
+              Write-Host "SUCCESS: 'pieces.exe --version' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe --version' threw an error: $($_.Exception.Message)"
+              exit 1
+          }
+          
+          Write-Host "`n--- Testing 'pieces.exe help' command ---"
+          try {
+              # Test the help command to ensure basic functionality works
+              $helpOutput = (.\pieces\pieces.exe help 2>&1)
+              Write-Host "Output for help (first 10 lines):`n$($helpOutput | Select-Object -First 10)"
+              Write-Host "SUCCESS: 'pieces.exe help' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe help' threw an error: $($_.Exception.Message)"
+              exit 1
+          }
+          
+          Write-Host "`n--- Testing 'pieces.exe --ignore-onboarding help' command ---"
+          try {
+              # Test with ignore-onboarding flag to bypass any interactive prompts
+              $helpOutput2 = (.\pieces\pieces.exe --ignore-onboarding help 2>&1)
+              Write-Host "SUCCESS: 'pieces.exe --ignore-onboarding help' executed without error."
+          } catch {
+              Write-Error "FAILURE: 'pieces.exe --ignore-onboarding help' threw an error: $($_.Exception.Message)"
+              exit 1
+          }
 
           Write-Host "`nBasic executable functionality tests passed."
         shell: powershell
@@ -703,37 +653,9 @@ jobs:
 
       ### Publish to Chocolatey
       - name: Publish to Chocolatey
-#        if: inputs.deploy == true  # Only publish when deploying
+        if: inputs.deploy == true  # Only publish when deploying
         env:
           CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
         run: |
-          cd choco
-          if ([string]::IsNullOrEmpty($env:CHOCOLATEY_API_KEY)) {
-            throw "CHOCOLATEY_API_KEY secret is not set or is empty"
-          }
-          
-          Write-Output "Setting Chocolatey API key..."
           choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
-          
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to set Chocolatey API key"
-          }
-          
-          Write-Output "Finding .nupkg file to publish..."
-          $nupkgFile = Get-ChildItem -Filter "pieces-cli.*.nupkg" | Select-Object -First 1
-          
-          if (-not $nupkgFile) {
-            Write-Output "Available files in current directory:"
-            Get-ChildItem | Select-Object Name
-            throw "No .nupkg file found matching pattern 'pieces-cli.*.nupkg'"
-          }
-          
-          Write-Output "Found package: $($nupkgFile.Name)"
-          Write-Output "Publishing package to Chocolatey..."
-          choco push "$($nupkgFile.Name)" --source https://push.chocolatey.org/ --force
-          
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to publish package to Chocolatey"
-          }
-          
-          Write-Output "✓ Package successfully published to Chocolatey"
+          choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
