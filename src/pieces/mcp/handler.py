@@ -10,7 +10,7 @@ from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
 from pieces.urls import URLs
 
-from pieces.utils import PiecesSelectMenu
+from ..utils import PiecesSelectMenu
 from .integrations import (
     vscode_integration,
     goose_integration,

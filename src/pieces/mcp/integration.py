@@ -9,7 +9,7 @@ from pieces.copilot.ltm import check_ltm
 from pieces.settings import Settings
 
 from .utils import get_mcp_latest_url, get_mcp_urls
-from pieces.utils import PiecesSelectMenu
+from ..utils import PiecesSelectMenu
 
 MCP_types = Literal["sse", "stdio"]
 

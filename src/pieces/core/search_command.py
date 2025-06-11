@@ -1,5 +1,5 @@
-from pieces.settings import Settings
 from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
+from ..settings import Settings
 from .list_command import ListCommand
 
 # Map search_type to descriptive text
