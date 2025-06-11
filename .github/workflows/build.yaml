@@ -625,11 +625,33 @@ jobs:
           path: choco/
           if-no-files-found: error
 
-      ### Publish to Chocolatey
+      ### Publish to ChocolateyMore actions
       - name: Publish to Chocolatey
-        # if: inputs.deploy == true  # Only publish when deploying
+        #        if: inputs.deploy == true  # Only publish when deploying
         env:
           CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
         run: |
+          cd choco
+          if ([string]::IsNullOrEmpty($env:CHOCOLATEY_API_KEY)) {
+            throw "CHOCOLATEY_API_KEY secret is not set or is empty"
+          }
+          
+          Write-Output "Setting Chocolatey API key..."
           choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
-          choco push pieces-cli.*.nupkg --source https://push.chocolatey.org/ --force
+          
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to set Chocolatey API key"
+          }
+          
+          Write-Output "Finding .nupkg file to publish..."
+          $nupkgFile = Get-ChildItem -Filter "pieces-cli.*.nupkg" | Select-Object -First 1
+          
+          if (-not $nupkgFile) {
+            Write-Output "Available files in current directory:"
+            Get-ChildItem | Select-Object Name
+            throw "No .nupkg file found matching pattern 'pieces-cli.*.nupkg'"
+          }
+          
+          Write-Output "Found package: $($nupkgFile.Name)"
+          Write-Output "Publishing package to Chocolatey..."
+          choco push "$($nupkgFile.Name)" --source https://push.chocolatey.org/ --force
