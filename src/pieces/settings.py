@@ -20,8 +20,8 @@ class Settings:
 
     pieces_client = PiecesClient()
 
-    PIECES_OS_MIN_VERSION = "11.0.0"  # Minium version (11.0.0)
-    PIECES_OS_MAX_VERSION = "12.0.0"  # Maxium version (12.0.0)
+    PIECES_OS_MIN_VERSION = "12.0.0"  # Minimum version (12.0.0)
+    PIECES_OS_MAX_VERSION = "13.0.0"  # Maximum version (13.0.0)
 
     TIMEOUT = 20  # Websocket ask timeout
 
@@ -142,6 +142,7 @@ class Settings:
     def startup(cls):
         if cls.pieces_client.is_pieces_running():
             cls.version_check()  # Check the version first
+            cls.check_login()
         else:
             server_startup_failed()
             sys.exit(2)  # Exit the program
@@ -177,9 +178,18 @@ class Settings:
             sys.exit(2)
 
     @classmethod
+    def check_login(cls):
+        if not cls.pieces_client.user_api.user_snapshot().user:
+            if cls.logger.confirm("In order to use this feature you must be logged in. Do you want to open the login page?"):
+                cls.pieces_client.user.login(True)
+        else:
+            return
+        sys.exit(1)
+
+    @classmethod
     def show_error(cls, error, error_message=None):
-        print(f"\033[31m{error}\033[0m")
-        print(f"\033[31m{error_message}\033[0m") if error_message else None
+        cls.logger.console_error.print(f"\033[31m{error}\033[0m")
+        cls.logger.console_error.print(f"\033[31m{error_message}\033[0m") if error_message else None
         if not cls.run_in_loop:
             sys.exit(2)
 
