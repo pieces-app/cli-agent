@@ -10,9 +10,10 @@ a = Analysis(
     ["src/pieces/app.py"],
     pathex=[str(src_path)],
     binaries=[],
-    datas=[],
+    datas=[(str(src_path / "pieces"), "pieces")],
     hiddenimports=[
         "pieces",
+        "pieces.pieces_argparser"
     ],
     hookspath=[],
     hooksconfig={},
