@@ -20,7 +20,7 @@ class Settings:
 
     pieces_client = PiecesClient()
 
-    PIECES_OS_MIN_VERSION = "12.0.0"  # Minimum version (12.0.0)
+    PIECES_OS_MIN_VERSION = "11.0.0"  # Minimum version (12.0.0)
     PIECES_OS_MAX_VERSION = "13.0.0"  # Maximum version (13.0.0)
 
     TIMEOUT = 20  # Websocket ask timeout
@@ -139,10 +139,11 @@ class Settings:
         cls.pieces_client.model_name = model_name
 
     @classmethod
-    def startup(cls):
+    def startup(cls, bypass_login = False):
         if cls.pieces_client.is_pieces_running():
             cls.version_check()  # Check the version first
-            cls.check_login()
+            if not bypass_login:
+                cls.check_login()
         else:
             server_startup_failed()
             sys.exit(2)  # Exit the program
@@ -160,29 +161,28 @@ class Settings:
             print(
                 "Please update your cli-agent tool. It is not compatible with the current PiecesOS version"
             )
-            print()
             print(
                 URLs.DOCS_CLI.value
             )  # TODO: We might need to add a link a better link here
-            print()
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
         elif result.update == UpdateEnum.PiecesOS:
+            # TODO: Use the update POS endpoint
             print(
                 "Please update PiecesOS. It is not compatible with the current cli-agent version"
             )
-            print()
             print(URLs.DOCS_INSTALLATION.value)
-            print()
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
 
     @classmethod
     def check_login(cls):
-        if not cls.pieces_client.user_api.user_snapshot().user:
+        user = cls.pieces_client.user_api.user_snapshot().user
+        if not user:
             if cls.logger.confirm("In order to use this feature you must be logged in. Do you want to open the login page?"):
                 cls.pieces_client.user.login(True)
-        else:
+                user = cls.pieces_client.user_api.user_snapshot().user
+        if user:
             return
         sys.exit(1)
 

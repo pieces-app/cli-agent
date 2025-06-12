@@ -11,7 +11,7 @@ class LoginCommand(BaseCommand):
         return "login"
 
     def get_help(self) -> str:
-        return "Login to PiecesOS"
+        return "Sign into PiecesOS"
 
     def get_description(self) -> str:
         return "Authenticate with PiecesOS to enable cloud features, sync across devices, and access your personal workspace"
@@ -31,7 +31,7 @@ class LoginCommand(BaseCommand):
         try:
             Settings.pieces_client.user.login()
         except Exception as e:
-            Settings.logger.error(f"Login failed: {e}")
+            Settings.logger.error(f"Sign in failed: {e}")
         return 0
 
 
@@ -42,7 +42,7 @@ class LogoutCommand(BaseCommand):
         return "logout"
 
     def get_help(self) -> str:
-        return "Logout from PiecesOS"
+        return "Sign out from PiecesOS"
 
     def get_description(self) -> str:
         return "Sign out from your PiecesOS account, disabling cloud sync and returning to local-only operation"
@@ -62,5 +62,5 @@ class LogoutCommand(BaseCommand):
         try:
             Settings.pieces_client.user.logout()
         except Exception as e:
-            Settings.logger.error(f"Logout failed: {e}")
+            Settings.logger.error(f"Sign out failed: {e}")
         return 0
