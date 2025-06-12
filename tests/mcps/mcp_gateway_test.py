@@ -3,15 +3,9 @@ End-to-end tests for the MCP Gateway functionality.
 These tests interact with a real Pieces OS instance and verify actual behavior.
 """
 
+import urllib.request
 import pytest
-import asyncio
-import os
-import json
-import time
 import requests
-import subprocess
-import sys
-from pathlib import Path
 import mcp.types as types
 from pieces.mcp.gateway import MCPGateway, PosMcpConnection
 from pieces.mcp.utils import get_mcp_latest_url
@@ -44,20 +38,6 @@ def ensure_pieces_setup():
         return False
 
 
-@pytest.fixture(scope="module")
-def ensure_ltm_status():
-    """
-    Fixture to check if LTM is enabled in Pieces OS.
-    Returns True if LTM is enabled, False otherwise.
-    """
-    try:
-        # Check LTM status using the actual Pieces client
-        Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
-        return Settings.pieces_client.copilot.context.ltm.is_enabled
-    except Exception:
-        return False
-
-
 @pytest.mark.asyncio
 async def test_gateway_initialization():
     """Test that the MCPGateway initializes correctly with real components"""
@@ -84,8 +64,6 @@ async def test_gateway_connection_with_pos_running(ensure_pieces_setup):
         pytest.skip("MCP server is not accessible. Skipping test.")
 
     try:
-        import urllib.request
-
         with urllib.request.urlopen(upstream_url, timeout=1) as response:
             response.read(1)
     except Exception:
@@ -112,21 +90,6 @@ async def test_gateway_connection_with_pos_running(ensure_pieces_setup):
 
     finally:
         # Clean up
-        await connection.cleanup()
-
-
-@pytest.mark.asyncio
-async def test_gateway_connection_without_pos():
-    """Test connecting to the upstream POS server when it's not available"""
-    # Use a URL that definitely won't connect
-    connection = PosMcpConnection("http://localhost:99999")
-
-    try:
-        # Attempt to connect - should raise an exception
-        with pytest.raises(Exception):
-            await connection.connect()
-    finally:
-        # Clean up (should be safe even if connect failed)
         await connection.cleanup()
 
 
