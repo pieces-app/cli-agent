@@ -179,7 +179,7 @@ class Settings:
     def check_login(cls):
         user = cls.pieces_client.user_api.user_snapshot().user
         if not user:
-            if cls.logger.confirm("In order to use this feature you must be logged in. Do you want to open the login page?"):
+            if cls.logger.confirm("Please sign into Pieces to use this feature. Do you want to sign in now?"):
                 cls.pieces_client.user.login(True)
                 user = cls.pieces_client.user_api.user_snapshot().user
         if user:
