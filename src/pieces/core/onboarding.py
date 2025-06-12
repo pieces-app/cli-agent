@@ -105,11 +105,10 @@ def create_snippet_one_validation():
     )
 
 def validate_login():
+    message = "You can't continue if you are not signed in"
     if Settings.pieces_client.user_api.user_snapshot():
-        return True
-    # This will happen if the user did not login or timeout and they will need to rerun the onboarding process
-    Settings.logger.console_error.print("You must Sign into Pieces to continue the onboarding process.")
-    sys.exit(4)
+        return True, message
+    return False, message
 
 def onboarding_command(**kwargs):
     step_number = 1
@@ -210,7 +209,7 @@ def onboarding_command(**kwargs):
     else:
         Settings.logger.print("✅ PiecesOS is running")
 
-    Settings.startup()
+    Settings.startup(True)
 
     while step_number - 1 < len(steps):
         for step in steps:
