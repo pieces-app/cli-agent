@@ -10,7 +10,7 @@ from pieces.mcp import (
     handle_status,
     handle_gateway,
 )
-from pieces.mcp.integrations import mcp_integrations
+from pieces.mcp.integration import mcp_integrations
 from pieces.mcp.handler import supported_mcps
 from pieces.settings import Settings
 
