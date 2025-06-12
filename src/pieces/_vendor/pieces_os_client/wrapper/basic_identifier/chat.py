@@ -263,7 +263,6 @@ class BasicChat(Basic):
             not temporal
             or not temporal.workstreams
             or not temporal.workstreams.indices
-            or not temporal.workstreams.iterable
         ):
             return []
         return self._from_indices(
