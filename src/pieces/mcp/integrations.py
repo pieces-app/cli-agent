@@ -44,7 +44,7 @@ def get_claude_cli_path():
     if sys == "Windows":
         return os.path.join(os.environ["APPDATA"], "claude", "mcp.json")
     elif sys == "Darwin" or sys == "Linux":
-        return os.path.join("~/.config/claude/mcp.json")
+        return os.path.expanduser("~/.config/claude/mcp.json")
     else:
         Settings.show_error(f"Unsupported platform {sys}")
         raise ValueError
@@ -56,9 +56,9 @@ def get_shortwave_path():
     if sys == "Windows":
         return os.path.join(os.environ["APPDATA"], "Shortwave", "mcp.json")
     elif sys == "Darwin":
-        return os.path.join("~/Library/Application Support/Shortwave/mcp.json")
+        return os.path.expanduser("~/Library/Application Support/Shortwave/mcp.json")
     elif sys == "Linux":
-        return os.path.join("~/.config/Shortwave/mcp.json")
+        return os.path.expanduser("~/.config/Shortwave/mcp.json")
     else:
         Settings.show_error(f"Unsupported platform {sys}")
         raise ValueError
@@ -305,7 +305,7 @@ wrap_sse_json = """
 text_success_short_wave = """
 ### Use Pieces LTM in Shortwave
 
-1. Open Shortwave
+1. Restart Shortwave
 2. **Ask a prompt:**
 
         What I was working on yesterday?

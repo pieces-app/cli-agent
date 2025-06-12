@@ -80,10 +80,7 @@ def handle_mcp(
     if cursor:
         supported_mcps["cursor"].run(stdio, **args)
 
-    if shortwave:
-        supported_mcps["shortwave"].run(stdio)
-
-    if claude or zed or raycast or claude_code:
+    if claude or zed or raycast or claude_code or shortwave:
         if not stdio:
             Settings.logger.print(
                 "[yellow]Warning: Using stdio instead of sse because sse connection is not supported"
@@ -97,6 +94,8 @@ def handle_mcp(
             mcp = "zed"
         elif claude_code:
             mcp = "claude_code"
+        elif shortwave:
+            mcp = "shortwave"
         else:
             return
         supported_mcps[mcp].run(stdio=True)
