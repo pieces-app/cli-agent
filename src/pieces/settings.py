@@ -188,8 +188,8 @@ class Settings:
 
     @classmethod
     def show_error(cls, error, error_message=None):
-        cls.logger.console_error.print(f"\033[31m{error}\033[0m")
-        cls.logger.console_error.print(f"\033[31m{error_message}\033[0m") if error_message else None
+        cls.logger.console_error.print(f"[red]{error}")
+        cls.logger.console_error.print(f"[red]{error_message}") if error_message else None
         if not cls.run_in_loop:
             sys.exit(2)
 

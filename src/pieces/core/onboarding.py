@@ -104,11 +104,24 @@ def create_snippet_one_validation():
         "Looks like you haven't copied the material yet. Please copy the material to save it to Pieces.",
     )
 
+def validate_login():
+    if Settings.pieces_client.user_api.user_snapshot():
+        return True
+    # This will happen if the user did not login or timeout and they will need to rerun the onboarding process
+    Settings.logger.console_error.print("You must Sign into Pieces to continue the onboarding process.")
+    sys.exit(4)
 
 def onboarding_command(**kwargs):
     step_number = 1
     steps = {
-        "Step 1: Save a Material": [
+        "Step 1: Sign into Pieces" : [
+            OnboardingCommandStep(
+                "You must be signed in to use Pieces. Type `pieces login` to sign into an account.",
+                "pieces login"
+            ),
+            OnboardingStep("", validate_login),
+        ],
+        "Step 2: Save a Material": [
             OnboardingStep(
                 "Let's get started by saving a material to Pieces.\n"
                 "Copy the following python material: \n"
@@ -119,20 +132,20 @@ def onboarding_command(**kwargs):
                 "You can save the material by typing `pieces create`", "pieces create"
             ),
         ],
-        "Step 2: Open your Saved materials": [
+        "Step 3: Open your Saved materials": [
             OnboardingCommandStep(
                 "Now, let's view all of your saved materials by typing `pieces list`.",
                 "pieces list",
             )
         ],
-        "Step 3: Start a Session": [
+        "Step 4: Start a Session": [
             OnboardingCommandStep(
                 "Starting a session allows you to run multiple commands without having to start the Pieces CLI every time."
                 "Start a session with `pieces run`. To exit your session, use `exit`.",
                 "pieces run",
             )
         ],
-        "Step 4: Chat with the Copilot": [
+        "Step 5: Chat with the Copilot": [
             OnboardingCommandStep(
                 "Start a chat with the Copilot by using `pieces ask 'How to print I love Pieces CLI in Python and Java'`.",
                 "pieces ask 'How to print I love Pieces CLI in Python and Java'",
@@ -142,13 +155,13 @@ def onboarding_command(**kwargs):
                 "pieces run",
             ),
         ],
-        "Step 5: Sharing your Feedback": [
+        "Step 6: Sharing your Feedback": [
             OnboardingCommandStep(
                 "Your feedback is very **important** to us. Please share some of your feedback by typing `pieces feedback`.",
                 "pieces feedback",
             )
         ],
-        "Step 6: Contributing": [
+        "Step 7: Contributing": [
             OnboardingCommandStep(
                 "The Pieces CLI is an **open source project** and you can contribute to it by creating a pull request or open an issue by typing `pieces contribute`.",
                 "pieces contribute",

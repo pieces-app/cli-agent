@@ -14,7 +14,7 @@ class LoginCommand(BaseCommand):
         return "Sign into PiecesOS"
 
     def get_description(self) -> str:
-        return "Authenticate with PiecesOS to enable cloud features, sync across devices, and access your personal workspace"
+        return "Authenticate with PiecesOS to enable cloud features, and access your personal domain, long term memory"
 
     def get_examples(self) -> list[str]:
         return ["pieces login"]
@@ -28,8 +28,12 @@ class LoginCommand(BaseCommand):
 
     def execute(self, **kwargs) -> int:
         """Execute the login command."""
+        Settings.pieces_client.user.user_profile =  Settings.pieces_client.user_api.user_snapshot().user
+        if Settings.pieces_client.user.user_profile:
+            Settings.logger.print(f"Signed in as {Settings.pieces_client.user.name}\nemail: {Settings.pieces_client.user.email}")
+            return 0
         try:
-            Settings.pieces_client.user.login()
+            Settings.pieces_client.user.login(True)
         except Exception as e:
             Settings.logger.error(f"Sign in failed: {e}")
         return 0
@@ -45,7 +49,7 @@ class LogoutCommand(BaseCommand):
         return "Sign out from PiecesOS"
 
     def get_description(self) -> str:
-        return "Sign out from your PiecesOS account, disabling cloud sync and returning to local-only operation"
+        return "Sign out from your PiecesOS account, disabling the use of any of the Pieces features"
 
     def get_examples(self) -> list[str]:
         return ["pieces logout"]

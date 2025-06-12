@@ -44,7 +44,7 @@ class BasicUser(Basic):
 		"""
 		self.user_profile = user
 
-	def _on_login_connect(self, thread, timeout):
+	def _on_login_connect(self):
 		"""
 		Waits for the user to login and then connects to the cloud.
 
@@ -52,7 +52,6 @@ class BasicUser(Basic):
 			thread: The thread handling the login process.
 			timeout: The maximum time to wait for the login process.
 		"""
-		thread.get(timeout)  # Wait for the user to login
 		self.connect()
 
 	def login(self, connect_after_login=True, timeout=120):
@@ -65,7 +64,9 @@ class BasicUser(Basic):
 		"""
 		thread = self.pieces_client.os_api.sign_into_os(async_req=True)
 		if connect_after_login:
-			threading.Thread(target=lambda: self._on_login_connect(thread, timeout))
+			user = thread.get(timeout)
+			self.user_profile = user
+			self._on_login_connect()
 
 	def logout(self):
 		"""
