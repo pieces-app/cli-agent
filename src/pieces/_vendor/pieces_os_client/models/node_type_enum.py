@@ -30,6 +30,7 @@ class NodeTypeEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     TAG = 'TAG'
     WEBSITE = 'WEBSITE'
     FORMAT = 'FORMAT'

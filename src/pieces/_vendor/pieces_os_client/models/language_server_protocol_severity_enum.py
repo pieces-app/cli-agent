@@ -30,6 +30,7 @@ class LanguageServerProtocolSeverityEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     ERROR = 'ERROR'
     WARNING = 'WARNING'
     INFORMATION = 'INFORMATION'

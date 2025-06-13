@@ -20,15 +20,17 @@ import json
 
 
 from typing import Optional
-from pydantic.v1 import BaseModel, StrictStr
+from pydantic.v1 import BaseModel, Field, StrictStr
+from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 
 class AppletOTAServerError(BaseModel):
     """
     AppletOTAServerError
     """
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     error: Optional[StrictStr] = None
     details: Optional[StrictStr] = None
-    __properties = ["error", "details"]
+    __properties = ["schema", "error", "details"]
 
     class Config:
         """Pydantic configuration"""
@@ -54,6 +56,9 @@ class AppletOTAServerError(BaseModel):
                           exclude={
                           },
                           exclude_none=True)
+        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
@@ -66,6 +71,7 @@ class AppletOTAServerError(BaseModel):
             return AppletOTAServerError.parse_obj(obj)
 
         _obj = AppletOTAServerError.parse_obj({
+            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
             "error": obj.get("error"),
             "details": obj.get("details")
         })

@@ -30,12 +30,13 @@ class MechanismEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     MANUAL = 'MANUAL'
     RECOMMENDED = 'RECOMMENDED'
     AUTOMATIC = 'AUTOMATIC'
     INTERNAL = 'INTERNAL'
     DELETED = 'DELETED'
-    UNKNOWN = 'UNKNOWN'
+    EXTERNAL_AGENT = 'EXTERNAL_AGENT'
 
     @classmethod
     def from_json(cls, json_str: str) -> MechanismEnum:

@@ -37,28 +37,28 @@ class SeededPKCE(BaseModel):
     code_challenge_method: StrictStr = Field(default=..., description="Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged.")
     domain: Optional[StrictStr] = Field(default=None, description="https://auth.pieces.services/authorize")
     audience: Optional[StrictStr] = Field(default=None, description="The unique identifier of the target API you want to access. i.e. https://pieces.us.auth0.com/api/v2/")
-    screen_hint: Optional[StrictStr] = Field(default=None, description="Provides a hint to Auth0 as to what flow should be displayed. The default behavior is to show a login page but you can override this by passing 'signup' to show the signup page instead.")
-    prompt: Optional[StrictStr] = Field(default=None, description=" To initiate a silent authentication request, use prompt=none (see Remarks for more info).")
+    screen_hint: Optional[StrictStr] = Field(default='UNKNOWN', description="Provides a hint to Auth0 as to what flow should be displayed. The default behavior is to show a login page but you can override this by passing 'signup' to show the signup page instead.")
+    prompt: Optional[StrictStr] = Field(default='UNKNOWN', description=" To initiate a silent authentication request, use prompt=none (see Remarks for more info).")
     organization: Optional[StrictStr] = None
     invitation: Optional[StrictStr] = None
     scope: conlist(StrictStr) = Field(default=..., description="The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token.")
     client_id: StrictStr = Field(default=..., description="Your application's Client ID.")
     additional_parameters: Optional[SeededPKCEADDITIONALPARAMETERS] = Field(default=None, alias="ADDITIONAL_PARAMETERS")
-    response_mode: Optional[StrictStr] = None
+    response_mode: Optional[StrictStr] = 'UNKNOWN'
     __properties = ["schema", "response_type", "state", "nonce", "redirect_uri", "code_challenge", "code_challenge_method", "domain", "audience", "screen_hint", "prompt", "organization", "invitation", "scope", "client_id", "ADDITIONAL_PARAMETERS", "response_mode"]
 
     @validator('response_type')
     def response_type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('code', 'token', 'id_token',):
-            raise ValueError("must be one of enum values ('code', 'token', 'id_token')")
+        if value not in ('UNKNOWN', 'code', 'token', 'id_token',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'code', 'token', 'id_token')")
         return value
 
     @validator('code_challenge_method')
     def code_challenge_method_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('S256',):
-            raise ValueError("must be one of enum values ('S256')")
+        if value not in ('UNKNOWN', 'S256',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'S256')")
         return value
 
     @validator('screen_hint')
@@ -67,8 +67,8 @@ class SeededPKCE(BaseModel):
         if value is None:
             return value
 
-        if value not in ('signup',):
-            raise ValueError("must be one of enum values ('signup')")
+        if value not in ('UNKNOWN', 'signup',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'signup')")
         return value
 
     @validator('prompt')
@@ -77,16 +77,16 @@ class SeededPKCE(BaseModel):
         if value is None:
             return value
 
-        if value not in ('login', 'none',):
-            raise ValueError("must be one of enum values ('login', 'none')")
+        if value not in ('UNKNOWN', 'login', 'none',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'login', 'none')")
         return value
 
     @validator('scope')
     def scope_validate_enum(cls, value):
         """Validates the enum"""
         for i in value:
-            if i not in ('offline_access', 'email', 'profile', 'openid',):
-                raise ValueError("each list item must be one of ('offline_access', 'email', 'profile', 'openid')")
+            if i not in ('UNKNOWN', 'offline_access', 'email', 'profile', 'openid',):
+                raise ValueError("each list item must be one of ('UNKNOWN', 'offline_access', 'email', 'profile', 'openid')")
         return value
 
     @validator('response_mode')
@@ -95,8 +95,8 @@ class SeededPKCE(BaseModel):
         if value is None:
             return value
 
-        if value not in ('form_post', 'web_message', 'fragment', 'query',):
-            raise ValueError("must be one of enum values ('form_post', 'web_message', 'fragment', 'query')")
+        if value not in ('UNKNOWN', 'form_post', 'web_message', 'fragment', 'query',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'form_post', 'web_message', 'fragment', 'query')")
         return value
 
     class Config:
@@ -142,22 +142,22 @@ class SeededPKCE(BaseModel):
 
         _obj = SeededPKCE.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "response_type": obj.get("response_type"),
+            "response_type": obj.get("response_type") if obj.get("response_type") is not None else 'UNKNOWN',
             "state": obj.get("state"),
             "nonce": obj.get("nonce"),
             "redirect_uri": obj.get("redirect_uri"),
             "code_challenge": obj.get("code_challenge"),
-            "code_challenge_method": obj.get("code_challenge_method"),
+            "code_challenge_method": obj.get("code_challenge_method") if obj.get("code_challenge_method") is not None else 'UNKNOWN',
             "domain": obj.get("domain"),
             "audience": obj.get("audience"),
-            "screen_hint": obj.get("screen_hint"),
-            "prompt": obj.get("prompt"),
+            "screen_hint": obj.get("screen_hint") if obj.get("screen_hint") is not None else 'UNKNOWN',
+            "prompt": obj.get("prompt") if obj.get("prompt") is not None else 'UNKNOWN',
             "organization": obj.get("organization"),
             "invitation": obj.get("invitation"),
             "scope": obj.get("scope"),
             "client_id": obj.get("client_id"),
             "additional_parameters": SeededPKCEADDITIONALPARAMETERS.from_dict(obj.get("ADDITIONAL_PARAMETERS")) if obj.get("ADDITIONAL_PARAMETERS") is not None else None,
-            "response_mode": obj.get("response_mode")
+            "response_mode": obj.get("response_mode") if obj.get("response_mode") is not None else 'UNKNOWN'
         })
         return _obj
 

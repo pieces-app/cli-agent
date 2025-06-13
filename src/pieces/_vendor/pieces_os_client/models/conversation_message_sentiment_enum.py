@@ -30,6 +30,7 @@ class ConversationMessageSentimentEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     LIKE = 'LIKE'
     DISLIKE = 'DISLIKE'
     REPORT = 'REPORT'

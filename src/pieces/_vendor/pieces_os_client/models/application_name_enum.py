@@ -30,6 +30,7 @@ class ApplicationNameEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     SUBLIME = 'SUBLIME'
     VS_CODE = 'VS_CODE'
     JETBRAINS = 'JETBRAINS'
@@ -71,7 +72,7 @@ class ApplicationNameEnum(str, Enum):
     ECLIPSE = 'ECLIPSE'
     X_CODE = 'X_CODE'
     NETBEANS = 'NETBEANS'
-    UNKNOWN = 'UNKNOWN'
+    OPERA = 'OPERA'
 
     @classmethod
     def from_json(cls, json_str: str) -> ApplicationNameEnum:

@@ -23,16 +23,26 @@ from typing import Optional
 from pydantic.v1 import BaseModel, Field
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.flattened_anchors import FlattenedAnchors
+from pieces._vendor.pieces_os_client.models.flattened_annotations import FlattenedAnnotations
 from pieces._vendor.pieces_os_client.models.flattened_assets import FlattenedAssets
+from pieces._vendor.pieces_os_client.models.flattened_conversation_messages import FlattenedConversationMessages
 from pieces._vendor.pieces_os_client.models.flattened_conversations import FlattenedConversations
+from pieces._vendor.pieces_os_client.models.flattened_hints import FlattenedHints
+from pieces._vendor.pieces_os_client.models.flattened_identified_workstream_pattern_engine_sources import FlattenedIdentifiedWorkstreamPatternEngineSources
 from pieces._vendor.pieces_os_client.models.flattened_persons import FlattenedPersons
+from pieces._vendor.pieces_os_client.models.flattened_sensitives import FlattenedSensitives
 from pieces._vendor.pieces_os_client.models.flattened_tags import FlattenedTags
 from pieces._vendor.pieces_os_client.models.flattened_websites import FlattenedWebsites
 from pieces._vendor.pieces_os_client.models.flattened_workstream_summaries import FlattenedWorkstreamSummaries
 from pieces._vendor.pieces_os_client.models.referenced_anchor import ReferencedAnchor
+from pieces._vendor.pieces_os_client.models.referenced_annotation import ReferencedAnnotation
 from pieces._vendor.pieces_os_client.models.referenced_asset import ReferencedAsset
 from pieces._vendor.pieces_os_client.models.referenced_conversation import ReferencedConversation
+from pieces._vendor.pieces_os_client.models.referenced_conversation_message import ReferencedConversationMessage
+from pieces._vendor.pieces_os_client.models.referenced_hint import ReferencedHint
+from pieces._vendor.pieces_os_client.models.referenced_identified_workstream_pattern_engine_source import ReferencedIdentifiedWorkstreamPatternEngineSource
 from pieces._vendor.pieces_os_client.models.referenced_person import ReferencedPerson
+from pieces._vendor.pieces_os_client.models.referenced_sensitive import ReferencedSensitive
 from pieces._vendor.pieces_os_client.models.referenced_tag import ReferencedTag
 from pieces._vendor.pieces_os_client.models.referenced_website import ReferencedWebsite
 from pieces._vendor.pieces_os_client.models.referenced_workstream_summary import ReferencedWorkstreamSummary
@@ -62,7 +72,17 @@ class WorkstreamSuggestion(BaseModel):
     persons: Optional[FlattenedPersons] = None
     related: Optional[WorkstreamSuggestions] = None
     current: Optional[WorkstreamSuggestion] = None
-    __properties = ["schema", "summary", "asset", "tag", "website", "anchor", "conversation", "person", "seed", "seeds", "summaries", "assets", "tags", "websites", "anchors", "conversations", "persons", "related", "current"]
+    annotation: Optional[ReferencedAnnotation] = None
+    annotations: Optional[FlattenedAnnotations] = None
+    conversation_message: Optional[ReferencedConversationMessage] = Field(default=None, alias="conversationMessage")
+    conversation_messages: Optional[FlattenedConversationMessages] = Field(default=None, alias="conversationMessages")
+    hint: Optional[ReferencedHint] = None
+    hints: Optional[FlattenedHints] = None
+    sensitive: Optional[ReferencedSensitive] = None
+    sensitives: Optional[FlattenedSensitives] = None
+    source: Optional[ReferencedIdentifiedWorkstreamPatternEngineSource] = None
+    sources: Optional[FlattenedIdentifiedWorkstreamPatternEngineSources] = None
+    __properties = ["schema", "summary", "asset", "tag", "website", "anchor", "conversation", "person", "seed", "seeds", "summaries", "assets", "tags", "websites", "anchors", "conversations", "persons", "related", "current", "annotation", "annotations", "conversationMessage", "conversationMessages", "hint", "hints", "sensitive", "sensitives", "source", "sources"]
 
     class Config:
         """Pydantic configuration"""
@@ -145,6 +165,36 @@ class WorkstreamSuggestion(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of current
         if self.current:
             _dict['current'] = self.current.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of annotation
+        if self.annotation:
+            _dict['annotation'] = self.annotation.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of annotations
+        if self.annotations:
+            _dict['annotations'] = self.annotations.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of conversation_message
+        if self.conversation_message:
+            _dict['conversationMessage'] = self.conversation_message.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of conversation_messages
+        if self.conversation_messages:
+            _dict['conversationMessages'] = self.conversation_messages.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of hint
+        if self.hint:
+            _dict['hint'] = self.hint.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of hints
+        if self.hints:
+            _dict['hints'] = self.hints.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of sensitive
+        if self.sensitive:
+            _dict['sensitive'] = self.sensitive.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of sensitives
+        if self.sensitives:
+            _dict['sensitives'] = self.sensitives.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of source
+        if self.source:
+            _dict['source'] = self.source.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of sources
+        if self.sources:
+            _dict['sources'] = self.sources.to_dict()
         return _dict
 
     @classmethod
@@ -175,7 +225,17 @@ class WorkstreamSuggestion(BaseModel):
             "conversations": FlattenedConversations.from_dict(obj.get("conversations")) if obj.get("conversations") is not None else None,
             "persons": FlattenedPersons.from_dict(obj.get("persons")) if obj.get("persons") is not None else None,
             "related": WorkstreamSuggestions.from_dict(obj.get("related")) if obj.get("related") is not None else None,
-            "current": WorkstreamSuggestion.from_dict(obj.get("current")) if obj.get("current") is not None else None
+            "current": WorkstreamSuggestion.from_dict(obj.get("current")) if obj.get("current") is not None else None,
+            "annotation": ReferencedAnnotation.from_dict(obj.get("annotation")) if obj.get("annotation") is not None else None,
+            "annotations": FlattenedAnnotations.from_dict(obj.get("annotations")) if obj.get("annotations") is not None else None,
+            "conversation_message": ReferencedConversationMessage.from_dict(obj.get("conversationMessage")) if obj.get("conversationMessage") is not None else None,
+            "conversation_messages": FlattenedConversationMessages.from_dict(obj.get("conversationMessages")) if obj.get("conversationMessages") is not None else None,
+            "hint": ReferencedHint.from_dict(obj.get("hint")) if obj.get("hint") is not None else None,
+            "hints": FlattenedHints.from_dict(obj.get("hints")) if obj.get("hints") is not None else None,
+            "sensitive": ReferencedSensitive.from_dict(obj.get("sensitive")) if obj.get("sensitive") is not None else None,
+            "sensitives": FlattenedSensitives.from_dict(obj.get("sensitives")) if obj.get("sensitives") is not None else None,
+            "source": ReferencedIdentifiedWorkstreamPatternEngineSource.from_dict(obj.get("source")) if obj.get("source") is not None else None,
+            "sources": FlattenedIdentifiedWorkstreamPatternEngineSources.from_dict(obj.get("sources")) if obj.get("sources") is not None else None
         })
         return _obj
 

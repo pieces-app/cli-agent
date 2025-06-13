@@ -30,14 +30,19 @@ class ExternalProviderTypeEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     GITHUB = 'github'
-    AUTH0 = 'auth0'
     GOOGLE_MINUS_OAUTH2 = 'google-oauth2'
     BITBUCKET = 'bitbucket'
     LINKEDIN = 'linkedin'
     TWITTER = 'twitter'
     FACEBOOK = 'facebook'
     WAAD = 'waad'
+    DISCORD = 'discord'
+    GITLAB = 'gitlab'
+    APPLE = 'apple'
+    USERNAME_EMAIL = 'username_email'
+    SLACK = 'slack'
 
     @classmethod
     def from_json(cls, json_str: str) -> ExternalProviderTypeEnum:

@@ -39,8 +39,8 @@ class TokenizedPKCE(BaseModel):
     @validator('grant_type')
     def grant_type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('refresh_token', 'authorization_code',):
-            raise ValueError("must be one of enum values ('refresh_token', 'authorization_code')")
+        if value not in ('UNKNOWN', 'refresh_token', 'authorization_code',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'refresh_token', 'authorization_code')")
         return value
 
     class Config:
@@ -83,7 +83,7 @@ class TokenizedPKCE(BaseModel):
 
         _obj = TokenizedPKCE.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "grant_type": obj.get("grant_type"),
+            "grant_type": obj.get("grant_type") if obj.get("grant_type") is not None else 'UNKNOWN',
             "client_id": obj.get("client_id"),
             "code": obj.get("code"),
             "redirect_uri": obj.get("redirect_uri"),

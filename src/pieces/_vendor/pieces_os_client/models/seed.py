@@ -20,8 +20,9 @@ import json
 
 
 from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr, validator
+from pydantic.v1 import BaseModel, Field
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from pieces._vendor.pieces_os_client.models.seed_type_enum import SeedTypeEnum
 from pieces._vendor.pieces_os_client.models.seeded_anchor import SeededAnchor
 from pieces._vendor.pieces_os_client.models.seeded_asset import SeededAsset
 from pieces._vendor.pieces_os_client.models.seeded_person import SeededPerson
@@ -36,18 +37,8 @@ class Seed(BaseModel):
     person: Optional[SeededPerson] = None
     anchor: Optional[SeededAnchor] = None
     website: Optional[SeededWebsite] = None
-    type: Optional[StrictStr] = None
+    type: Optional[SeedTypeEnum] = None
     __properties = ["schema", "asset", "person", "anchor", "website", "type"]
-
-    @validator('type')
-    def type_validate_enum(cls, value):
-        """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in ('SEEDED_FORMAT', 'SEEDED_ASSET',):
-            raise ValueError("must be one of enum values ('SEEDED_FORMAT', 'SEEDED_ASSET')")
-        return value
 
     class Config:
         """Pydantic configuration"""

@@ -30,6 +30,7 @@ class AccessEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     PUBLIC = 'PUBLIC'
     PRIVATE = 'PRIVATE'
 

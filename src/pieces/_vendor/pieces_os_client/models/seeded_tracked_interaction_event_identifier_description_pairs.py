@@ -28,7 +28,7 @@ class SeededTrackedInteractionEventIdentifierDescriptionPairs(BaseModel):
     SeededTrackedInteractionEventIdentifierDescriptionPairs
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    assets_list_refreshed: Optional[StrictStr] = None
+    assets_list_refreshed: Optional[StrictStr] = 'UNKNOWN'
     __properties = ["schema", "assets_list_refreshed"]
 
     @validator('assets_list_refreshed')
@@ -37,8 +37,8 @@ class SeededTrackedInteractionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('the_assets_list_was_refreshed_through_ui_element',):
-            raise ValueError("must be one of enum values ('the_assets_list_was_refreshed_through_ui_element')")
+        if value not in ('UNKNOWN', 'the_assets_list_was_refreshed_through_ui_element',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'the_assets_list_was_refreshed_through_ui_element')")
         return value
 
     class Config:
@@ -81,7 +81,7 @@ class SeededTrackedInteractionEventIdentifierDescriptionPairs(BaseModel):
 
         _obj = SeededTrackedInteractionEventIdentifierDescriptionPairs.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "assets_list_refreshed": obj.get("assets_list_refreshed")
+            "assets_list_refreshed": obj.get("assets_list_refreshed") if obj.get("assets_list_refreshed") is not None else 'UNKNOWN'
         })
         return _obj
 

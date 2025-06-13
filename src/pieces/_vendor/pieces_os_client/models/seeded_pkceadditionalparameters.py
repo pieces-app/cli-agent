@@ -26,8 +26,8 @@ class SeededPKCEADDITIONALPARAMETERS(BaseModel):
     """
     Append any additional parameter to the end of your request, and it will be sent to the provider. For example, access_type=offline (for Google Refresh Tokens) , display=popup (for Windows Live popup mode).  # noqa: E501
     """
-    access_type: Optional[StrictStr] = None
-    display: Optional[StrictStr] = None
+    access_type: Optional[StrictStr] = 'UNKNOWN'
+    display: Optional[StrictStr] = 'UNKNOWN'
     __properties = ["access_type", "display"]
 
     @validator('access_type')
@@ -36,8 +36,8 @@ class SeededPKCEADDITIONALPARAMETERS(BaseModel):
         if value is None:
             return value
 
-        if value not in ('offline',):
-            raise ValueError("must be one of enum values ('offline')")
+        if value not in ('UNKNOWN', 'offline',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'offline')")
         return value
 
     @validator('display')
@@ -46,8 +46,8 @@ class SeededPKCEADDITIONALPARAMETERS(BaseModel):
         if value is None:
             return value
 
-        if value not in ('popup',):
-            raise ValueError("must be one of enum values ('popup')")
+        if value not in ('UNKNOWN', 'popup',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'popup')")
         return value
 
     class Config:
@@ -86,8 +86,8 @@ class SeededPKCEADDITIONALPARAMETERS(BaseModel):
             return SeededPKCEADDITIONALPARAMETERS.parse_obj(obj)
 
         _obj = SeededPKCEADDITIONALPARAMETERS.parse_obj({
-            "access_type": obj.get("access_type"),
-            "display": obj.get("display")
+            "access_type": obj.get("access_type") if obj.get("access_type") is not None else 'UNKNOWN',
+            "display": obj.get("display") if obj.get("display") is not None else 'UNKNOWN'
         })
         return _obj
 

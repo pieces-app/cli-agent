@@ -24,7 +24,10 @@ from pydantic.v1 import BaseModel, Field, StrictFloat, StrictInt, StrictStr, con
 from pieces._vendor.pieces_os_client.models.application import Application
 from pieces._vendor.pieces_os_client.models.capabilities_enum import CapabilitiesEnum
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from pieces._vendor.pieces_os_client.models.flattened_anchors import FlattenedAnchors
+from pieces._vendor.pieces_os_client.models.flattened_persons import FlattenedPersons
 from pieces._vendor.pieces_os_client.models.flattened_tags import FlattenedTags
+from pieces._vendor.pieces_os_client.models.flattened_websites import FlattenedWebsites
 from pieces._vendor.pieces_os_client.models.referenced_workstream_summary import ReferencedWorkstreamSummary
 from pieces._vendor.pieces_os_client.models.score import Score
 from pieces._vendor.pieces_os_client.models.workstream_event_context import WorkstreamEventContext
@@ -42,10 +45,13 @@ class SeededWorkstreamEvent(BaseModel):
     summary: Optional[ReferencedWorkstreamSummary] = None
     internal_identifier: Optional[StrictStr] = Field(default=None, description="This is used to override the event identifier, if this was an event that was originally in the internal events collection.")
     readable: Optional[StrictStr] = None
-    workstream_events_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="workstreamEventsVector", description="This is the embedding for the format.(NEEDs to connection.vector) and specific here because we can only index on a single name")
+    workstream_events_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="workstreamEventsVector", description="This is the embedding for the format.(NEEDs to connection.vector) and specific here because we can only index on a single name NOTE: this the the vector index that corresponds the the couchbase lite index.")
     processing: Optional[CapabilitiesEnum] = None
     tags: Optional[FlattenedTags] = None
-    __properties = ["schema", "score", "application", "trigger", "context", "summary", "internal_identifier", "readable", "workstreamEventsVector", "processing", "tags"]
+    anchors: Optional[FlattenedAnchors] = None
+    websites: Optional[FlattenedWebsites] = None
+    persons: Optional[FlattenedPersons] = None
+    __properties = ["schema", "score", "application", "trigger", "context", "summary", "internal_identifier", "readable", "workstreamEventsVector", "processing", "tags", "anchors", "websites", "persons"]
 
     class Config:
         """Pydantic configuration"""
@@ -92,6 +98,15 @@ class SeededWorkstreamEvent(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of tags
         if self.tags:
             _dict['tags'] = self.tags.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of anchors
+        if self.anchors:
+            _dict['anchors'] = self.anchors.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of websites
+        if self.websites:
+            _dict['websites'] = self.websites.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of persons
+        if self.persons:
+            _dict['persons'] = self.persons.to_dict()
         return _dict
 
     @classmethod
@@ -114,7 +129,10 @@ class SeededWorkstreamEvent(BaseModel):
             "readable": obj.get("readable"),
             "workstream_events_vector": obj.get("workstreamEventsVector"),
             "processing": obj.get("processing"),
-            "tags": FlattenedTags.from_dict(obj.get("tags")) if obj.get("tags") is not None else None
+            "tags": FlattenedTags.from_dict(obj.get("tags")) if obj.get("tags") is not None else None,
+            "anchors": FlattenedAnchors.from_dict(obj.get("anchors")) if obj.get("anchors") is not None else None,
+            "websites": FlattenedWebsites.from_dict(obj.get("websites")) if obj.get("websites") is not None else None,
+            "persons": FlattenedPersons.from_dict(obj.get("persons")) if obj.get("persons") is not None else None
         })
         return _obj
 

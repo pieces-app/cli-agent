@@ -30,6 +30,7 @@ class SensitiveSeverityEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     LOW = 'LOW'
     MODERATE = 'MODERATE'
     HIGH = 'HIGH'

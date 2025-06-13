@@ -30,10 +30,10 @@ class UpdatingStatusEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     READY_TO_RESTART = 'READY_TO_RESTART'
     AVAILABLE = 'AVAILABLE'
     DOWNLOADING = 'DOWNLOADING'
-    UNKNOWN = 'UNKNOWN'
     UP_TO_DATE = 'UP_TO_DATE'
     REINSTALL_REQUIRED = 'REINSTALL_REQUIRED'
     CONTACT_SUPPORT = 'CONTACT_SUPPORT'

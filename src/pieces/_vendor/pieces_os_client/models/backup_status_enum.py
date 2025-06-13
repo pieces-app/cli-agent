@@ -30,11 +30,11 @@ class BackupStatusEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     INITIALIZED = 'INITIALIZED'
     IN_MINUS_PROGRESS = 'IN-PROGRESS'
     COMPLETED = 'COMPLETED'
     FAILED = 'FAILED'
-    UNKNOWN = 'UNKNOWN'
     CANCELED = 'CANCELED'
     RESET = 'RESET'
 

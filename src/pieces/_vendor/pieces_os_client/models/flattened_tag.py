@@ -19,8 +19,8 @@ import re  # noqa: F401
 import json
 
 
-from typing import Dict, Optional
-from pydantic.v1 import BaseModel, Field, StrictInt, StrictStr
+from typing import Dict, List, Optional, Union
+from pydantic.v1 import BaseModel, Field, StrictFloat, StrictInt, StrictStr, conlist
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 from pieces._vendor.pieces_os_client.models.mechanism_enum import MechanismEnum
@@ -48,7 +48,12 @@ class FlattenedTag(BaseModel):
     summaries: Optional[FlattenedWorkstreamSummaries] = None
     workstream_events: Optional[FlattenedWorkstreamEvents] = None
     messages: Optional[FlattenedConversationMessages] = None
-    __properties = ["schema", "id", "text", "mechanisms", "assets", "created", "updated", "deleted", "category", "relationship", "interactions", "persons", "score", "summaries", "workstream_events", "messages"]
+    annotations: Optional[FlattenedAnnotations] = None
+    tags_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="tagsVector", description="This is the embedding for the format.(NEEDs to collectionection.vector) and specific here because we can only index on a single name NOTE: this the the vector index that corresponds the the couchbase lite index.")
+    source_windows: Optional[FlattenedWorkstreamPatternEngineSourceWindows] = None
+    websites: Optional[FlattenedWebsites] = None
+    anchors: Optional[FlattenedAnchors] = None
+    __properties = ["schema", "id", "text", "mechanisms", "assets", "created", "updated", "deleted", "category", "relationship", "interactions", "persons", "score", "summaries", "workstream_events", "messages", "annotations", "tagsVector", "source_windows", "websites", "anchors"]
 
     class Config:
         """Pydantic configuration"""
@@ -107,6 +112,18 @@ class FlattenedTag(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of messages
         if self.messages:
             _dict['messages'] = self.messages.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of annotations
+        if self.annotations:
+            _dict['annotations'] = self.annotations.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of source_windows
+        if self.source_windows:
+            _dict['source_windows'] = self.source_windows.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of websites
+        if self.websites:
+            _dict['websites'] = self.websites.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of anchors
+        if self.anchors:
+            _dict['anchors'] = self.anchors.to_dict()
         return _dict
 
     @classmethod
@@ -134,14 +151,23 @@ class FlattenedTag(BaseModel):
             "score": Score.from_dict(obj.get("score")) if obj.get("score") is not None else None,
             "summaries": FlattenedWorkstreamSummaries.from_dict(obj.get("summaries")) if obj.get("summaries") is not None else None,
             "workstream_events": FlattenedWorkstreamEvents.from_dict(obj.get("workstream_events")) if obj.get("workstream_events") is not None else None,
-            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None
+            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None,
+            "annotations": FlattenedAnnotations.from_dict(obj.get("annotations")) if obj.get("annotations") is not None else None,
+            "tags_vector": obj.get("tagsVector"),
+            "source_windows": FlattenedWorkstreamPatternEngineSourceWindows.from_dict(obj.get("source_windows")) if obj.get("source_windows") is not None else None,
+            "websites": FlattenedWebsites.from_dict(obj.get("websites")) if obj.get("websites") is not None else None,
+            "anchors": FlattenedAnchors.from_dict(obj.get("anchors")) if obj.get("anchors") is not None else None
         })
         return _obj
 
+from pieces._vendor.pieces_os_client.models.flattened_anchors import FlattenedAnchors
+from pieces._vendor.pieces_os_client.models.flattened_annotations import FlattenedAnnotations
 from pieces._vendor.pieces_os_client.models.flattened_assets import FlattenedAssets
 from pieces._vendor.pieces_os_client.models.flattened_conversation_messages import FlattenedConversationMessages
 from pieces._vendor.pieces_os_client.models.flattened_persons import FlattenedPersons
+from pieces._vendor.pieces_os_client.models.flattened_websites import FlattenedWebsites
 from pieces._vendor.pieces_os_client.models.flattened_workstream_events import FlattenedWorkstreamEvents
+from pieces._vendor.pieces_os_client.models.flattened_workstream_pattern_engine_source_windows import FlattenedWorkstreamPatternEngineSourceWindows
 from pieces._vendor.pieces_os_client.models.flattened_workstream_summaries import FlattenedWorkstreamSummaries
 FlattenedTag.update_forward_refs()
 

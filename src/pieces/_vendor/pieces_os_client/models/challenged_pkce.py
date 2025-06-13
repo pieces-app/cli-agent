@@ -38,8 +38,8 @@ class ChallengedPKCE(BaseModel):
     @validator('method')
     def method_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('S256',):
-            raise ValueError("must be one of enum values ('S256')")
+        if value not in ('UNKNOWN', 'S256',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'S256')")
         return value
 
     class Config:
@@ -85,7 +85,7 @@ class ChallengedPKCE(BaseModel):
             "state": obj.get("state"),
             "nonce": obj.get("nonce"),
             "challenge": obj.get("challenge"),
-            "method": obj.get("method"),
+            "method": obj.get("method") if obj.get("method") is not None else 'UNKNOWN',
             "verifier": obj.get("verifier")
         })
         return _obj

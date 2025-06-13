@@ -30,6 +30,7 @@ class TLPDirectedDiscoveryFilterEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     FUNCTION = 'FUNCTION'
     METHOD = 'METHOD'
     CLASS = 'CLASS'

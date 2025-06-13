@@ -30,6 +30,7 @@ class ClassificationSpecificEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     CSX = 'csx'
     CS = 'cs'
     HTML = 'html'
@@ -287,7 +288,6 @@ class ClassificationSpecificEnum(str, Enum):
     LTX = 'ltx'
     STY = 'sty'
     CLS = 'cls'
-    UNKNOWN = 'UNKNOWN'
     YAML = 'yaml'
     YML = 'yml'
     TOML = 'toml'
@@ -534,6 +534,7 @@ class ClassificationSpecificEnum(str, Enum):
     HCL = 'hcl'
     ABAP = 'abap'
     NIM = 'nim'
+    CARA = 'cara'
 
     @classmethod
     def from_json(cls, json_str: str) -> ClassificationSpecificEnum:

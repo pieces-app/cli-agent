@@ -32,6 +32,7 @@ from pieces._vendor.pieces_os_client.models.flattened_ranges import FlattenedRan
 from pieces._vendor.pieces_os_client.models.flattened_tags import FlattenedTags
 from pieces._vendor.pieces_os_client.models.flattened_websites import FlattenedWebsites
 from pieces._vendor.pieces_os_client.models.flattened_workstream_events import FlattenedWorkstreamEvents
+from pieces._vendor.pieces_os_client.models.mechanism_enum import MechanismEnum
 from pieces._vendor.pieces_os_client.models.model import Model
 from pieces._vendor.pieces_os_client.models.seeded_annotation import SeededAnnotation
 
@@ -52,10 +53,11 @@ class SeededWorkstreamSummary(BaseModel):
     persons: Optional[FlattenedPersons] = None
     tags: Optional[FlattenedTags] = None
     applications: Optional[Applications] = None
-    workstream_summaries_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="workstreamSummariesVector", description="This is the embedding for the format.(NEEDs to connection.vector) and specific here because we can only index on a single name")
+    workstream_summaries_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="workstreamSummariesVector", description="This is the embedding for the format.(NEEDs to connection.vector) and specific here because we can only index on a single name NOTE: this the the vector index that corresponds the the couchbase lite index.")
     processing: Optional[CapabilitiesEnum] = None
     favorited: Optional[StrictBool] = None
-    __properties = ["schema", "events", "name", "annotations", "ranges", "model", "websites", "anchors", "assets", "conversations", "persons", "tags", "applications", "workstreamSummariesVector", "processing", "favorited"]
+    mechanism: Optional[MechanismEnum] = None
+    __properties = ["schema", "events", "name", "annotations", "ranges", "model", "websites", "anchors", "assets", "conversations", "persons", "tags", "applications", "workstreamSummariesVector", "processing", "favorited", "mechanism"]
 
     class Config:
         """Pydantic configuration"""
@@ -148,7 +150,8 @@ class SeededWorkstreamSummary(BaseModel):
             "applications": Applications.from_dict(obj.get("applications")) if obj.get("applications") is not None else None,
             "workstream_summaries_vector": obj.get("workstreamSummariesVector"),
             "processing": obj.get("processing"),
-            "favorited": obj.get("favorited")
+            "favorited": obj.get("favorited"),
+            "mechanism": obj.get("mechanism")
         })
         return _obj
 

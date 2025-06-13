@@ -30,6 +30,7 @@ class OSDeviceRAMTypeEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     DDR2 = 'DDR2'
     DDR3 = 'DDR3'
     DDR4 = 'DDR4'

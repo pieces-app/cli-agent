@@ -30,6 +30,7 @@ class EmbeddingsSearchOptionsEmbeddingTypeEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     JINA = 'JINA'
     NCS = 'NCS'
 

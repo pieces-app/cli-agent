@@ -30,11 +30,12 @@ class AllocationStatusEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     PENDING = 'PENDING'
     RUNNING = 'RUNNING'
     FAILED = 'FAILED'
     SUCCEEDED = 'SUCCEEDED'
-    UNKNOWN = 'UNKNOWN'
+    DISCONNECTED = 'DISCONNECTED'
 
     @classmethod
     def from_json(cls, json_str: str) -> AllocationStatusEnum:
