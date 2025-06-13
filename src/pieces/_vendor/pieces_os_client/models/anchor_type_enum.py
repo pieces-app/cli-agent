@@ -30,6 +30,7 @@ class AnchorTypeEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     FILE = 'FILE'
     DIRECTORY = 'DIRECTORY'
 

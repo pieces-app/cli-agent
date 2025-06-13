@@ -38,6 +38,7 @@ from pieces._vendor.pieces_os_client.models.referenced_range import ReferencedRa
 from pieces._vendor.pieces_os_client.models.referenced_sensitive import ReferencedSensitive
 from pieces._vendor.pieces_os_client.models.referenced_tag import ReferencedTag
 from pieces._vendor.pieces_os_client.models.referenced_website import ReferencedWebsite
+from pieces._vendor.pieces_os_client.models.referenced_workstream_pattern_engine_source_window import ReferencedWorkstreamPatternEngineSourceWindow
 from pieces._vendor.pieces_os_client.models.referenced_workstream_summary import ReferencedWorkstreamSummary
 
 class StreamedIdentifier(BaseModel):
@@ -62,8 +63,9 @@ class StreamedIdentifier(BaseModel):
     model: Optional[ReferencedModel] = None
     workstream_summary: Optional[ReferencedWorkstreamSummary] = None
     workstream_pattern_engine_source: Optional[ReferencedIdentifiedWorkstreamPatternEngineSource] = Field(default=None, alias="workstreamPatternEngineSource")
+    workstream_pattern_engine_source_window: Optional[ReferencedWorkstreamPatternEngineSourceWindow] = Field(default=None, alias="workstreamPatternEngineSourceWindow")
     deleted: Optional[StrictBool] = Field(default=None, description="This is a specific bool that will let us know if we deleted an Identifierfrom the db.")
-    __properties = ["asset", "conversation", "annotation", "activity", "anchor", "anchorPoint", "hint", "conversationMessage", "format", "person", "range", "sensitive", "tag", "website", "application", "model", "workstream_summary", "workstreamPatternEngineSource", "deleted"]
+    __properties = ["asset", "conversation", "annotation", "activity", "anchor", "anchorPoint", "hint", "conversationMessage", "format", "person", "range", "sensitive", "tag", "website", "application", "model", "workstream_summary", "workstreamPatternEngineSource", "workstreamPatternEngineSourceWindow", "deleted"]
 
     class Config:
         """Pydantic configuration"""
@@ -143,6 +145,9 @@ class StreamedIdentifier(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of workstream_pattern_engine_source
         if self.workstream_pattern_engine_source:
             _dict['workstreamPatternEngineSource'] = self.workstream_pattern_engine_source.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_pattern_engine_source_window
+        if self.workstream_pattern_engine_source_window:
+            _dict['workstreamPatternEngineSourceWindow'] = self.workstream_pattern_engine_source_window.to_dict()
         return _dict
 
     @classmethod
@@ -173,6 +178,7 @@ class StreamedIdentifier(BaseModel):
             "model": ReferencedModel.from_dict(obj.get("model")) if obj.get("model") is not None else None,
             "workstream_summary": ReferencedWorkstreamSummary.from_dict(obj.get("workstream_summary")) if obj.get("workstream_summary") is not None else None,
             "workstream_pattern_engine_source": ReferencedIdentifiedWorkstreamPatternEngineSource.from_dict(obj.get("workstreamPatternEngineSource")) if obj.get("workstreamPatternEngineSource") is not None else None,
+            "workstream_pattern_engine_source_window": ReferencedWorkstreamPatternEngineSourceWindow.from_dict(obj.get("workstreamPatternEngineSourceWindow")) if obj.get("workstreamPatternEngineSourceWindow") is not None else None,
             "deleted": obj.get("deleted")
         })
         return _obj

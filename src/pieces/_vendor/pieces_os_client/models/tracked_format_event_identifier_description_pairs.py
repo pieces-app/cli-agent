@@ -28,16 +28,16 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
     This is a model that allows us to send send over super specific format related events such as copied, deleted, downloaded, etc  # noqa: E501
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    format_created: Optional[StrictStr] = Field(default=None, description="The key value pair for an asset being created.")
-    format_copied: Optional[StrictStr] = Field(default=None, description="If a format was copied entirely")
-    format_partially_copied: Optional[StrictStr] = Field(default=None, description="If a format was copied partially")
-    format_downloaded: Optional[StrictStr] = Field(default=None, description="If a format was downloaded")
-    format_deleted: Optional[StrictStr] = Field(default=None, description="If an format was deleted")
-    format_generic_classification_updated: Optional[StrictStr] = Field(default=None, description="If a generic classification was changed on a format")
-    format_specific_classification_updated: Optional[StrictStr] = Field(default=None, description="If a specific classification was changed on a format")
-    format_updated: Optional[StrictStr] = Field(default=None, description="a format was updated, generic update.")
-    format_inserted: Optional[StrictStr] = Field(default=None, description="a format was inserted")
-    format_value_edited: Optional[StrictStr] = Field(default=None, description="a format's value was update ie, the text, etc...")
+    format_created: Optional[StrictStr] = Field(default='UNKNOWN', description="The key value pair for an asset being created.")
+    format_copied: Optional[StrictStr] = Field(default='UNKNOWN', description="If a format was copied entirely")
+    format_partially_copied: Optional[StrictStr] = Field(default='UNKNOWN', description="If a format was copied partially")
+    format_downloaded: Optional[StrictStr] = Field(default='UNKNOWN', description="If a format was downloaded")
+    format_deleted: Optional[StrictStr] = Field(default='UNKNOWN', description="If an format was deleted")
+    format_generic_classification_updated: Optional[StrictStr] = Field(default='UNKNOWN', description="If a generic classification was changed on a format")
+    format_specific_classification_updated: Optional[StrictStr] = Field(default='UNKNOWN', description="If a specific classification was changed on a format")
+    format_updated: Optional[StrictStr] = Field(default='UNKNOWN', description="a format was updated, generic update.")
+    format_inserted: Optional[StrictStr] = Field(default='UNKNOWN', description="a format was inserted")
+    format_value_edited: Optional[StrictStr] = Field(default='UNKNOWN', description="a format's value was update ie, the text, etc...")
     __properties = ["schema", "format_created", "format_copied", "format_partially_copied", "format_downloaded", "format_deleted", "format_generic_classification_updated", "format_specific_classification_updated", "format_updated", "format_inserted", "format_value_edited"]
 
     @validator('format_created')
@@ -46,8 +46,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_format_was_created',):
-            raise ValueError("must be one of enum values ('a_format_was_created')")
+        if value not in ('UNKNOWN', 'a_format_was_created',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_format_was_created')")
         return value
 
     @validator('format_copied')
@@ -56,8 +56,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('if_a_format_was_entirely_copied',):
-            raise ValueError("must be one of enum values ('if_a_format_was_entirely_copied')")
+        if value not in ('UNKNOWN', 'if_a_format_was_entirely_copied',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'if_a_format_was_entirely_copied')")
         return value
 
     @validator('format_partially_copied')
@@ -66,8 +66,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('if_a_format_was_partially_copied',):
-            raise ValueError("must be one of enum values ('if_a_format_was_partially_copied')")
+        if value not in ('UNKNOWN', 'if_a_format_was_partially_copied',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'if_a_format_was_partially_copied')")
         return value
 
     @validator('format_downloaded')
@@ -76,8 +76,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('if_a_format_was_downloaded',):
-            raise ValueError("must be one of enum values ('if_a_format_was_downloaded')")
+        if value not in ('UNKNOWN', 'if_a_format_was_downloaded',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'if_a_format_was_downloaded')")
         return value
 
     @validator('format_deleted')
@@ -86,8 +86,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('if_a_format_was_deleted',):
-            raise ValueError("must be one of enum values ('if_a_format_was_deleted')")
+        if value not in ('UNKNOWN', 'if_a_format_was_deleted',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'if_a_format_was_deleted')")
         return value
 
     @validator('format_generic_classification_updated')
@@ -96,8 +96,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('if_a_generic_classification_was_changed_on_a_format',):
-            raise ValueError("must be one of enum values ('if_a_generic_classification_was_changed_on_a_format')")
+        if value not in ('UNKNOWN', 'if_a_generic_classification_was_changed_on_a_format',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'if_a_generic_classification_was_changed_on_a_format')")
         return value
 
     @validator('format_specific_classification_updated')
@@ -106,8 +106,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('if_a_specific_classification_was_changed_on_a_format',):
-            raise ValueError("must be one of enum values ('if_a_specific_classification_was_changed_on_a_format')")
+        if value not in ('UNKNOWN', 'if_a_specific_classification_was_changed_on_a_format',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'if_a_specific_classification_was_changed_on_a_format')")
         return value
 
     @validator('format_updated')
@@ -116,8 +116,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_format_was_updated',):
-            raise ValueError("must be one of enum values ('a_format_was_updated')")
+        if value not in ('UNKNOWN', 'a_format_was_updated',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_format_was_updated')")
         return value
 
     @validator('format_inserted')
@@ -126,8 +126,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_format_was_inserted',):
-            raise ValueError("must be one of enum values ('a_format_was_inserted')")
+        if value not in ('UNKNOWN', 'a_format_was_inserted',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_format_was_inserted')")
         return value
 
     @validator('format_value_edited')
@@ -136,8 +136,8 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_format_value_was_edited',):
-            raise ValueError("must be one of enum values ('a_format_value_was_edited')")
+        if value not in ('UNKNOWN', 'a_format_value_was_edited',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_format_value_was_edited')")
         return value
 
     class Config:
@@ -180,16 +180,16 @@ class TrackedFormatEventIdentifierDescriptionPairs(BaseModel):
 
         _obj = TrackedFormatEventIdentifierDescriptionPairs.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "format_created": obj.get("format_created"),
-            "format_copied": obj.get("format_copied"),
-            "format_partially_copied": obj.get("format_partially_copied"),
-            "format_downloaded": obj.get("format_downloaded"),
-            "format_deleted": obj.get("format_deleted"),
-            "format_generic_classification_updated": obj.get("format_generic_classification_updated"),
-            "format_specific_classification_updated": obj.get("format_specific_classification_updated"),
-            "format_updated": obj.get("format_updated"),
-            "format_inserted": obj.get("format_inserted"),
-            "format_value_edited": obj.get("format_value_edited")
+            "format_created": obj.get("format_created") if obj.get("format_created") is not None else 'UNKNOWN',
+            "format_copied": obj.get("format_copied") if obj.get("format_copied") is not None else 'UNKNOWN',
+            "format_partially_copied": obj.get("format_partially_copied") if obj.get("format_partially_copied") is not None else 'UNKNOWN',
+            "format_downloaded": obj.get("format_downloaded") if obj.get("format_downloaded") is not None else 'UNKNOWN',
+            "format_deleted": obj.get("format_deleted") if obj.get("format_deleted") is not None else 'UNKNOWN',
+            "format_generic_classification_updated": obj.get("format_generic_classification_updated") if obj.get("format_generic_classification_updated") is not None else 'UNKNOWN',
+            "format_specific_classification_updated": obj.get("format_specific_classification_updated") if obj.get("format_specific_classification_updated") is not None else 'UNKNOWN',
+            "format_updated": obj.get("format_updated") if obj.get("format_updated") is not None else 'UNKNOWN',
+            "format_inserted": obj.get("format_inserted") if obj.get("format_inserted") is not None else 'UNKNOWN',
+            "format_value_edited": obj.get("format_value_edited") if obj.get("format_value_edited") is not None else 'UNKNOWN'
         })
         return _obj
 

@@ -43,7 +43,17 @@ class WorkstreamSuggestionType(BaseModel):
     anchors: Optional[StrictBool] = None
     conversations: Optional[StrictBool] = None
     persons: Optional[StrictBool] = None
-    __properties = ["schema", "summary", "asset", "tag", "website", "anchor", "conversation", "person", "seed", "seeds", "summaries", "assets", "tags", "websites", "anchors", "conversations", "persons"]
+    annotation: Optional[StrictBool] = None
+    annotations: Optional[StrictBool] = None
+    conversation_message: Optional[StrictBool] = Field(default=None, alias="conversationMessage")
+    conversation_messages: Optional[StrictBool] = Field(default=None, alias="conversationMessages")
+    hint: Optional[StrictBool] = None
+    hints: Optional[StrictBool] = None
+    sensitive: Optional[StrictBool] = None
+    sensitives: Optional[StrictBool] = None
+    source: Optional[StrictBool] = None
+    sources: Optional[StrictBool] = None
+    __properties = ["schema", "summary", "asset", "tag", "website", "anchor", "conversation", "person", "seed", "seeds", "summaries", "assets", "tags", "websites", "anchors", "conversations", "persons", "annotation", "annotations", "conversationMessage", "conversationMessages", "hint", "hints", "sensitive", "sensitives", "source", "sources"]
 
     class Config:
         """Pydantic configuration"""
@@ -97,7 +107,17 @@ class WorkstreamSuggestionType(BaseModel):
             "websites": obj.get("websites"),
             "anchors": obj.get("anchors"),
             "conversations": obj.get("conversations"),
-            "persons": obj.get("persons")
+            "persons": obj.get("persons"),
+            "annotation": obj.get("annotation"),
+            "annotations": obj.get("annotations"),
+            "conversation_message": obj.get("conversationMessage"),
+            "conversation_messages": obj.get("conversationMessages"),
+            "hint": obj.get("hint"),
+            "hints": obj.get("hints"),
+            "sensitive": obj.get("sensitive"),
+            "sensitives": obj.get("sensitives"),
+            "source": obj.get("source"),
+            "sources": obj.get("sources")
         })
         return _obj
 

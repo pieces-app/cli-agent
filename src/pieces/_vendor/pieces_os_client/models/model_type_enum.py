@@ -30,6 +30,7 @@ class ModelTypeEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     BALANCED = 'BALANCED'
     SPEED = 'SPEED'
     ACCURACY = 'ACCURACY'

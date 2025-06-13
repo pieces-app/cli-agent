@@ -30,9 +30,9 @@ class TagCategoryEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     HANDLE = 'HANDLE'
     EMAIL = 'EMAIL'
-    UNKNOWN = 'UNKNOWN'
 
     @classmethod
     def from_json(cls, json_str: str) -> TagCategoryEnum:

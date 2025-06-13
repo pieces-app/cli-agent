@@ -30,6 +30,7 @@ class PlatformEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     WEB = 'WEB'
     MACOS = 'MACOS'
     LINUX = 'LINUX'
@@ -37,7 +38,6 @@ class PlatformEnum(str, Enum):
     FUCHSIA = 'FUCHSIA'
     IOS = 'IOS'
     ANDROID = 'ANDROID'
-    UNKNOWN = 'UNKNOWN'
 
     @classmethod
     def from_json(cls, json_str: str) -> PlatformEnum:

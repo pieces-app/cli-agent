@@ -28,8 +28,8 @@ class AnalyticsTrackedAdoptionEventIdentifierDescriptionPairs(BaseModel):
     AnalyticsTrackedAdoptionEventIdentifierDescriptionPairs
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    adoption_install: Optional[StrictStr] = None
-    adoption_uninstall: Optional[StrictStr] = None
+    adoption_install: Optional[StrictStr] = 'UNKNOWN'
+    adoption_uninstall: Optional[StrictStr] = 'UNKNOWN'
     __properties = ["schema", "adoption_install", "adoption_uninstall"]
 
     @validator('adoption_install')
@@ -38,8 +38,8 @@ class AnalyticsTrackedAdoptionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('the_user_has_installed_a_pieces_application',):
-            raise ValueError("must be one of enum values ('the_user_has_installed_a_pieces_application')")
+        if value not in ('UNKNOWN', 'the_user_has_installed_a_pieces_application',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'the_user_has_installed_a_pieces_application')")
         return value
 
     @validator('adoption_uninstall')
@@ -48,8 +48,8 @@ class AnalyticsTrackedAdoptionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('the_user_has_uninstalled_a_pieces_application',):
-            raise ValueError("must be one of enum values ('the_user_has_uninstalled_a_pieces_application')")
+        if value not in ('UNKNOWN', 'the_user_has_uninstalled_a_pieces_application',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'the_user_has_uninstalled_a_pieces_application')")
         return value
 
     class Config:
@@ -92,8 +92,8 @@ class AnalyticsTrackedAdoptionEventIdentifierDescriptionPairs(BaseModel):
 
         _obj = AnalyticsTrackedAdoptionEventIdentifierDescriptionPairs.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "adoption_install": obj.get("adoption_install"),
-            "adoption_uninstall": obj.get("adoption_uninstall")
+            "adoption_install": obj.get("adoption_install") if obj.get("adoption_install") is not None else 'UNKNOWN',
+            "adoption_uninstall": obj.get("adoption_uninstall") if obj.get("adoption_uninstall") is not None else 'UNKNOWN'
         })
         return _obj
 

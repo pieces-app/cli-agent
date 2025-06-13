@@ -42,7 +42,8 @@ class WorkstreamEventTrigger(BaseModel):
     application_enter: Optional[StrictBool] = None
     application_leave: Optional[StrictBool] = None
     application_switch: Optional[StrictBool] = None
-    __properties = ["schema", "check_in", "copy", "paste", "file_open", "file_close", "tab_switch", "tab_close", "tab_open", "tab_enter", "tab_leave", "url_changed", "application_enter", "application_leave", "application_switch"]
+    native_screenshot: Optional[StrictBool] = None
+    __properties = ["schema", "check_in", "copy", "paste", "file_open", "file_close", "tab_switch", "tab_close", "tab_open", "tab_enter", "tab_leave", "url_changed", "application_enter", "application_leave", "application_switch", "native_screenshot"]
 
     class Config:
         """Pydantic configuration"""
@@ -97,7 +98,8 @@ class WorkstreamEventTrigger(BaseModel):
             "url_changed": obj.get("url_changed"),
             "application_enter": obj.get("application_enter"),
             "application_leave": obj.get("application_leave"),
-            "application_switch": obj.get("application_switch")
+            "application_switch": obj.get("application_switch"),
+            "native_screenshot": obj.get("native_screenshot")
         })
         return _obj
 

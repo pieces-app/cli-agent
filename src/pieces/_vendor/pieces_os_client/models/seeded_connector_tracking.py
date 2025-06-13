@@ -42,7 +42,9 @@ class SeededConnectorTracking(BaseModel):
     ml: Optional[SeededTrackedMachineLearningEvent] = None
     adoption: Optional[SeededTrackedAdoptionEvent] = None
     conversation: Optional[SeededTrackedConversationEvent] = None
-    __properties = ["schema", "format", "asset", "interaction", "keyboard", "session", "assets", "ml", "adoption", "conversation"]
+    conversation_message: Optional[SeededTrackedConversationMessageEvent] = None
+    workstream_summary: Optional[SeededTrackedWorkstreamSummaryEvent] = None
+    __properties = ["schema", "format", "asset", "interaction", "keyboard", "session", "assets", "ml", "adoption", "conversation", "conversation_message", "workstream_summary"]
 
     class Config:
         """Pydantic configuration"""
@@ -98,6 +100,12 @@ class SeededConnectorTracking(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of conversation
         if self.conversation:
             _dict['conversation'] = self.conversation.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of conversation_message
+        if self.conversation_message:
+            _dict['conversation_message'] = self.conversation_message.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_summary
+        if self.workstream_summary:
+            _dict['workstream_summary'] = self.workstream_summary.to_dict()
         return _dict
 
     @classmethod
@@ -119,13 +127,17 @@ class SeededConnectorTracking(BaseModel):
             "assets": SeededTrackedAssetsEvent.from_dict(obj.get("assets")) if obj.get("assets") is not None else None,
             "ml": SeededTrackedMachineLearningEvent.from_dict(obj.get("ml")) if obj.get("ml") is not None else None,
             "adoption": SeededTrackedAdoptionEvent.from_dict(obj.get("adoption")) if obj.get("adoption") is not None else None,
-            "conversation": SeededTrackedConversationEvent.from_dict(obj.get("conversation")) if obj.get("conversation") is not None else None
+            "conversation": SeededTrackedConversationEvent.from_dict(obj.get("conversation")) if obj.get("conversation") is not None else None,
+            "conversation_message": SeededTrackedConversationMessageEvent.from_dict(obj.get("conversation_message")) if obj.get("conversation_message") is not None else None,
+            "workstream_summary": SeededTrackedWorkstreamSummaryEvent.from_dict(obj.get("workstream_summary")) if obj.get("workstream_summary") is not None else None
         })
         return _obj
 
 from pieces._vendor.pieces_os_client.models.seeded_tracked_asset_event import SeededTrackedAssetEvent
 from pieces._vendor.pieces_os_client.models.seeded_tracked_assets_event import SeededTrackedAssetsEvent
 from pieces._vendor.pieces_os_client.models.seeded_tracked_conversation_event import SeededTrackedConversationEvent
+from pieces._vendor.pieces_os_client.models.seeded_tracked_conversation_message_event import SeededTrackedConversationMessageEvent
 from pieces._vendor.pieces_os_client.models.seeded_tracked_format_event import SeededTrackedFormatEvent
+from pieces._vendor.pieces_os_client.models.seeded_tracked_workstream_summary_event import SeededTrackedWorkstreamSummaryEvent
 SeededConnectorTracking.update_forward_refs()
 

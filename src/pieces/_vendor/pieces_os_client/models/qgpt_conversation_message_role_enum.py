@@ -30,6 +30,7 @@ class QGPTConversationMessageRoleEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     USER = 'USER'
     SYSTEM = 'SYSTEM'
     ASSISTANT = 'ASSISTANT'

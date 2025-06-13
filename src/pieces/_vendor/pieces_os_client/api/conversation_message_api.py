@@ -194,7 +194,7 @@ class ConversationMessageApi:
             _request_auth=_params.get('_request_auth'))
 
     @validate_arguments
-    def conversation_message_associate_conversation_message(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], additional_message : Annotated[StrictStr, Field(..., description="In the case of 2 route params we can use the additional prefix.")], **kwargs) -> None:  # noqa: E501
+    def conversation_message_associate_conversation_message(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], additional_message : Annotated[StrictStr, Field(..., description="This is the uuid of a additional message.  note: we have additional message because we can only a route parameter a single time in 1 route       so this is required for the Messages<>Messages association")], **kwargs) -> None:  # noqa: E501
         """/message/{message}/messages/associate/{additional_message} [POST]  # noqa: E501
 
         This will associate a conversation_message with a conversation_message.  # noqa: E501
@@ -206,7 +206,7 @@ class ConversationMessageApi:
 
         :param message: This is the uuid of a message. (required)
         :type message: str
-        :param additional_message: In the case of 2 route params we can use the additional prefix. (required)
+        :param additional_message: This is the uuid of a additional message.  note: we have additional message because we can only a route parameter a single time in 1 route       so this is required for the Messages<>Messages association (required)
         :type additional_message: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
@@ -226,7 +226,7 @@ class ConversationMessageApi:
         return self.conversation_message_associate_conversation_message_with_http_info(message, additional_message, **kwargs)  # noqa: E501
 
     @validate_arguments
-    def conversation_message_associate_conversation_message_with_http_info(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], additional_message : Annotated[StrictStr, Field(..., description="In the case of 2 route params we can use the additional prefix.")], **kwargs) -> ApiResponse:  # noqa: E501
+    def conversation_message_associate_conversation_message_with_http_info(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], additional_message : Annotated[StrictStr, Field(..., description="This is the uuid of a additional message.  note: we have additional message because we can only a route parameter a single time in 1 route       so this is required for the Messages<>Messages association")], **kwargs) -> ApiResponse:  # noqa: E501
         """/message/{message}/messages/associate/{additional_message} [POST]  # noqa: E501
 
         This will associate a conversation_message with a conversation_message.  # noqa: E501
@@ -238,7 +238,7 @@ class ConversationMessageApi:
 
         :param message: This is the uuid of a message. (required)
         :type message: str
-        :param additional_message: In the case of 2 route params we can use the additional prefix. (required)
+        :param additional_message: This is the uuid of a additional message.  note: we have additional message because we can only a route parameter a single time in 1 route       so this is required for the Messages<>Messages association (required)
         :type additional_message: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
@@ -1216,7 +1216,7 @@ class ConversationMessageApi:
             _request_auth=_params.get('_request_auth'))
 
     @validate_arguments
-    def conversation_message_disassociate_conversation_message(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], additional_message : Annotated[StrictStr, Field(..., description="In the case of 2 route params we can use the additional prefix.")], **kwargs) -> None:  # noqa: E501
+    def conversation_message_disassociate_conversation_message(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], additional_message : Annotated[StrictStr, Field(..., description="This is the uuid of a additional message.  note: we have additional message because we can only a route parameter a single time in 1 route       so this is required for the Messages<>Messages association")], **kwargs) -> None:  # noqa: E501
         """/message/{message}/messages/disassociate/{additional_message} [POST]  # noqa: E501
 
         This will enable us to disassociate a conversation_message from a conversation_message.  # noqa: E501
@@ -1228,7 +1228,7 @@ class ConversationMessageApi:
 
         :param message: This is the uuid of a message. (required)
         :type message: str
-        :param additional_message: In the case of 2 route params we can use the additional prefix. (required)
+        :param additional_message: This is the uuid of a additional message.  note: we have additional message because we can only a route parameter a single time in 1 route       so this is required for the Messages<>Messages association (required)
         :type additional_message: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
@@ -1248,7 +1248,7 @@ class ConversationMessageApi:
         return self.conversation_message_disassociate_conversation_message_with_http_info(message, additional_message, **kwargs)  # noqa: E501
 
     @validate_arguments
-    def conversation_message_disassociate_conversation_message_with_http_info(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], additional_message : Annotated[StrictStr, Field(..., description="In the case of 2 route params we can use the additional prefix.")], **kwargs) -> ApiResponse:  # noqa: E501
+    def conversation_message_disassociate_conversation_message_with_http_info(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], additional_message : Annotated[StrictStr, Field(..., description="This is the uuid of a additional message.  note: we have additional message because we can only a route parameter a single time in 1 route       so this is required for the Messages<>Messages association")], **kwargs) -> ApiResponse:  # noqa: E501
         """/message/{message}/messages/disassociate/{additional_message} [POST]  # noqa: E501
 
         This will enable us to disassociate a conversation_message from a conversation_message.  # noqa: E501
@@ -1260,7 +1260,7 @@ class ConversationMessageApi:
 
         :param message: This is the uuid of a message. (required)
         :type message: str
-        :param additional_message: In the case of 2 route params we can use the additional prefix. (required)
+        :param additional_message: This is the uuid of a additional message.  note: we have additional message because we can only a route parameter a single time in 1 route       so this is required for the Messages<>Messages association (required)
         :type additional_message: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
@@ -2238,20 +2238,20 @@ class ConversationMessageApi:
             _request_auth=_params.get('_request_auth'))
 
     @validate_arguments
-    def message_associate_annotation(self, annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], **kwargs) -> None:  # noqa: E501
+    def message_associate_annotation(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], **kwargs) -> None:  # noqa: E501
         """/message/{message}/annotations/associate/{annotation} [POST]  # noqa: E501
 
         This will associate a message with an annotation.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.message_associate_annotation(annotation, message, async_req=True)
+        >>> thread = api.message_associate_annotation(message, annotation, async_req=True)
         >>> result = thread.get()
 
-        :param annotation: This is a specific annotation uuid. (required)
-        :type annotation: str
         :param message: This is the uuid of a message. (required)
         :type message: str
+        :param annotation: This is a specific annotation uuid. (required)
+        :type annotation: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request.
@@ -2267,23 +2267,23 @@ class ConversationMessageApi:
         if '_preload_content' in kwargs:
             message = "Error! Please call the message_associate_annotation_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
             raise ValueError(message)
-        return self.message_associate_annotation_with_http_info(annotation, message, **kwargs)  # noqa: E501
+        return self.message_associate_annotation_with_http_info(message, annotation, **kwargs)  # noqa: E501
 
     @validate_arguments
-    def message_associate_annotation_with_http_info(self, annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], **kwargs) -> ApiResponse:  # noqa: E501
+    def message_associate_annotation_with_http_info(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], **kwargs) -> ApiResponse:  # noqa: E501
         """/message/{message}/annotations/associate/{annotation} [POST]  # noqa: E501
 
         This will associate a message with an annotation.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.message_associate_annotation_with_http_info(annotation, message, async_req=True)
+        >>> thread = api.message_associate_annotation_with_http_info(message, annotation, async_req=True)
         >>> result = thread.get()
 
-        :param annotation: This is a specific annotation uuid. (required)
-        :type annotation: str
         :param message: This is the uuid of a message. (required)
         :type message: str
+        :param annotation: This is a specific annotation uuid. (required)
+        :type annotation: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -2312,8 +2312,8 @@ class ConversationMessageApi:
         _params = locals()
 
         _all_params = [
-            'annotation',
-            'message'
+            'message',
+            'annotation'
         ]
         _all_params.extend(
             [
@@ -2341,11 +2341,11 @@ class ConversationMessageApi:
 
         # process the path parameters
         _path_params = {}
-        if _params['annotation'] is not None:
-            _path_params['annotation'] = _params['annotation']
-
         if _params['message'] is not None:
             _path_params['message'] = _params['message']
+
+        if _params['annotation'] is not None:
+            _path_params['annotation'] = _params['annotation']
 
 
         # process the query parameters
@@ -2822,20 +2822,20 @@ class ConversationMessageApi:
             _request_auth=_params.get('_request_auth'))
 
     @validate_arguments
-    def message_disassociate_annotation(self, annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], **kwargs) -> None:  # noqa: E501
+    def message_disassociate_annotation(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], **kwargs) -> None:  # noqa: E501
         """/message/{message}/annotations/disassociate/{annotation} [POST]  # noqa: E501
 
         This will enable us to dissassociate a message from an annotation.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.message_disassociate_annotation(annotation, message, async_req=True)
+        >>> thread = api.message_disassociate_annotation(message, annotation, async_req=True)
         >>> result = thread.get()
 
-        :param annotation: This is a specific annotation uuid. (required)
-        :type annotation: str
         :param message: This is the uuid of a message. (required)
         :type message: str
+        :param annotation: This is a specific annotation uuid. (required)
+        :type annotation: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request.
@@ -2851,23 +2851,23 @@ class ConversationMessageApi:
         if '_preload_content' in kwargs:
             message = "Error! Please call the message_disassociate_annotation_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
             raise ValueError(message)
-        return self.message_disassociate_annotation_with_http_info(annotation, message, **kwargs)  # noqa: E501
+        return self.message_disassociate_annotation_with_http_info(message, annotation, **kwargs)  # noqa: E501
 
     @validate_arguments
-    def message_disassociate_annotation_with_http_info(self, annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], **kwargs) -> ApiResponse:  # noqa: E501
+    def message_disassociate_annotation_with_http_info(self, message : Annotated[StrictStr, Field(..., description="This is the uuid of a message.")], annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], **kwargs) -> ApiResponse:  # noqa: E501
         """/message/{message}/annotations/disassociate/{annotation} [POST]  # noqa: E501
 
         This will enable us to dissassociate a message from an annotation.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.message_disassociate_annotation_with_http_info(annotation, message, async_req=True)
+        >>> thread = api.message_disassociate_annotation_with_http_info(message, annotation, async_req=True)
         >>> result = thread.get()
 
-        :param annotation: This is a specific annotation uuid. (required)
-        :type annotation: str
         :param message: This is the uuid of a message. (required)
         :type message: str
+        :param annotation: This is a specific annotation uuid. (required)
+        :type annotation: str
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -2896,8 +2896,8 @@ class ConversationMessageApi:
         _params = locals()
 
         _all_params = [
-            'annotation',
-            'message'
+            'message',
+            'annotation'
         ]
         _all_params.extend(
             [
@@ -2925,11 +2925,11 @@ class ConversationMessageApi:
 
         # process the path parameters
         _path_params = {}
-        if _params['annotation'] is not None:
-            _path_params['annotation'] = _params['annotation']
-
         if _params['message'] is not None:
             _path_params['message'] = _params['message']
+
+        if _params['annotation'] is not None:
+            _path_params['annotation'] = _params['annotation']
 
 
         # process the query parameters

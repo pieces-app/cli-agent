@@ -46,7 +46,10 @@ class FlattenedAnchor(BaseModel):
     summaries: Optional[FlattenedWorkstreamSummaries] = None
     persons: Optional[FlattenedPersons] = None
     messages: Optional[FlattenedConversationMessages] = None
-    __properties = ["schema", "id", "type", "watch", "points", "created", "updated", "deleted", "assets", "name", "annotations", "conversations", "score", "summaries", "persons", "messages"]
+    workstream_events: Optional[FlattenedWorkstreamEvents] = None
+    sources: Optional[FlattenedIdentifiedWorkstreamPatternEngineSources] = None
+    tags: Optional[FlattenedTags] = None
+    __properties = ["schema", "id", "type", "watch", "points", "created", "updated", "deleted", "assets", "name", "annotations", "conversations", "score", "summaries", "persons", "messages", "workstream_events", "sources", "tags"]
 
     class Config:
         """Pydantic configuration"""
@@ -108,6 +111,15 @@ class FlattenedAnchor(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of messages
         if self.messages:
             _dict['messages'] = self.messages.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_events
+        if self.workstream_events:
+            _dict['workstream_events'] = self.workstream_events.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of sources
+        if self.sources:
+            _dict['sources'] = self.sources.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of tags
+        if self.tags:
+            _dict['tags'] = self.tags.to_dict()
         return _dict
 
     @classmethod
@@ -135,7 +147,10 @@ class FlattenedAnchor(BaseModel):
             "score": Score.from_dict(obj.get("score")) if obj.get("score") is not None else None,
             "summaries": FlattenedWorkstreamSummaries.from_dict(obj.get("summaries")) if obj.get("summaries") is not None else None,
             "persons": FlattenedPersons.from_dict(obj.get("persons")) if obj.get("persons") is not None else None,
-            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None
+            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None,
+            "workstream_events": FlattenedWorkstreamEvents.from_dict(obj.get("workstream_events")) if obj.get("workstream_events") is not None else None,
+            "sources": FlattenedIdentifiedWorkstreamPatternEngineSources.from_dict(obj.get("sources")) if obj.get("sources") is not None else None,
+            "tags": FlattenedTags.from_dict(obj.get("tags")) if obj.get("tags") is not None else None
         })
         return _obj
 
@@ -144,7 +159,10 @@ from pieces._vendor.pieces_os_client.models.flattened_annotations import Flatten
 from pieces._vendor.pieces_os_client.models.flattened_assets import FlattenedAssets
 from pieces._vendor.pieces_os_client.models.flattened_conversation_messages import FlattenedConversationMessages
 from pieces._vendor.pieces_os_client.models.flattened_conversations import FlattenedConversations
+from pieces._vendor.pieces_os_client.models.flattened_identified_workstream_pattern_engine_sources import FlattenedIdentifiedWorkstreamPatternEngineSources
 from pieces._vendor.pieces_os_client.models.flattened_persons import FlattenedPersons
+from pieces._vendor.pieces_os_client.models.flattened_tags import FlattenedTags
+from pieces._vendor.pieces_os_client.models.flattened_workstream_events import FlattenedWorkstreamEvents
 from pieces._vendor.pieces_os_client.models.flattened_workstream_summaries import FlattenedWorkstreamSummaries
 FlattenedAnchor.update_forward_refs()
 

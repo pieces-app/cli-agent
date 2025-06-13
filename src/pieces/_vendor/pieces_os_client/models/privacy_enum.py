@@ -30,6 +30,7 @@ class PrivacyEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     OPEN = 'OPEN'
     CLOSED = 'CLOSED'
     ANONYMOUS = 'ANONYMOUS'

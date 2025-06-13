@@ -21,6 +21,7 @@ from pydantic.v1 import validate_arguments, ValidationError
 
 from typing import Optional
 
+from pieces._vendor.pieces_os_client.models.local_notification_response import LocalNotificationResponse
 from pieces._vendor.pieces_os_client.models.notification import Notification
 
 from pieces._vendor.pieces_os_client.api_client import ApiClient
@@ -44,10 +45,10 @@ class NotificationsApi:
         self.api_client = api_client
 
     @validate_arguments
-    def send_local_notification(self, notification : Optional[Notification] = None, **kwargs) -> None:  # noqa: E501
-        """Send notification  # noqa: E501
+    def send_local_notification(self, notification : Optional[Notification] = None, **kwargs) -> LocalNotificationResponse:  # noqa: E501
+        """/notifications/local/send [POST]  # noqa: E501
 
-        Retrieves a snapshot of all available models.  # noqa: E501
+        This will accept a notification to send and will return the uuid of the notification  for now: this will just be fire && forget notifications  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
@@ -65,7 +66,7 @@ class NotificationsApi:
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: None
+        :rtype: LocalNotificationResponse
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -75,9 +76,9 @@ class NotificationsApi:
 
     @validate_arguments
     def send_local_notification_with_http_info(self, notification : Optional[Notification] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Send notification  # noqa: E501
+        """/notifications/local/send [POST]  # noqa: E501
 
-        Retrieves a snapshot of all available models.  # noqa: E501
+        This will accept a notification to send and will return the uuid of the notification  for now: this will just be fire && forget notifications  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
@@ -108,7 +109,7 @@ class NotificationsApi:
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: None
+        :rtype: tuple(LocalNotificationResponse, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -155,6 +156,10 @@ class NotificationsApi:
         if _params['notification'] is not None:
             _body_params = _params['notification']
 
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
         # set the HTTP header `Content-Type`
         _content_types_list = _params.get('_content_type',
             self.api_client.select_header_content_type(
@@ -165,7 +170,9 @@ class NotificationsApi:
         # authentication setting
         _auth_settings = ['application']  # noqa: E501
 
-        _response_types_map = {}
+        _response_types_map = {
+            '200': "LocalNotificationResponse",
+        }
 
         return self.api_client.call_api(
             '/notifications/local/send', 'POST',

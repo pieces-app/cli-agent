@@ -30,6 +30,7 @@ class EmbeddedModelSchemaSemanticVersionEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     MAJOR_0_MINOR_0_PATCH_1 = 'MAJOR_0_MINOR_0_PATCH_1'
 
     @classmethod

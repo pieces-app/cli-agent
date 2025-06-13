@@ -28,18 +28,18 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
     These are all of the available event types that are permitted in an object pair notation.  # noqa: E501
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    session_initialized: Optional[StrictStr] = Field(default=None, description="The key value pair for an application being opened.")
-    session_local_connection_succeeded: Optional[StrictStr] = Field(default=None, description="There was a successful connection locally")
-    session_local_connection_failed: Optional[StrictStr] = Field(default=None, description="There was a failed connection locally")
-    session_inactive: Optional[StrictStr] = Field(default=None, description="If the current application is in the background or not, could also be minimized.")
-    session_active: Optional[StrictStr] = Field(default=None, description="If the application has been brought to the forground.")
-    session_terminated: Optional[StrictStr] = Field(default=None, description="If the user has closed the application, thus ending the session.")
-    session_authenticated_with_sign_in: Optional[StrictStr] = Field(default=None, description="A user has signed into this session with a an external account")
-    session_unauthenticated_with_sign_out: Optional[StrictStr] = Field(default=None, description="A user has signed out of this session")
-    session_unauthenticated_with_dismiss: Optional[StrictStr] = Field(default=None, description="A user did not sign into the session with a dismissal")
-    session_unauthenticated_with_remind: Optional[StrictStr] = Field(default=None, description="A user did not sign into the session with a reminder")
-    session_onboarding_initialized: Optional[StrictStr] = Field(default=None, description="Onboarding has been initialized for this session")
-    session_onboarding_completed: Optional[StrictStr] = Field(default=None, description="Onboarding has been completed for this session")
+    session_initialized: Optional[StrictStr] = Field(default='UNKNOWN', description="The key value pair for an application being opened.")
+    session_local_connection_succeeded: Optional[StrictStr] = Field(default='UNKNOWN', description="There was a successful connection locally")
+    session_local_connection_failed: Optional[StrictStr] = Field(default='UNKNOWN', description="There was a failed connection locally")
+    session_inactive: Optional[StrictStr] = Field(default='UNKNOWN', description="If the current application is in the background or not, could also be minimized.")
+    session_active: Optional[StrictStr] = Field(default='UNKNOWN', description="If the application has been brought to the forground.")
+    session_terminated: Optional[StrictStr] = Field(default='UNKNOWN', description="If the user has closed the application, thus ending the session.")
+    session_authenticated_with_sign_in: Optional[StrictStr] = Field(default='UNKNOWN', description="A user has signed into this session with a an external account")
+    session_unauthenticated_with_sign_out: Optional[StrictStr] = Field(default='UNKNOWN', description="A user has signed out of this session")
+    session_unauthenticated_with_dismiss: Optional[StrictStr] = Field(default='UNKNOWN', description="A user did not sign into the session with a dismissal")
+    session_unauthenticated_with_remind: Optional[StrictStr] = Field(default='UNKNOWN', description="A user did not sign into the session with a reminder")
+    session_onboarding_initialized: Optional[StrictStr] = Field(default='UNKNOWN', description="Onboarding has been initialized for this session")
+    session_onboarding_completed: Optional[StrictStr] = Field(default='UNKNOWN', description="Onboarding has been completed for this session")
     __properties = ["schema", "session_initialized", "session_local_connection_succeeded", "session_local_connection_failed", "session_inactive", "session_active", "session_terminated", "session_authenticated_with_sign_in", "session_unauthenticated_with_sign_out", "session_unauthenticated_with_dismiss", "session_unauthenticated_with_remind", "session_onboarding_initialized", "session_onboarding_completed"]
 
     @validator('session_initialized')
@@ -48,8 +48,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_session_has_been_initialized_and_the_application_has_been_opened',):
-            raise ValueError("must be one of enum values ('a_session_has_been_initialized_and_the_application_has_been_opened')")
+        if value not in ('UNKNOWN', 'a_session_has_been_initialized_and_the_application_has_been_opened',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_session_has_been_initialized_and_the_application_has_been_opened')")
         return value
 
     @validator('session_local_connection_succeeded')
@@ -58,8 +58,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('one_or_more_applications_has_successfully_connected',):
-            raise ValueError("must be one of enum values ('one_or_more_applications_has_successfully_connected')")
+        if value not in ('UNKNOWN', 'one_or_more_applications_has_successfully_connected',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'one_or_more_applications_has_successfully_connected')")
         return value
 
     @validator('session_local_connection_failed')
@@ -68,8 +68,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('one_or_more_applications_has_failed_to_connect_locally',):
-            raise ValueError("must be one of enum values ('one_or_more_applications_has_failed_to_connect_locally')")
+        if value not in ('UNKNOWN', 'one_or_more_applications_has_failed_to_connect_locally',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'one_or_more_applications_has_failed_to_connect_locally')")
         return value
 
     @validator('session_inactive')
@@ -78,8 +78,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_session_is_inactive_because_the_application_is_not_in_the_foreground',):
-            raise ValueError("must be one of enum values ('a_session_is_inactive_because_the_application_is_not_in_the_foreground')")
+        if value not in ('UNKNOWN', 'a_session_is_inactive_because_the_application_is_not_in_the_foreground',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_session_is_inactive_because_the_application_is_not_in_the_foreground')")
         return value
 
     @validator('session_active')
@@ -88,8 +88,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_session_is_active_because_the_application_is_in_the_foreground',):
-            raise ValueError("must be one of enum values ('a_session_is_active_because_the_application_is_in_the_foreground')")
+        if value not in ('UNKNOWN', 'a_session_is_active_because_the_application_is_in_the_foreground',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_session_is_active_because_the_application_is_in_the_foreground')")
         return value
 
     @validator('session_terminated')
@@ -98,8 +98,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_session_has_been_ended_and_the_application_has_been_closed',):
-            raise ValueError("must be one of enum values ('a_session_has_been_ended_and_the_application_has_been_closed')")
+        if value not in ('UNKNOWN', 'a_session_has_been_ended_and_the_application_has_been_closed',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_session_has_been_ended_and_the_application_has_been_closed')")
         return value
 
     @validator('session_authenticated_with_sign_in')
@@ -108,8 +108,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_user_has_signed_into_this_session_with_a_an_external_account',):
-            raise ValueError("must be one of enum values ('a_user_has_signed_into_this_session_with_a_an_external_account')")
+        if value not in ('UNKNOWN', 'a_user_has_signed_into_this_session_with_a_an_external_account',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_user_has_signed_into_this_session_with_a_an_external_account')")
         return value
 
     @validator('session_unauthenticated_with_sign_out')
@@ -118,8 +118,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_user_has_signed_out_of_this_session',):
-            raise ValueError("must be one of enum values ('a_user_has_signed_out_of_this_session')")
+        if value not in ('UNKNOWN', 'a_user_has_signed_out_of_this_session',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_user_has_signed_out_of_this_session')")
         return value
 
     @validator('session_unauthenticated_with_dismiss')
@@ -128,8 +128,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_user_did_not_sign_into_the_session_with_a_dismissal',):
-            raise ValueError("must be one of enum values ('a_user_did_not_sign_into_the_session_with_a_dismissal')")
+        if value not in ('UNKNOWN', 'a_user_did_not_sign_into_the_session_with_a_dismissal',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_user_did_not_sign_into_the_session_with_a_dismissal')")
         return value
 
     @validator('session_unauthenticated_with_remind')
@@ -138,8 +138,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('a_user_did_not_sign_into_the_session_with_a_reminder',):
-            raise ValueError("must be one of enum values ('a_user_did_not_sign_into_the_session_with_a_reminder')")
+        if value not in ('UNKNOWN', 'a_user_did_not_sign_into_the_session_with_a_reminder',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'a_user_did_not_sign_into_the_session_with_a_reminder')")
         return value
 
     @validator('session_onboarding_initialized')
@@ -148,8 +148,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('onboarding_has_been_initialized_for_this_session',):
-            raise ValueError("must be one of enum values ('onboarding_has_been_initialized_for_this_session')")
+        if value not in ('UNKNOWN', 'onboarding_has_been_initialized_for_this_session',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'onboarding_has_been_initialized_for_this_session')")
         return value
 
     @validator('session_onboarding_completed')
@@ -158,8 +158,8 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('onboarding_has_been_completed_for_this_session',):
-            raise ValueError("must be one of enum values ('onboarding_has_been_completed_for_this_session')")
+        if value not in ('UNKNOWN', 'onboarding_has_been_completed_for_this_session',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'onboarding_has_been_completed_for_this_session')")
         return value
 
     class Config:
@@ -202,18 +202,18 @@ class TrackedSessionEventIdentifierDescriptionPairs(BaseModel):
 
         _obj = TrackedSessionEventIdentifierDescriptionPairs.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "session_initialized": obj.get("session_initialized"),
-            "session_local_connection_succeeded": obj.get("session_local_connection_succeeded"),
-            "session_local_connection_failed": obj.get("session_local_connection_failed"),
-            "session_inactive": obj.get("session_inactive"),
-            "session_active": obj.get("session_active"),
-            "session_terminated": obj.get("session_terminated"),
-            "session_authenticated_with_sign_in": obj.get("session_authenticated_with_sign_in"),
-            "session_unauthenticated_with_sign_out": obj.get("session_unauthenticated_with_sign_out"),
-            "session_unauthenticated_with_dismiss": obj.get("session_unauthenticated_with_dismiss"),
-            "session_unauthenticated_with_remind": obj.get("session_unauthenticated_with_remind"),
-            "session_onboarding_initialized": obj.get("session_onboarding_initialized"),
-            "session_onboarding_completed": obj.get("session_onboarding_completed")
+            "session_initialized": obj.get("session_initialized") if obj.get("session_initialized") is not None else 'UNKNOWN',
+            "session_local_connection_succeeded": obj.get("session_local_connection_succeeded") if obj.get("session_local_connection_succeeded") is not None else 'UNKNOWN',
+            "session_local_connection_failed": obj.get("session_local_connection_failed") if obj.get("session_local_connection_failed") is not None else 'UNKNOWN',
+            "session_inactive": obj.get("session_inactive") if obj.get("session_inactive") is not None else 'UNKNOWN',
+            "session_active": obj.get("session_active") if obj.get("session_active") is not None else 'UNKNOWN',
+            "session_terminated": obj.get("session_terminated") if obj.get("session_terminated") is not None else 'UNKNOWN',
+            "session_authenticated_with_sign_in": obj.get("session_authenticated_with_sign_in") if obj.get("session_authenticated_with_sign_in") is not None else 'UNKNOWN',
+            "session_unauthenticated_with_sign_out": obj.get("session_unauthenticated_with_sign_out") if obj.get("session_unauthenticated_with_sign_out") is not None else 'UNKNOWN',
+            "session_unauthenticated_with_dismiss": obj.get("session_unauthenticated_with_dismiss") if obj.get("session_unauthenticated_with_dismiss") is not None else 'UNKNOWN',
+            "session_unauthenticated_with_remind": obj.get("session_unauthenticated_with_remind") if obj.get("session_unauthenticated_with_remind") is not None else 'UNKNOWN',
+            "session_onboarding_initialized": obj.get("session_onboarding_initialized") if obj.get("session_onboarding_initialized") is not None else 'UNKNOWN',
+            "session_onboarding_completed": obj.get("session_onboarding_completed") if obj.get("session_onboarding_completed") is not None else 'UNKNOWN'
         })
         return _obj
 

@@ -19,16 +19,18 @@ import re  # noqa: F401
 import json
 
 
-
+from typing import Optional
 from pydantic.v1 import BaseModel, Field, StrictStr
+from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 
 class ModelContextProtocolSchemaVersion(BaseModel):
     """
     This is a singular schema version for MCP  # noqa: E501
     """
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     version: StrictStr = Field(...)
     entry_endpoint: StrictStr = Field(default=..., description="this is the endpoint that the use should use to configure the server.")
-    __properties = ["version", "entry_endpoint"]
+    __properties = ["schema", "version", "entry_endpoint"]
 
     class Config:
         """Pydantic configuration"""
@@ -54,6 +56,9 @@ class ModelContextProtocolSchemaVersion(BaseModel):
                           exclude={
                           },
                           exclude_none=True)
+        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
@@ -66,6 +71,7 @@ class ModelContextProtocolSchemaVersion(BaseModel):
             return ModelContextProtocolSchemaVersion.parse_obj(obj)
 
         _obj = ModelContextProtocolSchemaVersion.parse_obj({
+            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
             "version": obj.get("version"),
             "entry_endpoint": obj.get("entry_endpoint")
         })

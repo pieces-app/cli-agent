@@ -30,6 +30,7 @@ class ModelFoundationEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     GPT_3_DOT_5 = 'GPT_3.5'
     GPT_4 = 'GPT_4'
     T5 = 'T5'
@@ -167,7 +168,7 @@ class ModelFoundationEnum(str, Enum):
     VICUNA_LATEST = 'VICUNA_LATEST'
     WIZARD_LATEST = 'WIZARD_LATEST'
     ZEPHYR_LATEST = 'ZEPHYR_LATEST'
-    UNKNOWN = 'UNKNOWN'
+    POTION = 'POTION'
 
     @classmethod
     def from_json(cls, json_str: str) -> ModelFoundationEnum:

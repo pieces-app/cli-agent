@@ -30,12 +30,12 @@ class QGPTStreamEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     CANCELED = 'CANCELED'
     INITIALIZED = 'INITIALIZED'
     IN_MINUS_PROGRESS = 'IN-PROGRESS'
     COMPLETED = 'COMPLETED'
     FAILED = 'FAILED'
-    UNKNOWN = 'UNKNOWN'
     STOPPED = 'STOPPED'
     RESET = 'RESET'
 

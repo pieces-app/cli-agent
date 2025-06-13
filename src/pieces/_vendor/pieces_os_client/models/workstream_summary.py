@@ -36,6 +36,7 @@ from pieces._vendor.pieces_os_client.models.flattened_tags import FlattenedTags
 from pieces._vendor.pieces_os_client.models.flattened_websites import FlattenedWebsites
 from pieces._vendor.pieces_os_client.models.flattened_workstream_events import FlattenedWorkstreamEvents
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
+from pieces._vendor.pieces_os_client.models.mechanism_enum import MechanismEnum
 from pieces._vendor.pieces_os_client.models.model import Model
 from pieces._vendor.pieces_os_client.models.score import Score
 
@@ -60,12 +61,13 @@ class WorkstreamSummary(BaseModel):
     persons: Optional[FlattenedPersons] = None
     applications: Optional[Applications] = None
     tags: Optional[FlattenedTags] = None
-    workstream_summaries_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="workstreamSummariesVector", description="This is the embedding for the format.(NEEDs to connection.vector) and specific here because we can only index on a single name")
+    workstream_summaries_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="workstreamSummariesVector", description="This is the embedding for the format.(NEEDs to connection.vector) and specific here because we can only index on a single name NOTE: this the the vector index that corresponds the the couchbase lite index.")
     sources: Optional[FlattenedIdentifiedWorkstreamPatternEngineSources] = None
     processing: Optional[CapabilitiesEnum] = None
     favorited: Optional[StrictBool] = None
     messages: Optional[FlattenedConversationMessages] = None
-    __properties = ["schema", "id", "score", "created", "updated", "events", "name", "annotations", "ranges", "model", "websites", "anchors", "assets", "conversations", "persons", "applications", "tags", "workstreamSummariesVector", "sources", "processing", "favorited", "messages"]
+    mechanism: Optional[MechanismEnum] = None
+    __properties = ["schema", "id", "score", "created", "updated", "events", "name", "annotations", "ranges", "model", "websites", "anchors", "assets", "conversations", "persons", "applications", "tags", "workstreamSummariesVector", "sources", "processing", "favorited", "messages", "mechanism"]
 
     class Config:
         """Pydantic configuration"""
@@ -175,7 +177,8 @@ class WorkstreamSummary(BaseModel):
             "sources": FlattenedIdentifiedWorkstreamPatternEngineSources.from_dict(obj.get("sources")) if obj.get("sources") is not None else None,
             "processing": obj.get("processing"),
             "favorited": obj.get("favorited"),
-            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None
+            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None,
+            "mechanism": obj.get("mechanism")
         })
         return _obj
 
