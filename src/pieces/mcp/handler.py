@@ -16,14 +16,15 @@ from .integrations import (
     goose_integration,
     cursor_integration,
     claude_integration,
-    mcp_integration_types,
     windsurf_integration,
     zed_integration,
+    shortwave_integration,
+    claude_cli_integration,
     wrap_instructions,
     wrap_sse_json,
     wrap_stdio_json,
 )
-from .integration import Integration
+from .integration import Integration, mcp_integration_types
 
 # NOTE: the key should be the same as the parameter name in the handle_mcp function
 supported_mcps: Dict[mcp_integration_types, Integration] = {
@@ -33,6 +34,8 @@ supported_mcps: Dict[mcp_integration_types, Integration] = {
     "claude": claude_integration,
     "windsurf": windsurf_integration,
     "zed": zed_integration,
+    "shortwave": shortwave_integration,
+    "claude_code": claude_cli_integration,
 }
 
 
@@ -45,6 +48,8 @@ def handle_mcp(
     windsurf: bool = False,
     raycast: bool = False,
     wrap: bool = False,
+    shortwave: bool = False,
+    claude_code: bool = False,
     stdio: bool = False,
     **kwargs,
 ):
@@ -75,7 +80,7 @@ def handle_mcp(
     if cursor:
         supported_mcps["cursor"].run(stdio, **args)
 
-    if claude or zed or raycast:
+    if claude or zed or raycast or claude_code or shortwave:
         if not stdio:
             Settings.logger.print(
                 "[yellow]Warning: Using stdio instead of sse because sse connection is not supported"
@@ -83,7 +88,18 @@ def handle_mcp(
         if raycast:
             handle_raycast()
             return
-        supported_mcps["zed" if zed else "claude"].run(stdio=True)
+        if claude:
+            mcp = "claude"
+        elif zed:
+            mcp = "zed"
+        elif claude_code:
+            mcp = "claude_code"
+        elif shortwave:
+            mcp = "shortwave"
+        else:
+            return
+        supported_mcps[mcp].run(stdio=True)
+        return
 
     if windsurf:
         supported_mcps["windsurf"].run(stdio)
@@ -95,8 +111,13 @@ def handle_mcp(
         text = wrap_instructions.format(json=jsn)
         Settings.logger.print(Markdown(text))
 
-    if not any([claude, cursor, vscode, goose, zed, windsurf, raycast, wrap]):
-        menu = [(val.readable, {key: True, "stdio": stdio}) for key, val in supported_mcps.items()]
+    if not any(
+        [claude, cursor, vscode, goose, zed, windsurf, raycast, wrap, shortwave]
+    ):
+        menu = [
+            (val.readable, {key: True, "stdio": stdio})
+            for key, val in supported_mcps.items()
+        ]
         menu.append(("Raycast", {"raycast": True, "stdio": stdio}))  # append raycast
         menu.append(("Wrap", {"wrap": True, "stdio": stdio}))  # append warp
         PiecesSelectMenu(

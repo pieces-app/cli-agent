@@ -1,6 +1,7 @@
 import json
 import os
-from typing import Callable, Dict, List, Literal, Tuple, Optional, TypedDict
+from typing import Callable, Dict, List, Literal, Tuple, Optional, TypedDict, get_args
+
 from rich.markdown import Markdown
 import yaml
 import sys
@@ -15,18 +16,27 @@ MCP_types = Literal["sse", "stdio"]
 
 IntegrationDict = Dict[str, MCP_types]
 
+mcp_integration_types = Literal[
+    "vscode", "goose", "cursor", "claude", "windsurf", "zed", "shortwave", "claude_code"
+]
+mcp_integrations: List[mcp_integration_types] = list(get_args(mcp_integration_types))
+
 
 class ConfigDict(TypedDict, total=False):
     schema: str
-    vs_code: IntegrationDict
+    vscode: IntegrationDict
     cursor: IntegrationDict
     goose: IntegrationDict
     claude: IntegrationDict
+    windsurf: IntegrationDict
+    zed: IntegrationDict
+    shortwave: IntegrationDict
+    claude_code: IntegrationDict
 
 
 class MCPLocalConfig:
     DEFAULT_SCHEMA = "0.0.0"
-    DEFAULT_INTEGRATIONS = ["vs_code", "cursor", "goose", "claude"]
+    DEFAULT_INTEGRATIONS = mcp_integrations
 
     def __init__(self) -> None:
         self.config: ConfigDict = self.load_config()
@@ -265,6 +275,10 @@ class Integration:
             with open(path, "r") as f:
                 settings = self.loader(f)
         except FileNotFoundError as e:
+            parent_dir = os.path.dirname(path)
+
+            if os.path.exists(parent_dir):
+                return {}
             raise e  # @tsavo-at-pieces Do we need to create the file? or just raise the error?
         except (json.JSONDecodeError, yaml.YAMLError):
             if os.path.getsize(path) == 0:

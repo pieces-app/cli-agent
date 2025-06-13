@@ -38,6 +38,8 @@ class URLs(Enum):
     ZED_MCP_DOCS = "https://zed.dev/docs/ai/mcp"
     RAYCAST_MCP_DOCS = "https://manual.raycast.com/model-context-protocol"
     WRAP_MCP_DOCS = "https://docs.warp.dev/knowledge-and-collaboration/mcp"
+    SHORT_WAVE_MCP_DOCS = "https://www.shortwave.com/docs/how-tos/using-mcp/"
+    CLAUDE_CLI_MCP_DOCS = "https://docs.anthropic.com/en/docs/claude-code/mcp"
 
     # MCP Command Documentation URLs
     CLI_MCP_DOCS = "https://docs.pieces.app/products/cli/copilot/chat#pieces-mcp"
