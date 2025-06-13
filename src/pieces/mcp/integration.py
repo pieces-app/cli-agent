@@ -3,7 +3,7 @@ import os
 from typing import Callable, Dict, List, Literal, Tuple, Optional, TypedDict
 from rich.markdown import Markdown
 import yaml
-import shutil
+import sys
 
 from pieces.copilot.ltm import check_ltm
 from pieces.settings import Settings
@@ -101,7 +101,8 @@ class MCPProperties:
         self.url_property_name = url_property_name
         self.command_property_name = command_property_name
         self.args_property_name = args_property_name
-        self.pieces_cli_bin_path = shutil.which("pieces")
+        # Better than shutil.which if pieces is not added to the path
+        self.pieces_cli_bin_path = os.path.abspath(sys.argv[0])
 
     def mcp_settings(self, mcp_type: MCP_types):
         if mcp_type == "sse":
@@ -121,7 +122,7 @@ class MCPProperties:
             mcp_settings[self.url_property_name] = get_mcp_latest_url()
         else:
             mcp_settings[self.command_property_name] = self.pieces_cli_bin_path
-            mcp_settings[self.args_property_name] = ["mcp", "start"]
+            mcp_settings[self.args_property_name] = ["--ignore-onboarding", "mcp", "start"]
         return mcp_settings
 
 
