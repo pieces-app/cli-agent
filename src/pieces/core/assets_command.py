@@ -220,7 +220,7 @@ class AssetsCommands:
             except PermissionError:
                 Settings.logger.print(
                     Markdown(
-                        "Please login using `pieces login` command and make sure you are connected to the Pieces cloud"
+                        "Please sign in using `pieces login` command and make sure you are connected to the Pieces cloud"
                     )
                 )
                 return

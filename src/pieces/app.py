@@ -60,6 +60,7 @@ class PiecesCLI:
         mcp_subcommand = getattr(args, "mcp", None)
 
         # Check if the command needs PiecesOS or not
+        # TODO: need some cleanups here
         if command not in [
             "help",
             "--version",
@@ -68,8 +69,10 @@ class PiecesCLI:
             "feedback",
             "contribute",
             "open",
+            "config"
         ] and not (command == "mcp" and mcp_subcommand == "start"):
-            Settings.startup()
+            bypass_loging = True if (command in ["version"]) else False
+            Settings.startup(bypass_loging)
         Settings.logger.debug(f"Running command {arg} using: {args}")
         args.func(**vars(args))
 

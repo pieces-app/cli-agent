@@ -57,6 +57,7 @@ class Copilot:
         from pieces._vendor.pieces_os_client.models.qgpt_relevance_input_options import QGPTRelevanceInputOptions
         from pieces._vendor.pieces_os_client.models.qgpt_conversation_pipeline import QGPTConversationPipeline
         from pieces._vendor.pieces_os_client.models.qgpt_conversation_pipeline_for_contextualized_code_workstream_dialog import QGPTConversationPipelineForContextualizedCodeWorkstreamDialog
+        from pieces._vendor.pieces_os_client.models.qgpt_prompt_pipeline import QGPTPromptPipeline
 
         if self.context.ltm.is_chat_ltm_enabled:
             pipeline = pipeline or QGPTPromptPipeline(
