@@ -2,7 +2,7 @@ import pytest
 from tests.utils import SCRIPT_NAME
 from unittest.mock import patch
 from pieces.app import main
-from pieces_os_client.models.classification_specific_enum import (
+from pieces._vendor.pieces_os_client.models.classification_specific_enum import (
     ClassificationSpecificEnum,
 )
 
