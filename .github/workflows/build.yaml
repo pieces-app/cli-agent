@@ -554,11 +554,15 @@ jobs:
           # Decode certificate from base64
           [System.Convert]::FromBase64String($env:CERTIFICATE) | Set-Content -Path "certificate.pfx" -AsByteStream
           
+          # Find the latest signtool version
+          $signtoolPath = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object Name -Descending | Select-Object -First 1
+          Write-Output "Using signtool: $($signtoolPath.FullName)"
+          
           # Sign the executable
-          signtool sign /f certificate.pfx /p "$env:CERT_PASSWORD" /tr http://timestamp.digicert.com /td sha256 /fd sha256 "choco/tools/pieces/pieces.exe"
+          & $signtoolPath.FullName sign /v /fd "SHA256" /a /f "certificate.pfx" /p "$env:CERT_PASSWORD" /tr "http://timestamp.digicert.com" /td SHA256 "choco/tools/pieces/pieces.exe"
           
           # Verify the signature
-          signtool verify /pa "choco/tools/pieces/pieces.exe"
+          & $signtoolPath.FullName verify /pa "choco/tools/pieces/pieces.exe"
           
           # Clean up certificate file
           Remove-Item "certificate.pfx" -Force
