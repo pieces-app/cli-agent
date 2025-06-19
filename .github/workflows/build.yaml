@@ -546,6 +546,25 @@ jobs:
           Write-Output "Final structure:"
           Get-ChildItem "choco/tools/pieces" -Recurse | Select-Object Name, FullName
 
+      - name: Sign executable
+        env:
+          CERTIFICATE: ${{ secrets.CODE_SIGNING_CERT }}
+          CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+        run: |
+          # Decode certificate from base64
+          echo "$env:CERTIFICATE" | ForEach-Object { [System.Convert]::FromBase64String($_) } | Set-Content -Path "certificate.pfx" -Encoding Byte
+          
+          # Sign the executable
+          signtool sign /f certificate.pfx /p "$env:CERT_PASSWORD" /tr http://timestamp.digicert.com /td sha256 /fd sha256 "choco/tools/pieces/pieces.exe"
+          
+          # Verify the signature
+          signtool verify /pa "choco/tools/pieces/pieces.exe"
+          
+          # Clean up certificate file
+          Remove-Item "certificate.pfx" -Force
+          
+          Write-Output "✓ pieces.exe has been signed successfully"
+
       - name: Copy LICENSE
         run: |
           Copy-Item -Path "LICENSE" -Destination "choco/tools/LICENSE.txt" -Force
