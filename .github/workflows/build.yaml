@@ -110,6 +110,7 @@ jobs:
       - name: Build static completions
         run: |
           mkdir -p src/pieces/completions
+          touch src/pieces/completions/__init__.py
           python3 completion_scripts/autocomplete_generator.py --zsh >> src/pieces/completions/zsh
           python3 completion_scripts/autocomplete_generator.py --bash >> src/pieces/completions/bash
           python3 completion_scripts/autocomplete_generator.py --fish >> src/pieces/completions/fish
@@ -123,7 +124,7 @@ jobs:
       ### Note, this is also how it should be code-signed. Code-signing the Binary after it is built breaks it as I think it overwrites signatures on Python Libs
       - name: Build stand alone
         run: |
-          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)"
+          poetry run pyinstaller -c --onefile src/pieces/app.py  --hidden-import=pydantic_core --name=pieces --codesign-identity="Developer ID Application: Mesh Intelligent Technologies, Inc. (287L9TU9JL)" --add-data "src/pieces/completions/*:pieces/completions"
 
       ### Binary to Zip file
       - name: Mac Binary to Zip File
