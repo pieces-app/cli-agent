@@ -107,6 +107,14 @@ jobs:
         run: echo "${{ steps.staging_version.outputs.STAGING_VERSION }}" > staging_version$GITHUB_RUN_NUMBER.txt
         if: ${{ inputs.deploy == false && inputs.beta == false }}
 
+      - name: Build static completions
+        run: |
+          mkdir -p src/pieces/completions
+          python3 completion_scripts/autocomplete_generator.py --zsh >> src/pieces/completions/zsh
+          python3 completion_scripts/autocomplete_generator.py --bash >> src/pieces/completions/bash
+          python3 completion_scripts/autocomplete_generator.py --fish >> src/pieces/completions/fish
+
+
       ### Building the Library and Wheel files
       - name: Build library
         run: poetry build
