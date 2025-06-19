@@ -552,7 +552,7 @@ jobs:
           CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
         run: |
           # Decode certificate from base64
-          echo "$env:CERTIFICATE" | ForEach-Object { [System.Convert]::FromBase64String($_) } | Set-Content -Path "certificate.pfx" -Encoding Byte
+          [System.Convert]::FromBase64String($env:CERTIFICATE) | Set-Content -Path "certificate.pfx" -AsByteStream
           
           # Sign the executable
           signtool sign /f certificate.pfx /p "$env:CERT_PASSWORD" /tr http://timestamp.digicert.com /td sha256 /fd sha256 "choco/tools/pieces/pieces.exe"
