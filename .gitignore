@@ -172,3 +172,4 @@ macos/notes.txt
 logs
 
 ./completion_script/generated/
+src/pieces/completions/

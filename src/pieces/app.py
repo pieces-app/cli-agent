@@ -58,6 +58,8 @@ class PiecesCLI:
             command = "--version"
 
         mcp_subcommand = getattr(args, "mcp", None)
+        if not ignore_onboarding or command != "completion":
+            CompletionCommandGroup.instance.check_for_updates()  # noqa: F405
 
         # Check if the command needs PiecesOS or not
         # TODO: need some cleanups here
@@ -70,7 +72,7 @@ class PiecesCLI:
             "contribute",
             "open",
             "config",
-            "completion"
+            "completion",
         ] and not (command == "mcp" and mcp_subcommand == "start"):
             bypass_loging = True if (command in ["version"]) else False
             Settings.startup(bypass_loging)
@@ -85,10 +87,16 @@ def main():
     except KeyboardInterrupt:
         pass
     except Exception as e:
+        if __version__ == "dev":
+            Settings.logger.console.print_exception(show_locals=True)
+            return
+
         Settings.logger.critical(e)
         Settings.show_error("UNKNOWN EXCEPTION", e)
     finally:
-        from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import BaseWebsocket
+        from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import (
+            BaseWebsocket,
+        )
 
         BaseWebsocket.close_all()
 
