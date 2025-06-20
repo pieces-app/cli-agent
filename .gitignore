@@ -171,5 +171,7 @@ cli-agent.iml
 macos/notes.txt
 logs
 
+# Generated completions scripts for tests (to run the tests on)
 ./completion_script/generated/
+# Generated completion scripts for the commands interface (when running pieces completion install)
 src/pieces/completions/
