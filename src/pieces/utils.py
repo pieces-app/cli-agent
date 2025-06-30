@@ -168,9 +168,9 @@ class PiecesSelectMenu:
 
         style = Style.from_dict(
             {
-                "selected": "#ffffff bold",
-                "title": "#aaddff bold",
-                "footer": "#888888 italic",
+                "selected": "reverse bold",
+                "title": "ansicyan bold",
+                "footer": "ansibrightblack italic",
             }
         )
 
