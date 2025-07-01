@@ -266,8 +266,8 @@ text_success_windsurf = """
 > Ensure PiecesOS is running & LTM is enabled
 """
 
-wrap_instructions = """
-### Use Pieces LTM in Wrap
+warp_instructions = """
+### Use Pieces LTM in Warp
 
 1. From `Settings > AI > Manage MCP servers`
 
@@ -282,7 +282,7 @@ wrap_instructions = """
 > Ensure PiecesOS is running & LTM is enabled
 """
 
-wrap_stdio_json = """
+warp_stdio_json = """
 {
     "Pieces": {
         "command": "pieces",
@@ -294,7 +294,7 @@ wrap_stdio_json = """
 }
 """
 
-wrap_sse_json = """
+warp_sse_json = """
 {{
     "Pieces": {{
         "serverUrl": "{url}"
