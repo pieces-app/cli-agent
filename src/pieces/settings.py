@@ -9,7 +9,6 @@ from pieces._vendor.pieces_os_client.wrapper import PiecesClient
 from pieces._vendor.pieces_os_client.wrapper.version_compatibility import VersionChecker, UpdateEnum
 from pieces import __version__
 from pieces.gui import (
-    server_startup_failed,
     print_version_details,
 )
 from pieces.urls import URLs
@@ -145,7 +144,18 @@ class Settings:
             if not bypass_login:
                 cls.check_login()
         else:
-            server_startup_failed()
+            if cls.pieces_client.open_pieces_os(): # PiecesOS is running
+                return cls.startup(bypass_login)
+            else:
+                if cls.logger.confirm("Pieces OS is required but wasn’t found or couldn’t be launched.\n"
+                    "Do you want to install it now and get started?"):
+                    from .command_interface.simple_commands import InstallCommand
+
+                    status_code = InstallCommand.instance.execute()
+                    if status_code == 0:
+                        return cls.startup(bypass_login)
+                    sys.exit(status_code)
+
             sys.exit(2)  # Exit the program
 
     @classmethod
