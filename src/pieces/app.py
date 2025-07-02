@@ -41,11 +41,19 @@ class PiecesCLI:
             and not onboarded
             and not ignore_onboarding
         ):
-            res = Settings.logger.prompt(
-                "It looks like this is your first time using the Pieces CLI."
-                "\nWould you like to start onboarding",
-                choices=["y", "n", "skip"],
+            res = Settings.logger.print(
+                (
+                    "👋 It looks like this is your first time using the Pieces CLI.\n\n"
+                    "Would you like to start the onboarding process?\n"
+                    "\n"
+                    "  [y] Yes  – Start onboarding now.\n"
+                    "  [n] No   – Skip for now (you'll be asked again next time).\n"
+                    "  [skip]   – Don't ask me again (you can always run `pieces onboarding` manually).\n"
+                ),
+                markup=False
             )
+
+            res = Settings.logger.prompt(choices=["y", "n", "skip"])
             if res.lower() == "y":
                 return OnboardingCommand.instance.execute()  # noqa: F405
             elif res.lower() == "skip":

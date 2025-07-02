@@ -5,7 +5,9 @@ from .logger import Logger
 
 
 if TYPE_CHECKING:
-    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
+    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import (
+        BasicAsset,
+    )
 
 
 def print(*args, **kwargs):
@@ -38,22 +40,9 @@ def double_line(text):
     print()
 
 
-def server_startup_failed():
-    print()
-    print("############################")
-    print()
-    print(Markdown("Please make sure PiecesOS is running `pieces open` and up-to-date"))
-    print()
-    print(Markdown("Or, to install PiecesOS, use the `pieces install` command"))
-    print()
-    print("############################")
-    print()
-
-
 def print_version_details(pos_version, cli_version):
     print(Markdown(f"`PiecesOS Version:` {pos_version}"))
     print(Markdown(f"`CLI Version:` {cli_version}"))
-
 
 
 def double_space(text):
