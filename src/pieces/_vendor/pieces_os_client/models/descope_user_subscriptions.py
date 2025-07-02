@@ -19,18 +19,18 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr
+from typing import List, Optional
+from pydantic.v1 import BaseModel, Field, conlist
+from pieces._vendor.pieces_os_client.models.descope_user_subscription import DescopeUserSubscription
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 
-class ReferencedUser(BaseModel):
+class DescopeUserSubscriptions(BaseModel):
     """
-    A object to reference a user's ID and optionally a FlattenedUserProfile Instance   # noqa: E501
+    This is the descope user subscriptions  # noqa: E501
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(...)
-    reference: Optional[FlattenedUserProfile] = None
-    __properties = ["schema", "id", "reference"]
+    iterable: conlist(DescopeUserSubscription) = Field(default=..., description="This is the iterable of the descope user subscriptions")
+    __properties = ["schema", "iterable"]
 
     class Config:
         """Pydantic configuration"""
@@ -46,8 +46,8 @@ class ReferencedUser(BaseModel):
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a JSON string"""
+    def from_json(cls, json_str: str) -> DescopeUserSubscriptions:
+        """Create an instance of DescopeUserSubscriptions from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self):
@@ -59,27 +59,28 @@ class ReferencedUser(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of reference
-        if self.reference:
-            _dict['reference'] = self.reference.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of each item in iterable (list)
+        _items = []
+        if self.iterable:
+            for _item in self.iterable:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict['iterable'] = _items
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a dict"""
+    def from_dict(cls, obj: dict) -> DescopeUserSubscriptions:
+        """Create an instance of DescopeUserSubscriptions from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ReferencedUser.parse_obj(obj)
+            return DescopeUserSubscriptions.parse_obj(obj)
 
-        _obj = ReferencedUser.parse_obj({
+        _obj = DescopeUserSubscriptions.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "id": obj.get("id"),
-            "reference": FlattenedUserProfile.from_dict(obj.get("reference")) if obj.get("reference") is not None else None
+            "iterable": [DescopeUserSubscription.from_dict(_item) for _item in obj.get("iterable")] if obj.get("iterable") is not None else None
         })
         return _obj
 
-from pieces._vendor.pieces_os_client.models.flattened_user_profile import FlattenedUserProfile
-ReferencedUser.update_forward_refs()
 

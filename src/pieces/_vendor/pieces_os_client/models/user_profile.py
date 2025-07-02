@@ -19,14 +19,15 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr
+from typing import List, Optional
+from pydantic.v1 import BaseModel, Field, StrictStr, conlist
 from pieces._vendor.pieces_os_client.models.aesthetics import Aesthetics
 from pieces._vendor.pieces_os_client.models.allocation_cloud import AllocationCloud
 from pieces._vendor.pieces_os_client.models.auth0_user_metadata import Auth0UserMetadata
 from pieces._vendor.pieces_os_client.models.descope_user_metadata import DescopeUserMetadata
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.external_providers import ExternalProviders
+from pieces._vendor.pieces_os_client.models.flattened_subscriptions import FlattenedSubscriptions
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 
 class UserProfile(BaseModel):
@@ -47,7 +48,9 @@ class UserProfile(BaseModel):
     providers: Optional[ExternalProviders] = None
     auth0: Optional[Auth0UserMetadata] = None
     descope: Optional[DescopeUserMetadata] = None
-    __properties = ["schema", "picture", "email", "created", "updated", "username", "id", "name", "aesthetics", "vanityname", "allocation", "providers", "auth0", "descope"]
+    subscriptions: Optional[FlattenedSubscriptions] = None
+    api_keys: Optional[conlist(StrictStr)] = Field(default=None, alias="apiKeys")
+    __properties = ["schema", "picture", "email", "created", "updated", "username", "id", "name", "aesthetics", "vanityname", "allocation", "providers", "auth0", "descope", "subscriptions", "apiKeys"]
 
     class Config:
         """Pydantic configuration"""
@@ -97,6 +100,9 @@ class UserProfile(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of descope
         if self.descope:
             _dict['descope'] = self.descope.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of subscriptions
+        if self.subscriptions:
+            _dict['subscriptions'] = self.subscriptions.to_dict()
         return _dict
 
     @classmethod
@@ -122,7 +128,9 @@ class UserProfile(BaseModel):
             "allocation": AllocationCloud.from_dict(obj.get("allocation")) if obj.get("allocation") is not None else None,
             "providers": ExternalProviders.from_dict(obj.get("providers")) if obj.get("providers") is not None else None,
             "auth0": Auth0UserMetadata.from_dict(obj.get("auth0")) if obj.get("auth0") is not None else None,
-            "descope": DescopeUserMetadata.from_dict(obj.get("descope")) if obj.get("descope") is not None else None
+            "descope": DescopeUserMetadata.from_dict(obj.get("descope")) if obj.get("descope") is not None else None,
+            "subscriptions": FlattenedSubscriptions.from_dict(obj.get("subscriptions")) if obj.get("subscriptions") is not None else None,
+            "api_keys": obj.get("apiKeys")
         })
         return _obj
 

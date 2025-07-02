@@ -34,7 +34,8 @@ class FlattenedUserProfile(BaseModel):
     username: Optional[StrictStr] = None
     picture: Optional[StrictStr] = None
     vanityname: Optional[StrictStr] = None
-    __properties = ["schema", "id", "email", "name", "username", "picture", "vanityname"]
+    subscriptions: Optional[FlattenedSubscriptions] = None
+    __properties = ["schema", "id", "email", "name", "username", "picture", "vanityname", "subscriptions"]
 
     class Config:
         """Pydantic configuration"""
@@ -63,6 +64,9 @@ class FlattenedUserProfile(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of subscriptions
+        if self.subscriptions:
+            _dict['subscriptions'] = self.subscriptions.to_dict()
         return _dict
 
     @classmethod
@@ -81,8 +85,11 @@ class FlattenedUserProfile(BaseModel):
             "name": obj.get("name"),
             "username": obj.get("username"),
             "picture": obj.get("picture"),
-            "vanityname": obj.get("vanityname")
+            "vanityname": obj.get("vanityname"),
+            "subscriptions": FlattenedSubscriptions.from_dict(obj.get("subscriptions")) if obj.get("subscriptions") is not None else None
         })
         return _obj
 
+from pieces._vendor.pieces_os_client.models.flattened_subscriptions import FlattenedSubscriptions
+FlattenedUserProfile.update_forward_refs()
 
