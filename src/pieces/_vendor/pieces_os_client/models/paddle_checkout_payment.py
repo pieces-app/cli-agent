@@ -20,17 +20,17 @@ import json
 
 
 from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr
+from pydantic.v1 import BaseModel, Field
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from pieces._vendor.pieces_os_client.models.paddle_checkout_payment_method_details import PaddleCheckoutPaymentMethodDetails
 
-class ReferencedUser(BaseModel):
+class PaddleCheckoutPayment(BaseModel):
     """
-    A object to reference a user's ID and optionally a FlattenedUserProfile Instance   # noqa: E501
+    PaddleCheckoutPayment
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(...)
-    reference: Optional[FlattenedUserProfile] = None
-    __properties = ["schema", "id", "reference"]
+    method_details: PaddleCheckoutPaymentMethodDetails = Field(...)
+    __properties = ["schema", "method_details"]
 
     class Config:
         """Pydantic configuration"""
@@ -46,8 +46,8 @@ class ReferencedUser(BaseModel):
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a JSON string"""
+    def from_json(cls, json_str: str) -> PaddleCheckoutPayment:
+        """Create an instance of PaddleCheckoutPayment from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self):
@@ -59,27 +59,24 @@ class ReferencedUser(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of reference
-        if self.reference:
-            _dict['reference'] = self.reference.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of method_details
+        if self.method_details:
+            _dict['method_details'] = self.method_details.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a dict"""
+    def from_dict(cls, obj: dict) -> PaddleCheckoutPayment:
+        """Create an instance of PaddleCheckoutPayment from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ReferencedUser.parse_obj(obj)
+            return PaddleCheckoutPayment.parse_obj(obj)
 
-        _obj = ReferencedUser.parse_obj({
+        _obj = PaddleCheckoutPayment.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "id": obj.get("id"),
-            "reference": FlattenedUserProfile.from_dict(obj.get("reference")) if obj.get("reference") is not None else None
+            "method_details": PaddleCheckoutPaymentMethodDetails.from_dict(obj.get("method_details")) if obj.get("method_details") is not None else None
         })
         return _obj
 
-from pieces._vendor.pieces_os_client.models.flattened_user_profile import FlattenedUserProfile
-ReferencedUser.update_forward_refs()
 

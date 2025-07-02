@@ -19,18 +19,22 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr
+from typing import Optional, Union
+from pydantic.v1 import BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from pieces._vendor.pieces_os_client.models.subscription import Subscription
 
-class ReferencedUser(BaseModel):
+class SearchedSubscription(BaseModel):
     """
-    A object to reference a user's ID and optionally a FlattenedUserProfile Instance   # noqa: E501
+    TODO  # noqa: E501
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(...)
-    reference: Optional[FlattenedUserProfile] = None
-    __properties = ["schema", "id", "reference"]
+    subscription: Optional[Subscription] = None
+    exact: StrictBool = Field(...)
+    similarity: Union[StrictFloat, StrictInt] = Field(...)
+    temporal: Optional[StrictBool] = None
+    identifier: StrictStr = Field(default=..., description="This is the uuid of the source.")
+    __properties = ["schema", "subscription", "exact", "similarity", "temporal", "identifier"]
 
     class Config:
         """Pydantic configuration"""
@@ -46,8 +50,8 @@ class ReferencedUser(BaseModel):
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a JSON string"""
+    def from_json(cls, json_str: str) -> SearchedSubscription:
+        """Create an instance of SearchedSubscription from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self):
@@ -59,27 +63,28 @@ class ReferencedUser(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of reference
-        if self.reference:
-            _dict['reference'] = self.reference.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of subscription
+        if self.subscription:
+            _dict['subscription'] = self.subscription.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a dict"""
+    def from_dict(cls, obj: dict) -> SearchedSubscription:
+        """Create an instance of SearchedSubscription from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ReferencedUser.parse_obj(obj)
+            return SearchedSubscription.parse_obj(obj)
 
-        _obj = ReferencedUser.parse_obj({
+        _obj = SearchedSubscription.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "id": obj.get("id"),
-            "reference": FlattenedUserProfile.from_dict(obj.get("reference")) if obj.get("reference") is not None else None
+            "subscription": Subscription.from_dict(obj.get("subscription")) if obj.get("subscription") is not None else None,
+            "exact": obj.get("exact"),
+            "similarity": obj.get("similarity"),
+            "temporal": obj.get("temporal"),
+            "identifier": obj.get("identifier")
         })
         return _obj
 
-from pieces._vendor.pieces_os_client.models.flattened_user_profile import FlattenedUserProfile
-ReferencedUser.update_forward_refs()
 

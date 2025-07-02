@@ -23,14 +23,15 @@ from typing import Optional
 from pydantic.v1 import BaseModel, Field, StrictStr
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 
-class ReferencedUser(BaseModel):
+class PaddleCheckoutSettings(BaseModel):
     """
-    A object to reference a user's ID and optionally a FlattenedUserProfile Instance   # noqa: E501
+    PaddleCheckoutSettings
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(...)
-    reference: Optional[FlattenedUserProfile] = None
-    __properties = ["schema", "id", "reference"]
+    display_mode: StrictStr = Field(default=..., description="e.g. 'wide-overlay'")
+    theme: StrictStr = Field(default=..., description="e.g. 'light' or 'dark'")
+    locale: Optional[StrictStr] = None
+    __properties = ["schema", "display_mode", "theme", "locale"]
 
     class Config:
         """Pydantic configuration"""
@@ -46,8 +47,8 @@ class ReferencedUser(BaseModel):
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a JSON string"""
+    def from_json(cls, json_str: str) -> PaddleCheckoutSettings:
+        """Create an instance of PaddleCheckoutSettings from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self):
@@ -59,27 +60,23 @@ class ReferencedUser(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of reference
-        if self.reference:
-            _dict['reference'] = self.reference.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a dict"""
+    def from_dict(cls, obj: dict) -> PaddleCheckoutSettings:
+        """Create an instance of PaddleCheckoutSettings from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ReferencedUser.parse_obj(obj)
+            return PaddleCheckoutSettings.parse_obj(obj)
 
-        _obj = ReferencedUser.parse_obj({
+        _obj = PaddleCheckoutSettings.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "id": obj.get("id"),
-            "reference": FlattenedUserProfile.from_dict(obj.get("reference")) if obj.get("reference") is not None else None
+            "display_mode": obj.get("display_mode"),
+            "theme": obj.get("theme"),
+            "locale": obj.get("locale")
         })
         return _obj
 
-from pieces._vendor.pieces_os_client.models.flattened_user_profile import FlattenedUserProfile
-ReferencedUser.update_forward_refs()
 

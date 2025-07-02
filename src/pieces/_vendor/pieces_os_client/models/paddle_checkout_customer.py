@@ -22,15 +22,19 @@ import json
 from typing import Optional
 from pydantic.v1 import BaseModel, Field, StrictStr
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from pieces._vendor.pieces_os_client.models.paddle_checkout_address import PaddleCheckoutAddress
+from pieces._vendor.pieces_os_client.models.paddle_checkout_business import PaddleCheckoutBusiness
 
-class ReferencedUser(BaseModel):
+class PaddleCheckoutCustomer(BaseModel):
     """
-    A object to reference a user's ID and optionally a FlattenedUserProfile Instance   # noqa: E501
+    PaddleCheckoutCustomer
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(...)
-    reference: Optional[FlattenedUserProfile] = None
-    __properties = ["schema", "id", "reference"]
+    id: Optional[StrictStr] = None
+    email: Optional[StrictStr] = None
+    address: Optional[PaddleCheckoutAddress] = None
+    business: Optional[PaddleCheckoutBusiness] = None
+    __properties = ["schema", "id", "email", "address", "business"]
 
     class Config:
         """Pydantic configuration"""
@@ -46,8 +50,8 @@ class ReferencedUser(BaseModel):
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a JSON string"""
+    def from_json(cls, json_str: str) -> PaddleCheckoutCustomer:
+        """Create an instance of PaddleCheckoutCustomer from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self):
@@ -59,27 +63,30 @@ class ReferencedUser(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of reference
-        if self.reference:
-            _dict['reference'] = self.reference.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of address
+        if self.address:
+            _dict['address'] = self.address.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of business
+        if self.business:
+            _dict['business'] = self.business.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ReferencedUser:
-        """Create an instance of ReferencedUser from a dict"""
+    def from_dict(cls, obj: dict) -> PaddleCheckoutCustomer:
+        """Create an instance of PaddleCheckoutCustomer from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ReferencedUser.parse_obj(obj)
+            return PaddleCheckoutCustomer.parse_obj(obj)
 
-        _obj = ReferencedUser.parse_obj({
+        _obj = PaddleCheckoutCustomer.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
             "id": obj.get("id"),
-            "reference": FlattenedUserProfile.from_dict(obj.get("reference")) if obj.get("reference") is not None else None
+            "email": obj.get("email"),
+            "address": PaddleCheckoutAddress.from_dict(obj.get("address")) if obj.get("address") is not None else None,
+            "business": PaddleCheckoutBusiness.from_dict(obj.get("business")) if obj.get("business") is not None else None
         })
         return _obj
 
-from pieces._vendor.pieces_os_client.models.flattened_user_profile import FlattenedUserProfile
-ReferencedUser.update_forward_refs()
 
