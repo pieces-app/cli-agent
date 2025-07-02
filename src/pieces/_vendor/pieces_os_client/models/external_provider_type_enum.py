@@ -43,6 +43,7 @@ class ExternalProviderTypeEnum(str, Enum):
     APPLE = 'apple'
     USERNAME_EMAIL = 'username_email'
     SLACK = 'slack'
+    MICROSOFT = 'microsoft'
 
     @classmethod
     def from_json(cls, json_str: str) -> ExternalProviderTypeEnum:

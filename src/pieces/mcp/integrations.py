@@ -38,16 +38,7 @@ def get_global_vs_settings():
     return settings_path
 
 
-def get_claude_cli_path():
-    sys = platform.system()
-
-    if sys == "Windows":
-        return os.path.join(os.environ["APPDATA"], "claude", "mcp.json")
-    elif sys == "Darwin" or sys == "Linux":
-        return os.path.expanduser("~/.config/claude/mcp.json")
-    else:
-        Settings.show_error(f"Unsupported platform {sys}")
-        raise ValueError
+claude_cli_path = os.path.expanduser("~/.claude.json")
 
 
 def get_shortwave_path():
@@ -266,8 +257,8 @@ text_success_windsurf = """
 > Ensure PiecesOS is running & LTM is enabled
 """
 
-wrap_instructions = """
-### Use Pieces LTM in Wrap
+warp_instructions = """
+### Use Pieces LTM in Warp
 
 1. From `Settings > AI > Manage MCP servers`
 
@@ -282,7 +273,7 @@ wrap_instructions = """
 > Ensure PiecesOS is running & LTM is enabled
 """
 
-wrap_stdio_json = """
+warp_stdio_json = """
 {
     "Pieces": {
         "command": "pieces",
@@ -294,7 +285,7 @@ wrap_stdio_json = """
 }
 """
 
-wrap_sse_json = """
+warp_sse_json = """
 {{
     "Pieces": {{
         "serverUrl": "{url}"
@@ -457,7 +448,7 @@ claude_cli_integration = Integration(
     text_success=text_success_claude_cli,
     readable="Claude Code",
     docs=URLs.CLAUDE_CLI_MCP_DOCS.value,
-    get_settings_path=get_claude_cli_path,
+    get_settings_path=lambda: claude_cli_path,
     mcp_properties=MCPProperties(
         stdio_path=["mcpServers", "Pieces"],
         sse_path=["mcpServers", "Pieces"],

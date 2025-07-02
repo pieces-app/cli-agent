@@ -20,9 +20,9 @@ from .integrations import (
     zed_integration,
     shortwave_integration,
     claude_cli_integration,
-    wrap_instructions,
-    wrap_sse_json,
-    wrap_stdio_json,
+    warp_instructions,
+    warp_sse_json,
+    warp_stdio_json,
 )
 from .integration import Integration, mcp_integration_types
 
@@ -47,7 +47,7 @@ def handle_mcp(
     zed: bool = False,
     windsurf: bool = False,
     raycast: bool = False,
-    wrap: bool = False,
+    warp: bool = False,
     shortwave: bool = False,
     claude_code: bool = False,
     stdio: bool = False,
@@ -104,22 +104,22 @@ def handle_mcp(
     if windsurf:
         supported_mcps["windsurf"].run(stdio)
 
-    if wrap:
+    if warp:
         jsn = (
-            wrap_stdio_json if stdio else wrap_sse_json.format(url=get_mcp_latest_url())
+            warp_stdio_json if stdio else warp_sse_json.format(url=get_mcp_latest_url())
         )
-        text = wrap_instructions.format(json=jsn)
+        text = warp_instructions.format(json=jsn)
         Settings.logger.print(Markdown(text))
 
     if not any(
-        [claude, cursor, vscode, goose, zed, windsurf, raycast, wrap, shortwave]
+        [claude, cursor, vscode, goose, zed, windsurf, raycast, warp, shortwave]
     ):
         menu = [
             (val.readable, {key: True, "stdio": stdio})
             for key, val in supported_mcps.items()
         ]
         menu.append(("Raycast", {"raycast": True, "stdio": stdio}))  # append raycast
-        menu.append(("Wrap", {"wrap": True, "stdio": stdio}))  # append warp
+        menu.append(("Warp", {"warp": True, "stdio": stdio}))  # append warp
         PiecesSelectMenu(
             menu,
             handle_mcp,
@@ -141,7 +141,7 @@ def handle_raycast():
 
 
 def handle_mcp_docs(
-    ide: Union[mcp_integration_types, Literal["all", "current", "raycast", "wrap"]],
+    ide: Union[mcp_integration_types, Literal["all", "current", "raycast", "warp"]],
     **kwargs,
 ):
     if ide == "all" or ide == "current":
@@ -153,7 +153,7 @@ def handle_mcp_docs(
     if ide == "raycast":
         readable = "Raycast"
         docs = URLs.RAYCAST_MCP_DOCS.value
-    elif ide == "wrap":
+    elif ide == "warp":
         readable = "Wrap"
         docs = URLs.WRAP_MCP_DOCS.value
     else:

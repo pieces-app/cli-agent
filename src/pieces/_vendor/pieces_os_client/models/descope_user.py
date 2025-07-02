@@ -24,6 +24,7 @@ from pydantic.v1 import BaseModel, Field, StrictBool, StrictInt, StrictStr, conl
 from pieces._vendor.pieces_os_client.models.anonymous_temporal_range import AnonymousTemporalRange
 from pieces._vendor.pieces_os_client.models.auth0_open_ai_user_metadata import Auth0OpenAIUserMetadata
 from pieces._vendor.pieces_os_client.models.auth0_user_allocation_metadata import Auth0UserAllocationMetadata
+from pieces._vendor.pieces_os_client.models.descope_user_subscriptions import DescopeUserSubscriptions
 
 class DescopeUser(BaseModel):
     """
@@ -49,7 +50,9 @@ class DescopeUser(BaseModel):
     allocation: Optional[Auth0UserAllocationMetadata] = None
     open_ai: Optional[Auth0OpenAIUserMetadata] = None
     beta: Optional[AnonymousTemporalRange] = None
-    __properties = ["userId", "id", "givenName", "middleName", "familyName", "name", "email", "phone", "picture", "createdTime", "loginIds", "oauth", "isVerifiedEmail", "status", "welcome_email", "vanity", "cloud_key", "allocation", "open_ai", "beta"]
+    subscriptions: Optional[DescopeUserSubscriptions] = None
+    api_keys: Optional[conlist(StrictStr)] = Field(default=None, alias="apiKeys")
+    __properties = ["userId", "id", "givenName", "middleName", "familyName", "name", "email", "phone", "picture", "createdTime", "loginIds", "oauth", "isVerifiedEmail", "status", "welcome_email", "vanity", "cloud_key", "allocation", "open_ai", "beta", "subscriptions", "apiKeys"]
 
     class Config:
         """Pydantic configuration"""
@@ -84,6 +87,9 @@ class DescopeUser(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of beta
         if self.beta:
             _dict['beta'] = self.beta.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of subscriptions
+        if self.subscriptions:
+            _dict['subscriptions'] = self.subscriptions.to_dict()
         return _dict
 
     @classmethod
@@ -115,7 +121,9 @@ class DescopeUser(BaseModel):
             "cloud_key": obj.get("cloud_key"),
             "allocation": Auth0UserAllocationMetadata.from_dict(obj.get("allocation")) if obj.get("allocation") is not None else None,
             "open_ai": Auth0OpenAIUserMetadata.from_dict(obj.get("open_ai")) if obj.get("open_ai") is not None else None,
-            "beta": AnonymousTemporalRange.from_dict(obj.get("beta")) if obj.get("beta") is not None else None
+            "beta": AnonymousTemporalRange.from_dict(obj.get("beta")) if obj.get("beta") is not None else None,
+            "subscriptions": DescopeUserSubscriptions.from_dict(obj.get("subscriptions")) if obj.get("subscriptions") is not None else None,
+            "api_keys": obj.get("apiKeys")
         })
         return _obj
 
