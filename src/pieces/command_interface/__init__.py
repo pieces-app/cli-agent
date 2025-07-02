@@ -22,7 +22,7 @@ from .conversation_commands import ChatsCommand, ChatCommand
 from .commit_command import CommitCommand
 from .open_command import OpenCommand
 from .mcp_command_group import MCPCommandGroup
-from .completions import CompletionCommandGroup
+from .completions import CompletionCommand
 
 __all__ = [
     "ConfigCommand",
@@ -47,5 +47,5 @@ __all__ = [
     "InstallCommand",
     "OpenCommand",
     "MCPCommandGroup",
-    "CompletionCommandGroup",
+    "CompletionCommand",
 ]

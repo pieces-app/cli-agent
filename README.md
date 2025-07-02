@@ -52,6 +52,44 @@ After installing the CLI tool, you can access its functionalities through the te
 - `current asset` -> The asset that you are currently using can be changed by the open command
 - `current conversation` -> The conversation that you currently using in the ask command
 
+## Shell Completion
+
+The Pieces CLI supports auto-completion for bash, zsh, and fish shells. To enable completion, add the appropriate line to your shell configuration file:
+
+### Bash
+
+Add to your `~/.bashrc`:
+```bash
+eval "$(pieces completion bash)"
+```
+
+### Zsh
+
+Add to your `~/.zshrc`:
+```bash
+eval "$(pieces completion zsh)"
+```
+
+### Fish
+
+Add to your `~/.config/fish/config.fish`:
+```fish
+pieces completion fish | source
+```
+
+After adding the appropriate line to your shell configuration, either restart your terminal or source the configuration file:
+
+```bash
+# For bash
+source ~/.bashrc
+
+# For zsh  
+source ~/.zshrc
+
+# For fish
+source ~/.config/fish/config.fish
+```
+
 ## Usage
 
 To refer to the list of all the commands currently supported in the Pieces CLI Agent, visit the [documentation](https://docs.pieces.app/extensions-plugins/cli/commands).

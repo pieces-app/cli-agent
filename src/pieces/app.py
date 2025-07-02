@@ -58,8 +58,6 @@ class PiecesCLI:
             command = "--version"
 
         mcp_subcommand = getattr(args, "mcp", None)
-        if not ignore_onboarding or command != "completion":
-            CompletionCommandGroup.instance.check_for_updates()  # noqa: F405
 
         # Check if the command needs PiecesOS or not
         # TODO: need some cleanups here
