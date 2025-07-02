@@ -246,6 +246,15 @@ class CompletionInstallCommand(BaseCommand):
                 f"[red]Error:[/red] Permission denied writing to {completion_file}"
             )
             return 1
+        except OSError as e:
+            console.print(f"[red]Error:[/red] Failed to write completion file: {e}")
+            if "No space left" in str(e):
+                console.print("[yellow]Tip:[/yellow] Check available disk space")
+            elif "Read-only file system" in str(e):
+                console.print(
+                    "[yellow]Tip:[/yellow] The file system is read-only. Try a different location."
+                )
+            return 1
 
 
 class CompletionShowCommand(BaseCommand):

@@ -20,7 +20,7 @@ class PiecesCLI:
 
     def run(self):
         config = ConfigCommands.load_config()
-        Settings.logger = Logger(config.get("debug", False), Settings.pieces_data_dir)
+        Settings.logger = Logger(__version__ == "dev", Settings.pieces_data_dir)
         try:
             arg = sys.argv[1]
             if arg == "--ignore-onboarding":

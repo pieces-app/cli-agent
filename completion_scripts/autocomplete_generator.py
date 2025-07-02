@@ -33,7 +33,9 @@ import signal
 cli = PiecesCLI()
 parser = CommandParser(cli.parser)
 
-signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
 
 def generate(shell_arg):
     try:
