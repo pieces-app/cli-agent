@@ -8,10 +8,10 @@ class CommandInfo:
     """Data class to hold command information."""
 
     def __init__(self, name: str, help: str, description: str, aliases: List[str]):
-        self.name = name
-        self.help = help
-        self.description = description
-        self.aliases = aliases
+        self.name: str = name
+        self.help: str = help
+        self.description: str = description
+        self.aliases: List[str] = aliases
 
 
 class OptionInfo:

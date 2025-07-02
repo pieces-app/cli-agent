@@ -111,9 +111,33 @@ jobs:
         run: |
           mkdir -p src/pieces/completions
           touch src/pieces/completions/__init__.py
-          python3 completion_scripts/autocomplete_generator.py --zsh >> src/pieces/completions/zsh
-          python3 completion_scripts/autocomplete_generator.py --bash >> src/pieces/completions/bash
-          python3 completion_scripts/autocomplete_generator.py --fish >> src/pieces/completions/fish
+
+          # Generate each completion script with error checking
+          echo "Generating Zsh completions..."
+          python3 completion_scripts/autocomplete_generator.py --zsh > src/pieces/completions/zsh || {
+            echo "Failed to generate Zsh completions"
+            exit 1
+          }
+
+          echo "Generating Bash completions..."
+          python3 completion_scripts/autocomplete_generator.py --bash > src/pieces/completions/bash || {
+            echo "Failed to generate Bash completions"
+            exit 1
+          }
+
+          echo "Generating Fish completions..."
+          python3 completion_scripts/autocomplete_generator.py --fish > src/pieces/completions/fish || {
+            echo "Failed to generate Fish completions"
+            exit 1
+          }
+
+          # Verify files were created and are non-empty
+          for shell in zsh bash fish; do
+            if [ \! -s "src/pieces/completions/$shell" ]; then
+              echo "Error: Completion file for $shell is empty"
+              exit 1
+            fi
+          done
 
 
       ### Building the Library and Wheel files

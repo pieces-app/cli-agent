@@ -81,6 +81,10 @@ class CompletionInstallCommand(BaseCommand):
         """Execute the install command."""
         shell = kwargs["shell"]
         force = kwargs.get("force", False)
+        if not self._is_shell_available(shell) and not Settings.logger.confirm(
+            f"{shell} is not added to the path and not be installed\nAre you sure you want to continue adding the completion script?"
+        ):
+            return 1
 
         if __version__ == "dev":
             Settings.logger.print(
@@ -91,6 +95,12 @@ class CompletionInstallCommand(BaseCommand):
             return 3
 
         return self._install_completion(shell, force)
+
+    def _is_shell_available(self, shell: str) -> bool:
+        """Check if the shell is available on the system."""
+        import shutil
+
+        return shutil.which(shell) is not None
 
     def _check_installed_version(self, shell: str) -> tuple[bool, str]:
         """Check if completion is installed and return (is_installed, installed_version)."""
@@ -209,10 +219,10 @@ class CompletionInstallCommand(BaseCommand):
                 )
                 console.print(f"Updating to version {__version__}...")
 
+        path = files("pieces.completions").joinpath(shell)
+        content = path.read_text(encoding="utf-8")
+        completion_file = self._find_and_prepare_completion_path(shell)
         try:
-            path = files("pieces.completions").joinpath(shell)
-            content = path.read_text(encoding="utf-8")
-            completion_file = self._find_and_prepare_completion_path(shell)
             completion_file.write_text(content)
             console.print(
                 f"[green]✓[/green] {shell.capitalize()} completion installed to: {completion_file}"
@@ -229,6 +239,11 @@ class CompletionInstallCommand(BaseCommand):
         except FileNotFoundError:
             Settings.logger.console_error.print(
                 f"[red]Error:[/red] No completion script found for '{shell}'"
+            )
+            return 1
+        except PermissionError:
+            Settings.logger.console_error.print(
+                f"[red]Error:[/red] Permission denied writing to {completion_file}"
             )
             return 1
 
