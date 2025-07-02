@@ -54,52 +54,35 @@ After installing the CLI tool, you can access its functionalities through the te
 
 ## Shell Completion
 
-The Pieces CLI supports auto-completion for bash, zsh, fish, and PowerShell. To enable completion, add the appropriate line to your shell configuration file:
+The Pieces CLI supports auto-completion for bash, zsh, fish, and PowerShell. To enable completion for your shell, run:
 
-### Bash
-
-Add to your `~/.bashrc`:
 ```bash
-eval "$(pieces completion bash)"
+pieces completion [shell]
 ```
 
-### Zsh
+**Quick setup commands for each shell:**
 
-Add to your `~/.zshrc`:
+- **Bash:**
 ```bash
-eval "$(pieces completion zsh)"
+echo 'eval "$(pieces completion bash)"' >> ~/.bashrc && source ~/.bashrc
 ```
 
-### Fish
+- **Zsh:**
+```zsh
+echo 'eval "$(pieces completion zsh)"' >> ~/.zshrc && source ~/.zshrc
+```
 
-Add to your `~/.config/fish/config.fish`:
+- **Fish:**
 ```fish
-pieces completion fish | source
+echo 'pieces completion fish | source' >> ~/.config/fish/config.fish && source ~/.config/fish/config.fish
 ```
 
-### PowerShell
-
-Add to your PowerShell profile (run `$PROFILE` to find the path):
+- **PowerShell:**
 ```powershell
-$completionPiecesScript = pieces completion powershell | Out-String
-Invoke-Expression $completionPiecesScript
+Add-Content $PROFILE '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript'; . $PROFILE
 ```
 
-After adding the appropriate line to your shell configuration, either restart your terminal or source the configuration file:
-
-```bash
-# For bash
-source ~/.bashrc
-
-# For zsh  
-source ~/.zshrc
-
-# For fish
-source ~/.config/fish/config.fish
-
-# For PowerShell
-. $PROFILE
-```
+After setup, restart your terminal or source your configuration file. Then try typing `pieces ` and press **Tab** to test auto-completion!
 
 ## Usage
 

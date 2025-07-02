@@ -176,19 +176,7 @@ def get_completion_instructions():
 
 Auto-complete commands and options by pressing **Tab** while typing.
 
-**For your {shell_info["name"]} shell:**
-
-1. Add this line to your `{shell_info["config_file"]}`:
-   ```{code_block_lang}
-   {shell_info["command"]}
-   ```
-
-2. Reload your shell configuration:
-   ```{code_block_lang}
-   {shell_info["reload"]}
-   ```
-
-**💡 Quick setup:** Run this command to add completion to your config file:
+**💡 Quick setup for {shell_info["name"]}:** Run this command to enable completion:
 ```{code_block_lang}
 {quick_setup}
 ```
