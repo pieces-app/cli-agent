@@ -54,7 +54,7 @@ After installing the CLI tool, you can access its functionalities through the te
 
 ## Shell Completion
 
-The Pieces CLI supports auto-completion for bash, zsh, and fish shells. To enable completion, add the appropriate line to your shell configuration file:
+The Pieces CLI supports auto-completion for bash, zsh, fish, and PowerShell. To enable completion, add the appropriate line to your shell configuration file:
 
 ### Bash
 
@@ -77,6 +77,14 @@ Add to your `~/.config/fish/config.fish`:
 pieces completion fish | source
 ```
 
+### PowerShell
+
+Add to your PowerShell profile (run `$PROFILE` to find the path):
+```powershell
+$completionPiecesScript = pieces completion powershell | Out-String
+Invoke-Expression $completionPiecesScript
+```
+
 After adding the appropriate line to your shell configuration, either restart your terminal or source the configuration file:
 
 ```bash
@@ -88,6 +96,9 @@ source ~/.zshrc
 
 # For fish
 source ~/.config/fish/config.fish
+
+# For PowerShell
+. $PROFILE
 ```
 
 ## Usage

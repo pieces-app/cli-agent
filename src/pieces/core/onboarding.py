@@ -116,9 +116,20 @@ def get_shell_info():
     """Detect user's shell and return completion instructions."""
     shell_path = os.environ.get("SHELL", "")
     shell_name = os.path.basename(shell_path).lower()
-
+    
+    # Check if running in PowerShell (Windows or cross-platform)
+    ps_session = os.environ.get("PSModulePath") or os.environ.get("POWERSHELL_DISTRIBUTION_CHANNEL")
+    
+    # Handle PowerShell detection
+    if ps_session or "pwsh" in shell_name or "powershell" in shell_name:
+        return {
+            "name": "PowerShell",
+            "config_file": "$PROFILE",
+            "command": '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript',
+            "reload": ". $PROFILE",
+        }
     # Handle common shell variations
-    if "zsh" in shell_name:
+    elif "zsh" in shell_name:
         return {
             "name": "Zsh",
             "config_file": "~/.zshrc",
@@ -153,6 +164,14 @@ def get_completion_instructions():
     """Generate shell-specific completion setup instructions."""
     shell_info = get_shell_info()
 
+    # Generate shell-specific quick setup command
+    if shell_info["name"] == "PowerShell":
+        quick_setup = f"""Add-Content {shell_info["config_file"]} '{shell_info["command"]}'; {shell_info["reload"]}"""
+        code_block_lang = "powershell"
+    else:
+        quick_setup = f"""echo '{shell_info["command"]}' >> {shell_info["config_file"]} && {shell_info["reload"]}"""
+        code_block_lang = "bash"
+
     instructions = f"""## Enable Shell Completions
 
 Auto-complete commands and options by pressing **Tab** while typing.
@@ -160,18 +179,18 @@ Auto-complete commands and options by pressing **Tab** while typing.
 **For your {shell_info["name"]} shell:**
 
 1. Add this line to your `{shell_info["config_file"]}`:
-   ```bash
+   ```{code_block_lang}
    {shell_info["command"]}
    ```
 
 2. Reload your shell configuration:
-   ```bash
+   ```{code_block_lang}
    {shell_info["reload"]}
    ```
 
 **💡 Quick setup:** Run this command to add completion to your config file:
-```bash
-echo '{shell_info["command"]}' >> {shell_info["config_file"]} && {shell_info["reload"]}
+```{code_block_lang}
+{quick_setup}
 ```
 
 Try typing `pieces ` and press **Tab** to test it out!"""

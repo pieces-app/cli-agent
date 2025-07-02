@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 """
 To generate the completion scripts, run the following commands:
-
-python3 completion_scripts/autocomplete_generator.py --zsh >> src/pieces/completions/zsh
-python3 completion_scripts/autocomplete_generator.py --bash >> src/pieces/completions/bash
-python3 completion_scripts/autocomplete_generator.py --fish >> src/pieces/completions/fish
+```bash
+python3 completion_scripts/autocomplete_generator.py --zsh > src/pieces/completions/zsh
+python3 completion_scripts/autocomplete_generator.py --bash > src/pieces/completions/bash
+python3 completion_scripts/autocomplete_generator.py --fish > src/pieces/completions/fish
+python3 completion_scripts/autocomplete_generator.py --powershell > src/pieces/completions/powershell
+```
 
 To try it run:
 
@@ -19,6 +21,10 @@ source <(python3 completion_scripts/autocomplete_generator.py --zsh)
 ```fish
 python3 completion_scripts/autocomplete_generator.py --fish | source
 ```
+
+```powershell
+python3 completion_scripts/autocomplete_generator.py --powershell | Invoke-Expression
+```
 """
 
 import sys
@@ -27,6 +33,7 @@ from base import CommandParser
 from bash import BashCompletionGenerator
 from zsh import ZshCompletionGenerator
 from fish import FishCompletionGenerator
+from powershell import PowerShellCompletionGenerator
 import signal
 
 
@@ -43,6 +50,7 @@ def generate(shell_arg):
             "bash": BashCompletionGenerator,
             "zsh": ZshCompletionGenerator,
             "fish": FishCompletionGenerator,
+            "powershell": PowerShellCompletionGenerator,
         }[shell_arg]
 
         generator = generators(parser, "pieces")
@@ -61,10 +69,10 @@ def main():
     if len(sys.argv) >= 2:
         shell_arg = sys.argv[1].lstrip("-")
 
-        if shell_arg in ["bash", "zsh", "fish"]:
+        if shell_arg in ["bash", "zsh", "fish", "powershell"]:
             generate(shell_arg)
     else:
-        print("Usage: python autocomplete_generator.py [--bash|--zsh|--fish]")
+        print("Usage: python autocomplete_generator.py [--bash|--zsh|--fish|--powershell]")
         print("Generates shell completion scripts for the Pieces CLI")
 
 

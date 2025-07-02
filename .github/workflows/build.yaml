@@ -131,8 +131,14 @@ jobs:
             exit 1
           }
 
+          echo "Generating PowerShell completions..."
+          python3 completion_scripts/autocomplete_generator.py --powershell > src/pieces/completions/powershell || {
+            echo "Failed to generate PowerShell completions"
+            exit 1
+          }
+
           # Verify files were created and are non-empty
-          for shell in zsh bash fish; do
+          for shell in zsh bash fish powershell; do
             if [ \! -s "src/pieces/completions/$shell" ]; then
               echo "Error: Completion file for $shell is empty"
               exit 1

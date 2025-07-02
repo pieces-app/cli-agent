@@ -8,7 +8,7 @@ from rich.markdown import Markdown
 from typing import Literal, List, get_args
 
 
-supported_shells_type = Literal["bash", "zsh", "fish"]
+supported_shells_type = Literal["bash", "zsh", "fish", "powershell"]
 supported_shells: List[supported_shells_type] = list(get_args(supported_shells_type))
 
 
@@ -29,6 +29,7 @@ class CompletionCommand(BaseCommand):
             "pieces completion bash",
             "pieces completion zsh",
             "pieces completion fish",
+            "pieces completion powershell",
         ]
 
     def get_docs(self) -> str:
