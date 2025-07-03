@@ -87,7 +87,7 @@ class URLs(Enum):
 
         if hasattr(Settings.pieces_client, "user_api"):
             user_profile = Settings.pieces_client.user_api.user_snapshot().user
-            if (not Settings.pieces_client.is_pieces_running) or (
+            if (not Settings.pieces_client.is_pieces_running()) or (
                 "pieces.app" not in url
             ):
                 return webbrowser.open(url)

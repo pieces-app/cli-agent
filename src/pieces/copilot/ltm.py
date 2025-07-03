@@ -216,7 +216,7 @@ def check_ltm(docs=None) -> bool:
                 progress.update(vision_task, visible=False)
                 progress.update(accessibility_task, visible=False)
 
-                if Settings.pieces_client.is_pieces_running(maxium_retries=10):
+                if Settings.pieces_client.is_pieces_running(maximum_retries=10):
                     missing_permissions = (
                         Settings.pieces_client.copilot.context.ltm.check_perms()
                     )

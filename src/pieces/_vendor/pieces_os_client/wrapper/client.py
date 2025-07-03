@@ -234,20 +234,20 @@ class PiecesClient(PiecesApiClient):
             subprocess.run(["open", "pieces://launch"])
         elif self.local_os == "LINUX":
             subprocess.run(["xdg-open", "pieces://launch"])
-        return self.is_pieces_running(maxium_retries=6)
+        return self.is_pieces_running(maximum_retries=12)
 
-    def is_pieces_running(self, maxium_retries=1) -> bool:
+    def is_pieces_running(self, maximum_retries=1) -> bool:
         """
             Checks if PiecesOS is running or not
 
             Returns (bool): true if PiecesOS is running 
         """
-        for _ in range(maxium_retries):
+        for _ in range(maximum_retries):
             try:
                 with urllib.request.urlopen(f"{self.host}/.well-known/health", timeout=1) as response:
                     return response.status == 200
             except:
-                if maxium_retries == 1:
+                if maximum_retries == 1:
                     return False
                 time.sleep(1)
         return False
