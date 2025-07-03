@@ -234,7 +234,7 @@ class PiecesClient(PiecesApiClient):
             subprocess.run(["open", "pieces://launch"])
         elif self.local_os == "LINUX":
             subprocess.run(["xdg-open", "pieces://launch"])
-        return self.is_pieces_running(maxium_retries=6)
+        return self.is_pieces_running(maxium_retries=12)
 
     def is_pieces_running(self, maxium_retries=1) -> bool:
         """
