@@ -104,19 +104,95 @@ def create_snippet_one_validation():
         "Looks like you haven't copied the material yet. Please copy the material to save it to Pieces.",
     )
 
+
 def validate_login():
     message = "You can't continue if you are not signed in"
     if Settings.pieces_client.user_api.user_snapshot():
         return True, message
     return False, message
 
+
+def get_shell_info():
+    """Detect user's shell and return completion instructions."""
+    shell_path = os.environ.get("SHELL", "")
+    shell_name = os.path.basename(shell_path).lower()
+    
+    # Check if running in PowerShell (Windows or cross-platform)
+    ps_session = os.environ.get("PSModulePath") or os.environ.get("POWERSHELL_DISTRIBUTION_CHANNEL")
+    
+    # Handle PowerShell detection
+    if ps_session or "pwsh" in shell_name or "powershell" in shell_name:
+        return {
+            "name": "PowerShell",
+            "config_file": "$PROFILE",
+            "command": '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript',
+            "reload": ". $PROFILE",
+        }
+    # Handle common shell variations
+    elif "zsh" in shell_name:
+        return {
+            "name": "Zsh",
+            "config_file": "~/.zshrc",
+            "command": 'eval "$(pieces completion zsh)"',
+            "reload": "source ~/.zshrc",
+        }
+    elif "fish" in shell_name:
+        return {
+            "name": "Fish",
+            "config_file": "~/.config/fish/config.fish",
+            "command": "pieces completion fish | source",
+            "reload": "source ~/.config/fish/config.fish",
+        }
+    elif "bash" in shell_name or shell_name in ["sh", ""]:
+        return {
+            "name": "Bash",
+            "config_file": "~/.bashrc",
+            "command": 'eval "$(pieces completion bash)"',
+            "reload": "source ~/.bashrc",
+        }
+    else:
+        # Default to bash for unknown shells
+        return {
+            "name": "Bash",
+            "config_file": "~/.bashrc",
+            "command": 'eval "$(pieces completion bash)"',
+            "reload": "source ~/.bashrc",
+        }
+
+
+def get_completion_instructions():
+    """Generate shell-specific completion setup instructions."""
+    shell_info = get_shell_info()
+
+    # Generate shell-specific quick setup command
+    if shell_info["name"] == "PowerShell":
+        quick_setup = f"""Add-Content {shell_info["config_file"]} '{shell_info["command"]}'; {shell_info["reload"]}"""
+        code_block_lang = "powershell"
+    else:
+        quick_setup = f"""echo '{shell_info["command"]}' >> {shell_info["config_file"]} && {shell_info["reload"]}"""
+        code_block_lang = "bash"
+
+    instructions = f"""## Enable Shell Completions
+
+Auto-complete commands and options by pressing **Tab** while typing.
+
+**💡 Quick setup for {shell_info["name"]}:** Run this command to enable completion:
+```{code_block_lang}
+{quick_setup}
+```
+
+Try typing `pieces ` and press **Tab** to test it out!"""
+
+    return instructions
+
+
 def onboarding_command(**kwargs):
     step_number = 1
     steps = {
-        "Step 1: Sign into Pieces" : [
+        "Step 1: Sign into Pieces": [
             OnboardingCommandStep(
                 "You must be signed in to use Pieces. Type `pieces login` to sign into an account.",
-                "pieces login"
+                "pieces login",
             ),
             OnboardingStep("", validate_login),
         ],
@@ -154,13 +230,19 @@ def onboarding_command(**kwargs):
                 "pieces run",
             ),
         ],
-        "Step 6: Sharing your Feedback": [
+        "Step 6: Add completion scripts": [
+            OnboardingStep(
+                get_completion_instructions(),
+                lambda: (True, ""),
+            )
+        ],
+        "Step 7: Sharing your Feedback": [
             OnboardingCommandStep(
                 "Your feedback is very **important** to us. Please share some of your feedback by typing `pieces feedback`.",
                 "pieces feedback",
             )
         ],
-        "Step 7: Contributing": [
+        "Step 8: Contributing": [
             OnboardingCommandStep(
                 "The Pieces CLI is an **open source project** and you can contribute to it by creating a pull request or open an issue by typing `pieces contribute`.",
                 "pieces contribute",

@@ -9,6 +9,9 @@ repository = "https://github.com/pieces-app/cli-agent"
 keywords = ["copilot", "pieces", "ai", "snippets", "materials"]
 packages = [{ include = "pieces", from = "src" }]
 license = "MIT"
+include = [
+    { path = "src/pieces/completions/*", format = ["sdist", "wheel"] }
+]
 
 
 [tool.ruff]

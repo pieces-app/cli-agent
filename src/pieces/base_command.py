@@ -23,6 +23,8 @@ class BaseCommand(ABC):
         return instance
 
     def __init__(self):
+        if self._is_command_group:
+            self.__class__.instance = self
         self.name: str = self.get_name()
         self.aliases: List[str] = self.get_aliases()
         self.help: str = self.get_help()
@@ -106,6 +108,7 @@ class CommandGroup(BaseCommand):
 
     def execute(self, **kwargs) -> int:
         """Default execution for command groups - show help."""
+        self.parser.print_help()
         return 0
 
     def add_arguments(self, parser: argparse.ArgumentParser):

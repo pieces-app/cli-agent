@@ -20,7 +20,7 @@ class PiecesCLI:
 
     def run(self):
         config = ConfigCommands.load_config()
-        Settings.logger = Logger(config.get("debug", False), Settings.pieces_data_dir)
+        Settings.logger = Logger(__version__ == "dev", Settings.pieces_data_dir)
         try:
             arg = sys.argv[1]
             if arg == "--ignore-onboarding":
@@ -77,10 +77,11 @@ class PiecesCLI:
             "feedback",
             "contribute",
             "open",
-            "config"
+            "config",
+            "completion",
         ] and not (command == "mcp" and mcp_subcommand == "start"):
-            bypass_loging = True if (command in ["version"]) else False
-            Settings.startup(bypass_loging)
+            bypass_login = True if (command in ["version"]) else False
+            Settings.startup(bypass_login)
         Settings.logger.debug(f"Running command {arg} using: {args}")
         args.func(**vars(args))
 
@@ -92,10 +93,16 @@ def main():
     except KeyboardInterrupt:
         pass
     except Exception as e:
+        if __version__ == "dev":
+            Settings.logger.console.print_exception(show_locals=True)
+            return
+
         Settings.logger.critical(e)
         Settings.show_error("UNKNOWN EXCEPTION", e)
     finally:
-        from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import BaseWebsocket
+        from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import (
+            BaseWebsocket,
+        )
 
         BaseWebsocket.close_all()
 
