@@ -111,28 +111,29 @@ jobs:
         run: |
           mkdir -p src/pieces/completions
           touch src/pieces/completions/__init__.py
+          poetry run pip install -e .
 
           # Generate each completion script with error checking
           echo "Generating Zsh completions..."
-          python3 completion_scripts/autocomplete_generator.py --zsh > src/pieces/completions/zsh || {
+          poetry run python completion_scripts/autocomplete_generator.py --zsh > src/pieces/completions/zsh || {
             echo "Failed to generate Zsh completions"
             exit 1
           }
 
           echo "Generating Bash completions..."
-          python3 completion_scripts/autocomplete_generator.py --bash > src/pieces/completions/bash || {
+          poetry run python completion_scripts/autocomplete_generator.py --bash > src/pieces/completions/bash || {
             echo "Failed to generate Bash completions"
             exit 1
           }
 
           echo "Generating Fish completions..."
-          python3 completion_scripts/autocomplete_generator.py --fish > src/pieces/completions/fish || {
+          poetry run python completion_scripts/autocomplete_generator.py --fish > src/pieces/completions/fish || {
             echo "Failed to generate Fish completions"
             exit 1
           }
 
           echo "Generating PowerShell completions..."
-          python3 completion_scripts/autocomplete_generator.py --powershell > src/pieces/completions/powershell || {
+          poetry run python completion_scripts/autocomplete_generator.py --powershell > src/pieces/completions/powershell || {
             echo "Failed to generate PowerShell completions"
             exit 1
           }
