@@ -2,9 +2,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Optional, Dict, Union, Callable
 import platform
 import atexit
-import subprocess
 import urllib.request
 import urllib.error
+import webbrowser
 import socket
 
 from .websockets.base_websocket import BaseWebsocket
@@ -226,14 +226,15 @@ class PiecesClient(PiecesApiClient):
 
             Returns (bool): true if PiecesOS launches successfully
         """
+        uri = "pieces://launch"
         if self.is_pieces_running():
             return True
-        if self.local_os == "WINDOWS":
-            subprocess.run(["start", "pieces://launch"], shell=True)
-        elif self.local_os == "MACOS":
-            subprocess.run(["open", "pieces://launch"])
-        elif self.local_os == "LINUX":
-            subprocess.run(["xdg-open", "pieces://launch"])
+        try:
+            sucess = webbrowser.open(uri)
+            if not sucess:
+                return False
+        except:
+            return False
         return self.is_pieces_running(maximum_retries=12)
 
     def is_pieces_running(self, maximum_retries=1) -> bool:
