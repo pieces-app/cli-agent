@@ -52,6 +52,38 @@ After installing the CLI tool, you can access its functionalities through the te
 - `current asset` -> The asset that you are currently using can be changed by the open command
 - `current conversation` -> The conversation that you currently using in the ask command
 
+## Shell Completion
+
+The Pieces CLI supports auto-completion for bash, zsh, fish, and PowerShell. To enable completion for your shell, run:
+
+```bash
+pieces completion [shell]
+```
+
+**Quick setup commands for each shell:**
+
+- **Bash:**
+```bash
+echo 'eval "$(pieces completion bash)"' >> ~/.bashrc && source ~/.bashrc
+```
+
+- **Zsh:**
+```zsh
+echo 'eval "$(pieces completion zsh)"' >> ~/.zshrc && source ~/.zshrc
+```
+
+- **Fish:**
+```fish
+echo 'pieces completion fish | source' >> ~/.config/fish/config.fish && source ~/.config/fish/config.fish
+```
+
+- **PowerShell:**
+```powershell
+Add-Content $PROFILE '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript'; . $PROFILE
+```
+
+After setup, restart your terminal or source your configuration file. Then try typing `pieces ` and press **Tab** to test auto-completion!
+
 ## Usage
 
 To refer to the list of all the commands currently supported in the Pieces CLI Agent, visit the [documentation](https://docs.pieces.app/extensions-plugins/cli/commands).

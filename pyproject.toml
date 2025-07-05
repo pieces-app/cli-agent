@@ -1,33 +1,48 @@
 [tool.poetry]
-  name = "pieces-cli"
-  version = "1.3.1"
-  description = "A powerful cli tool to interact with PiecesOS "
-  authors = ["Pieces <development@pieces.app>"]
-  readme = "README.md"
-  homepage = "https://pieces.app"
-  repository = "https://github.com/pieces-app/cli-agent"
-  keywords = ["copilot", "pieces","ai","snippets", "materials"]
-  packages = [{ include = "pieces", from = "src" }]
-  license = "MIT"
+name = "pieces-cli"
+version = "1.3.1"
+description = "A powerful cli tool to interact with PiecesOS "
+authors = ["Pieces <development@pieces.app>"]
+readme = "README.md"
+homepage = "https://pieces.app"
+repository = "https://github.com/pieces-app/cli-agent"
+keywords = ["copilot", "pieces", "ai", "snippets", "materials"]
+packages = [{ include = "pieces", from = "src" }]
+license = "MIT"
+include = [
+    { path = "src/pieces/completions/*", format = ["sdist", "wheel"] }
+]
 
+
+[tool.ruff]
+lint.ignore = [
+  "E501", # Line too long
+]
 
 [tool.poetry.dependencies]
-  python = ">=3.11,<3.14"
-  pyperclip = ">=1.8.2"
-  pieces_os_client = "4.1.0"
-  prompt-toolkit = "^3.0.43"
-  rich = "^13.7.1"
-  platformdirs = "^4.2.0"
+python = ">=3.11,<3.14"
+pyperclip = ">=1.8.2"
+prompt-toolkit = "^3.0.43"
+rich = "^13.7.1"
+platformdirs = "^4.2.0"
+pyyaml = "^6.0.2"
+mcp = "1.8.0"
+
+## POS dependencies
+urllib3 = ">= 1.25.3"
+python-dateutil = ">=2.8.2"
+aenum = ">=3.1.11"
+websocket-client = "^1.8.0"
 
 [tool.poetry.group.dev.dependencies]
-  pytest = "^8.0.0"
-  pyinstaller = "^6.3.0"
+pytest = "^8.0.0"
+pyinstaller = "^6.3.0"
+requests = "^2.31.0"
+pytest-asyncio = "^1.0.0"
 
 [build-system]
-  requires = ["poetry-core>=1.0.0"]
-  build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-  pieces = "pieces.app:main"
-
-
+pieces = "pieces.app:main"

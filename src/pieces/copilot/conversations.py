@@ -1,12 +1,12 @@
 from typing import Optional
 
-import pieces_os_client
-import pieces_os_client.exceptions
+import pieces._vendor.pieces_os_client
+import pieces._vendor.pieces_os_client.exceptions
 from rich.console import Console
 from rich.text import Text
 from rich.markdown import Markdown
 
-from pieces.wrapper.basic_identifier.chat import BasicChat
+from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 from pieces.settings import Settings
 
 
@@ -46,8 +46,8 @@ def conversation_handler(**kwargs):
 
     # Delete the conversation
     if delete:
-        r = input(f"Are you sure you want to delete '{chat.name}'? (y/n) : ")
-        if r == "y":
+        r = Settings.logger.confirm(f"Are you sure you want to delete '{chat.name}'?")
+        if r:
             chat.delete()
             print("Chat deleted successfully")
         return
@@ -86,7 +86,7 @@ def get_conversations(max_chats, **kwargs):
     try:
         copilot_chat = Settings.pieces_client.copilot.chat
         copilot_chat.name  # This will throw an exception if the chat is not found
-    except (pieces_os_client.exceptions.NotFoundException, AttributeError):
+    except (pieces._vendor.pieces_os_client.exceptions.NotFoundException, AttributeError):
         Settings.pieces_client.copilot.chat = None
         copilot_chat = None
 

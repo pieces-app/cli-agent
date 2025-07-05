@@ -1,57 +1,58 @@
-from pieces.commands.assets_command import AssetsCommands
-from tests.base_test import BaseTestCase,SCRIPT_NAME
+import pytest
 from io import StringIO
-import sys
-import unittest
+from pieces.app import main
+from tests.utils import run_main_with_args
 from unittest.mock import patch, Mock
 
-from pieces.app import main
 
-MODULE_NAME = "pieces.commands.assets_command"
-
-
-class TestCreateAsset(BaseTestCase):
-    def setUp(self):
-        self.asset_patcher = patch(f'{MODULE_NAME}.BasicAsset')
-        self.mock_basic_asset = self.asset_patcher.start()
-
-    def tearDown(self):
-        self.asset_patcher.stop()
-
-    @patch('sys.argv', [SCRIPT_NAME, "create"])
-    @patch(f'{MODULE_NAME}.pyperclip.paste')
-    @patch('builtins.input') 
-    def test_create_asset_save(self, mock_input, mock_paste):
-        mock_paste.return_value = 'Mocked clipboard content'
-        mock_input.return_value = 'y'
-        main()
-
-        # Check if asset was created
-        self.mock_basic_asset.create.assert_called_with(raw_content='Mocked clipboard content', metadata=None)
-        self.assertIsNotNone(AssetsCommands.current_asset)
-
-    @patch('sys.argv', [SCRIPT_NAME, "create"])
-    @patch(f'{MODULE_NAME}.pyperclip.paste')
-    @patch('builtins.input')
-    def test_create_asset_cancel(self, mock_input, mock_paste):
-        mock_paste.return_value = 'Mocked clipboard content'
+def assert_asset_created(mock_basic_asset, content):
+    mock_basic_asset.create.assert_called_with(raw_content=content, metadata=None)
+    mock_basic_asset.create.assert_called_once()
 
 
-        mock_input.return_value = 'n'
+def test_create_asset_save(mock_basic_asset, mock_pyperclip_paste, mock_input):
+    mock_pyperclip_paste.return_value = "Mocked clipboard content"
+    mock_input.return_value = "y"
+    run_main_with_args(["create"], main)
 
-        main()
+    assert_asset_created(mock_basic_asset, "Mocked clipboard content")
 
-        self.assertIsNone(AssetsCommands.current_asset)
 
-    @patch('sys.argv', [SCRIPT_NAME, "create"])
-    @patch(f'{MODULE_NAME}.pyperclip.paste')
-    @patch('builtins.input')
-    def test_create_asset_invalid_input(self, mock_input, mock_paste):
-        mock_paste.return_value = 'Mocked clipboard content'
+def test_create_asset_cancel(mock_basic_asset, mock_pyperclip_paste, mock_input):
+    mock_pyperclip_paste.return_value = "Mocked clipboard content"
+    mock_input.return_value = "n"
+    run_main_with_args(["create"], main)
 
-        mock_input.return_value = 'x'
+    mock_basic_asset.create.assert_not_called()
 
-        with patch('builtins.print') as mocked_print:
-            main()
-            self.assertIsNone(AssetsCommands.current_asset)
-            mocked_print.assert_any_call("Invalid input. Please type 'y' to save or 'n' to cancel.")
+
+def test_create_asset_invalid_input(mock_basic_asset, mock_pyperclip_paste, mock_input):
+    mock_pyperclip_paste.return_value = "Mocked clipboard content"
+    mock_input.side_effect = ["x", "x", "x", "x", "n"]
+
+    with patch("pieces.logger.Logger.confirm") as mocked_print:
+        run_main_with_args(["create"], main)
+        mocked_print.assert_any_call("Do you want to save this content?")
+
+
+def test_create_asset_with_c_flag(mock_basic_asset):
+    input_text = "Content from stdin"
+    with patch("sys.stdin", new=StringIO(input_text)):
+        run_main_with_args(["create", "-c"], main)
+
+    assert_asset_created(mock_basic_asset, input_text)
+
+
+def test_create_asset_with_existing_assets(
+    mock_basic_asset, mock_assets, mock_pyperclip_paste, mock_input
+):
+    mock_pyperclip_paste.return_value = "New Asset Content"
+    mock_input.return_value = "y"
+    run_main_with_args(["create"], main)
+
+    # Verify that a new asset is created
+    assert_asset_created(mock_basic_asset, "New Asset Content")
+
+    # Verify that existing assets are not affected
+    for asset in mock_assets:
+        asset.create.assert_not_called()

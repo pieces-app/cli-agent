@@ -1,40 +1,39 @@
-from pieces.commands.assets_command import AssetsCommands
-from tests.base_test import BaseTestCase,SCRIPT_NAME
-from io import StringIO
-import sys
-import unittest
-from unittest.mock import patch, Mock
-
+import pytest
 from pieces.app import main
+from tests.utils import run_main_with_args
+from pieces.core.assets_command import AssetsCommands
 
 
-class TestDeleteAsset(BaseTestCase):
-    def setUp(self):
-        self._mocked_asset = self.mock_create_assets()
-        AssetsCommands.current_asset = self._mocked_asset
-        
-        
+def assert_asset_deleted(mocked_asset):
+    mocked_asset.delete.assert_called_once()
 
-    @patch('sys.argv', [SCRIPT_NAME, "delete"])
-    @patch('builtins.input', side_effect=['y']) 
-    def test_delete_asset_success(self, mock_input):
-        main()
-        self._mocked_asset.delete.assert_called_once()
-        self.assertIsNone(AssetsCommands.current_asset)
 
-    @patch('sys.argv', [SCRIPT_NAME, "delete"])
-    @patch('builtins.input', side_effect=['n']) 
-    def test_delete_asset_cancelled(self, mock_input):
-        main()
-        self._mocked_asset.delete.assert_not_called()
-        self.assertIsNotNone(AssetsCommands.current_asset)
+def test_delete_asset_success(mocked_asset, mock_input):
+    mock_input.side_effect = ["y"]
+    AssetsCommands.current_asset = mocked_asset
+    run_main_with_args(["delete"], main)
 
-    @patch('sys.argv', [SCRIPT_NAME, "delete"])
-    @patch('builtins.input', side_effect=['x'])
-    def test_delete_asset_invalid_input(self, mock_input):
-        main()
-        self._mocked_asset.delete.assert_not_called()
-        self.assertIsNotNone(AssetsCommands.current_asset)
+    assert_asset_deleted(mocked_asset)
+    assert AssetsCommands.current_asset is None
 
-if __name__ == '__main__':
-    unittest.main()
+
+def test_delete_asset_cancelled(mocked_asset, mock_input):
+    mock_input.side_effect = ["n"]
+    AssetsCommands.current_asset = mocked_asset
+    run_main_with_args(["delete"], main)
+
+    mocked_asset.delete.assert_not_called()
+    assert AssetsCommands.current_asset is not None
+
+
+def test_delete_specific_asset(mocked_asset, mock_assets, mock_input):
+    asset_to_delete = mock_assets[0]
+    AssetsCommands.current_asset = asset_to_delete
+
+    mock_input.side_effect = ["y"]
+    run_main_with_args(["delete"], main)
+
+    asset_to_delete.delete.assert_called_once()
+
+    for asset in mock_assets[1:]:
+        asset.delete.assert_not_called()
