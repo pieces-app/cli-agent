@@ -203,5 +203,5 @@ class VersionCommand(BaseCommand):
         else:
             pass
         return CommandResult(
-            0, create_version_success(Settings.pieces_os_version, __version__)
+            0, create_version_success(__version__, Settings.pieces_os_version)
         )
