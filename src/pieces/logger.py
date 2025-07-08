@@ -2,11 +2,13 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Self
+from typing import Optional, Self, Any
 
 from rich import prompt
 from rich.console import Console
 from rich.prompt import Prompt
+
+from pieces.headless.exceptions import HeadlessPromptError
 
 
 class Logger:
@@ -74,19 +76,39 @@ class Logger:
     @property
     def input(self):
         """Get user input with a prompt."""
-        return self.console.input
+        if not self._is_headless_mode():
+            return self.console.input
+        return self.handle_input
 
     @property
     def print(self):
-        return self.console.print
+        if not self._is_headless_mode():
+            return self.console.print
+        return lambda *args, **kwargs: None
+
+    def handle_input(self, default: Optional[str] = None, *args, **kwargs) -> str:
+        """Handle user input with an optional default value."""
+        if default:
+            return default
+        raise HeadlessPromptError()
 
     @property
     def prompt(self):
-        return self._prompt.ask
+        if not self._is_headless_mode():
+            return self._prompt.ask
+        return self.handle_input
 
     @property
     def confirm(self):
-        return self._confirm.ask
+        if not self._is_headless_mode():
+            return self._prompt.ask
+        return self.handle_input
+
+    def _is_headless_mode(self) -> bool:
+        """Check if currently in headless mode."""
+        from pieces.settings import Settings
+
+        return Settings.headless_mode
 
     @classmethod
     def get_instance(cls):

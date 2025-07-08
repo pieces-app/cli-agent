@@ -1,5 +1,6 @@
 from rich.markdown import Markdown
 
+from pieces.headless.models.mcp import MCPListReponse, create_mcp_list_success
 from pieces.mcp.integration import Integration
 from pieces.settings import Settings
 
@@ -36,3 +37,22 @@ def handle_list(
                 )
     for t in text:
         Settings.logger.print(Markdown(t))
+
+
+def get_status(integration: Integration):
+    if integration.is_set_up():
+        if integration.need_repair():
+            return "needs_repair"
+        else:
+            return "healthy"
+    else:
+        return "available_to_setup"
+
+
+def handle_list_headless(**kwargs):
+    return create_mcp_list_success(
+        [
+            MCPListReponse(key, get_status(integration))
+            for key, integration in supported_mcps.items()
+        ]
+    )

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Self
+from typing import Union, List, Dict, Self
 import argparse
+from pieces.headless.models.base import CommandResult
 from pieces.settings import Settings
 import sys
 
@@ -10,6 +11,7 @@ class BaseCommand(ABC):
 
     commands: List[Self] = []
     _is_command_group = False
+    support_headless = False
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -33,9 +35,15 @@ class BaseCommand(ABC):
         self.docs: str = self.get_docs()
 
     def command_func(self, *args, **kwargs):
+        # Only enable headless mode if the command supports it and it's requested
+        if not self.support_headless and Settings.headless_mode:
+            Settings.headless_mode = False
         return_code = self.execute(*args, **kwargs)
         if not Settings.run_in_loop:
-            sys.exit(return_code)
+            if isinstance(return_code, int):
+                sys.exit(return_code)
+            else:
+                return_code.exit(Settings.headless_mode)
         return return_code
 
     @abstractmethod
@@ -70,7 +78,7 @@ class BaseCommand(ABC):
         pass
 
     @abstractmethod
-    def execute(self, **kwargs) -> int:
+    def execute(self, **kwargs) -> Union[int, CommandResult]:
         """Execute the command with the given arguments.
 
         Returns:

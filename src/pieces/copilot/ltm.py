@@ -7,6 +7,7 @@ import time
 import urllib3
 
 from prompt_toolkit.formatted_text import HTML
+from pieces.headless.exceptions import HeadlessLTMNotEnabledError
 from pieces.settings import Settings
 from prompt_toolkit.application import Application
 from prompt_toolkit.layout import Layout
@@ -119,6 +120,9 @@ def check_ltm(docs=None) -> bool:
     Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
     if Settings.pieces_client.copilot.context.ltm.is_enabled:
         return True
+
+    if Settings.headless_mode:
+        raise HeadlessLTMNotEnabledError()
 
     if not Settings.logger.confirm(
         "Pieces LTM must be running, do you want to enable it?",

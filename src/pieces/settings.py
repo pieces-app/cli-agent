@@ -4,6 +4,8 @@ from pathlib import Path
 import sys
 from platformdirs import user_data_dir
 
+from pieces.headless.exceptions import HeadlessCompatibilityError
+from pieces.headless.models.base import CommandResult
 from pieces.logger import Logger
 from pieces._vendor.pieces_os_client.wrapper import PiecesClient
 from pieces._vendor.pieces_os_client.wrapper.version_compatibility import VersionChecker, UpdateEnum
@@ -47,6 +49,7 @@ class Settings:
     config_file = Path(pieces_data_dir, "pieces_config.json")
 
     run_in_loop = False  # is CLI looping?
+    headless_mode = False  # is CLI running in headless mode?
 
     # some useful directories
     # extensions_dir
@@ -165,23 +168,25 @@ class Settings:
         result = VersionChecker(
             cls.PIECES_OS_MIN_VERSION, cls.PIECES_OS_MAX_VERSION, cls.pieces_os_version
         ).version_check()
+        if cls.headless_mode and not result.compatible:
+            raise HeadlessCompatibilityError(result)
 
         # Check compatibility
         if result.update == UpdateEnum.Plugin:
-            print(
+            cls.logger.print(
                 "Please update your cli-agent tool. It is not compatible with the current PiecesOS version"
             )
-            print(
+            cls.logger.print(
                 URLs.DOCS_CLI.value
             )  # TODO: We might need to add a link a better link here
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
         elif result.update == UpdateEnum.PiecesOS:
             # TODO: Use the update POS endpoint
-            print(
+            cls.logger.print(
                 "Please update PiecesOS. It is not compatible with the current cli-agent version"
             )
-            print(URLs.DOCS_INSTALLATION.value)
+            cls.logger.print(URLs.DOCS_INSTALLATION.value)
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
 

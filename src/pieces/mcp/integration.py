@@ -132,7 +132,11 @@ class MCPProperties:
             mcp_settings[self.url_property_name] = get_mcp_latest_url()
         else:
             mcp_settings[self.command_property_name] = self.pieces_cli_bin_path
-            mcp_settings[self.args_property_name] = ["--ignore-onboarding", "mcp", "start"]
+            mcp_settings[self.args_property_name] = [
+                "--ignore-onboarding",
+                "mcp",
+                "start",
+            ]
         return mcp_settings
 
 
@@ -149,6 +153,7 @@ class Integration:
         loader=json.load,
         saver=lambda x, y: json.dump(x, y, indent=4),
         id: Optional[str] = None,
+        support_sse: bool = True,
     ) -> None:
         # remove the css selector
         self.docs_no_css_selector = docs.split("#")[0]
@@ -159,11 +164,11 @@ class Integration:
             "Something went wrong. "
             f"Please refer to the documentation: `{self.docs_no_css_selector}`"
         )
+        self.support_sse = support_sse
         self.docs = docs
         self.get_settings_path = get_settings_path
         self.loader = loader
         self.saver = saver
-        self.console = Settings.logger.console
         self.id: str = id or self.readable.lower().replace(" ", "_")
         self._local_config = None
         self.mcp_properties = mcp_properties
@@ -185,32 +190,41 @@ class Integration:
         else:
             return self.on_select(mcp_type, **kwargs)
 
-    def run(self, stdio: bool, **kwargs):
+    def run(self, stdio: bool, **kwargs) -> bool:
+        if not stdio and not self.support_sse:
+            Settings.logger.print(
+                "[yellow]Warning: Using stdio instead of sse because sse connection is not supported"
+            )
+            stdio = True
         if stdio and not self.mcp_properties.pieces_cli_bin_path:
             raise ValueError(
                 "Pieces Cli is not added to the path you can't setup the stdio servers please add it to the path"
             )
-        self.console.print(f"Attempting to update Global {self.readable} MCP Tooling")
+        Settings.logger.print(
+            f"Attempting to update Global {self.readable} MCP Tooling"
+        )
         if not self.check_ltm():
-            return
+            return False
         try:
             if not self.handle_options(stdio, **kwargs):
-                return
-            self.console.print(
+                return False
+            Settings.logger.print(
                 Markdown(f"✅ Pieces MCP is now enabled for {self.readable}!")
             )
-            self.console.print(
+            Settings.logger.print(
                 Markdown(
                     f"For more information please refer to the docs: `{self.docs}`"
                 )
             )
-            self.console.print(Markdown(self.text_end))
+            Settings.logger.print(Markdown(self.text_end))
+            return True
         except KeyboardInterrupt:
-            pass
+            return False
         except Exception as e:  # noqa: E722
-            print(e)
+            Settings.logger.print(e)
             Settings.logger.critical(e)
-            self.console.print(Markdown(self.error_text))
+            Settings.logger.print(Markdown(self.error_text))
+            return False
 
     def check_ltm(self) -> bool:
         css_selector = "#installing-piecesos--configuring-permissions"
@@ -221,7 +235,7 @@ class Integration:
         if paths_to_repair:
             [self.on_select(mcp_type, p) for p, mcp_type in paths_to_repair.items()]
         else:
-            self.console.print(f"No issues detected in {self.readable}")
+            Settings.logger.print(f"No issues detected in {self.readable}")
 
     def on_select(self, mcp_type: MCP_types, path=None, **kwargs) -> bool:
         mcp_settings = self.mcp_properties.mcp_modified_settings(mcp_type)
@@ -234,7 +248,8 @@ class Integration:
             and self.search(path, old_mcp_type)[0]  # the old set up and NOT removed
             and not Settings.logger.confirm(
                 f"{mcp_type} is already used as your {self.readable} MCP\n"
-                f"Do you want to replace the {old_mcp_type} mcp with the {mcp_type} mcp?"
+                f"Do you want to replace the {old_mcp_type} mcp with the {mcp_type} mcp?",
+                default=True,
             )
         ):
             return False
@@ -261,9 +276,11 @@ class Integration:
         try:
             with open(path, "w") as f:
                 self.saver(settings, f)
-            print(f"Successfully updated {path} with Pieces configuration")
+            Settings.logger.print(
+                f"Successfully updated {path} with Pieces configuration"
+            )
         except Exception as e:
-            print(f"Error writing {self.readable} {dirname}")
+            Settings.logger.print(f"Error writing {self.readable} {dirname}")
             raise e
         self.local_config.add_project(self.id, mcp_type, path)
         return True
@@ -283,7 +300,9 @@ class Integration:
         except (json.JSONDecodeError, yaml.YAMLError):
             if os.path.getsize(path) == 0:
                 return {}
-            print(f"Failed in prasing {self.readable}, {path} - it may be malformed")
+            Settings.logger.print(
+                f"Failed in prasing {self.readable}, {path} - it may be malformed"
+            )
             raise ValueError
 
         return settings
@@ -372,7 +391,7 @@ class Integration:
         except FileNotFoundError:
             return False, {}
         except ValueError as e:
-            print(e)
+            Settings.logger.print(e)
             return False, {}
 
         # Ignore the Pieces because it might be named anything else
