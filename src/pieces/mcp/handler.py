@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Union, cast
+from typing import Dict, Literal, Union, Optional
 from rich.markdown import Markdown
 import urllib.request
 import time
@@ -6,6 +6,12 @@ import json
 import urllib.parse
 import webbrowser
 
+from pieces.headless.models.base import (
+    BaseResponse,
+    ErrorCode,
+    ErrorResponse,
+)
+from pieces.headless.models.mcp import create_mcp_setup_success
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
 from pieces.urls import URLs
@@ -25,6 +31,7 @@ from .integrations import (
     warp_stdio_json,
 )
 from .integration import Integration, mcp_integration_types
+from pieces.headless.models.mcp import MCPRepairResult, create_mcp_repair_success
 
 # NOTE: the key should be the same as the parameter name in the handle_mcp function
 supported_mcps: Dict[mcp_integration_types, Integration] = {
@@ -39,21 +46,7 @@ supported_mcps: Dict[mcp_integration_types, Integration] = {
 }
 
 
-def handle_mcp(
-    vscode: bool = False,
-    cursor: bool = False,
-    goose: bool = False,
-    claude: bool = False,
-    zed: bool = False,
-    windsurf: bool = False,
-    raycast: bool = False,
-    warp: bool = False,
-    shortwave: bool = False,
-    claude_code: bool = False,
-    stdio: bool = False,
-    **kwargs,
-):
-    # Let's check for the MCP server to see if it is running
+def check_mcp_running():
     try:
         with urllib.request.urlopen(get_mcp_latest_url(), timeout=1) as response:
             for line in response:
@@ -62,7 +55,21 @@ def handle_mcp(
                     break
     except Exception as e:
         Settings.show_error(f"Pieces MCP server is not running {e}")
-        return
+        return False
+    return True
+
+
+def handle_mcp(
+    integration: Union[mcp_integration_types, Literal["raycast", "wrap"], None],
+    stdio: bool = False,
+    **kwargs,
+) -> BaseResponse:
+    if not check_mcp_running():
+        return ErrorResponse(
+            "mcp setup",
+            ErrorCode.MCP_SERVER_NOT_RUNNING,
+            "The stdio or SSE connection to the Pieces MCP server is not available. Please restart PiecesOS.",
+        )
 
     # Getting the args
     args = {}
@@ -71,59 +78,63 @@ def handle_mcp(
     elif kwargs.get("local"):
         args = {"option": "local"}
 
-    if vscode:
-        supported_mcps["vscode"].run(stdio, **args)
-
-    if goose:
-        supported_mcps["goose"].run(stdio)
-
-    if cursor:
-        supported_mcps["cursor"].run(stdio, **args)
-
-    if claude or zed or raycast or claude_code or shortwave:
+    if integration == "raycast":
         if not stdio:
             Settings.logger.print(
                 "[yellow]Warning: Using stdio instead of sse because sse connection is not supported"
             )
-        if raycast:
-            handle_raycast()
-            return
-        if claude:
-            mcp = "claude"
-        elif zed:
-            mcp = "zed"
-        elif claude_code:
-            mcp = "claude_code"
-        elif shortwave:
-            mcp = "shortwave"
-        else:
-            return
-        supported_mcps[mcp].run(stdio=True)
-        return
-
-    if windsurf:
-        supported_mcps["windsurf"].run(stdio)
-
-    if warp:
+        handle_raycast()
+        return create_mcp_setup_success(
+            integration,
+            None,
+            "Follow the Raycast deeplink to set up Pieces MCP integration.",
+            "stdio",
+        )
+    elif integration == "wrap":
         jsn = (
             warp_stdio_json if stdio else warp_sse_json.format(url=get_mcp_latest_url())
         )
         text = warp_instructions.format(json=jsn)
         Settings.logger.print(Markdown(text))
+        return create_mcp_setup_success(
+            integration, None, text, "stdio" if stdio else "sse"
+        )
 
-    if not any(
-        [claude, cursor, vscode, goose, zed, windsurf, raycast, warp, shortwave]
-    ):
+    integration_instance = supported_mcps[integration] if integration else None
+    if integration_instance is None or integration is None:
         menu = [
             (val.readable, {key: True, "stdio": stdio})
             for key, val in supported_mcps.items()
         ]
         menu.append(("Raycast", {"raycast": True, "stdio": stdio}))  # append raycast
         menu.append(("Warp", {"warp": True, "stdio": stdio}))  # append warp
-        PiecesSelectMenu(
+        return PiecesSelectMenu(
             menu,
             handle_mcp,
         ).run()
+
+    # Run the setup and check if it was successful
+    if integration in ["vscode", "cursor"]:
+        success = integration_instance.run(stdio, **args)
+    else:
+        success = integration_instance.run(stdio)
+
+    if success:
+        stdio_text = "stdio" if stdio else "sse"
+        if not integration_instance.support_sse:
+            stdio_text = "stdio"
+        return create_mcp_setup_success(
+            integration,
+            integration_instance.get_settings_path(**args),
+            integration_instance.text_end,
+            stdio_text,
+        )
+    else:
+        return ErrorResponse(
+            "mcp setup",
+            ErrorCode.MCP_SETUP_FAILED,
+            integration_instance.error_text,
+        )
 
 
 def handle_raycast():
@@ -137,7 +148,7 @@ def handle_raycast():
     encoded_config = urllib.parse.quote(config_json)
     raycast_url = f"raycast://mcp/install?{encoded_config}"
     webbrowser.open(raycast_url)
-    print("Deeplink opened follow up in Raycast")
+    Settings.logger.print("Deeplink opened follow up in Raycast")
 
 
 def handle_mcp_docs(
@@ -165,11 +176,76 @@ def handle_mcp_docs(
         URLs.open_website(docs)
 
 
-def handle_repair(ide: Union[mcp_integration_types, Literal["all"]], **kwargs):
+def handle_repair(
+    ide: Union[mcp_integration_types, Literal["all"]], **kwargs
+) -> BaseResponse:
+    """
+    Repair MCP configuration for a specific IDE or all IDEs.
+
+    Args:
+        ide: The IDE to repair or 'all' to repair all IDEs
+        **kwargs: Additional arguments
+
+    Returns:
+        BaseResponse in headless mode, None otherwise
+    """
+    repair_results = []
+
+    def repair_single_integration(
+        integration_name: mcp_integration_types,
+    ) -> MCPRepairResult:
+        try:
+            integration = supported_mcps[integration_name]
+            needs_repair = integration.need_repair()
+
+            if needs_repair:
+                integration.repair()
+                return MCPRepairResult(
+                    integration_name=integration_name,
+                    status="repaired",
+                    configuration_path=integration.get_settings_path(),
+                )
+            else:
+                return MCPRepairResult(
+                    integration_name=integration_name,
+                    status="healthy",
+                    configuration_path=integration.get_settings_path(),
+                )
+
+        except Exception as e:
+            error_msg = str(e)
+            if Settings.headless_mode:
+                raise e
+            else:
+                Settings.logger.error(
+                    f"Failed to repair {integration_name}: {error_msg}"
+                )
+                Settings.show_error(f"Failed to repair {integration_name}: {error_msg}")
+
     if ide == "all":
-        [handle_repair(integration) for integration in supported_mcps]
-        return
-    supported_mcps[ide].repair()
+        for integration_name in supported_mcps:
+            result = repair_single_integration(integration_name)
+            repair_results.append(result)
+    else:
+        result = repair_single_integration(ide)
+        repair_results.append(result)
+
+    # In interactive mode, just print summary
+    total = len(repair_results)
+    repaired = len([r for r in repair_results if r.status == "repaired"])
+    healthy = len([r for r in repair_results if r.status == "healthy"])
+    failed = len([r for r in repair_results if r.status == "failed"])
+
+    if total > 1:
+        Settings.logger.print("\nRepair Summary:")
+        Settings.logger.print(f"Total integrations checked: {total}")
+        if repaired > 0:
+            Settings.logger.print(f"[green]Repaired: {repaired}[/green]")
+        if healthy > 0:
+            Settings.logger.print(f"[blue]Already healthy: {healthy}[/blue]")
+        if failed > 0:
+            Settings.logger.print(f"[red]Failed: {failed}[/red]")
+    return create_mcp_repair_success(repair_results)
 
 
 def handle_status(**kwargs):
@@ -187,7 +263,7 @@ def handle_status(**kwargs):
                 f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow]",
             )
             if response:
-                handle_repair(cast(Literal["vscode", "goose", "cursor"], key))
+                handle_repair(key)
 
     time.sleep(1)
     Settings.logger.print("[bold green]All integrations are checked[/bold green]")
