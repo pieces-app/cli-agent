@@ -23,7 +23,7 @@ def create_mcp_setup_success(
     return SuccessResponse(command="mcp setup", data=setup_data)
 
 
-class MCPListReponse:
+class MCPListResponse:
     def __init__(
         self,
         integration_name: str,
@@ -40,7 +40,7 @@ class MCPListReponse:
 
 
 def create_mcp_list_success(
-    integrations: List[MCPListReponse],
+    integrations: List[MCPListResponse],
 ):
     return SuccessResponse(
         command="mcp list",
