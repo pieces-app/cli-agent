@@ -591,69 +591,69 @@ jobs:
           Write-Output "Final structure:"
           Get-ChildItem "choco/tools/pieces" -Recurse | Select-Object Name, FullName
 
-      - name: Sign executable
-        env:
-          CERTIFICATE: ${{ secrets.code_signing_cert }}
-          CERT_PASSWORD: ${{ secrets.cert_password }}
-        run: |
-          # Debug: Check if environment variables are set
-          Write-Output "Checking environment variables..."
-          if ([string]::IsNullOrEmpty($env:CERTIFICATE)) {
-            throw "CERTIFICATE environment variable is empty or not set"
-          }
-          if ([string]::IsNullOrEmpty($env:CERT_PASSWORD)) {
-            throw "CERT_PASSWORD environment variable is empty or not set"
-          }
-          
-          Write-Output "Certificate length: $($env:CERTIFICATE.Length)"
-          Write-Output "Password length: $($env:CERT_PASSWORD.Length)"
-          
-          # Decode certificate from base64
-          Write-Output "Decoding certificate..."
-          try {
-            [System.Convert]::FromBase64String($env:CERTIFICATE) | Set-Content -Path "certificate.pfx" -AsByteStream
-            Write-Output "Certificate file created successfully"
-          } catch {
-            throw "Failed to decode certificate: $_"
-          }
-          
-          # Verify certificate file exists
-          if (-not (Test-Path "certificate.pfx")) {
-            throw "Certificate file was not created"
-          }
-          
-          $certSize = (Get-Item "certificate.pfx").Length
-          Write-Output "Certificate file size: $certSize bytes"
-          
-          # Find the latest signtool version
-          $signtoolPath = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object Name -Descending | Select-Object -First 1
-          Write-Output "Using signtool: $($signtoolPath.FullName)"
-          
-          # Verify target exe exists
-          if (-not (Test-Path "choco/tools/pieces/pieces.exe")) {
-            Write-Output "Contents of choco/tools/pieces/:"
-            Get-ChildItem "choco/tools/pieces/" -Recurse | Select-Object Name, FullName
-            throw "Target executable not found: choco/tools/pieces/pieces.exe"
-          }
-          
-          # Sign the executable
-          Write-Output "Signing executable..."
-          & $signtoolPath.FullName sign /v /fd "SHA256" /a /f "certificate.pfx" /p "$env:CERT_PASSWORD" /tr "http://timestamp.digicert.com" /td SHA256 "choco/tools/pieces/pieces.exe"
-          
-          if ($LASTEXITCODE -ne 0) {
-            throw "Signing failed with exit code $LASTEXITCODE"
-          }
-          
-          # Verify the signature
-          Write-Output "Verifying signature..."
-          & $signtoolPath.FullName verify /pa "choco/tools/pieces/pieces.exe"
-          
-          # Clean up certificate file
-          if (Test-Path "certificate.pfx") {
-            Remove-Item "certificate.pfx" -Force
-          }
-          
-          Write-Output "✓ pieces.exe has been signed successfully"
+#      - name: Sign executable
+#        env:
+#          CERTIFICATE: ${{ secrets.code_signing_cert }}
+#          CERT_PASSWORD: ${{ secrets.cert_password }}
+#        run: |
+#          # Debug: Check if environment variables are set
+#          Write-Output "Checking environment variables..."
+#          if ([string]::IsNullOrEmpty($env:CERTIFICATE)) {
+#            throw "CERTIFICATE environment variable is empty or not set"
+#          }
+#          if ([string]::IsNullOrEmpty($env:CERT_PASSWORD)) {
+#            throw "CERT_PASSWORD environment variable is empty or not set"
+#          }
+#
+#          Write-Output "Certificate length: $($env:CERTIFICATE.Length)"
+#          Write-Output "Password length: $($env:CERT_PASSWORD.Length)"
+#
+#          # Decode certificate from base64
+#          Write-Output "Decoding certificate..."
+#          try {
+#            [System.Convert]::FromBase64String($env:CERTIFICATE) | Set-Content -Path "certificate.pfx" -AsByteStream
+#            Write-Output "Certificate file created successfully"
+#          } catch {
+#            throw "Failed to decode certificate: $_"
+#          }
+#
+#          # Verify certificate file exists
+#          if (-not (Test-Path "certificate.pfx")) {
+#            throw "Certificate file was not created"
+#          }
+#
+#          $certSize = (Get-Item "certificate.pfx").Length
+#          Write-Output "Certificate file size: $certSize bytes"
+#
+#          # Find the latest signtool version
+#          $signtoolPath = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object Name -Descending | Select-Object -First 1
+#          Write-Output "Using signtool: $($signtoolPath.FullName)"
+#
+#          # Verify target exe exists
+#          if (-not (Test-Path "choco/tools/pieces/pieces.exe")) {
+#            Write-Output "Contents of choco/tools/pieces/:"
+#            Get-ChildItem "choco/tools/pieces/" -Recurse | Select-Object Name, FullName
+#            throw "Target executable not found: choco/tools/pieces/pieces.exe"
+#          }
+#
+#          # Sign the executable
+#          Write-Output "Signing executable..."
+#          & $signtoolPath.FullName sign /v /fd "SHA256" /a /f "certificate.pfx" /p "$env:CERT_PASSWORD" /tr "http://timestamp.digicert.com" /td SHA256 "choco/tools/pieces/pieces.exe"
+#
+#          if ($LASTEXITCODE -ne 0) {
+#            throw "Signing failed with exit code $LASTEXITCODE"
+#          }
+#
+#          # Verify the signature
+#          Write-Output "Verifying signature..."
+#          & $signtoolPath.FullName verify /pa "choco/tools/pieces/pieces.exe"
+#
+#          # Clean up certificate file
+#          if (Test-Path "certificate.pfx") {
+#            Remove-Item "certificate.pfx" -Force
+#          }
+#
+#          Write-Output "✓ pieces.exe has been signed successfully"
 
       - name: Copy LICENSE
         run: |
