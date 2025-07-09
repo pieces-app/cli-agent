@@ -1,4 +1,6 @@
 import argparse
+from pieces.core.update_pieces_os import update_pieces_os
+from pieces.utils import PiecesSelectMenu
 import json
 import sys
 import subprocess
@@ -184,6 +186,13 @@ class ManageUpdateCommand(BaseCommand):
             action="store_true",
             help="Force update even if already up to date",
         )
+        parser.add_argument(
+            "update",
+            help="What to udpate",
+            choices=["PiecesOS", "Self"],
+            nargs="?",
+            default=None,
+        )
 
     def _check_updates(self, source: Literal["pip", "homebrew"]) -> bool:
         """Check if updates are available."""
@@ -291,6 +300,19 @@ class ManageUpdateCommand(BaseCommand):
 
     def execute(self, **kwargs) -> int:
         force = kwargs.get("force", False)
+        update = kwargs.get("update", None)
+        if not update:
+            PiecesSelectMenu(
+                [
+                    ("PiecesOS", {"update": "PiecesOS"}),
+                    ("Self (Pieces CLI)", {"force": force, "update": "Self"}),
+                ],
+                on_enter_callback=self.execute,
+            ).run()
+            return 0
+        elif update == "PiecesOS":
+            update_pieces_os()
+            return 0
 
         operation_map = {
             "installer": lambda **kw: self._update_installer_version(

@@ -50,7 +50,7 @@ class PiecesCLI:
                     "  [n] No   – Skip for now (you'll be asked again next time).\n"
                     "  [skip]   – Don't ask me again (you can always run `pieces onboarding` manually).\n"
                 ),
-                markup=False
+                markup=False,
             )
 
             res = Settings.logger.prompt(choices=["y", "n", "skip"])
