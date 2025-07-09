@@ -30,12 +30,12 @@ class ClassificationGenericEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     CODE = 'CODE'
     TEXT = 'TEXT'
     IMAGE = 'IMAGE'
     VIDEO = 'VIDEO'
     EXTERNAL_RESOURCE_REFERENCE = 'EXTERNAL_RESOURCE_REFERENCE'
-    UNKNOWN = 'UNKNOWN'
     FILE = 'FILE'
 
     @classmethod

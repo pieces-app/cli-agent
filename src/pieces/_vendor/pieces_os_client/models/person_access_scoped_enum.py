@@ -30,6 +30,7 @@ class PersonAccessScopedEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     OWNER = 'OWNER'
     EDITOR = 'EDITOR'
     COMMENTER = 'COMMENTER'

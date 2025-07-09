@@ -48,6 +48,152 @@ class WebsiteApi:
         self.api_client = api_client
 
     @validate_arguments
+    def website_associate_annotation(self, website : Annotated[StrictStr, Field(..., description="website id")], annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/annotations/associate/{annotation} [POST]  # noqa: E501
+
+        This will enable us to associate an annotation with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_annotation(website, annotation, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param annotation: This is a specific annotation uuid. (required)
+        :type annotation: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_associate_annotation_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_associate_annotation_with_http_info(website, annotation, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_associate_annotation_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/annotations/associate/{annotation} [POST]  # noqa: E501
+
+        This will enable us to associate an annotation with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_annotation_with_http_info(website, annotation, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param annotation: This is a specific annotation uuid. (required)
+        :type annotation: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'annotation'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_associate_annotation" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['annotation'] is not None:
+            _path_params['annotation'] = _params['annotation']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/annotations/associate/{annotation}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
     def website_associate_asset(self, asset : Annotated[StrictStr, Field(..., description="The id (uuid) of the asset that you are trying to access.")], website : Annotated[StrictStr, Field(..., description="website id")], **kwargs) -> None:  # noqa: E501
         """/website/{website}/assets/associate/{asset} [POST]  # noqa: E501
 
@@ -632,6 +778,590 @@ class WebsiteApi:
             _request_auth=_params.get('_request_auth'))
 
     @validate_arguments
+    def website_associate_tag(self, website : Annotated[StrictStr, Field(..., description="website id")], tag : Annotated[StrictStr, Field(..., description="tag id")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/tags/associate/{tag} [POST]  # noqa: E501
+
+        This will enable us to associate a tag with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_tag(website, tag, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param tag: tag id (required)
+        :type tag: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_associate_tag_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_associate_tag_with_http_info(website, tag, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_associate_tag_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], tag : Annotated[StrictStr, Field(..., description="tag id")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/tags/associate/{tag} [POST]  # noqa: E501
+
+        This will enable us to associate a tag with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_tag_with_http_info(website, tag, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param tag: tag id (required)
+        :type tag: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'tag'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_associate_tag" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['tag'] is not None:
+            _path_params['tag'] = _params['tag']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/tags/associate/{tag}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
+    def website_associate_workstream_event(self, website : Annotated[StrictStr, Field(..., description="website id")], workstream_event : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific workstream_event.")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/workstream_events/associate/{workstream_event} [POST]  # noqa: E501
+
+        This will enable us to associate a workstream event with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_workstream_event(website, workstream_event, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param workstream_event: This is a identifier that is used to identify a specific workstream_event. (required)
+        :type workstream_event: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_associate_workstream_event_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_associate_workstream_event_with_http_info(website, workstream_event, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_associate_workstream_event_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], workstream_event : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific workstream_event.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/workstream_events/associate/{workstream_event} [POST]  # noqa: E501
+
+        This will enable us to associate a workstream event with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_workstream_event_with_http_info(website, workstream_event, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param workstream_event: This is a identifier that is used to identify a specific workstream_event. (required)
+        :type workstream_event: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'workstream_event'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_associate_workstream_event" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['workstream_event'] is not None:
+            _path_params['workstream_event'] = _params['workstream_event']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/workstream_events/associate/{workstream_event}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
+    def website_associate_workstream_pattern_engine_source(self, website : Annotated[StrictStr, Field(..., description="website id")], source : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific WorkstreamPatternEngineSource")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/workstream_pattern_engine/sources/associate/{source} [POST]  # noqa: E501
+
+        This will enable us to associate a source with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_workstream_pattern_engine_source(website, source, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param source: This is a identifier that is used to identify a specific WorkstreamPatternEngineSource (required)
+        :type source: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_associate_workstream_pattern_engine_source_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_associate_workstream_pattern_engine_source_with_http_info(website, source, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_associate_workstream_pattern_engine_source_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], source : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific WorkstreamPatternEngineSource")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/workstream_pattern_engine/sources/associate/{source} [POST]  # noqa: E501
+
+        This will enable us to associate a source with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_workstream_pattern_engine_source_with_http_info(website, source, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param source: This is a identifier that is used to identify a specific WorkstreamPatternEngineSource (required)
+        :type source: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'source'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_associate_workstream_pattern_engine_source" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['source'] is not None:
+            _path_params['source'] = _params['source']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/workstream_pattern_engine/sources/associate/{source}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
+    def website_associate_workstream_pattern_engine_source_window(self, website : Annotated[StrictStr, Field(..., description="website id")], source_window : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific WorkstreamPatternEngineSourceWindow")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/workstream_pattern_engine/source_windows/associate/{source_window} [POST]  # noqa: E501
+
+        This will enable us to associate a source window with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_workstream_pattern_engine_source_window(website, source_window, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param source_window: This is a identifier that is used to identify a specific WorkstreamPatternEngineSourceWindow (required)
+        :type source_window: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_associate_workstream_pattern_engine_source_window_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_associate_workstream_pattern_engine_source_window_with_http_info(website, source_window, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_associate_workstream_pattern_engine_source_window_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], source_window : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific WorkstreamPatternEngineSourceWindow")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/workstream_pattern_engine/source_windows/associate/{source_window} [POST]  # noqa: E501
+
+        This will enable us to associate a source window with a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_associate_workstream_pattern_engine_source_window_with_http_info(website, source_window, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param source_window: This is a identifier that is used to identify a specific WorkstreamPatternEngineSourceWindow (required)
+        :type source_window: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'source_window'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_associate_workstream_pattern_engine_source_window" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['source_window'] is not None:
+            _path_params['source_window'] = _params['source_window']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/workstream_pattern_engine/source_windows/associate/{source_window}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
     def website_associate_workstream_summary(self, website : Annotated[StrictStr, Field(..., description="website id")], workstream_summary : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific workstream_summary.")], **kwargs) -> None:  # noqa: E501
         """/website/{website}/workstream_summaries/associate/{workstream_summary} [POST]  # noqa: E501
 
@@ -762,6 +1492,152 @@ class WebsiteApi:
 
         return self.api_client.call_api(
             '/website/{website}/workstream_summaries/associate/{workstream_summary}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
+    def website_disassociate_annotation(self, website : Annotated[StrictStr, Field(..., description="website id")], annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/annotations/disassociate/{annotation} [POST]  # noqa: E501
+
+        This will enable us to dissassociate an annotation from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_annotation(website, annotation, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param annotation: This is a specific annotation uuid. (required)
+        :type annotation: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_disassociate_annotation_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_disassociate_annotation_with_http_info(website, annotation, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_disassociate_annotation_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], annotation : Annotated[StrictStr, Field(..., description="This is a specific annotation uuid.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/annotations/disassociate/{annotation} [POST]  # noqa: E501
+
+        This will enable us to dissassociate an annotation from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_annotation_with_http_info(website, annotation, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param annotation: This is a specific annotation uuid. (required)
+        :type annotation: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'annotation'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_disassociate_annotation" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['annotation'] is not None:
+            _path_params['annotation'] = _params['annotation']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/annotations/disassociate/{annotation}', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -1346,6 +2222,590 @@ class WebsiteApi:
 
         return self.api_client.call_api(
             '/website/{website}/persons/disassociate/{person}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
+    def website_disassociate_tag(self, website : Annotated[StrictStr, Field(..., description="website id")], tag : Annotated[StrictStr, Field(..., description="tag id")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/tags/disassociate/{tag} [POST]  # noqa: E501
+
+        This will enable us to disassociate a tag from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_tag(website, tag, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param tag: tag id (required)
+        :type tag: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_disassociate_tag_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_disassociate_tag_with_http_info(website, tag, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_disassociate_tag_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], tag : Annotated[StrictStr, Field(..., description="tag id")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/tags/disassociate/{tag} [POST]  # noqa: E501
+
+        This will enable us to disassociate a tag from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_tag_with_http_info(website, tag, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param tag: tag id (required)
+        :type tag: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'tag'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_disassociate_tag" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['tag'] is not None:
+            _path_params['tag'] = _params['tag']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/tags/disassociate/{tag}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
+    def website_disassociate_workstream_event(self, website : Annotated[StrictStr, Field(..., description="website id")], workstream_event : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific workstream_event.")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/workstream_events/disassociate/{workstream_event} [POST]  # noqa: E501
+
+        This will enable us to disassociate a workstream event from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_workstream_event(website, workstream_event, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param workstream_event: This is a identifier that is used to identify a specific workstream_event. (required)
+        :type workstream_event: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_disassociate_workstream_event_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_disassociate_workstream_event_with_http_info(website, workstream_event, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_disassociate_workstream_event_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], workstream_event : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific workstream_event.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/workstream_events/disassociate/{workstream_event} [POST]  # noqa: E501
+
+        This will enable us to disassociate a workstream event from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_workstream_event_with_http_info(website, workstream_event, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param workstream_event: This is a identifier that is used to identify a specific workstream_event. (required)
+        :type workstream_event: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'workstream_event'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_disassociate_workstream_event" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['workstream_event'] is not None:
+            _path_params['workstream_event'] = _params['workstream_event']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/workstream_events/disassociate/{workstream_event}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
+    def website_disassociate_workstream_pattern_engine_source(self, website : Annotated[StrictStr, Field(..., description="website id")], source : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific WorkstreamPatternEngineSource")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/workstream_pattern_engine/sources/disassociate/{source} [POST]  # noqa: E501
+
+        This will enable us to disassociate a source from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_workstream_pattern_engine_source(website, source, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param source: This is a identifier that is used to identify a specific WorkstreamPatternEngineSource (required)
+        :type source: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_disassociate_workstream_pattern_engine_source_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_disassociate_workstream_pattern_engine_source_with_http_info(website, source, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_disassociate_workstream_pattern_engine_source_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], source : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific WorkstreamPatternEngineSource")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/workstream_pattern_engine/sources/disassociate/{source} [POST]  # noqa: E501
+
+        This will enable us to disassociate a source from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_workstream_pattern_engine_source_with_http_info(website, source, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param source: This is a identifier that is used to identify a specific WorkstreamPatternEngineSource (required)
+        :type source: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'source'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_disassociate_workstream_pattern_engine_source" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['source'] is not None:
+            _path_params['source'] = _params['source']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/workstream_pattern_engine/sources/disassociate/{source}', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_arguments
+    def website_disassociate_workstream_pattern_engine_source_window(self, website : Annotated[StrictStr, Field(..., description="website id")], source_window : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific WorkstreamPatternEngineSourceWindow")], **kwargs) -> None:  # noqa: E501
+        """/website/{website}/workstream_pattern_engine/source_windows/disassociate/{source_window} [POST]  # noqa: E501
+
+        This will enable us to disassociate a source window from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_workstream_pattern_engine_source_window(website, source_window, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param source_window: This is a identifier that is used to identify a specific WorkstreamPatternEngineSourceWindow (required)
+        :type source_window: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request.
+               If one number provided, it will be total request
+               timeout. It can also be a pair (tuple) of
+               (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            message = "Error! Please call the website_disassociate_workstream_pattern_engine_source_window_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            raise ValueError(message)
+        return self.website_disassociate_workstream_pattern_engine_source_window_with_http_info(website, source_window, **kwargs)  # noqa: E501
+
+    @validate_arguments
+    def website_disassociate_workstream_pattern_engine_source_window_with_http_info(self, website : Annotated[StrictStr, Field(..., description="website id")], source_window : Annotated[StrictStr, Field(..., description="This is a identifier that is used to identify a specific WorkstreamPatternEngineSourceWindow")], **kwargs) -> ApiResponse:  # noqa: E501
+        """/website/{website}/workstream_pattern_engine/source_windows/disassociate/{source_window} [POST]  # noqa: E501
+
+        This will enable us to disassociate a source window from a website.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.website_disassociate_workstream_pattern_engine_source_window_with_http_info(website, source_window, async_req=True)
+        >>> result = thread.get()
+
+        :param website: website id (required)
+        :type website: str
+        :param source_window: This is a identifier that is used to identify a specific WorkstreamPatternEngineSourceWindow (required)
+        :type source_window: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: None
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'website',
+            'source_window'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method website_disassociate_workstream_pattern_engine_source_window" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['website'] is not None:
+            _path_params['website'] = _params['website']
+
+        if _params['source_window'] is not None:
+            _path_params['source_window'] = _params['source_window']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['text/plain'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = ['application']  # noqa: E501
+
+        _response_types_map = {}
+
+        return self.api_client.call_api(
+            '/website/{website}/workstream_pattern_engine/source_windows/disassociate/{source_window}', 'POST',
             _path_params,
             _query_params,
             _header_params,

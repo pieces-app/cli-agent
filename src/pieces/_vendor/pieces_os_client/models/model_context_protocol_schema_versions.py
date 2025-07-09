@@ -19,16 +19,18 @@ import re  # noqa: F401
 import json
 
 
-from typing import List
+from typing import List, Optional
 from pydantic.v1 import BaseModel, Field, conlist
+from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.model_context_protocol_schema_version import ModelContextProtocolSchemaVersion
 
 class ModelContextProtocolSchemaVersions(BaseModel):
     """
     This is the request body that will return all the support schemas  # noqa: E501
     """
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     iterable: conlist(ModelContextProtocolSchemaVersion) = Field(default=..., description="This is a singular version for MCP")
-    __properties = ["iterable"]
+    __properties = ["schema", "iterable"]
 
     class Config:
         """Pydantic configuration"""
@@ -54,6 +56,9 @@ class ModelContextProtocolSchemaVersions(BaseModel):
                           exclude={
                           },
                           exclude_none=True)
+        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
         # override the default output from pydantic.v1 by calling `to_dict()` of each item in iterable (list)
         _items = []
         if self.iterable:
@@ -73,6 +78,7 @@ class ModelContextProtocolSchemaVersions(BaseModel):
             return ModelContextProtocolSchemaVersions.parse_obj(obj)
 
         _obj = ModelContextProtocolSchemaVersions.parse_obj({
+            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
             "iterable": [ModelContextProtocolSchemaVersion.from_dict(_item) for _item in obj.get("iterable")] if obj.get("iterable") is not None else None
         })
         return _obj

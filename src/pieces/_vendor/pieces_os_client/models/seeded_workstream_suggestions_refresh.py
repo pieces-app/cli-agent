@@ -20,19 +20,20 @@ import json
 
 
 from typing import Optional
-from pydantic.v1 import BaseModel, Field
+from pydantic.v1 import BaseModel, Field, StrictStr
 from pieces._vendor.pieces_os_client.models.application import Application
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.workstream_event_context import WorkstreamEventContext
 
 class SeededWorkstreamSuggestionsRefresh(BaseModel):
     """
-    This is used in the input of the /workstream/feed/refresh  The application here will let us know if what scope you would like to refresh the stream for. IE an Application will  provide bias in the items that are displayed.  note: context can be used here to provide further bias to the suggestions.  # noqa: E501
+    This is used in the input of the /workstream/feed/refresh  The application here will let us know if what scope you would like to refresh the stream for. IE an Application will  provide bias in the items that are displayed.  note: context can be used here to provide further bias to the suggestions.  if query is provided we will use global search.  # noqa: E501
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     application: Application = Field(...)
     context: Optional[WorkstreamEventContext] = None
-    __properties = ["schema", "application", "context"]
+    query: Optional[StrictStr] = None
+    __properties = ["schema", "application", "context", "query"]
 
     class Config:
         """Pydantic configuration"""
@@ -81,7 +82,8 @@ class SeededWorkstreamSuggestionsRefresh(BaseModel):
         _obj = SeededWorkstreamSuggestionsRefresh.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
             "application": Application.from_dict(obj.get("application")) if obj.get("application") is not None else None,
-            "context": WorkstreamEventContext.from_dict(obj.get("context")) if obj.get("context") is not None else None
+            "context": WorkstreamEventContext.from_dict(obj.get("context")) if obj.get("context") is not None else None,
+            "query": obj.get("query")
         })
         return _obj
 

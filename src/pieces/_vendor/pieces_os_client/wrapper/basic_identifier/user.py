@@ -1,10 +1,11 @@
-import threading
 from typing import TYPE_CHECKING, Optional
+
 from .basic import Basic
 
 from pieces._vendor.pieces_os_client.models.allocation_status_enum import AllocationStatusEnum
 
 if TYPE_CHECKING:
+	from pieces._vendor.pieces_os_client.wrapper.client import PiecesClient
 	from pieces._vendor.pieces_os_client.models.user_profile import UserProfile
 
 class BasicUser(Basic):
@@ -18,7 +19,7 @@ class BasicUser(Basic):
 
 	user_profile: Optional["UserProfile"] = None
 
-	def __init__(self, pieces_client) -> None:
+	def __init__(self, pieces_client: "PiecesClient") -> None:
 		"""
 		Initializes the BasicUser with a pieces client.
 
@@ -44,7 +45,7 @@ class BasicUser(Basic):
 		"""
 		self.user_profile = user
 
-	def _on_login_connect(self, thread, timeout):
+	def _on_login_connect(self):
 		"""
 		Waits for the user to login and then connects to the cloud.
 
@@ -52,8 +53,7 @@ class BasicUser(Basic):
 			thread: The thread handling the login process.
 			timeout: The maximum time to wait for the login process.
 		"""
-		thread.get(timeout)  # Wait for the user to login
-		self.connect()
+		self.connect(True)
 
 	def login(self, connect_after_login=True, timeout=120):
 		"""
@@ -65,7 +65,9 @@ class BasicUser(Basic):
 		"""
 		thread = self.pieces_client.os_api.sign_into_os(async_req=True)
 		if connect_after_login:
-			threading.Thread(target=lambda: self._on_login_connect(thread, timeout))
+			user = thread.get(timeout)
+			self.user_profile = user
+			self._on_login_connect()
 
 	def logout(self):
 		"""
@@ -73,7 +75,7 @@ class BasicUser(Basic):
 		"""
 		self.pieces_client.os_api.sign_out_of_os()
 
-	def connect(self):
+	def connect(self, async_req = False):
 		"""
 		Connects the user to the cloud.
 
@@ -83,7 +85,7 @@ class BasicUser(Basic):
 		if not self.user_profile:
 			raise PermissionError("You must be logged in to use this feature")
 		self.on_user_callback(self.user_profile, True)  # Set the connecting to cloud bool to true
-		self.pieces_client.allocations_api.allocations_connect_new_cloud(self.user_profile)
+		self.pieces_client.allocations_api.allocations_connect_new_cloud(self.user_profile,async_req=async_req)
 
 	def disconnect(self):
 		"""

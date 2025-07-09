@@ -1,4 +1,4 @@
-from typing import Literal, List, get_args
+from typing import Literal
 import yaml
 import platform
 import os
@@ -18,11 +18,6 @@ zed_config_path = os.path.join(
     "settings.json",
 )
 
-mcp_integration_types = Literal[
-    "vscode", "goose", "cursor", "claude", "windsurf", "zed"
-]
-mcp_integrations: List[mcp_integration_types] = list(get_args(mcp_integration_types))
-
 
 def get_global_vs_settings():
     system = platform.system()
@@ -41,6 +36,23 @@ def get_global_vs_settings():
         Settings.show_error(f"Unsupported platform {system}")
         raise ValueError
     return settings_path
+
+
+claude_cli_path = os.path.expanduser("~/.claude.json")
+
+
+def get_shortwave_path():
+    sys = platform.system()
+
+    if sys == "Windows":
+        return os.path.join(os.environ["APPDATA"], "Shortwave", "mcp.json")
+    elif sys == "Darwin":
+        return os.path.expanduser("~/Library/Application Support/Shortwave/mcp.json")
+    elif sys == "Linux":
+        return os.path.expanduser("~/.config/Shortwave/mcp.json")
+    else:
+        Settings.show_error(f"Unsupported platform {sys}")
+        raise ValueError
 
 
 def validate_project_path(path, dot_file=".vscode", readable: str = "VS Code"):
@@ -215,9 +227,20 @@ text_success_zed = """
 
 1. Open Zed
 2. **Ask a prompt:**
+    What I was working on yesterday?
+    Summarize it with 5 bullet points and timestamps.
 
-        What I was working on yesterday?
-        Summarize it with 5 bullet points and timestamps.
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
+text_success_claude_cli = """
+### Use Pieces LTM in Claude CLI
+
+1. Open Claude CLI (typing claude in your terminal)
+2. **Ask a prompt:**
+
+    claude> What I was working on yesterday?
+    claude> Summarize it with 5 bullet points and timestamps
 
 > Ensure PiecesOS is running & LTM is enabled
 """
@@ -234,8 +257,8 @@ text_success_windsurf = """
 > Ensure PiecesOS is running & LTM is enabled
 """
 
-wrap_instructions = """
-### Use Pieces LTM in Wrap
+warp_instructions = """
+### Use Pieces LTM in Warp
 
 1. From `Settings > AI > Manage MCP servers`
 
@@ -250,7 +273,7 @@ wrap_instructions = """
 > Ensure PiecesOS is running & LTM is enabled
 """
 
-wrap_stdio_json = """
+warp_stdio_json = """
 {
     "Pieces": {
         "command": "pieces",
@@ -262,12 +285,24 @@ wrap_stdio_json = """
 }
 """
 
-wrap_sse_json = """
+warp_sse_json = """
 {{
     "Pieces": {{
         "serverUrl": "{url}"
     }}
 }}
+"""
+
+text_success_short_wave = """
+### Use Pieces LTM in Shortwave
+
+1. Restart Shortwave
+2. **Ask a prompt:**
+
+        What I was working on yesterday?
+        Summarize it with 5 bullet points and timestamps.
+
+> Ensure PiecesOS is running & LTM is enabled
 """
 
 options = [
@@ -391,4 +426,33 @@ zed_integration = Integration(
     ),
     # We might need to add better abstraction for all the MCPs that do not support SSE.
     # As far as I know, SSE is not supported on Zed. We are going to use stdio only like Claude
+)
+
+shortwave_integration = Integration(
+    options=[],
+    text_success=text_success_short_wave,
+    readable="Shortwave",
+    get_settings_path=get_shortwave_path,
+    docs=URLs.SHORT_WAVE_MCP_DOCS.value,
+    mcp_properties=MCPProperties(
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=["mcp", "Pieces", "command"],
+        sse_property={},
+        stdio_property={},
+    ),
+)
+
+
+claude_cli_integration = Integration(
+    options=[],  # TODO: Add local and global options
+    text_success=text_success_claude_cli,
+    readable="Claude Code",
+    docs=URLs.CLAUDE_CLI_MCP_DOCS.value,
+    get_settings_path=lambda: claude_cli_path,
+    mcp_properties=MCPProperties(
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=["mcpServers", "Pieces"],
+        sse_property={},
+        stdio_property={},
+    ),
 )

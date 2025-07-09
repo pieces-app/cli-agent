@@ -30,6 +30,7 @@ class ExternalMLProviderEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     APPLE = 'APPLE'
     AMAZON = 'AMAZON'
     GOOGLE = 'GOOGLE'
@@ -57,7 +58,7 @@ class ExternalMLProviderEnum(str, Enum):
     IBM = 'IBM'
     SNOWFLAKE = 'SNOWFLAKE'
     PERPLEXITY = 'PERPLEXITY'
-    UNKNOWN = 'UNKNOWN'
+    MINISHLABS = 'MINISHLABS'
 
     @classmethod
     def from_json(cls, json_str: str) -> ExternalMLProviderEnum:

@@ -30,6 +30,7 @@ class SearchedMatchEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     TITLE = 'TITLE'
     ANNOTATION = 'ANNOTATION'
     HINT = 'HINT'

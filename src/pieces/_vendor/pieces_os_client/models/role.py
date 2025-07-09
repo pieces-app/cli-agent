@@ -30,6 +30,7 @@ class Role(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     ORIGINAL = 'ORIGINAL'
     ADDITIONAL = 'ADDITIONAL'
     BOTH = 'BOTH'

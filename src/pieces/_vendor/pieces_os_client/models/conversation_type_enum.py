@@ -30,6 +30,7 @@ class ConversationTypeEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     COPILOT = 'COPILOT'
 
     @classmethod

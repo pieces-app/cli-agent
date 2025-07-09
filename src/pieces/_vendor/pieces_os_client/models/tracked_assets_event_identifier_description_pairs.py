@@ -28,7 +28,7 @@ class TrackedAssetsEventIdentifierDescriptionPairs(BaseModel):
     These are all of the available event types that are permitted in an object pair notation.  # noqa: E501
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    assets_searched: Optional[StrictStr] = Field(default=None, description="A If the assets were searched")
+    assets_searched: Optional[StrictStr] = Field(default='UNKNOWN', description="A If the assets were searched")
     __properties = ["schema", "assets_searched"]
 
     @validator('assets_searched')
@@ -37,8 +37,8 @@ class TrackedAssetsEventIdentifierDescriptionPairs(BaseModel):
         if value is None:
             return value
 
-        if value not in ('assets_were_searched',):
-            raise ValueError("must be one of enum values ('assets_were_searched')")
+        if value not in ('UNKNOWN', 'assets_were_searched',):
+            raise ValueError("must be one of enum values ('UNKNOWN', 'assets_were_searched')")
         return value
 
     class Config:
@@ -81,7 +81,7 @@ class TrackedAssetsEventIdentifierDescriptionPairs(BaseModel):
 
         _obj = TrackedAssetsEventIdentifierDescriptionPairs.parse_obj({
             "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "assets_searched": obj.get("assets_searched")
+            "assets_searched": obj.get("assets_searched") if obj.get("assets_searched") is not None else 'UNKNOWN'
         })
         return _obj
 

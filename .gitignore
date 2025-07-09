@@ -36,8 +36,6 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
-# Exception for our custom spec file
-!pieces.spec
 
 # Installer logs
 pip-log.txt
@@ -172,6 +170,8 @@ cython_debug/
 cli-agent.iml
 macos/notes.txt
 logs
-/choco/tools/pieces
-Mesh_Intelligent_Technologies_Inc_6_24_22.pfx
-certificate.txt
+
+# Generated completions scripts for tests (to run the tests on)
+./completion_script/generated/
+# Generated completion scripts for the commands interface (when running pieces completion install)
+src/pieces/completions/

@@ -19,8 +19,8 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr
+from typing import List, Optional, Union
+from pydantic.v1 import BaseModel, Field, StrictFloat, StrictInt, StrictStr, conlist
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.mechanism_enum import MechanismEnum
 from pieces._vendor.pieces_os_client.models.tag_category_enum import TagCategoryEnum
@@ -35,7 +35,8 @@ class SeededTag(BaseModel):
     mechanism: Optional[MechanismEnum] = None
     category: Optional[TagCategoryEnum] = None
     person: Optional[StrictStr] = Field(default=None, description="uuid of the person, you want to add this tag too")
-    __properties = ["schema", "text", "asset", "mechanism", "category", "person"]
+    tags_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="tagsVector", description="This is the embedding for the format.(NEEDs to collectionection.vector) and specific here because we can only index on a single name NOTE: this the the vector index that corresponds the the couchbase lite index.")
+    __properties = ["schema", "text", "asset", "mechanism", "category", "person", "tagsVector"]
 
     class Config:
         """Pydantic configuration"""
@@ -81,7 +82,8 @@ class SeededTag(BaseModel):
             "asset": obj.get("asset"),
             "mechanism": obj.get("mechanism"),
             "category": obj.get("category"),
-            "person": obj.get("person")
+            "person": obj.get("person"),
+            "tags_vector": obj.get("tagsVector")
         })
         return _obj
 

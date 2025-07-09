@@ -30,6 +30,7 @@ class CapabilitiesEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     LOCAL = 'LOCAL'
     CLOUD = 'CLOUD'
     BLENDED = 'BLENDED'

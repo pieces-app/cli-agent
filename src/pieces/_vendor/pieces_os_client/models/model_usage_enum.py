@@ -30,6 +30,7 @@ class ModelUsageEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     OCR = 'OCR'
     CODE_CLASSIFICATION = 'CODE_CLASSIFICATION'
     TEXT_VS_CODE = 'TEXT_VS_CODE'

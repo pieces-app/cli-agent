@@ -30,6 +30,7 @@ class SensitiveCategoryEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     SECRET = 'SECRET'
     API_KEY = 'API_KEY'
     CLIENT_ID = 'CLIENT_ID'

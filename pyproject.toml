@@ -9,6 +9,9 @@ repository = "https://github.com/pieces-app/cli-agent"
 keywords = ["copilot", "pieces", "ai", "snippets", "materials"]
 packages = [{ include = "pieces", from = "src" }]
 license = "MIT"
+include = [
+    { path = "src/pieces/completions/*", format = ["sdist", "wheel"] }
+]
 
 
 [tool.ruff]
@@ -35,6 +38,7 @@ websocket-client = "^1.8.0"
 pytest = "^8.0.0"
 pyinstaller = "^6.13.0"
 requests = "^2.31.0"
+pytest-asyncio = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

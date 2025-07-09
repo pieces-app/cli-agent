@@ -95,10 +95,8 @@ class PiecesArgparser(argparse.ArgumentParser):
         console = self.console
 
         # HEADER
-        prog_title = self.prog.split(" ")[-1].title()
-        desc = self.description if self.description else f"Pieces CLI {prog_title} Command"
-        formatted = f"[bold blue]{desc}[/]"
-        console.print(formatted)
+        default_desc = f"Pieces CLI {self.prog.split(' ')[-1].title()} Command"
+        console.print(f"[bold blue]{self.description or default_desc}[/]")
 
         console.print(self.format_usage(), "\n")
 

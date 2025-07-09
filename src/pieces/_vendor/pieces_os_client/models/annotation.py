@@ -23,7 +23,15 @@ from typing import Optional
 from pydantic.v1 import BaseModel, Field, StrictBool, StrictStr
 from pieces._vendor.pieces_os_client.models.annotation_type_enum import AnnotationTypeEnum
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from pieces._vendor.pieces_os_client.models.flattened_anchors import FlattenedAnchors
+from pieces._vendor.pieces_os_client.models.flattened_assets import FlattenedAssets
 from pieces._vendor.pieces_os_client.models.flattened_conversation_messages import FlattenedConversationMessages
+from pieces._vendor.pieces_os_client.models.flattened_conversations import FlattenedConversations
+from pieces._vendor.pieces_os_client.models.flattened_persons import FlattenedPersons
+from pieces._vendor.pieces_os_client.models.flattened_tags import FlattenedTags
+from pieces._vendor.pieces_os_client.models.flattened_websites import FlattenedWebsites
+from pieces._vendor.pieces_os_client.models.flattened_workstream_events import FlattenedWorkstreamEvents
+from pieces._vendor.pieces_os_client.models.flattened_workstream_summaries import FlattenedWorkstreamSummaries
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 from pieces._vendor.pieces_os_client.models.mechanism_enum import MechanismEnum
 from pieces._vendor.pieces_os_client.models.referenced_anchor import ReferencedAnchor
@@ -36,7 +44,7 @@ from pieces._vendor.pieces_os_client.models.score import Score
 
 class Annotation(BaseModel):
     """
-    An Annotation is the replacement for descriptions, this will enable comments, description, summaries and many more.  person on here is a reference to the description/comment/annotation about a person  NOTE: person here is NOT the creator of the annotaion. but rather the descriptions of the person. NOTE****: if we want to add \"who\" wrote the annotation, we will want to add a new field on here called author && will need to also layer in behavior the enable an author(person) and an asset both being referenced(ensure you check the side effect in the AssetsFacade.delete)  # noqa: E501
+    An Annotation is the replacement for descriptions, this will enable comments, description, summaries and many more.  person on here is a reference to the description/comment/annotation about a person  NOTE: person here is NOT the creator of the annotaion. but rather the descriptions of the person. NOTE****: if we want to add \"who\" wrote the annotation, we will want to add a new field on here called author && will need to also layer in behavior the enable an author(person) and an asset both being referenced(ensure you check the side effect in the AssetsFacade.delete)  UPDATE: the singular fields on here(asset, person, anchor, conversation, and summary) are all now deprecated... an annotation will now have a many to many relationship with all of it materials.  # noqa: E501
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     id: StrictStr = Field(...)
@@ -56,7 +64,15 @@ class Annotation(BaseModel):
     score: Optional[Score] = None
     messages: Optional[FlattenedConversationMessages] = None
     summary: Optional[ReferencedWorkstreamSummary] = None
-    __properties = ["schema", "id", "created", "updated", "deleted", "mechanism", "asset", "person", "type", "text", "model", "pseudo", "favorited", "anchor", "conversation", "score", "messages", "summary"]
+    assets: Optional[FlattenedAssets] = None
+    persons: Optional[FlattenedPersons] = None
+    anchors: Optional[FlattenedAnchors] = None
+    conversations: Optional[FlattenedConversations] = None
+    summaries: Optional[FlattenedWorkstreamSummaries] = None
+    websites: Optional[FlattenedWebsites] = None
+    tags: Optional[FlattenedTags] = None
+    workstream_events: Optional[FlattenedWorkstreamEvents] = None
+    __properties = ["schema", "id", "created", "updated", "deleted", "mechanism", "asset", "person", "type", "text", "model", "pseudo", "favorited", "anchor", "conversation", "score", "messages", "summary", "assets", "persons", "anchors", "conversations", "summaries", "websites", "tags", "workstream_events"]
 
     class Config:
         """Pydantic configuration"""
@@ -118,6 +134,30 @@ class Annotation(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of summary
         if self.summary:
             _dict['summary'] = self.summary.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of assets
+        if self.assets:
+            _dict['assets'] = self.assets.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of persons
+        if self.persons:
+            _dict['persons'] = self.persons.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of anchors
+        if self.anchors:
+            _dict['anchors'] = self.anchors.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of conversations
+        if self.conversations:
+            _dict['conversations'] = self.conversations.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of summaries
+        if self.summaries:
+            _dict['summaries'] = self.summaries.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of websites
+        if self.websites:
+            _dict['websites'] = self.websites.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of tags
+        if self.tags:
+            _dict['tags'] = self.tags.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_events
+        if self.workstream_events:
+            _dict['workstream_events'] = self.workstream_events.to_dict()
         return _dict
 
     @classmethod
@@ -147,7 +187,15 @@ class Annotation(BaseModel):
             "conversation": ReferencedConversation.from_dict(obj.get("conversation")) if obj.get("conversation") is not None else None,
             "score": Score.from_dict(obj.get("score")) if obj.get("score") is not None else None,
             "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None,
-            "summary": ReferencedWorkstreamSummary.from_dict(obj.get("summary")) if obj.get("summary") is not None else None
+            "summary": ReferencedWorkstreamSummary.from_dict(obj.get("summary")) if obj.get("summary") is not None else None,
+            "assets": FlattenedAssets.from_dict(obj.get("assets")) if obj.get("assets") is not None else None,
+            "persons": FlattenedPersons.from_dict(obj.get("persons")) if obj.get("persons") is not None else None,
+            "anchors": FlattenedAnchors.from_dict(obj.get("anchors")) if obj.get("anchors") is not None else None,
+            "conversations": FlattenedConversations.from_dict(obj.get("conversations")) if obj.get("conversations") is not None else None,
+            "summaries": FlattenedWorkstreamSummaries.from_dict(obj.get("summaries")) if obj.get("summaries") is not None else None,
+            "websites": FlattenedWebsites.from_dict(obj.get("websites")) if obj.get("websites") is not None else None,
+            "tags": FlattenedTags.from_dict(obj.get("tags")) if obj.get("tags") is not None else None,
+            "workstream_events": FlattenedWorkstreamEvents.from_dict(obj.get("workstream_events")) if obj.get("workstream_events") is not None else None
         })
         return _obj
 

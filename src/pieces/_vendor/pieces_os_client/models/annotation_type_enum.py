@@ -30,6 +30,7 @@ class AnnotationTypeEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     DESCRIPTION = 'DESCRIPTION'
     COMMENT = 'COMMENT'
     DOCUMENTATION = 'DOCUMENTATION'

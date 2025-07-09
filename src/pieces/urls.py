@@ -38,6 +38,8 @@ class URLs(Enum):
     ZED_MCP_DOCS = "https://zed.dev/docs/ai/mcp"
     RAYCAST_MCP_DOCS = "https://manual.raycast.com/model-context-protocol"
     WRAP_MCP_DOCS = "https://docs.warp.dev/knowledge-and-collaboration/mcp"
+    SHORT_WAVE_MCP_DOCS = "https://www.shortwave.com/docs/how-tos/using-mcp/"
+    CLAUDE_CLI_MCP_DOCS = "https://docs.anthropic.com/en/docs/claude-code/mcp"
 
     # MCP Command Documentation URLs
     CLI_MCP_DOCS = "https://docs.pieces.app/products/cli/copilot/chat#pieces-mcp"
@@ -74,6 +76,7 @@ class URLs(Enum):
     CLI_INSTALL_DOCS = "https://docs.pieces.app/products/cli/commands#install"
     CLI_OPEN_DOCS = "https://docs.pieces.app/products/cli/commands#open"
     CLI_HELP_DOCS = "https://docs.pieces.app/products/cli/troubleshooting"
+    CLI_COMPLETION_DOCS = ""
 
     def open(self):
         self.open_website(self.value)
@@ -84,7 +87,7 @@ class URLs(Enum):
 
         if hasattr(Settings.pieces_client, "user_api"):
             user_profile = Settings.pieces_client.user_api.user_snapshot().user
-            if (not Settings.pieces_client.is_pieces_running) or (
+            if (not Settings.pieces_client.is_pieces_running()) or (
                 "pieces.app" not in url
             ):
                 return webbrowser.open(url)

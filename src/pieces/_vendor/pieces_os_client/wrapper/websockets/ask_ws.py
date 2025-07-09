@@ -2,11 +2,11 @@ from websocket import WebSocketConnectionClosedException, WebSocketApp
 from typing import Callable, Optional,TYPE_CHECKING
 
 from .base_websocket import BaseWebsocket
-from pieces._vendor.pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
 
 if TYPE_CHECKING:
 	from ..client import PiecesClient
 	from pieces._vendor.pieces_os_client.models.qgpt_stream_input import QGPTStreamInput
+	from pieces._vendor.pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
 
 class AskStreamWS(BaseWebsocket):
 	"""
@@ -20,7 +20,7 @@ class AskStreamWS(BaseWebsocket):
 		on_close (Optional[Callable[[WebSocketApp, str, str], None]]): Optional callback function to handle WebSocket closing.
 	"""
 	def __init__(self, pieces_client: "PiecesClient",
-				 on_message_callback: Callable[[QGPTStreamOutput], None], 
+				 on_message_callback: Callable[["QGPTStreamOutput"], None], 
 				 on_open_callback: Optional[Callable[[WebSocketApp], None]] = None, 
 				 on_error: Optional[Callable[[WebSocketApp, Exception], None]] = None, 
 				 on_close: Optional[Callable[[WebSocketApp, str, str], None]] = None):
@@ -54,6 +54,7 @@ class AskStreamWS(BaseWebsocket):
 			ws (WebSocketApp): The WebSocket application instance.
 			message (str): The incoming message in JSON format.
 		"""
+		from pieces._vendor.pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
 		self.on_message_callback(QGPTStreamOutput.from_json(message))
 
 	def send_message(self, message: "QGPTStreamInput"):

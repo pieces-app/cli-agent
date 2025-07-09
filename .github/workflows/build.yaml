@@ -134,6 +134,46 @@ jobs:
         run: echo "${{ steps.staging_version.outputs.STAGING_VERSION }}" > staging_version$GITHUB_RUN_NUMBER.txt
         if: ${{ inputs.deploy == false && inputs.beta == false }}
 
+      - name: Build static completions
+        run: |
+          mkdir -p src/pieces/completions
+          touch src/pieces/completions/__init__.py
+          poetry run pip install -e .
+
+          # Generate each completion script with error checking
+          echo "Generating Zsh completions..."
+          poetry run python completion_scripts/autocomplete_generator.py --zsh > src/pieces/completions/zsh || {
+            echo "Failed to generate Zsh completions"
+            exit 1
+          }
+
+          echo "Generating Bash completions..."
+          poetry run python completion_scripts/autocomplete_generator.py --bash > src/pieces/completions/bash || {
+            echo "Failed to generate Bash completions"
+            exit 1
+          }
+
+          echo "Generating Fish completions..."
+          poetry run python completion_scripts/autocomplete_generator.py --fish > src/pieces/completions/fish || {
+            echo "Failed to generate Fish completions"
+            exit 1
+          }
+
+          echo "Generating PowerShell completions..."
+          poetry run python completion_scripts/autocomplete_generator.py --powershell > src/pieces/completions/powershell || {
+            echo "Failed to generate PowerShell completions"
+            exit 1
+          }
+
+          # Verify files were created and are non-empty
+          for shell in zsh bash fish powershell; do
+            if [ \! -s "src/pieces/completions/$shell" ]; then
+              echo "Error: Completion file for $shell is empty"
+              exit 1
+            fi
+          done
+
+
       ### Building the Library and Wheel files
       - name: Build library
         run: poetry build

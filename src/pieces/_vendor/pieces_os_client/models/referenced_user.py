@@ -22,7 +22,6 @@ import json
 from typing import Optional
 from pydantic.v1 import BaseModel, Field, StrictStr
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
-from pieces._vendor.pieces_os_client.models.flattened_user_profile import FlattenedUserProfile
 
 class ReferencedUser(BaseModel):
     """
@@ -81,4 +80,6 @@ class ReferencedUser(BaseModel):
         })
         return _obj
 
+from pieces._vendor.pieces_os_client.models.flattened_user_profile import FlattenedUserProfile
+ReferencedUser.update_forward_refs()
 

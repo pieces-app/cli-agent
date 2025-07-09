@@ -63,7 +63,11 @@ class SeededScoreIncrement(BaseModel):
     workstream_pattern_engine_source: Optional[SeededScore] = None
     models: Optional[SeededScore] = None
     model: Optional[SeededScore] = None
-    __properties = ["schema", "asset", "assets", "website", "websites", "anchor", "anchors", "anchorPoint", "anchorPoints", "annotation", "annotations", "conversation", "conversations", "conversationMessage", "conversationMessages", "share", "shares", "sensitive", "sensitives", "hint", "hints", "person", "persons", "tag", "tags", "workstream_summary", "workstream_summaries", "workstream_events", "workstream_event", "ranges", "range", "workstream_pattern_engine_sources", "workstream_pattern_engine_source", "models", "model"]
+    workstream_pattern_engine_source_windows: Optional[SeededScore] = None
+    workstream_pattern_engine_source_window: Optional[SeededScore] = None
+    subscription: Optional[SeededScore] = None
+    subscriptions: Optional[SeededScore] = None
+    __properties = ["schema", "asset", "assets", "website", "websites", "anchor", "anchors", "anchorPoint", "anchorPoints", "annotation", "annotations", "conversation", "conversations", "conversationMessage", "conversationMessages", "share", "shares", "sensitive", "sensitives", "hint", "hints", "person", "persons", "tag", "tags", "workstream_summary", "workstream_summaries", "workstream_events", "workstream_event", "ranges", "range", "workstream_pattern_engine_sources", "workstream_pattern_engine_source", "models", "model", "workstream_pattern_engine_source_windows", "workstream_pattern_engine_source_window", "subscription", "subscriptions"]
 
     class Config:
         """Pydantic configuration"""
@@ -194,6 +198,18 @@ class SeededScoreIncrement(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of model
         if self.model:
             _dict['model'] = self.model.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_pattern_engine_source_windows
+        if self.workstream_pattern_engine_source_windows:
+            _dict['workstream_pattern_engine_source_windows'] = self.workstream_pattern_engine_source_windows.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_pattern_engine_source_window
+        if self.workstream_pattern_engine_source_window:
+            _dict['workstream_pattern_engine_source_window'] = self.workstream_pattern_engine_source_window.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of subscription
+        if self.subscription:
+            _dict['subscription'] = self.subscription.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of subscriptions
+        if self.subscriptions:
+            _dict['subscriptions'] = self.subscriptions.to_dict()
         return _dict
 
     @classmethod
@@ -240,7 +256,11 @@ class SeededScoreIncrement(BaseModel):
             "workstream_pattern_engine_sources": SeededScore.from_dict(obj.get("workstream_pattern_engine_sources")) if obj.get("workstream_pattern_engine_sources") is not None else None,
             "workstream_pattern_engine_source": SeededScore.from_dict(obj.get("workstream_pattern_engine_source")) if obj.get("workstream_pattern_engine_source") is not None else None,
             "models": SeededScore.from_dict(obj.get("models")) if obj.get("models") is not None else None,
-            "model": SeededScore.from_dict(obj.get("model")) if obj.get("model") is not None else None
+            "model": SeededScore.from_dict(obj.get("model")) if obj.get("model") is not None else None,
+            "workstream_pattern_engine_source_windows": SeededScore.from_dict(obj.get("workstream_pattern_engine_source_windows")) if obj.get("workstream_pattern_engine_source_windows") is not None else None,
+            "workstream_pattern_engine_source_window": SeededScore.from_dict(obj.get("workstream_pattern_engine_source_window")) if obj.get("workstream_pattern_engine_source_window") is not None else None,
+            "subscription": SeededScore.from_dict(obj.get("subscription")) if obj.get("subscription") is not None else None,
+            "subscriptions": SeededScore.from_dict(obj.get("subscriptions")) if obj.get("subscriptions") is not None else None
         })
         return _obj
 

@@ -26,7 +26,7 @@ from pieces._vendor.pieces_os_client.models.flattened_user_profile import Flatte
 
 class Accessor(BaseModel):
     """
-    This is used to determine who has accessed a share. and how many times.  The user here is the user that accessed this Piece.(optional) if undefined then this user was not logged in yet.  # noqa: E501
+    This is used to determine who has accessed a share. and how many times. The user here is the user that accessed this Piece.(optional) if undefined then this user was not logged in yet.  # noqa: E501
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     id: StrictStr = Field(...)

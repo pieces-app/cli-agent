@@ -20,7 +20,7 @@ class PiecesCLI:
 
     def run(self):
         config = ConfigCommands.load_config()
-        Settings.logger = Logger(config.get("debug", False), Settings.pieces_data_dir)
+        Settings.logger = Logger(__version__ == "dev", Settings.pieces_data_dir)
         try:
             arg = sys.argv[1]
             if arg == "--ignore-onboarding":
@@ -41,11 +41,19 @@ class PiecesCLI:
             and not onboarded
             and not ignore_onboarding
         ):
-            res = Settings.logger.prompt(
-                "It looks like this is your first time using the Pieces CLI."
-                "\nWould you like to start onboarding",
-                choices=["y", "n", "skip"],
+            res = Settings.logger.print(
+                (
+                    "👋 It looks like this is your first time using the Pieces CLI.\n\n"
+                    "Would you like to start the onboarding process?\n"
+                    "\n"
+                    "  [y] Yes  – Start onboarding now.\n"
+                    "  [n] No   – Skip for now (you'll be asked again next time).\n"
+                    "  [skip]   – Don't ask me again (you can always run `pieces onboarding` manually).\n"
+                ),
+                markup=False
             )
+
+            res = Settings.logger.prompt(choices=["y", "n", "skip"])
             if res.lower() == "y":
                 return OnboardingCommand.instance.execute()  # noqa: F405
             elif res.lower() == "skip":
@@ -60,6 +68,7 @@ class PiecesCLI:
         mcp_subcommand = getattr(args, "mcp", None)
 
         # Check if the command needs PiecesOS or not
+        # TODO: need some cleanups here
         if command not in [
             "help",
             "--version",
@@ -68,8 +77,11 @@ class PiecesCLI:
             "feedback",
             "contribute",
             "open",
+            "config",
+            "completion",
         ] and not (command == "mcp" and mcp_subcommand == "start"):
-            Settings.startup()
+            bypass_login = True if (command in ["version"]) else False
+            Settings.startup(bypass_login)
         Settings.logger.debug(f"Running command {arg} using: {args}")
         args.func(**vars(args))
 
@@ -81,10 +93,16 @@ def main():
     except KeyboardInterrupt:
         pass
     except Exception as e:
+        if __version__ == "dev":
+            Settings.logger.console.print_exception(show_locals=True)
+            return
+
         Settings.logger.critical(e)
         Settings.show_error("UNKNOWN EXCEPTION", e)
     finally:
-        from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import BaseWebsocket
+        from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import (
+            BaseWebsocket,
+        )
 
         BaseWebsocket.close_all()
 

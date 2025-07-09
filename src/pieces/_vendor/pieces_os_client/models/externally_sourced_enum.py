@@ -30,6 +30,7 @@ class ExternallySourcedEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     TWITTER = 'TWITTER'
     MEDIUM = 'MEDIUM'
     LINKED_IN = 'LINKED_IN'

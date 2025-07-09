@@ -9,7 +9,6 @@ from pieces._vendor.pieces_os_client.wrapper import PiecesClient
 from pieces._vendor.pieces_os_client.wrapper.version_compatibility import VersionChecker, UpdateEnum
 from pieces import __version__
 from pieces.gui import (
-    server_startup_failed,
     print_version_details,
 )
 from pieces.urls import URLs
@@ -20,10 +19,10 @@ class Settings:
 
     pieces_client = PiecesClient()
 
-    PIECES_OS_MIN_VERSION = "11.0.0"  # Minium version (11.0.0)
-    PIECES_OS_MAX_VERSION = "12.0.0"  # Maxium version (12.0.0)
+    PIECES_OS_MIN_VERSION = "12.0.0"  # Minimum version (12.0.0)
+    PIECES_OS_MAX_VERSION = "13.0.0"  # Maximum version (13.0.0)
 
-    TIMEOUT = 20  # Websocket ask timeout
+    TIMEOUT = 40  # Websocket ask timeout
 
     # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
     BASE_DIR = os.path.dirname(__file__)
@@ -139,11 +138,24 @@ class Settings:
         cls.pieces_client.model_name = model_name
 
     @classmethod
-    def startup(cls):
+    def startup(cls, bypass_login = False):
         if cls.pieces_client.is_pieces_running():
             cls.version_check()  # Check the version first
+            if not bypass_login:
+                cls.check_login()
         else:
-            server_startup_failed()
+            if cls.pieces_client.open_pieces_os(): # PiecesOS is running
+                return cls.startup(bypass_login)
+            else:
+                if cls.logger.confirm("Pieces OS is required but wasn’t found or couldn’t be launched.\n"
+                    "Do you want to install it now and get started?"):
+                    from .command_interface.simple_commands import InstallCommand
+
+                    status_code = InstallCommand.instance.execute()
+                    if status_code == 0:
+                        return cls.startup(bypass_login)
+                    sys.exit(status_code)
+
             sys.exit(2)  # Exit the program
 
     @classmethod
@@ -159,27 +171,35 @@ class Settings:
             print(
                 "Please update your cli-agent tool. It is not compatible with the current PiecesOS version"
             )
-            print()
             print(
                 URLs.DOCS_CLI.value
             )  # TODO: We might need to add a link a better link here
-            print()
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
         elif result.update == UpdateEnum.PiecesOS:
+            # TODO: Use the update POS endpoint
             print(
                 "Please update PiecesOS. It is not compatible with the current cli-agent version"
             )
-            print()
             print(URLs.DOCS_INSTALLATION.value)
-            print()
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
 
     @classmethod
+    def check_login(cls):
+        user = cls.pieces_client.user_api.user_snapshot().user
+        if not user:
+            if cls.logger.confirm("Please sign into Pieces to use this feature. Do you want to sign in now?"):
+                cls.pieces_client.user.login(True)
+                user = cls.pieces_client.user_api.user_snapshot().user
+        if user:
+            return
+        sys.exit(1)
+
+    @classmethod
     def show_error(cls, error, error_message=None):
-        print(f"\033[31m{error}\033[0m")
-        print(f"\033[31m{error_message}\033[0m") if error_message else None
+        cls.logger.console_error.print(f"[red]{error}")
+        cls.logger.console_error.print(f"[red]{error_message}") if error_message else None
         if not cls.run_in_loop:
             sys.exit(2)
 

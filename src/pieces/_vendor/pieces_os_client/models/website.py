@@ -22,10 +22,15 @@ import json
 from typing import Dict, Optional
 from pydantic.v1 import BaseModel, Field, StrictInt, StrictStr
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from pieces._vendor.pieces_os_client.models.flattened_annotations import FlattenedAnnotations
 from pieces._vendor.pieces_os_client.models.flattened_assets import FlattenedAssets
 from pieces._vendor.pieces_os_client.models.flattened_conversation_messages import FlattenedConversationMessages
 from pieces._vendor.pieces_os_client.models.flattened_conversations import FlattenedConversations
+from pieces._vendor.pieces_os_client.models.flattened_identified_workstream_pattern_engine_sources import FlattenedIdentifiedWorkstreamPatternEngineSources
 from pieces._vendor.pieces_os_client.models.flattened_persons import FlattenedPersons
+from pieces._vendor.pieces_os_client.models.flattened_tags import FlattenedTags
+from pieces._vendor.pieces_os_client.models.flattened_workstream_events import FlattenedWorkstreamEvents
+from pieces._vendor.pieces_os_client.models.flattened_workstream_pattern_engine_source_windows import FlattenedWorkstreamPatternEngineSourceWindows
 from pieces._vendor.pieces_os_client.models.flattened_workstream_summaries import FlattenedWorkstreamSummaries
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 from pieces._vendor.pieces_os_client.models.mechanism_enum import MechanismEnum
@@ -33,7 +38,7 @@ from pieces._vendor.pieces_os_client.models.score import Score
 
 class Website(BaseModel):
     """
-    This is a specific model for related websites to an asset.  # noqa: E501
+    This is a specific model for related websites to an asset.  NOTE: website <> source window displays a many to many relationship, however is a 1 to 1 relationship with logic built in to ensure that this remains a 1 to one relationship. Please take a look at the the workstreamEvent creation(specifically when creating a website <> source window relationship), as well as the associate for a website <> a source window, This will ensure that we only ever have a single website, this will update the website if the time stamp if we are seeing the website again and as well update the source windows name as well if this is different so that is is only ever possible to have a website<>sourceWindow where a website can only ever have 1 source window.  # noqa: E501
     """
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     id: StrictStr = Field(...)
@@ -50,7 +55,12 @@ class Website(BaseModel):
     score: Optional[Score] = None
     summaries: Optional[FlattenedWorkstreamSummaries] = None
     messages: Optional[FlattenedConversationMessages] = None
-    __properties = ["schema", "id", "assets", "url", "name", "created", "updated", "deleted", "mechanisms", "interactions", "persons", "conversations", "score", "summaries", "messages"]
+    annotations: Optional[FlattenedAnnotations] = None
+    workstream_events: Optional[FlattenedWorkstreamEvents] = None
+    sources: Optional[FlattenedIdentifiedWorkstreamPatternEngineSources] = None
+    source_windows: Optional[FlattenedWorkstreamPatternEngineSourceWindows] = None
+    tags: Optional[FlattenedTags] = None
+    __properties = ["schema", "id", "assets", "url", "name", "created", "updated", "deleted", "mechanisms", "interactions", "persons", "conversations", "score", "summaries", "messages", "annotations", "workstream_events", "sources", "source_windows", "tags"]
 
     class Config:
         """Pydantic configuration"""
@@ -106,6 +116,21 @@ class Website(BaseModel):
         # override the default output from pydantic.v1 by calling `to_dict()` of messages
         if self.messages:
             _dict['messages'] = self.messages.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of annotations
+        if self.annotations:
+            _dict['annotations'] = self.annotations.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_events
+        if self.workstream_events:
+            _dict['workstream_events'] = self.workstream_events.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of sources
+        if self.sources:
+            _dict['sources'] = self.sources.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of source_windows
+        if self.source_windows:
+            _dict['source_windows'] = self.source_windows.to_dict()
+        # override the default output from pydantic.v1 by calling `to_dict()` of tags
+        if self.tags:
+            _dict['tags'] = self.tags.to_dict()
         return _dict
 
     @classmethod
@@ -132,7 +157,12 @@ class Website(BaseModel):
             "conversations": FlattenedConversations.from_dict(obj.get("conversations")) if obj.get("conversations") is not None else None,
             "score": Score.from_dict(obj.get("score")) if obj.get("score") is not None else None,
             "summaries": FlattenedWorkstreamSummaries.from_dict(obj.get("summaries")) if obj.get("summaries") is not None else None,
-            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None
+            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None,
+            "annotations": FlattenedAnnotations.from_dict(obj.get("annotations")) if obj.get("annotations") is not None else None,
+            "workstream_events": FlattenedWorkstreamEvents.from_dict(obj.get("workstream_events")) if obj.get("workstream_events") is not None else None,
+            "sources": FlattenedIdentifiedWorkstreamPatternEngineSources.from_dict(obj.get("sources")) if obj.get("sources") is not None else None,
+            "source_windows": FlattenedWorkstreamPatternEngineSourceWindows.from_dict(obj.get("source_windows")) if obj.get("source_windows") is not None else None,
+            "tags": FlattenedTags.from_dict(obj.get("tags")) if obj.get("tags") is not None else None
         })
         return _obj
 

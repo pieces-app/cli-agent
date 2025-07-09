@@ -21,6 +21,7 @@ import json
 
 from typing import Optional
 from pydantic.v1 import BaseModel, Field, StrictInt
+from pieces._vendor.pieces_os_client.models.workstream_pattern_engine_status import WorkstreamPatternEngineStatus
 
 class TrackedSummaryTotals(BaseModel):
     """
@@ -44,7 +45,11 @@ class TrackedSummaryTotals(BaseModel):
     anchor_folders: StrictInt = Field(...)
     isr_reports: StrictInt = Field(...)
     requests: Optional[StrictInt] = None
-    __properties = ["assets", "tags", "websites", "persons", "sensitives", "shares", "copilot_sends", "copilot_receives", "copilot_sessions", "copilot_conversations", "productivity_score", "searches", "references", "reuses", "anchor_files", "anchor_folders", "isr_reports", "requests"]
+    workstream_events: Optional[StrictInt] = None
+    workstream_summaries: Optional[StrictInt] = None
+    workstream_pattern_engine_sources: Optional[StrictInt] = None
+    workstream_pattern_engine_status: Optional[WorkstreamPatternEngineStatus] = None
+    __properties = ["assets", "tags", "websites", "persons", "sensitives", "shares", "copilot_sends", "copilot_receives", "copilot_sessions", "copilot_conversations", "productivity_score", "searches", "references", "reuses", "anchor_files", "anchor_folders", "isr_reports", "requests", "workstream_events", "workstream_summaries", "workstream_pattern_engine_sources", "workstream_pattern_engine_status"]
 
     class Config:
         """Pydantic configuration"""
@@ -70,10 +75,28 @@ class TrackedSummaryTotals(BaseModel):
                           exclude={
                           },
                           exclude_none=True)
+        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_pattern_engine_status
+        if self.workstream_pattern_engine_status:
+            _dict['workstream_pattern_engine_status'] = self.workstream_pattern_engine_status.to_dict()
         # set to None if requests (nullable) is None
         # and __fields_set__ contains the field
         if self.requests is None and "requests" in self.__fields_set__:
             _dict['requests'] = None
+
+        # set to None if workstream_events (nullable) is None
+        # and __fields_set__ contains the field
+        if self.workstream_events is None and "workstream_events" in self.__fields_set__:
+            _dict['workstream_events'] = None
+
+        # set to None if workstream_summaries (nullable) is None
+        # and __fields_set__ contains the field
+        if self.workstream_summaries is None and "workstream_summaries" in self.__fields_set__:
+            _dict['workstream_summaries'] = None
+
+        # set to None if workstream_pattern_engine_sources (nullable) is None
+        # and __fields_set__ contains the field
+        if self.workstream_pattern_engine_sources is None and "workstream_pattern_engine_sources" in self.__fields_set__:
+            _dict['workstream_pattern_engine_sources'] = None
 
         return _dict
 
@@ -104,7 +127,11 @@ class TrackedSummaryTotals(BaseModel):
             "anchor_files": obj.get("anchor_files"),
             "anchor_folders": obj.get("anchor_folders"),
             "isr_reports": obj.get("isr_reports"),
-            "requests": obj.get("requests")
+            "requests": obj.get("requests"),
+            "workstream_events": obj.get("workstream_events"),
+            "workstream_summaries": obj.get("workstream_summaries"),
+            "workstream_pattern_engine_sources": obj.get("workstream_pattern_engine_sources"),
+            "workstream_pattern_engine_status": WorkstreamPatternEngineStatus.from_dict(obj.get("workstream_pattern_engine_status")) if obj.get("workstream_pattern_engine_status") is not None else None
         })
         return _obj
 

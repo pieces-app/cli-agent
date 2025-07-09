@@ -30,6 +30,7 @@ class ClassificationRenderingEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     HTML = 'HTML'
     TWENTY_FOUR_BIT_ANSI_ESCAPED_SEQUENCES = 'TWENTY_FOUR_BIT_ANSI_ESCAPED_SEQUENCES'
     HIGHLIGHT_JS_HTML = 'HIGHLIGHT_JS_HTML'

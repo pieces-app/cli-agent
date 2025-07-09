@@ -3,18 +3,24 @@ import json
 from unittest.mock import patch, Mock, mock_open, PropertyMock
 from pieces.mcp.integration import Integration, MCPProperties
 from pieces.settings import Settings
-from pieces_os_client.models.workstream_pattern_engine_status import (
+from pieces._vendor.pieces_os_client.models.workstream_pattern_engine_status import (
     WorkstreamPatternEngineStatus,
 )
-from pieces_os_client.api.workstream_pattern_engine_api import WorkstreamPatternEngineApi
-from pieces_os_client.api.model_context_protocol_api import ModelContextProtocolApi
+from pieces._vendor.pieces_os_client.api.workstream_pattern_engine_api import (
+    WorkstreamPatternEngineApi,
+)
+from pieces._vendor.pieces_os_client.api.model_context_protocol_api import (
+    ModelContextProtocolApi,
+)
 
 
 class MockPiecesClient(Mock):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.api_client = Mock()
-        self._work_stream_pattern_engine_api = WorkstreamPatternEngineApi(self.api_client)
+        self._work_stream_pattern_engine_api = WorkstreamPatternEngineApi(
+            self.api_client
+        )
         self._model_context_protocol_api = ModelContextProtocolApi(self.api_client)
         self.copilot = Mock()
         self.copilot.context = Mock()
@@ -65,17 +71,21 @@ class TestIntegration(unittest.TestCase):
     def setUp(self):
         self.mock_api_client = MockPiecesClient()
         self.mock_workstream_api = Mock()
-        self.mock_workstream_api.workstream_pattern_engine_processors_vision_status = Mock(
-            return_value=WorkstreamPatternEngineStatus.from_dict({
-                "vision": {
-                    "deactivation": {
-                        "from": {"value": "2025-05-20T12:41:46.211Z"},
-                        "to": {"value": "2025-05-20T18:42:02.407636Z"},
-                        "continuous": True,
-                    },
-                    "degraded": False,
-                }
-            })
+        self.mock_workstream_api.workstream_pattern_engine_processors_vision_status = (
+            Mock(
+                return_value=WorkstreamPatternEngineStatus.from_dict(
+                    {
+                        "vision": {
+                            "deactivation": {
+                                "from": {"value": "2025-05-20T12:41:46.211Z"},
+                                "to": {"value": "2025-05-20T18:42:02.407636Z"},
+                                "continuous": True,
+                            },
+                            "degraded": False,
+                        }
+                    }
+                )
+            )
         )
         self.mock_api_client._work_stream_pattern_engine_api = self.mock_workstream_api
         self.mock_settings.pieces_client = self.mock_api_client
@@ -87,7 +97,7 @@ class TestIntegration(unittest.TestCase):
             sse_path=["mcp", "servers", "Pieces"],
             url_property_name="url",
             command_property_name="command",
-            args_property_name="args"
+            args_property_name="args",
         )
 
         self.basic_integration = Integration(
@@ -100,7 +110,7 @@ class TestIntegration(unittest.TestCase):
             error_text="Test error text",
             loader=json.load,
             saver=lambda x, y: json.dump(x, y, indent=4),
-            id="test_integration"
+            id="test_integration",
         )
 
     def tearDown(self):
@@ -129,7 +139,9 @@ class TestIntegration(unittest.TestCase):
     def test_remove_project(self):
         mock_config = {"test_integration": ["/path/to/project"]}
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-            self.basic_integration.local_config.remove_project("test_integration", "/path/to/project")
+            self.basic_integration.local_config.remove_project(
+                "test_integration", "/path/to/project"
+            )
             open.assert_called_with(Settings.mcp_config, "w")
 
     def test_is_set_up(self):

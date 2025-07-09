@@ -30,6 +30,7 @@ class FilterOperationTypeEnum(str, Enum):
     """
     allowed enum values
     """
+    UNKNOWN = 'UNKNOWN'
     AND = 'AND'
     OR = 'OR'
 
