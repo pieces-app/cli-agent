@@ -5,6 +5,7 @@
 </p>
   
 ##### <p align="center"> [Website](https://pieces.app/) • [PiecesOS Documentation](https://docs.pieces.app/) • [Pieces CLI Documentation](https://docs.pieces.app/extensions-plugins/cli)
+
 </p>
 
 [![Introducing CLI](https://img.youtube.com/vi/kAgwHMxWY8c/0.jpg)](https://www.youtube.com/watch?v=kAgwHMxWY8c)
@@ -29,6 +30,20 @@ To get started with the Pieces Python CLI Tool, you need to:
 
 1. Ensure PiecesOS is installed and running on your system.
 2. Install the Python package:
+
+   **Installer Script (Recommended):**
+
+   ```bash
+   # macOS/Linux
+   curl -fsSL https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.sh | sh
+   ```
+
+   ```powershell
+   # Windows (PowerShell)
+   irm https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.ps1 | iex
+   ```
+
+   **Package Managers:**
 
    ```bash
    pip install pieces-cli
@@ -63,26 +78,30 @@ pieces completion [shell]
 **Quick setup commands for each shell:**
 
 - **Bash:**
+
 ```bash
 echo 'eval "$(pieces completion bash)"' >> ~/.bashrc && source ~/.bashrc
 ```
 
 - **Zsh:**
+
 ```zsh
 echo 'eval "$(pieces completion zsh)"' >> ~/.zshrc && source ~/.zshrc
 ```
 
 - **Fish:**
+
 ```fish
 echo 'pieces completion fish | source' >> ~/.config/fish/config.fish && source ~/.config/fish/config.fish
 ```
 
 - **PowerShell:**
+
 ```powershell
 Add-Content $PROFILE '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript'; . $PROFILE
 ```
 
-After setup, restart your terminal or source your configuration file. Then try typing `pieces ` and press **Tab** to test auto-completion!
+After setup, restart your terminal or source your configuration file. Then try typing `pieces` and press **Tab** to test auto-completion!
 
 ## Usage
 
@@ -198,7 +217,7 @@ coverage report
 To uninstall the project, run the following command:
 
 ```shell
-pip uninstall pieces-cli
+pieces manage uninstall
 ```
 
 Don't forget to remove the virtual environment and dist folder
