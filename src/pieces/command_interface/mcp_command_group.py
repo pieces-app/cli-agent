@@ -35,9 +35,9 @@ class MCPSetupCommand(BaseCommand):
 
     def get_examples(self) -> list[str]:
         return [
-            "pieces mcp setup --vscode",
-            "pieces mcp setup --cursor --globally",
-            "pieces mcp setup --claude --stdio",
+            "pieces mcp setup vscode",
+            "pieces mcp setup cursor --globally",
+            "pieces mcp setup claude --stdio",
         ]
 
     def get_docs(self) -> str:
