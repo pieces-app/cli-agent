@@ -203,7 +203,7 @@ class PiecesUpdater:
                         UpdatingStatusEnum.CONTACT_SUPPORT,
                         UpdatingStatusEnum.REINSTALL_REQUIRED,
                     ]:
-                        error_msg = self._get_status_message(response.status)
+                        error_msg = self.get_status_message(response.status)
                         progress.update(
                             download_task,
                             description=f"[red]{error_msg}",
@@ -301,7 +301,8 @@ class PiecesUpdater:
 
         return False
 
-    def _get_status_message(self, status: UpdatingStatusEnum) -> str:
+    @staticmethod
+    def get_status_message(status: UpdatingStatusEnum) -> str:
         """Get human-readable message for update status"""
         status_messages = {
             UpdatingStatusEnum.AVAILABLE: "Update available",
