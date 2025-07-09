@@ -50,7 +50,7 @@ class PiecesCLI:
                     "  [n] No   – Skip for now (you'll be asked again next time).\n"
                     "  [skip]   – Don't ask me again (you can always run `pieces onboarding` manually).\n"
                 ),
-                markup=False
+                markup=False,
             )
 
             res = Settings.logger.prompt(choices=["y", "n", "skip"])
@@ -79,6 +79,7 @@ class PiecesCLI:
             "open",
             "config",
             "completion",
+            "manage",
         ] and not (command == "mcp" and mcp_subcommand == "start"):
             bypass_login = True if (command in ["version"]) else False
             Settings.startup(bypass_login)
