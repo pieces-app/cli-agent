@@ -15,6 +15,7 @@
     <bugTrackerUrl>https://github.com/pieces-app/cli-agent/issues</bugTrackerUrl>
     <tags>cli developer-tools code-snippets ai productivity</tags>
     <summary>Pieces CLI for interacting with the PiecesOS</summary>
+    <iconUrl>https://old.docs.pieces.app/assets/pieces_logos/white_circle.png</iconUrl>
     <description>
 The Pieces CLI is a command-line interface for interacting with PiecesOS, providing developers with powerful tools for managing code snippets, assets, and AI-powered features directly from the terminal.
 
