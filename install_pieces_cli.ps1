@@ -80,7 +80,7 @@ function Test-PythonVersion {
 # Find the best Python executable available
 function Find-Python {
     $pythonCommands = @("python", "python3", "py")
-    
+
     foreach ($cmd in $pythonCommands) {
         if (Test-Command $cmd) {
             if (Test-PythonVersion $cmd) {
@@ -88,7 +88,7 @@ function Find-Python {
             }
         }
     }
-    
+
     # Try Python Launcher with version specifiers (Windows only)
     if (Test-Windows) {
         $pythonVersions = @("py -3.12", "py -3.11", "py -3")
@@ -104,46 +104,46 @@ function Find-Python {
             }
         }
     }
-    
+
     return $null
 }
 
 # Setup completion for PowerShell
 function Setup-PowerShellCompletion {
     param($InstallDir)
-    
+
     # Check if PowerShell profile exists
     if (!(Test-Path $PROFILE)) {
         Write-Info "Creating PowerShell profile at $PROFILE"
         New-Item -Path $PROFILE -ItemType File -Force | Out-Null
     }
-    
+
     # Check if completion is already configured
     if (Get-Content $PROFILE -ErrorAction SilentlyContinue | Select-String "pieces completion") {
         Write-Info "Completion already configured in $PROFILE"
         return $true
     }
-    
+
     # Add completion to profile
     $completionCmd = '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript'
     Add-Content -Path $PROFILE -Value $completionCmd
     Write-Success "Added completion to $PROFILE"
-    
+
     return $true
 }
 
 # Setup PATH for PowerShell
 function Setup-PowerShellPath {
     param($InstallDir)
-    
+
     $pathSeparator = Get-PathSeparator
-    
+
     # Check if directory is already in PATH
     if ($env:PATH -split $pathSeparator | Where-Object { $_ -eq $InstallDir }) {
         Write-Info "Pieces CLI directory already in PATH"
         return $true
     }
-    
+
     if (Test-Windows) {
         # Windows-specific PATH setup
         $currentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
@@ -152,17 +152,17 @@ function Setup-PowerShellPath {
         } else {
             $newPath = $InstallDir
         }
-        
+
         [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
         Write-Success "Added Pieces CLI to user PATH"
-        
+
         # Update current session PATH
         $env:PATH = "$InstallDir;$env:PATH"
     } else {
         # Unix-like systems - add to shell profile
         $homeDir = Get-HomeDirectory
         $shellProfile = "$homeDir/.profile"
-        
+
         # Check if PATH is already in profile
         if (Test-Path $shellProfile) {
             $profileContent = Get-Content $shellProfile -ErrorAction SilentlyContinue
@@ -171,16 +171,16 @@ function Setup-PowerShellPath {
                 return $true
             }
         }
-        
+
         # Add to profile
         $pathLine = "export PATH=`"$InstallDir`":`$PATH"
         Add-Content -Path $shellProfile -Value $pathLine
         Write-Success "Added PATH to $shellProfile"
-        
+
         # Update current session PATH
         $env:PATH = "$InstallDir" + $pathSeparator + $env:PATH
     }
-    
+
     return $true
 }
 
@@ -203,7 +203,7 @@ function Test-Administrator {
 # Main installation function
 function Install-PiecesCLI {
     Write-Info "Starting Pieces CLI installation..."
-    
+
     # Step 1: Check if running as Administrator/root
     if (Test-Administrator) {
         Write-Warning "You appear to be running this script as Administrator/root."
@@ -214,11 +214,11 @@ function Install-PiecesCLI {
             return
         }
     }
-    
+
     # Step 2: Find Python executable
     Write-Info "Locating Python executable..."
     $pythonCmd = Find-Python
-    
+
     if (!$pythonCmd) {
         Write-Error "Python 3.11+ is required but not found on your system."
         Write-Error "Please install Python 3.11 or higher from: https://www.python.org/downloads/"
@@ -227,54 +227,54 @@ function Install-PiecesCLI {
         }
         return
     }
-    
+
     # Get Python version for display
     $pythonVersion = & $pythonCmd.Split(' ') --version 2>&1
     Write-Success "Found Python: $pythonCmd ($pythonVersion)"
-    
+
     # Step 3: Set installation directory
     $homeDir = Get-HomeDirectory
     $installDir = Join-Path $homeDir ".pieces-cli"
     $venvDir = Join-Path $installDir "venv"
-    
+
     Write-Info "Installation directory: $installDir"
-    
+
     # Create installation directory
     if (!(Test-Path $installDir)) {
         New-Item -Path $installDir -ItemType Directory | Out-Null
     }
-    
+
     # Step 4: Create virtual environment
     Write-Info "Creating virtual environment..."
     if (Test-Path $venvDir) {
         Write-Warning "Virtual environment already exists. Removing old environment..."
         Remove-Item -Path $venvDir -Recurse -Force
     }
-    
+
     $createVenvCmd = $pythonCmd.Split(' ') + @("-m", "venv", $venvDir)
     & $createVenvCmd[0] $createVenvCmd[1..($createVenvCmd.Length-1)]
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to create virtual environment."
         Write-Error "Please ensure you have the 'venv' module available."
         return
     }
-    
+
     Write-Success "Virtual environment created successfully."
-    
+
     # Step 5: Install pieces-cli
     Write-Info "Installing Pieces CLI..."
-    
+
     # Use venv's pip - different paths for Windows vs Unix
     if (Test-Windows) {
         $venvPip = Join-Path $venvDir "Scripts\pip.exe"
     } else {
         $venvPip = Join-Path $venvDir "bin/pip"
     }
-    
+
     # Upgrade pip first
     & $venvPip install --upgrade pip
-    
+
     # Install pieces-cli
     & $venvPip install pieces-cli
     if ($LASTEXITCODE -ne 0) {
@@ -282,12 +282,12 @@ function Install-PiecesCLI {
         Write-Error "Please check your internet connection and try again."
         return
     }
-    
+
     Write-Success "Pieces CLI installed successfully!"
-    
+
     # Step 6: Create wrapper script
     Write-Info "Creating wrapper script..."
-    
+
     if (Test-Windows) {
         $wrapperScript = Join-Path $installDir "pieces.cmd"
         $wrapperContent = @"
@@ -337,19 +337,19 @@ fi
 exec "`$PIECES_EXECUTABLE" "`$@"
 "@
     }
-    
+
     Set-Content -Path $wrapperScript -Value $wrapperContent
-    
+
     # Make executable on Unix-like systems
     if (!(Test-Windows)) {
         chmod +x $wrapperScript
     }
-    
+
     Write-Success "Wrapper script created at: $wrapperScript"
-    
+
     # Step 7: Configure PowerShell
     Write-Info "Configuring PowerShell integration..."
-    
+
     if (Test-Command "pwsh") {
         Write-Info "Found PowerShell Core (pwsh)"
         $shells = @("PowerShell", "PowerShell Core")
@@ -357,11 +357,11 @@ exec "`$PIECES_EXECUTABLE" "`$@"
         Write-Info "Found Windows PowerShell"
         $shells = @("PowerShell")
     }
-    
+
     Write-Host ""
     foreach ($shell in $shells) {
         Write-Host "--- $shell configuration ---" -ForegroundColor Magenta
-        
+
         # Ask about PATH setup
         $addPath = Read-Host "Add Pieces CLI to PATH in $shell? [Y/n]"
         if ($addPath -notmatch '^[nN]([oO])?$') {
@@ -370,7 +370,7 @@ exec "`$PIECES_EXECUTABLE" "`$@"
         } else {
             Write-Info "Skipping PATH setup for $shell"
         }
-        
+
         # Ask about completion setup
         $enableCompletion = Read-Host "Enable shell completion for $shell? [Y/n]"
         if ($enableCompletion -notmatch '^[nN]([oO])?$') {
@@ -379,10 +379,10 @@ exec "`$PIECES_EXECUTABLE" "`$@"
         } else {
             Write-Info "Skipping completion setup for $shell"
         }
-        
+
         Write-Host ""
     }
-    
+
     # Step 8: Final instructions
     Write-Host ""
     Write-Success "Installation completed successfully!"

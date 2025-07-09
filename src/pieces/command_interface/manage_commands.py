@@ -369,12 +369,12 @@ class ManageStatusCommand(BaseCommand):
         Settings.logger.print(
             f"[cyan]Installation Method: [white]{installation_type.title()}"
         )
-        Settings.logger.print("\n[blue]Checking for updates...")
+        Settings.logger.print("[blue]Checking for updates...")
 
         if installation_type == "homebrew":
             latest_version = get_latest_homebrew_version()
             source = "Homebrew"
-        elif installation_type in "pip":
+        elif installation_type == "pip":
             latest_version = get_latest_pypi_version()
             source = "PyPI"
         elif installation_type == "installer":
@@ -405,32 +405,33 @@ class ManageStatusCommand(BaseCommand):
         else:
             Settings.logger.print("[green]✓ You are using the latest version!")
 
-        Settings.logger.print("[blue]Pieces OS Status")
-        Settings.logger.print("=" * 18)
-        response = Settings.pieces_client.os_api.os_update_check(
-            unchecked_os_server_update=UncheckedOSServerUpdate()
-        )
-        pieces_os_version = Settings.pieces_os_version
-        Settings.logger.print("[blue]Pieces OS Status")
-        Settings.logger.print("=" * 18)
+        Settings.logger.print("\n\n[blue]Pieces OS Status")
+        Settings.logger.print("=" * 17)
+        if Settings.pieces_client.is_pieces_running():
+            Settings.startup()
+            status = Settings.pieces_client.os_api.os_update_check(
+                unchecked_os_server_update=UncheckedOSServerUpdate()
+            ).status
+        else:
+            status = UpdatingStatusEnum.UNKNOWN
+        pieces_os_version = getattr(Settings, "pieces_os_version", "Unknown")
         Settings.logger.print(f"[cyan]Pieces OS Version: [white]{pieces_os_version}")
         color = "white"
-        if response.status == UpdatingStatusEnum.UP_TO_DATE:
+        if status == UpdatingStatusEnum.UP_TO_DATE:
             color = "green"
-        elif response.status == UpdatingStatusEnum.DOWNLOADING:
+        elif status == [UpdatingStatusEnum.DOWNLOADING, UpdatingStatusEnum.AVAILABLE]:
             color = "yellow"
-        elif response.status in [
-            UpdatingStatusEnum.RESTARTING,
-            UpdatingStatusEnum.RECONNECTING,
+        elif status in [
+            UpdatingStatusEnum.READY_TO_RESTART,
         ]:
             color = "blue"
-        elif response.status in [
+        elif status in [
             UpdatingStatusEnum.CONTACT_SUPPORT,
             UpdatingStatusEnum.REINSTALL_REQUIRED,
         ]:
             color = "red"
         Settings.logger.print(
-            f"[{color}]Pieces OS Update Status: [white]{PiecesUpdater.get_status_message(response.status)}"
+            f"[cyan]Pieces OS Update Status: [{color}]{PiecesUpdater.get_status_message(status)}"
         )
         return 0
 

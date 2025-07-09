@@ -37,7 +37,7 @@ _pieces_which() {
   which "$1" 2>/dev/null || command -v "$1" 2>/dev/null
 }
 
-# Check if a Python version meets minimum requirements (3.8+)
+# Check if a Python version meets minimum requirements (3.11+)
 check_python_version() {
   python_cmd="$1"
   if "$python_cmd" -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)" >/dev/null 2>&1; then

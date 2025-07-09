@@ -33,6 +33,8 @@ To get started with the Pieces Python CLI Tool, you need to:
 
    **Installer Script (Recommended):**
 
+   > **Requirements:** Python 3.11 or higher is required for the installation scripts.
+
    ```bash
    # macOS/Linux
    curl -fsSL https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.sh | sh

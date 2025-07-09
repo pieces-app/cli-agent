@@ -7,8 +7,6 @@ mirroring the behavior of the TypeScript modal but for CLI usage.
 
 import time
 from typing import Optional
-from enum import Enum
-
 from rich.progress import (
     Progress,
     BarColumn,
@@ -31,18 +29,6 @@ UPDATE_POLL_INTERVAL = 3  # seconds
 UPDATE_TIMEOUT = 10 * 60  # 10 minutes
 RECONNECT_POLL_INTERVAL = 0.5  # seconds
 RECONNECT_TIMEOUT = 5 * 60  # 5 minutes
-
-
-class UpdateState(Enum):
-    """Update process states"""
-
-    CHECKING = "checking"
-    UPDATING = "updating"
-    RESTARTING = "restarting"
-    RECONNECTING = "reconnecting"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
 
 
 class PiecesUpdater:
@@ -311,7 +297,7 @@ class PiecesUpdater:
             UpdatingStatusEnum.UP_TO_DATE: "PiecesOS is up to date",
             UpdatingStatusEnum.REINSTALL_REQUIRED: "Reinstall required - please reinstall PiecesOS",
             UpdatingStatusEnum.CONTACT_SUPPORT: "Error occurred - contact support at https://docs.pieces.app/products/support",
-            UpdatingStatusEnum.UNKNOWN: "Unknown status",
+            UpdatingStatusEnum.UNKNOWN: "Unknown",
         }
         return status_messages.get(status, "Unknown update status")
 
