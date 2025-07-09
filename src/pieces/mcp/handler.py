@@ -103,11 +103,13 @@ def handle_mcp(
     integration_instance = supported_mcps[integration] if integration else None
     if integration_instance is None or integration is None:
         menu = [
-            (val.readable, {key: True, "stdio": stdio})
+            (val.readable, {"integration": key, "stdio": stdio})
             for key, val in supported_mcps.items()
         ]
-        menu.append(("Raycast", {"raycast": True, "stdio": stdio}))  # append raycast
-        menu.append(("Warp", {"warp": True, "stdio": stdio}))  # append warp
+        menu.append(
+            ("Raycast", {"integration": "raycast", "stdio": stdio})
+        )  # append raycast
+        menu.append(("Warp", {"integration": "wrap", "stdio": stdio}))  # append warp
         return PiecesSelectMenu(
             menu,
             handle_mcp,

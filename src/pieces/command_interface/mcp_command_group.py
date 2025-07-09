@@ -49,6 +49,8 @@ class MCPSetupCommand(BaseCommand):
             type=str,
             choices=mcp_integrations + ["raycast", "wrap"],
             help="The integration to set up",
+            default=None,
+            nargs="?",
         )
         parser.add_argument(
             "--globally",
