@@ -135,6 +135,7 @@ jobs:
         if: ${{ inputs.deploy == false && inputs.beta == false }}
 
       - name: Build static completions
+        shell: bash
         run: |
           mkdir -p src/pieces/completions
           touch src/pieces/completions/__init__.py
