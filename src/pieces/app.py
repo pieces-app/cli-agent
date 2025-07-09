@@ -79,6 +79,7 @@ class PiecesCLI:
             "open",
             "config",
             "completion",
+            "manage",
         ] and not (command == "mcp" and mcp_subcommand == "start"):
             bypass_login = True if (command in ["version"]) else False
             Settings.startup(bypass_login)

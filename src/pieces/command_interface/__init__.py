@@ -23,6 +23,7 @@ from .commit_command import CommitCommand
 from .open_command import OpenCommand
 from .mcp_command_group import MCPCommandGroup
 from .completions import CompletionCommand
+from .manage_commands import ManageCommandGroup
 
 __all__ = [
     "ConfigCommand",
@@ -48,4 +49,5 @@ __all__ = [
     "OpenCommand",
     "MCPCommandGroup",
     "CompletionCommand",
+    "ManageCommandGroup",
 ]
