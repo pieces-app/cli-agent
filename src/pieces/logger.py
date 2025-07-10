@@ -2,11 +2,13 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Self
+from typing import Optional, Self, Any
 
 from rich import prompt
 from rich.console import Console
 from rich.prompt import Prompt
+
+from pieces.headless.exceptions import HeadlessPromptError
 
 
 class Logger:
@@ -27,15 +29,14 @@ class Logger:
         self._prompt = Prompt(console=self.console)
 
         self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.DEBUG if debug_mode else logging.CRITICAL)
+        self.logger.setLevel(logging.DEBUG if debug_mode else logging.ERROR)
 
         for handler in self.logger.handlers[:]:
             self.logger.removeHandler(handler)
 
         self.debug_mode = debug_mode
-        if debug_mode and log_dir:
+        if log_dir:
             self._setup_file_logging(os.path.join(log_dir, "logs"), self.name)
-            # self.print("Running in debug mode") Sadly it leads to some issues wit the claude MCP
 
     def _setup_file_logging(self, log_dir, name):
         """Set up file logging to save logs to files."""
@@ -74,19 +75,39 @@ class Logger:
     @property
     def input(self):
         """Get user input with a prompt."""
-        return self.console.input
+        if not self._is_headless_mode():
+            return self.console.input
+        raise HeadlessPromptError()
 
     @property
     def print(self):
-        return self.console.print
+        if not self._is_headless_mode():
+            return self.console.print
+        return lambda *args, **kwargs: None
+
+    def handle_input(self, default: Optional[str] = None, *args, **kwargs) -> str:
+        """Handle user input with an optional default value."""
+        if default:
+            return default
+        raise HeadlessPromptError()
 
     @property
     def prompt(self):
-        return self._prompt.ask
+        if not self._is_headless_mode():
+            return self._prompt.ask
+        return self.handle_input
 
     @property
     def confirm(self):
-        return self._confirm.ask
+        if not self._is_headless_mode():
+            return self._confirm.ask
+        return self.handle_input
+
+    def _is_headless_mode(self) -> bool:
+        """Check if currently in headless mode."""
+        from pieces.settings import Settings
+
+        return Settings.headless_mode
 
     @classmethod
     def get_instance(cls):
