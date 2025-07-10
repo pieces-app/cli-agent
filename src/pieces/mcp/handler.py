@@ -73,10 +73,10 @@ def handle_mcp(
 
     # Getting the args
     args = {}
-    if kwargs.get("global"):
-        args = {"option": "global"}
-    elif kwargs.get("local"):
+    if kwargs.get("local"):
         args = {"option": "local"}
+    elif kwargs.get("global") or Settings.headless_mode:
+        args = {"option": "global"}
 
     if integration == "raycast":
         if not stdio:
@@ -105,6 +105,7 @@ def handle_mcp(
         menu = [
             (val.readable, {"integration": key, "stdio": stdio})
             for key, val in supported_mcps.items()
+            if val.exists()
         ]
         menu.append(
             ("Raycast", {"integration": "raycast", "stdio": stdio})
@@ -130,6 +131,7 @@ def handle_mcp(
             integration_instance.get_settings_path(**args),
             integration_instance.text_end,
             stdio_text,
+            location_type=args.get("option", "global"),
         )
     else:
         return ErrorResponse(

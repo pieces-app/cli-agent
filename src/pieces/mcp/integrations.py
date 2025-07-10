@@ -332,6 +332,7 @@ cursor_integration = Integration(
 vscode_integration = Integration(
     options=options,
     text_success=text_success_vscode,
+    id="vscode",
     readable="VS Code",
     docs=URLs.VS_CODE_MCP_DOCS.value,
     get_settings_path=get_vscode_path,

@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Callable, Dict, List, Literal, Tuple, Optional, TypedDict, get_args
-
+import shutil
 from rich.markdown import Markdown
 import yaml
 import sys
@@ -154,6 +154,8 @@ class Integration:
         saver=lambda x, y: json.dump(x, y, indent=4),
         id: Optional[str] = None,
         support_sse: bool = True,
+        check_existence_paths: Optional[List[str]] = None,
+        check_existence_command: Optional[str] = None,
     ) -> None:
         # remove the css selector
         self.docs_no_css_selector = docs.split("#")[0]
@@ -173,6 +175,10 @@ class Integration:
         self._local_config = None
         self.mcp_properties = mcp_properties
         self.mcp_types: List[MCP_types] = ["sse", "stdio"]
+        self.check_existence_paths = check_existence_paths or [
+            os.path.dirname(self.get_settings_path())
+        ]
+        self.check_existence_command = check_existence_command
 
     @property
     def local_config(self):
@@ -196,6 +202,12 @@ class Integration:
                 "[yellow]Warning: Using stdio instead of sse because sse connection is not supported"
             )
             stdio = True
+
+        if not self.exists() and not Settings.logger.confirm(
+            "This integration is not installed are you sure you want to proceed?"
+        ):
+            return False
+
         if stdio and not self.mcp_properties.pieces_cli_bin_path:
             raise ValueError(
                 "Pieces Cli is not added to the path you can't setup the stdio servers please add it to the path"
@@ -244,12 +256,12 @@ class Integration:
             path = self.get_settings_path(**kwargs)
         old_mcp_type = self.local_config.get_projects(self.id).get(path, mcp_type)
         if (
-            old_mcp_type != mcp_type
-            and self.search(path, old_mcp_type)[0]  # the old set up and NOT removed
+            (
+                old_mcp_type != mcp_type and self.search(path, old_mcp_type)[0]
+            )  # the old set up and NOT removed
             and not Settings.logger.confirm(
                 f"{mcp_type} is already used as your {self.readable} MCP\n"
                 f"Do you want to replace the {old_mcp_type} mcp with the {mcp_type} mcp?",
-                default=True,
             )
         ):
             return False
@@ -306,6 +318,22 @@ class Integration:
             raise ValueError
 
         return settings
+
+    def exists(self) -> bool:
+        return self.check_command_existence() or self.check_paths_existence()
+
+    def check_command_existence(self) -> bool:
+        return (
+            shutil.which(self.check_existence_command) is not None
+            if self.check_existence_command
+            else False
+        )
+
+    def check_paths_existence(self) -> bool:
+        for path in self.check_existence_paths:
+            if os.path.exists(path):
+                return True
+        return False
 
     def need_repair(
         self,
