@@ -92,12 +92,12 @@ def validate_project_path(path, dot_file=".vscode", readable: str = "VS Code"):
 
 
 def input_local_path(dot_file: str, name: str) -> str:
-    path = input(f"Enter the path to the {name} project: ")
+    path = Settings.logger.input(f"Enter the path to the {name} workspace: ")
     is_valid, m = validate_project_path(path, dot_file, name)
 
     while not is_valid:
         print(m)
-        path = input(f"Enter a valid path for the {name} project: ")
+        path = Settings.logger.input(f"Enter a valid path for the {name} workspace: ")
         is_valid, m = validate_project_path(path, dot_file, name)
     settings_path = m
 

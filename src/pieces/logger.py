@@ -78,7 +78,7 @@ class Logger:
         """Get user input with a prompt."""
         if not self._is_headless_mode():
             return self.console.input
-        return self.handle_input
+        raise HeadlessPromptError()
 
     @property
     def print(self):
@@ -107,6 +107,7 @@ class Logger:
     def _is_headless_mode(self) -> bool:
         """Check if currently in headless mode."""
         from pieces.settings import Settings
+
         return Settings.headless_mode
 
     @classmethod

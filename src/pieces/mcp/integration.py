@@ -7,6 +7,7 @@ import yaml
 import sys
 
 from pieces.copilot.ltm import check_ltm
+from pieces.headless.exceptions import HeadlessError
 from pieces.settings import Settings
 
 from .utils import get_mcp_latest_url, get_mcp_urls
@@ -232,6 +233,8 @@ class Integration:
             return True
         except KeyboardInterrupt:
             return False
+        except HeadlessError as e:
+            raise e
         except Exception as e:  # noqa: E722
             Settings.logger.print(e)
             Settings.logger.critical(e)

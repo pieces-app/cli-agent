@@ -61,7 +61,8 @@ class MCPSetupCommand(BaseCommand):
         parser.add_argument(
             "--specific-workspace",
             dest="local",
-            action="store_true",
+            nargs="?",
+            const=True,
             help="For VS Code or Cursor to set the Local MCP",
         )
         parser.add_argument(

@@ -75,6 +75,9 @@ def handle_mcp(
     args = {}
     if kwargs.get("local"):
         args = {"option": "local"}
+        local_workspace = kwargs.get("local")
+        if isinstance(local_workspace, str):
+            args["path"] = local_workspace
     elif kwargs.get("global") or Settings.headless_mode:
         args = {"option": "global"}
 
