@@ -451,6 +451,7 @@ jobs:
   ### Build and publish Chocolatey package
   chocolatey-package:
     runs-on: windows-latest
+    if: inputs.deploy == true  # Only for production releases
     needs: [ build ]
     steps:
       - name: Checkout repository
