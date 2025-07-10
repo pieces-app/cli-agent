@@ -29,15 +29,14 @@ class Logger:
         self._prompt = Prompt(console=self.console)
 
         self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.DEBUG if debug_mode else logging.CRITICAL)
+        self.logger.setLevel(logging.DEBUG if debug_mode else logging.ERROR)
 
         for handler in self.logger.handlers[:]:
             self.logger.removeHandler(handler)
 
         self.debug_mode = debug_mode
-        if debug_mode and log_dir:
+        if log_dir:
             self._setup_file_logging(os.path.join(log_dir, "logs"), self.name)
-            # self.print("Running in debug mode") Sadly it leads to some issues wit the claude MCP
 
     def _setup_file_logging(self, log_dir, name):
         """Set up file logging to save logs to files."""
