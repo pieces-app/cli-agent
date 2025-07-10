@@ -340,6 +340,8 @@ jobs:
           gsutil cp -r */**.tar.gz gs://$BUCKET/pieces_cli/release/
           gsutil cp -r */**.zip gs://$BUCKET/pieces_cli/release/
           gsutil cp -r */**.whl gs://$BUCKET/pieces_cli/release/
+          # Upload to winget folder (Windows CLI zip only)
+          gsutil cp -r */pieces-cli-win_x86_64-*.zip gs://$BUCKET/pieces_cli/winget/
           echo "releasetag=$VERSION" >> $GITHUB_ENV
 
       ### Upload to GitHub releases pre-release
@@ -736,7 +738,7 @@ jobs:
 
       ### Publish to ChocolateyMore actions
       - name: Publish to Chocolatey
-        #        if: inputs.deploy == true  # Only publish when deploying
+        if: inputs.deploy == true  # Only publish when deploying
         env:
           CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
         run: |
