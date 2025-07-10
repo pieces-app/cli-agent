@@ -270,7 +270,7 @@ jobs:
   ### Pushing the built packages to GCP and GitHub
   push-build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    #    if: github.ref == 'refs/heads/main'
     needs:
       - build
     steps:
