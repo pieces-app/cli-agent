@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 import yaml
 import platform
 import os
@@ -104,37 +104,54 @@ def input_local_path(dot_file: str, name: str) -> str:
     return settings_path
 
 
-def get_vscode_path(option: Literal["global", "local"] = "global"):
+def _get_config_path(
+    base_folder: str,
+    filename: str,
+    mcp_path: Optional[str],
+    option: Literal["global", "local"],
+    global_config: str,
+):
     if option == "global":
-        settings_path = get_global_vs_settings()
-    elif option == "local":
-        settings_path = input_local_path(".vscode", "VS Code")
-        settings_path = os.path.join(
-            settings_path, "settings.json"
-        )  # Add the settings.json to the settings path to edit
-    create_config(settings_path)
-    return settings_path
+        config_path = global_config
+    else:
+        config_path = mcp_path or input_local_path(
+            base_folder, base_folder.lstrip(".").title()
+        )
+        config_path = os.path.join(config_path, filename)
+
+    create_config(config_path)
+    return config_path
+
+
+def get_vscode_path(
+    mcp_path: Optional[str] = None, option: Literal["global", "local"] = "global"
+):
+    return _get_config_path(
+        base_folder=".vscode",
+        filename="settings.json",
+        mcp_path=mcp_path,
+        option=option,
+        global_config=get_global_vs_settings(),
+    )
+
+
+def get_cursor_path(
+    mcp_path: Optional[str] = None, option: Literal["global", "local"] = "global"
+):
+    return _get_config_path(
+        base_folder=".cursor",
+        filename="mcp.json",
+        mcp_path=mcp_path,
+        option=option,
+        global_config=os.path.expanduser(os.path.join("~", ".cursor", "mcp.json")),
+    )
 
 
 def create_config(path: str):
-    # Create the MCP file if not exists
     dir = os.path.dirname(path)
     if os.path.exists(dir) and not os.path.exists(path):
         with open(path, "w") as file:
             json.dump({}, file)
-
-
-def get_cursor_path(option: Literal["global", "local"] = "global"):
-    if option == "global":
-        config_path = os.path.expanduser(os.path.join("~", ".cursor", "mcp.json"))
-    elif option == "local":
-        config_path = input_local_path(".cursor", "Cursor")
-        config_path = os.path.join(
-            config_path, "mcp.json"
-        )  # Add the settings.json to the settings path to edit
-    create_config(config_path)
-
-    return config_path
 
 
 def get_claude_path():

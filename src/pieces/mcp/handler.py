@@ -1,4 +1,5 @@
-from typing import Dict, Literal, Union, Optional
+from typing import Dict, Literal, Union
+import os
 from rich.markdown import Markdown
 import urllib.request
 import time
@@ -18,6 +19,7 @@ from pieces.urls import URLs
 
 from ..utils import PiecesSelectMenu
 from .integrations import (
+    validate_project_path,
     vscode_integration,
     goose_integration,
     cursor_integration,
@@ -71,16 +73,6 @@ def handle_mcp(
             "The stdio or SSE connection to the Pieces MCP server is not available. Please restart PiecesOS.",
         )
 
-    # Getting the args
-    args = {}
-    if kwargs.get("local"):
-        args = {"option": "local"}
-        local_workspace = kwargs.get("local")
-        if isinstance(local_workspace, str):
-            args["path"] = local_workspace
-    elif kwargs.get("global") or Settings.headless_mode:
-        args = {"option": "global"}
-
     if integration == "raycast":
         if not stdio:
             Settings.logger.print(
@@ -119,8 +111,33 @@ def handle_mcp(
             handle_mcp,
         ).run()
 
+    args = {}
     # Run the setup and check if it was successful
     if integration in ["vscode", "cursor"]:
+        # Getting the args
+        if kwargs.get("local"):
+            args = {"option": "local"}
+            local_workspace = kwargs.get("local")
+            if isinstance(local_workspace, str) and integration:
+                dot_file = ".cursor" if integration == "cursor" else ".vscode"
+                readable = "Cursor" if integration == "cursor" else "VS Code"
+                validate_path, message = validate_project_path(
+                    local_workspace,
+                    dot_file=dot_file,
+                    readable=readable,
+                )
+                if not validate_path:
+                    Settings.logger.print(message)
+                    return ErrorResponse(
+                        "mcp setup",
+                        ErrorCode.INVALID_PATH,
+                        "Invalid project path provided.",
+                    )
+                args["mcp_path"] = message
+
+        elif kwargs.get("global") or Settings.headless_mode:
+            args = {"option": "global"}
+
         success = integration_instance.run(stdio, **args)
     else:
         success = integration_instance.run(stdio)
@@ -131,7 +148,7 @@ def handle_mcp(
             stdio_text = "stdio"
         return create_mcp_setup_success(
             integration,
-            integration_instance.get_settings_path(**args),
+            args.get("mcp_path") or integration_instance.get_settings_path(**args),
             integration_instance.text_end,
             stdio_text,
             location_type=args.get("option", "global"),

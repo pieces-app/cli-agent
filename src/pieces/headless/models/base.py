@@ -20,6 +20,7 @@ class ErrorCode(IntEnum):
     COMMAND_ERROR = 3
     INVALID_ARGUMENT = 4
     TIMEOUT_ERROR = 5
+    INVALID_PATH = 6
 
     # User interaction errors (100-199)
     PROMPT_REQUIRED = 100
