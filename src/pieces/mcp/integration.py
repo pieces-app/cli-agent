@@ -349,10 +349,10 @@ class Integration:
         Returns: list of the paths that needs to be repaired
         """
         paths = self.local_config.get_projects(self.id)
+        paths_to_remove = []
         paths_to_repair: IntegrationDict = {}
         for path, mcp_type in paths.items():
             check, config = self.search(path, mcp_type)
-            # Check is True
             if check:
                 if not self.check_properties(mcp_type, config):
                     paths_to_repair[path] = mcp_type
@@ -367,7 +367,9 @@ class Integration:
                         break
                 if not appended:
                     # SADLY let's removed from the local cache
-                    self.local_config.remove_project(self.id, path)
+                    paths_to_remove.append(path)
+
+        [self.local_config.remove_project(self.id, path) for path in paths_to_remove]
 
         return paths_to_repair
 
