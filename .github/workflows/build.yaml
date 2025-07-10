@@ -30,6 +30,19 @@ on:
         required: false
       cert_password:
         required: false
+      # New DigiCert Software Trust Manager secrets
+      sm_host:
+        required: false
+      sm_api_key:
+        required: false
+      sm_client_cert_file_b64:
+        required: false
+      sm_client_cert_password:
+        required: false
+      sm_code_signing_cert_sha1_hash:
+        required: false
+      sm_keypair_alias:
+        required: false
 
 jobs:
   build:
@@ -226,6 +239,58 @@ jobs:
           else
               xcrun notarytool submit dist/${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip --password ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} --apple-id "development@pieces.app" --team-id "287L9TU9JL" --wait
           fi
+
+      ### Install DigiCert Client tools for code signing
+      - name: Install DigiCert Software Trust Manager
+        if: runner.os == 'Windows'
+        uses: digicert/ssm-code-signing@v1.0.1
+
+      ### Setup DigiCert certificate and environment variables
+      - name: Set up DigiCert certificate
+        if: runner.os == 'Windows' && inputs.deploy == true
+        run: |
+          # Create temp directory and decode certificate using PowerShell
+          New-Item -ItemType Directory -Force -Path "C:\temp"
+          $certBytes = [System.Convert]::FromBase64String("${{ secrets.sm_client_cert_file_b64 }}")
+          [System.IO.File]::WriteAllBytes("C:\temp\Certificate_pkcs12.p12", $certBytes)
+        shell: pwsh
+
+      ### Set Up Digi Cert Credentials
+      - name: Set DigiCert environment variables
+        if: runner.os == 'Windows' && inputs.deploy == true
+        run: |
+          echo "SM_HOST=${{ secrets.sm_host }}" >> "$GITHUB_ENV" 
+          echo "SM_API_KEY=${{ secrets.sm_api_key }}" >> "$GITHUB_ENV" 
+          echo "SM_CLIENT_CERT_FILE=C:\\temp\\Certificate_pkcs12.p12" >> "$GITHUB_ENV" 
+          echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.sm_client_cert_password }}" >> "$GITHUB_ENV"
+        shell: bash
+
+      ### Run health check for digicert
+      - name: Debug DigiCert setup
+        if: runner.os == 'Windows' && inputs.deploy == true
+        run: |
+          echo "Checking DigiCert setup..."
+          echo "SM_HOST: $env:SM_HOST"
+          echo "SM_CLIENT_CERT_FILE: $env:SM_CLIENT_CERT_FILE"
+          Test-Path $env:SM_CLIENT_CERT_FILE
+          smctl healthcheck
+        shell: pwsh
+
+      ### Sign the Pieces CLI Binary
+      - name: Sign EXE
+        if: runner.os == 'Windows' && inputs.deploy == true
+        run: |
+          # Sign using keypair alias
+          smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" --input ".\dist\pieces.exe" -v
+          
+          # Check if signing was successful
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "EXE signing failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
+          }
+          
+          echo "Pieces EXE signed and copied successfully"
+        shell: pwsh
 
       ### Package binary to zip file for Windows using PowerShell
       - name: Windows Binary to Zip File
@@ -593,70 +658,6 @@ jobs:
           Write-Output "Final structure:"
           Get-ChildItem "choco/tools/pieces" -Recurse | Select-Object Name, FullName
 
-      #      - name: Sign executable
-      #        env:
-      #          CERTIFICATE: ${{ secrets.code_signing_cert }}
-      #          CERT_PASSWORD: ${{ secrets.cert_password }}
-      #        run: |
-      #          # Debug: Check if environment variables are set
-      #          Write-Output "Checking environment variables..."
-      #          if ([string]::IsNullOrEmpty($env:CERTIFICATE)) {
-      #            throw "CERTIFICATE environment variable is empty or not set"
-      #          }
-      #          if ([string]::IsNullOrEmpty($env:CERT_PASSWORD)) {
-      #            throw "CERT_PASSWORD environment variable is empty or not set"
-      #          }
-      #
-      #          Write-Output "Certificate length: $($env:CERTIFICATE.Length)"
-      #          Write-Output "Password length: $($env:CERT_PASSWORD.Length)"
-      #
-      #          # Decode certificate from base64
-      #          Write-Output "Decoding certificate..."
-      #          try {
-      #            [System.Convert]::FromBase64String($env:CERTIFICATE) | Set-Content -Path "certificate.pfx" -AsByteStream
-      #            Write-Output "Certificate file created successfully"
-      #          } catch {
-      #            throw "Failed to decode certificate: $_"
-      #          }
-      #
-      #          # Verify certificate file exists
-      #          if (-not (Test-Path "certificate.pfx")) {
-      #            throw "Certificate file was not created"
-      #          }
-      #
-      #          $certSize = (Get-Item "certificate.pfx").Length
-      #          Write-Output "Certificate file size: $certSize bytes"
-      #
-      #          # Find the latest signtool version
-      #          $signtoolPath = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object Name -Descending | Select-Object -First 1
-      #          Write-Output "Using signtool: $($signtoolPath.FullName)"
-      #
-      #          # Verify target exe exists
-      #          if (-not (Test-Path "choco/tools/pieces/pieces.exe")) {
-      #            Write-Output "Contents of choco/tools/pieces/:"
-      #            Get-ChildItem "choco/tools/pieces/" -Recurse | Select-Object Name, FullName
-      #            throw "Target executable not found: choco/tools/pieces/pieces.exe"
-      #          }
-      #
-      #          # Sign the executable
-      #          Write-Output "Signing executable..."
-      #          & $signtoolPath.FullName sign /v /fd "SHA256" /a /f "certificate.pfx" /p "$env:CERT_PASSWORD" /tr "http://timestamp.digicert.com" /td SHA256 "choco/tools/pieces/pieces.exe"
-      #
-      #          if ($LASTEXITCODE -ne 0) {
-      #            throw "Signing failed with exit code $LASTEXITCODE"
-      #          }
-      #
-      #          # Verify the signature
-      #          Write-Output "Verifying signature..."
-      #          & $signtoolPath.FullName verify /pa "choco/tools/pieces/pieces.exe"
-      #
-      #          # Clean up certificate file
-      #          if (Test-Path "certificate.pfx") {
-      #            Remove-Item "certificate.pfx" -Force
-      #          }
-      #
-      #          Write-Output "✓ pieces.exe has been signed successfully"
-
       - name: Copy LICENSE
         run: |
           Copy-Item -Path "LICENSE" -Destination "choco/tools/LICENSE.txt" -Force
@@ -766,3 +767,44 @@ jobs:
           Write-Output "Found package: $($nupkgFile.Name)"
           Write-Output "Publishing package to Chocolatey..."
           choco push "$($nupkgFile.Name)" --source https://push.chocolatey.org/ --force
+
+
+  # WinGet portable package submission
+  winget-submission:
+    runs-on: windows-latest
+    needs: [ build, push-build ]
+    if: inputs.deploy == true  # Only for production releases
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get the version
+        shell: bash
+        id: get_version
+        run: |
+          VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
+          # Remove 'v' prefix if present
+          VERSION=${VERSION#v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install WinGet Create
+        run: winget install Microsoft.WingetCreate
+
+      - name: Create/Update WinGet Manifest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = "${{ steps.get_version.outputs.VERSION }}"
+          $zipUrl = "https://storage.googleapis.com/app-releases-production/pieces_cli/winget/pieces-cli-win_x86_64-$version.zip"
+          
+          Write-Output "Creating/updating manifest for version $version"
+          Write-Output "Using zip URL: $zipUrl"
+          
+          # Check if this is a new package or update
+          try {
+            $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI"
+            Write-Output "Package exists, updating..."
+            wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:GITHUB_TOKEN --submit
+          } catch {
+            Write-Output "Error checking existing package or package doesn't exist"
+          }
