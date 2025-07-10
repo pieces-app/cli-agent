@@ -27,7 +27,7 @@ class MCPListResponse:
     def __init__(
         self,
         integration_name: str,
-        status: Literal["healthy", "available_to_setup", "needs_repair"],
+        status: Literal["activated", "available_to_setup", "needs_repair"],
     ):
         self.integration_name = integration_name
         self.status = status

@@ -44,7 +44,7 @@ def get_status(integration: Integration):
         if integration.need_repair():
             return "needs_repair"
         else:
-            return "healthy"
+            return "activated"
     else:
         return "available_to_setup"
 
