@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - windows-support
-      - choco-package
 
 jobs:
   build:
