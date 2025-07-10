@@ -101,13 +101,12 @@ class Logger:
     @property
     def confirm(self):
         if not self._is_headless_mode():
-            return self._prompt.ask
+            return self._confirm.ask
         return self.handle_input
 
     def _is_headless_mode(self) -> bool:
         """Check if currently in headless mode."""
         from pieces.settings import Settings
-
         return Settings.headless_mode
 
     @classmethod

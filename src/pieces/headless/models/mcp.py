@@ -11,6 +11,7 @@ def create_mcp_setup_success(
     configuration_path: Optional[str],
     instructions: str,
     setup_type: Literal["stdio", "sse"] = "stdio",
+    location_type: Literal["local", "global"] = "global",
 ) -> SuccessResponse:
     """Create a successful MCP setup response."""
     setup_data = {
@@ -18,6 +19,7 @@ def create_mcp_setup_success(
         "setup_type": setup_type,
         "instructions": instructions,
         "configuration_path": configuration_path,
+        "location_type": location_type,
     }
 
     return SuccessResponse(command="mcp setup", data=setup_data)
@@ -27,7 +29,7 @@ class MCPListResponse:
     def __init__(
         self,
         integration_name: str,
-        status: Literal["activated", "available_to_setup", "needs_repair"],
+        status: Literal["activated", "available_to_setup", "needs_repair", "not_found"],
     ):
         self.integration_name = integration_name
         self.status = status

@@ -7,17 +7,22 @@ from pieces.settings import Settings
 from .handler import supported_mcps
 
 
-def print_setup_status(integration: Integration, key):
+def print_setup_status(integration: Integration, key: str) -> str:
     if integration.is_set_up():
         if integration.need_repair():
-            return f"🔨 it looks like {integration} needs to be repaired use `pieces mcp repair --ide {key}` to repair"
-        else:
-            return f"✅ {integration} MCP is set up!"
-    else:
-        return (
-            f"❌ {integration} MCP is not set up, "
-            f"Use `pieces mcp setup --{key}` to set it up."
-        )
+            return (
+                f"🔨 It looks like {integration} needs to be repaired. "
+                f"Use `pieces mcp repair --ide {key}` to repair it."
+            )
+        return f"✅ {integration} MCP is set up!"
+
+    if not integration.exists():
+        return "ℹ️ Integration not found."
+
+    return (
+        f"❌ {integration} MCP is not set up. "
+        f"Use `pieces mcp setup --ide {key}` to set it up."
+    )
 
 
 def handle_list(
@@ -43,10 +48,10 @@ def get_status(integration: Integration):
     if integration.is_set_up():
         if integration.need_repair():
             return "needs_repair"
-        else:
-            return "activated"
-    else:
-        return "available_to_setup"
+        return "activated"
+    if not integration.exists():
+        return "not_found"
+    return "available_to_setup"
 
 
 def handle_list_headless(**kwargs):

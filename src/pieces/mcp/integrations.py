@@ -8,6 +8,8 @@ from .integration import Integration, MCPProperties
 from ..settings import Settings
 from ..urls import URLs
 
+# TODO: Might need some cleanups here
+
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
 windsurf_config_path = os.path.expanduser("~/.codeium/windsurf/mcp_config.json")
 # TODO: We might need to add local config like vscode and cursor for local projects
@@ -325,6 +327,7 @@ cursor_integration = Integration(
         sse_path=["mcpServers", "Pieces"],
         sse_property={},
     ),
+    check_existence_command="cursor",
 )
 vscode_integration = Integration(
     options=options,
@@ -338,6 +341,7 @@ vscode_integration = Integration(
         sse_property={"type": "sse"},
         sse_path=["mcp", "servers", "Pieces"],
     ),
+    check_existence_command="code",
 )
 goose_integration = Integration(
     options=[],
@@ -373,6 +377,7 @@ goose_integration = Integration(
     ),
     saver=yaml.dump,
     loader=yaml.safe_load,
+    check_existence_command="goose",
 )
 
 claude_integration = Integration(
@@ -428,6 +433,7 @@ zed_integration = Integration(
     ),
     # We might need to add better abstraction for all the MCPs that do not support SSE.
     # As far as I know, SSE is not supported on Zed. We are going to use stdio only like Claude
+    check_existence_command="zed",
 )
 
 shortwave_integration = Integration(
@@ -459,4 +465,5 @@ claude_cli_integration = Integration(
         sse_property={},
         stdio_property={},
     ),
+    check_existence_command="claude",
 )

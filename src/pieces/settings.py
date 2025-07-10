@@ -8,7 +8,10 @@ from pieces.headless.exceptions import HeadlessCompatibilityError
 from pieces.headless.models.base import CommandResult
 from pieces.logger import Logger
 from pieces._vendor.pieces_os_client.wrapper import PiecesClient
-from pieces._vendor.pieces_os_client.wrapper.version_compatibility import VersionChecker, UpdateEnum
+from pieces._vendor.pieces_os_client.wrapper.version_compatibility import (
+    VersionChecker,
+    UpdateEnum,
+)
 from pieces import __version__
 from pieces.gui import (
     print_version_details,
@@ -141,17 +144,19 @@ class Settings:
         cls.pieces_client.model_name = model_name
 
     @classmethod
-    def startup(cls, bypass_login = False):
+    def startup(cls, bypass_login=False):
         if cls.pieces_client.is_pieces_running():
             cls.version_check()  # Check the version first
             if not bypass_login:
                 cls.check_login()
         else:
-            if cls.pieces_client.open_pieces_os(): # PiecesOS is running
+            if cls.pieces_client.open_pieces_os():  # PiecesOS is running
                 return cls.startup(bypass_login)
             else:
-                if cls.logger.confirm("Pieces OS is required but wasn’t found or couldn’t be launched.\n"
-                    "Do you want to install it now and get started?"):
+                if cls.logger.confirm(
+                    "Pieces OS is required but wasn’t found or couldn’t be launched.\n"
+                    "Do you want to install it now and get started?"
+                ):
                     from .command_interface.simple_commands import InstallCommand
 
                     status_code = InstallCommand.instance.execute()
@@ -194,7 +199,9 @@ class Settings:
     def check_login(cls):
         user = cls.pieces_client.user_api.user_snapshot().user
         if not user:
-            if cls.logger.confirm("Please sign into Pieces to use this feature. Do you want to sign in now?"):
+            if cls.logger.confirm(
+                "Please sign into Pieces to use this feature. Do you want to sign in now?"
+            ):
                 cls.pieces_client.user.login(True)
                 user = cls.pieces_client.user_api.user_snapshot().user
         if user:
@@ -204,13 +211,17 @@ class Settings:
     @classmethod
     def show_error(cls, error, error_message=None):
         cls.logger.console_error.print(f"[red]{error}")
-        cls.logger.console_error.print(f"[red]{error_message}") if error_message else None
+        cls.logger.console_error.print(
+            f"[red]{error_message}"
+        ) if error_message else None
         if not cls.run_in_loop:
             sys.exit(2)
 
     @classmethod
     def get_os_id(cls):
-        from pieces._vendor.pieces_os_client.models.application_name_enum import ApplicationNameEnum
+        from pieces._vendor.pieces_os_client.models.application_name_enum import (
+            ApplicationNameEnum,
+        )
 
         if cls._os_id:
             return cls._os_id
