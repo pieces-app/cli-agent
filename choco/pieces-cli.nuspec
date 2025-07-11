@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>pieces-cli</id>
+    <version>1.0.0</version>
+    <packageSourceUrl>https://github.com/pieces-app/cli-agent</packageSourceUrl>
+    <owners>Pieces</owners>
+    <title>Pieces CLI</title>
+    <authors>Pieces</authors>
+    <projectUrl>https://github.com/pieces-app/cli-agent</projectUrl>
+    <copyright>2024 Pieces</copyright>
+    <licenseUrl>https://github.com/pieces-app/cli-agent/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <docsUrl>https://docs.pieces.app/installation-getting-started/what-am-i-installing</docsUrl>
+    <bugTrackerUrl>https://github.com/pieces-app/cli-agent/issues</bugTrackerUrl>
+    <tags>cli developer-tools code-snippets ai productivity</tags>
+    <summary>Pieces CLI for interacting with the PiecesOS</summary>
+    <iconUrl>https://old.docs.pieces.app/assets/pieces_logos/white_circle.png</iconUrl>
+    <description>
+The Pieces CLI is a command-line interface for interacting with PiecesOS, providing developers with powerful tools for managing code snippets, assets, and AI-powered features directly from the terminal.
+
+Features:
+- Manage code snippets and assets
+- AI-powered code assistance
+- Integration with PiecesOS
+- Cross-platform support
+- Rich terminal interface
+    </description>
+    <releaseNotes>Initial Chocolatey release</releaseNotes>
+    <dependencies>
+      <dependency id="chocolatey-core.extension" version="1.1.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
