@@ -801,7 +801,12 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Install WinGet Create
-        run: winget install Microsoft.WingetCreate
+        # https://learn.microsoft.com/en-us/windows/package-manager/winget/install
+        # --accept-package-agreements: Used to accept the license agreement, and avoid the prompt.
+        # --accept-source-agreements: Used to accept the source license agreement, and avoid the prompt.
+        run: winget install Microsoft.WingetCreate `
+          --accept-source-agreements `
+          --accept-package-agreements
 
       - name: Create/Update WinGet Manifest
         env:
