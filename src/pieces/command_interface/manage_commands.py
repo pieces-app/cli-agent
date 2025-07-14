@@ -49,6 +49,32 @@ def detect_installation_type():
     if pieces_cli_dir.exists() and (pieces_cli_dir / "venv").exists():
         return "installer"
 
+    # Check if installed via chocolatey
+    try:
+        result = subprocess.run(
+            ["choco", "list", "--local-only", "pieces-cli"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and "pieces-cli" in result.stdout:
+            return "chocolatey"
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+
+    # Check if installed via winget
+    try:
+        result = subprocess.run(
+            ["winget", "list", "--id", "MeshIntelligentTechnologies.PiecesCLI"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and "MeshIntelligentTechnologies.PiecesCLI" in result.stdout:
+            return "winget"
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+
     # Check if installed via homebrew
     try:
         result = subprocess.run(
@@ -59,7 +85,7 @@ def detect_installation_type():
         )
         if result.returncode == 0:
             return "homebrew"
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
     # Check if installed via pip globally
@@ -72,7 +98,7 @@ def detect_installation_type():
         )
         if result.returncode == 0:
             return "pip"
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
     return "unknown"
@@ -174,7 +200,7 @@ class ManageUpdateCommand(BaseCommand):
         return "Update Pieces CLI"
 
     def get_description(self) -> str:
-        return "Update the Pieces CLI to the latest version. Automatically detects installation method (pip, homebrew, or installer script) and uses the appropriate update method."
+        return "Update the Pieces CLI to the latest version. Automatically detects installation method (pip, homebrew, chocolatey, winget, or installer script) and uses the appropriate update method."
 
     def get_examples(self) -> list[str]:
         return [
@@ -192,14 +218,21 @@ class ManageUpdateCommand(BaseCommand):
             help="Force update even if already up to date",
         )
 
-    def _check_updates(self, source: Literal["pip", "homebrew"]) -> bool:
+    def _check_updates(self, source: Literal["pip", "homebrew", "chocolatey", "winget"]) -> bool:
         """Check if updates are available."""
         Settings.logger.print("[blue]Checking for updates...")
 
         if source == "pip":
             latest_version = get_latest_pypi_version()
-        else:  # homebrew
+        elif source == "homebrew":
             latest_version = get_latest_homebrew_version()
+        elif source == "chocolatey":
+            latest_version = self._get_latest_chocolatey_version()
+        elif source == "winget":
+            latest_version = self._get_latest_winget_version()
+        else:
+            Settings.logger.print("[yellow]Could not determine update status")
+            return False
 
         if not latest_version:
             Settings.logger.print("[yellow]Could not determine update status")
@@ -296,6 +329,45 @@ class ManageUpdateCommand(BaseCommand):
         except subprocess.CalledProcessError as e:
             return _handle_subprocess_error("updating", "pip", e)
 
+    def _update_chocolatey_version(self, force: bool = False) -> int:
+        """Update Pieces CLI installed via chocolatey."""
+        if not force and not self._check_updates("chocolatey"):
+            return 1
+
+        try:
+            Settings.logger.print("[blue]Updating Pieces CLI via chocolatey...")
+            if force:
+                # For chocolatey, we can use reinstall to force update
+                cmd = ["choco", "upgrade", "pieces-cli", "--force", "-y"]
+            else:
+                cmd = ["choco", "upgrade", "pieces-cli", "-y"]
+            subprocess.run(cmd, check=True)
+            Settings.logger.print("[green]✓ Pieces CLI updated successfully!")
+            return 0
+
+        except subprocess.CalledProcessError as e:
+            return _handle_subprocess_error("updating", "chocolatey", e)
+
+    def _update_winget_version(self, force: bool = False) -> int:
+        """Update Pieces CLI installed via winget."""
+        if not force and not self._check_updates("winget"):
+            return 1
+
+        try:
+            Settings.logger.print("[blue]Updating Pieces CLI via winget...")
+            if force:
+                # For winget, we can uninstall and then install to force update
+                subprocess.run(["winget", "uninstall", "MeshIntelligentTechnologies.PiecesCLI", "--silent"], check=True)
+                cmd = ["winget", "install", "MeshIntelligentTechnologies.PiecesCLI", "--silent"]
+            else:
+                cmd = ["winget", "upgrade", "MeshIntelligentTechnologies.PiecesCLI", "--silent"]
+            subprocess.run(cmd, check=True)
+            Settings.logger.print("[green]✓ Pieces CLI updated successfully!")
+            return 0
+
+        except subprocess.CalledProcessError as e:
+            return _handle_subprocess_error("updating", "winget", e)
+
     def execute(self, **kwargs) -> int:
         force = kwargs.get("force", False)
 
@@ -307,6 +379,8 @@ class ManageUpdateCommand(BaseCommand):
                 kw.get("force", False)
             ),
             "pip": lambda **kw: self._update_pip_version(kw.get("force", False)),
+            "chocolatey": lambda **kw: self._update_chocolatey_version(kw.get("force", False)),
+            "winget": lambda **kw: self._update_winget_version(kw.get("force", False)),
         }
 
         return _execute_operation_by_type(operation_map, force=force)
@@ -337,6 +411,52 @@ class ManageStatusCommand(BaseCommand):
     def add_arguments(self, parser: argparse.ArgumentParser):
         pass
 
+    def _get_latest_chocolatey_version(self) -> Optional[str]:
+        """Get the latest version of pieces-cli from Chocolatey."""
+        try:
+            result = subprocess.run(
+                ["choco", "search", "pieces-cli", "--exact", "--limit-output"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0 and "pieces-cli" in result.stdout:
+                # Extract version from the search output
+                # The output format is like: pieces-cli|1.2.3
+                for line in result.stdout.splitlines():
+                    if line.startswith("pieces-cli|"):
+                        return line.split("|")[1]
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
+        return None
+
+    def _get_latest_winget_version(self) -> Optional[str]:
+        """Get the latest version of pieces-cli from WinGet."""
+        try:
+            result = subprocess.run(
+                ["winget", "search", "MeshIntelligentTechnologies.PiecesCLI", "--exact"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0 and "MeshIntelligentTechnologies.PiecesCLI" in result.stdout:
+                # Extract version from the search output
+                # The output format varies, but we need to find the version
+                lines = result.stdout.splitlines()
+                for line in lines:
+                    if "MeshIntelligentTechnologies.PiecesCLI" in line:
+                        # Try to extract version from the line
+                        parts = line.split()
+                        if len(parts) >= 3:
+                            # Usually the version is in the 3rd column
+                            version = parts[2]
+                            # Basic version validation
+                            if version and "." in version:
+                                return version
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
+        return None
+
     def execute(self, **kwargs) -> int:
         """Execute the status command."""
         Settings.logger.print("[blue]Pieces CLI Status")
@@ -359,6 +479,12 @@ class ManageStatusCommand(BaseCommand):
         elif installation_type == "installer":
             latest_version = get_latest_pypi_version()
             source = "Installer Script"
+        elif installation_type == "chocolatey":
+            latest_version = self._get_latest_chocolatey_version()
+            source = "Chocolatey"
+        elif installation_type == "winget":
+            latest_version = self._get_latest_winget_version()
+            source = "WinGet"
         else:
             Settings.logger.print(
                 "[yellow]Could not determine update source for unknown installation method"
@@ -537,6 +663,33 @@ class ManageUninstallCommand(BaseCommand):
         except subprocess.CalledProcessError as e:
             return _handle_subprocess_error("uninstalling", "pip", e)
 
+    def _uninstall_chocolatey_version(self, remove_config: bool = False) -> int:
+        """Uninstall Pieces CLI installed via chocolatey."""
+        try:
+            Settings.logger.print("[blue]Uninstalling Pieces CLI via chocolatey...")
+            subprocess.run(["choco", "uninstall", "pieces-cli", "-y"], check=True)
+            self._post_uninstall_cleanup(remove_config)
+            Settings.logger.print("[green]✓ Pieces CLI uninstalled successfully!")
+            return 0
+
+        except subprocess.CalledProcessError as e:
+            return _handle_subprocess_error("uninstalling", "chocolatey", e)
+
+    def _uninstall_winget_version(self, remove_config: bool = False) -> int:
+        """Uninstall Pieces CLI installed via winget."""
+        try:
+            Settings.logger.print("[blue]Uninstalling Pieces CLI via winget...")
+            subprocess.run(
+                ["winget", "uninstall", "MeshIntelligentTechnologies.PiecesCLI", "--silent"],
+                check=True,
+            )
+            self._post_uninstall_cleanup(remove_config)
+            Settings.logger.print("[green]✓ Pieces CLI uninstalled successfully!")
+            return 0
+
+        except subprocess.CalledProcessError as e:
+            return _handle_subprocess_error("uninstalling", "winget", e)
+
     def execute(self, **kwargs) -> int:
         remove_config = kwargs.get("remove_config", False)
 
@@ -548,6 +701,12 @@ class ManageUninstallCommand(BaseCommand):
                 kw.get("remove_config", False)
             ),
             "pip": lambda **kw: self._uninstall_pip_version(
+                kw.get("remove_config", False)
+            ),
+            "chocolatey": lambda **kw: self._uninstall_chocolatey_version(
+                kw.get("remove_config", False)
+            ),
+            "winget": lambda **kw: self._uninstall_winget_version(
                 kw.get("remove_config", False)
             ),
         }
@@ -565,7 +724,7 @@ class ManageCommandGroup(CommandGroup):
         return "Manage Pieces CLI installation"
 
     def get_description(self) -> str:
-        return "Manage the Pieces CLI installation including updating to the latest version and uninstalling the tool. Automatically detects installation method and uses appropriate tools."
+        return "Manage the Pieces CLI installation including updating to the latest version and uninstalling the tool. Automatically detects installation method (pip, homebrew, chocolatey, winget, or installer script) and uses appropriate tools."
 
     def get_examples(self) -> list[str]:
         return [
