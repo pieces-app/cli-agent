@@ -802,9 +802,6 @@ jobs:
           VERSION=${VERSION#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      #      - name: Install winget
-      #        uses: Cyberboss/install-winget@v1
-
       - name: Install WinGet Create
         # https://learn.microsoft.com/en-us/windows/package-manager/winget/install
         # --accept-package-agreements: Used to accept the license agreement, and avoid the prompt.
@@ -815,6 +812,7 @@ jobs:
 
       - name: Create/Update WinGet Manifest
         env:
+          # Use PAT instead of GITHUB_TOKEN for external repository access
           WINGET_TOKEN: ${{ secrets.personal_access_token }}
         run: |
           $version = "${{ steps.get_version.outputs.VERSION }}"
@@ -823,11 +821,36 @@ jobs:
           Write-Output "Creating/updating manifest for version $version"
           Write-Output "Using zip URL: $zipUrl"
           
+          # Clean up any existing forks to avoid NonFastForwardException
+          Write-Output "Cleaning up existing forks..."
+          try {
+            # Delete existing fork if it exists (this helps with sync issues)
+            $headers = @{
+              'Authorization' = "token $env:WINGET_TOKEN"
+              'Accept' = 'application/vnd.github.v3+json'
+            }
+            $userInfo = Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers
+            $username = $userInfo.login
+          
+            Write-Output "Checking for existing fork at $username/winget-pkgs"
+            try {
+              $forkInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/$username/winget-pkgs" -Headers $headers
+              Write-Output "Found existing fork, deleting..."
+              Invoke-RestMethod -Uri "https://api.github.com/repos/$username/winget-pkgs" -Method DELETE -Headers $headers
+              Write-Output "Fork deleted successfully"
+              Start-Sleep -Seconds 5  # Wait a bit for GitHub to process the deletion
+            } catch {
+              Write-Output "No existing fork found or error deleting: $($_.Exception.Message)"
+            }
+          } catch {
+            Write-Output "Error in cleanup process: $($_.Exception.Message)"
+          }
+          
           # Check if this is a new package or update
           try {
             $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI"
             Write-Output "Package exists, updating..."
             wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
           } catch {
-            Write-Output "Error checking existing package or package doesn't exist"
+            Write-Output "Package doesn't exist, creating new manifest..."
           }
