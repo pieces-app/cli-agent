@@ -19,7 +19,7 @@ class TestMCPHandler(unittest.TestCase):
             sse_path=["mcp", "servers", "Pieces"],
             url_property_name="url",
             command_property_name="command",
-            args_property_name="args"
+            args_property_name="args",
         )
 
         self.integration = Integration(
@@ -32,13 +32,17 @@ class TestMCPHandler(unittest.TestCase):
             error_text="Test error text",
             loader=json.load,
             saver=lambda x, y: json.dump(x, y, indent=4),
-            id="test_integration"
+            id="test_integration",
         )
 
     def test_handle_mcp_server_status(self):
-        mock_config = {"mcp": {"servers": {"Pieces": {"url": "pieces_url", "type": "sse"}}}}
+        mock_config = {
+            "mcp": {"servers": {"Pieces": {"url": "pieces_url", "type": "sse"}}}
+        }
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-            with patch.object(self.integration, 'search', return_value=(True, {"type": "sse"})):
+            with patch.object(
+                self.integration, "search", return_value=(True, {"type": "sse"})
+            ):
                 status = self.integration.is_set_up()
                 self.assertTrue(status)
 
@@ -47,7 +51,7 @@ class TestMCPHandler(unittest.TestCase):
         self.assertEqual(docs, "https://docs.example.com")
 
     def test_handle_mcp_repair(self):
-        with patch.object(self.integration, 'need_repair') as mock_repair:
+        with patch.object(self.integration, "need_repair") as mock_repair:
             mock_repair.return_value = {}
             self.integration.need_repair()
             mock_repair.assert_called_once()
