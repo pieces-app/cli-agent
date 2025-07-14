@@ -842,6 +842,32 @@ jobs:
             Write-Output "Fork test failed: $($_.Exception.Message)"
           }
 
+      - name: Sync fork with upstream
+        env:
+          WINGET_TOKEN: ${{ secrets.personal_access_token }}
+        run: |
+          $headers = @{
+            'Authorization' = "token $env:WINGET_TOKEN"
+            'Accept' = 'application/vnd.github.v3+json'
+          }
+
+          # Get user info
+          $userInfo = Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers
+          $username = $userInfo.login
+
+          # Clone fork and upstream
+          git clone https://$env:WINGET_TOKEN@github.com/$username/winget-pkgs.git
+          cd winget-pkgs
+          git remote add upstream https://github.com/microsoft/winget-pkgs.git
+          git fetch upstream
+
+          # Merge upstream/main into fork/main
+          git checkout main
+          git merge upstream/main
+
+          # Push to sync fork
+          git push origin main
+
       - name: Create/Update WinGet Manifest
         env:
           WINGET_TOKEN: ${{ secrets.personal_access_token }}
