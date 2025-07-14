@@ -65,7 +65,10 @@ function Test-Command {
 function Test-PythonVersion {
     param($PythonCmd)
     try {
-        $version = & $PythonCmd -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
+        $meetsRequirement = & $PythonCmd -c "import sys; print('true' if sys.version_info >= (3, 11) else 'false')" 2>$null
+        if ($meetsRequirement -eq 'true') {
+            return $true
+        }
         if ($version) {
             $major, $minor = $version.Split('.')
             return ([int]$major -eq 3) -and ([int]$minor -ge 11)

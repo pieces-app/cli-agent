@@ -63,12 +63,6 @@ To get started with the Pieces Python CLI Tool, you need to:
 
 After installing the CLI tool, you can access its functionalities through the terminal. The tool is initialized with the command `pieces` followed by various subcommands and options.
 
-### Some important terminologies
-
-- `x` -> The index
-- `current asset` -> The asset that you are currently using can be changed by the open command
-- `current conversation` -> The conversation that you currently using in the ask command
-
 ## Shell Completion
 
 The Pieces CLI supports auto-completion for bash, zsh, fish, and PowerShell. To enable completion for your shell, run:
@@ -103,7 +97,7 @@ echo 'pieces completion fish | source' >> ~/.config/fish/config.fish && source ~
 Add-Content $PROFILE '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript'; . $PROFILE
 ```
 
-After setup, restart your terminal or source your configuration file. Then try typing `pieces` and press **Tab** to test auto-completion!
+After setup, restart your terminal or source your configuration file. Then try typing `pieces ` and press **Tab** to test auto-completion!
 
 ## Usage
 
@@ -174,7 +168,7 @@ cd dist
 pip install pieces-cli-{VERSION}-py3-none-any.whl
 ```
 
-replace the VERSION with the version you downloaded
+Replace the VERSION with the version you downloaded
 Note: Ensure you get latest from the [releases](https://github.com/pieces-app/cli-agent/releases) of the cli-agent
 
 11. To view all the CLI Commands
