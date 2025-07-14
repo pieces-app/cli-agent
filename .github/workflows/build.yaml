@@ -889,7 +889,28 @@ jobs:
             $tempRepoPath = Join-Path $env:TEMP "winget-pkgs-sync"
             Remove-Item $tempRepoPath -Recurse -Force -ErrorAction SilentlyContinue
           
-            git clone https://$env:WINGET_TOKEN@github.com/$username/winget-pkgs.git $tempRepoPath
+          # Retry logic for cloning the fork
+            $cloneSuccess = $false
+            $cloneAttempts = 5
+            $cloneDelay = 5
+          
+            for ($i = 1; $i -le $cloneAttempts; $i++) {
+              Write-Output "Attempt $i: Cloning forked repo..."
+                try {
+                git clone https://$env:WINGET_TOKEN@github.com/$username/winget-pkgs.git $tempRepoPath
+                $cloneSuccess = $true
+                break
+              } catch {
+                Write-Output "Clone attempt $i failed: $($_.Exception.Message)"
+                  Start-Sleep -Seconds $cloneDelay
+                }
+              }
+          
+                if (-not $cloneSuccess) {
+                Write-Error "Failed to clone the forked repository after $cloneAttempts attempts."
+                exit 1
+              }
+          
             cd $tempRepoPath
             git remote add upstream https://github.com/microsoft/winget-pkgs.git
             git fetch upstream
