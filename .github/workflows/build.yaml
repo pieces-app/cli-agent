@@ -895,7 +895,7 @@ jobs:
             $cloneDelay = 5
           
             for ($i = 1; $i -le $cloneAttempts; $i++) {
-              Write-Output "Attempt $i: Cloning forked repo..."
+              Write-Output "Attempt $i Cloning forked repo..."
                 try {
                 git clone https://$env:WINGET_TOKEN@github.com/$username/winget-pkgs.git $tempRepoPath
                 $cloneSuccess = $true
