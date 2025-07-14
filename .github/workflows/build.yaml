@@ -380,80 +380,80 @@ jobs:
         run: |
           GITHUB_RUN_NUMBER+="gha"
           if [[ ${{ steps.get_version.outputs.VERSION }} =~ [0-9]+.[0-9]+.[0-9]+ ]]; then
-              echo "Git Tag Versioning"
-              export CHANNEL=production
-              export VERSION=${{ steps.get_version.outputs.VERSION }}
-              export BUCKET=app-releases-production
-              export production_json="$(curl https://storage.googleapis.com/app-releases-production/pieces_cli/production/latest.json -H "Accept: application/json")"
-              export reversed_production_json=$(echo $production_json | jq 'reverse')
-              export updated_production_json=$(echo $reversed_production_json | jq --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '.[length] |= . + {channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}')
-              echo $updated_production_json | jq 'reverse' > latest.json
-              jq -n --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '{channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}' > latest-single.json
+          echo "Git Tag Versioning"
+          export CHANNEL=production
+          export VERSION=${{ steps.get_version.outputs.VERSION }}
+          export BUCKET=app-releases-production
+          export production_json="$(curl https://storage.googleapis.com/app-releases-production/pieces_cli/production/latest.json -H "Accept: application/json")"
+          export reversed_production_json=$(echo $production_json | jq 'reverse')
+          export updated_production_json=$(echo $reversed_production_json | jq --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '.[length] |= . + {channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}')
+          echo $updated_production_json | jq 'reverse' > latest.json
+          jq -n --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '{channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}' > latest-single.json
           else
-              echo "Staging Versioning"
-              export CHANNEL=staging
-              export VERSION=$(echo "$(set -- */*.txt; echo "$1")" | xargs head -n 1)
-              export BUCKET=app-releases-staging
-              export staging_json="$(curl https://storage.googleapis.com/app-releases-staging/pieces_cli/staging/latest.json -H "Accept: application/json")"
-              export reversed_staging_json=$(echo $staging_json | jq 'reverse')
-              export updated_staging_json=$(echo $reversed_staging_json | jq --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '.[length] |= . + {channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}')
-              echo $updated_staging_json | jq 'reverse' > latest.json
-              jq -n --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '{channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}' > latest-single.json
+          echo "Staging Versioning"
+          export CHANNEL=staging
+          export VERSION=$(echo "$(set -- */*.txt; echo "$1")" | xargs head -n 1)
+          export BUCKET=app-releases-staging
+          export staging_json="$(curl https://storage.googleapis.com/app-releases-staging/pieces_cli/staging/latest.json -H "Accept: application/json")"
+          export reversed_staging_json=$(echo $staging_json | jq 'reverse')
+          export updated_staging_json=$(echo $reversed_staging_json | jq --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '.[length] |= . + {channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}')
+          echo $updated_staging_json | jq 'reverse' > latest.json
+          jq -n --arg number "$GITHUB_RUN_NUMBER" --arg channel "$CHANNEL" --arg branch "${{ steps.get_version.outputs.VERSION }}" --arg tag "$VERSION" --arg sha1 "${{ github.sha }}" '{channel: $channel, number: $number, branch: $branch, tag: $tag, sha1: $sha1}' > latest-single.json
           fi
-          gsutil -h "Cache-Control: max-age=0" cp */**.tar.gz gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz
-          gsutil -h "Cache-Control: max-age=0" cp */**.whl gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz.whl
-          gsutil -h "Cache-Control: max-age=0" cp latest-single.json gs://$BUCKET/pieces_cli/$CHANNEL/latest-single.json
-          gsutil -h "Cache-Control: max-age=0" cp latest.json gs://$BUCKET/pieces_cli/$CHANNEL/latest.json
-          gsutil cp -r */**.tar.gz gs://$BUCKET/pieces_cli/release/
-          gsutil cp -r */**.zip gs://$BUCKET/pieces_cli/release/
-          gsutil cp -r */**.whl gs://$BUCKET/pieces_cli/release/
+          #          gsutil -h "Cache-Control: max-age=0" cp */**.tar.gz gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz
+          #          gsutil -h "Cache-Control: max-age=0" cp */**.whl gs://$BUCKET/pieces_cli/$GITHUB_RUN_NUMBER/pieces.tar.gz.whl
+          #          gsutil -h "Cache-Control: max-age=0" cp latest-single.json gs://$BUCKET/pieces_cli/$CHANNEL/latest-single.json
+          #          gsutil -h "Cache-Control: max-age=0" cp latest.json gs://$BUCKET/pieces_cli/$CHANNEL/latest.json
+          #          gsutil cp -r */**.tar.gz gs://$BUCKET/pieces_cli/release/
+          #          gsutil cp -r */**.zip gs://$BUCKET/pieces_cli/release/
+          #          gsutil cp -r */**.whl gs://$BUCKET/pieces_cli/release/
           # Upload to winget folder (Windows CLI zip only)
           gsutil cp -r */pieces-cli-win_x86_64-*.zip gs://$BUCKET/pieces_cli/winget/
           echo "releasetag=$VERSION" >> $GITHUB_ENV
 
       ### Upload to GitHub releases pre-release
-      - name: Release to GitHub Releases
-        uses: softprops/action-gh-release@v2
-        if: inputs.deploy == false
-        with:
-          files: |
-            macos-latest/*.tar.gz
-            macos-latest/*.whl
-            */**.zip
-          fail_on_unmatched_files: false
-          name: ${{ env.releasetag }}
-          tag_name: ${{ env.releasetag }}
-          generate_release_notes: true
-          prerelease: true
+      #      - name: Release to GitHub Releases
+      #        uses: softprops/action-gh-release@v2
+      #        if: inputs.deploy == false
+      #        with:
+      #          files: |
+      #            macos-latest/*.tar.gz
+      #            macos-latest/*.whl
+      #            */**.zip
+      #          fail_on_unmatched_files: false
+      #          name: ${{ env.releasetag }}
+      #          tag_name: ${{ env.releasetag }}
+      #          generate_release_notes: true
+      #          prerelease: true
 
       ### Upload to GitHub releases
-      - name: Release to GitHub Releases
-        uses: softprops/action-gh-release@v2
-        if: inputs.deploy == true
-        with:
-          files: |
-            macos-latest/*.tar.gz
-            macos-latest/*.whl
-            */**.zip
-          fail_on_unmatched_files: false
-          name: ${{ env.releasetag }}
-          tag_name: ${{ env.releasetag }}
-          generate_release_notes: true
-          prerelease: false
+      #      - name: Release to GitHub Releases
+      #        uses: softprops/action-gh-release@v2
+      #        if: inputs.deploy == true
+      #        with:
+      #          files: |
+      #            macos-latest/*.tar.gz
+      #            macos-latest/*.whl
+      #            */**.zip
+      #          fail_on_unmatched_files: false
+      #          name: ${{ env.releasetag }}
+      #          tag_name: ${{ env.releasetag }}
+      #          generate_release_notes: true
+      #          prerelease: false
 
       ### Upload to test Pypi
-      - name: Upload Packages to PyPi for release
-        if: inputs.deploy == true
-        run: |-
-          mkdir dist
-          cp macos-latest/*.tar.gz macos-latest/*.whl ./dist/
-          python3 -m pip install --upgrade twine
-          python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
+  #      - name: Upload Packages to PyPi for release
+  #        if: inputs.deploy == true
+  #        run: |-
+  #          mkdir dist
+  #          cp macos-latest/*.tar.gz macos-latest/*.whl ./dist/
+  #          python3 -m pip install --upgrade twine
+  #          python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
 
   ### Build and publish Chocolatey package
   chocolatey-package:
     runs-on: windows-latest
-    if: inputs.deploy == true  # Only for production releases
+    if: github.ref == 'refs/heads/main'
     needs: [ build ]
     permissions:
       contents: read
