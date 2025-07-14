@@ -1,12 +1,11 @@
 import argparse
-from pieces.core.update_pieces_os import update_pieces_os, PiecesUpdater
-from pieces.utils import PiecesSelectMenu
+from pieces.core.update_pieces_os import PiecesUpdater
 import json
 import sys
 import subprocess
 import shutil
 from pathlib import Path
-from typing import Literal, Optional, Callable
+from typing import Literal, Optional, Callable, cast
 from pieces import __version__
 from pieces.base_command import BaseCommand, CommandGroup
 from pieces.urls import URLs
@@ -192,13 +191,6 @@ class ManageUpdateCommand(BaseCommand):
             action="store_true",
             help="Force update even if already up to date",
         )
-        parser.add_argument(
-            "update",
-            help="What to udpate",
-            choices=["PiecesOS", "Self"],
-            nargs="?",
-            default=None,
-        )
 
     def _check_updates(self, source: Literal["pip", "homebrew"]) -> bool:
         """Check if updates are available."""
@@ -306,19 +298,6 @@ class ManageUpdateCommand(BaseCommand):
 
     def execute(self, **kwargs) -> int:
         force = kwargs.get("force", False)
-        update = kwargs.get("update", None)
-        if not update:
-            PiecesSelectMenu(
-                [
-                    ("PiecesOS", {"update": "PiecesOS"}),
-                    ("Self (Pieces CLI)", {"force": force, "update": "Self"}),
-                ],
-                on_enter_callback=self.execute,
-            ).run()
-            return 0
-        elif update == "PiecesOS":
-            update_pieces_os()
-            return 0
 
         operation_map = {
             "installer": lambda **kw: self._update_installer_version(
@@ -401,7 +380,7 @@ class ManageStatusCommand(BaseCommand):
             Settings.logger.print(
                 f"[yellow]✓ Update available: v{__version__} → v{latest_version}"
             )
-            Settings.logger.print("[blue]Run 'pieces manage update self' to update")
+            Settings.logger.print("[blue]Run 'pieces manage update' to update")
         else:
             Settings.logger.print("[green]✓ You are using the latest version!")
 
@@ -409,9 +388,12 @@ class ManageStatusCommand(BaseCommand):
         Settings.logger.print("=" * 17)
         if Settings.pieces_client.is_pieces_running():
             Settings.startup()
-            status = Settings.pieces_client.os_api.os_update_check(
-                unchecked_os_server_update=UncheckedOSServerUpdate()
-            ).status
+            status = cast(
+                UpdatingStatusEnum,
+                Settings.pieces_client.os_api.os_update_check(
+                    unchecked_os_server_update=UncheckedOSServerUpdate()
+                ).status,
+            )
         else:
             status = UpdatingStatusEnum.UNKNOWN
         pieces_os_version = getattr(Settings, "pieces_os_version", "Unknown")

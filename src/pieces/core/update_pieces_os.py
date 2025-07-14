@@ -6,7 +6,7 @@ mirroring the behavior of the TypeScript modal but for CLI usage.
 """
 
 import time
-from typing import Optional
+from typing import Optional, cast
 from rich.progress import (
     Progress,
     BarColumn,
@@ -97,17 +97,20 @@ class PiecesUpdater:
             )
 
             try:
-                response = Settings.pieces_client.os_api.os_update_check(
-                    unchecked_os_server_update=UncheckedOSServerUpdate()
+                status = cast(
+                    UpdatingStatusEnum,
+                    Settings.pieces_client.os_api.os_update_check(
+                        unchecked_os_server_update=UncheckedOSServerUpdate()
+                    ).status,
                 )
 
-                if response.status == UpdatingStatusEnum.UP_TO_DATE:
+                if status == UpdatingStatusEnum.UP_TO_DATE:
                     progress.update(
                         check_task,
                         description="[green]PiecesOS is up to date",
                         completed=True,
                     )
-                elif response.status in [
+                elif status in [
                     UpdatingStatusEnum.AVAILABLE,
                     UpdatingStatusEnum.DOWNLOADING,
                 ]:
@@ -123,7 +126,7 @@ class PiecesUpdater:
                         completed=True,
                     )
 
-                return response.status
+                return status
 
             except Exception as e:
                 progress.update(
