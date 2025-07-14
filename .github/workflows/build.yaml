@@ -776,7 +776,11 @@ jobs:
 
   # WinGet portable package submission
   winget-submission:
-    runs-on: windows-latest
+    # https://github.com/actions/runner-images
+    # https://github.com/marketplace/actions/install-winget
+    # "The windows-2025 GitHub actions runner image now comes preinstalled with winget."
+    # The windows-latest is 2022 we will need 2025 runner to have winget CLI
+    runs-on: windows-2025
     needs: [ build, push-build ]
     if: inputs.deploy == true  # Only for production releases
     permissions:
@@ -795,6 +799,9 @@ jobs:
           # Remove 'v' prefix if present
           VERSION=${VERSION#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update winget
+        run: winget upgrade winget --accept-package-agreements --accept-source-agreements --disable-interactivity
 
       - name: Install WinGet Create
         run: winget install Microsoft.WingetCreate
