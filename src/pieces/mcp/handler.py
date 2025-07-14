@@ -1,39 +1,42 @@
-from typing import Dict, Literal, Union
-import os
-from rich.markdown import Markdown
-import urllib.request
-import time
 import json
+import time
 import urllib.parse
+import urllib.request
 import webbrowser
+from typing import Dict, Literal, Union, cast
+
+from rich.markdown import Markdown
 
 from pieces.headless.models.base import (
     BaseResponse,
     ErrorCode,
     ErrorResponse,
 )
-from pieces.headless.models.mcp import create_mcp_setup_success
+from pieces.headless.models.mcp import (
+    MCPRepairResult,
+    create_mcp_repair_success,
+    create_mcp_setup_success,
+)
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
 from pieces.urls import URLs
 
 from ..utils import PiecesSelectMenu
+from .integration import Integration, mcp_integration_types
 from .integrations import (
+    claude_cli_integration,
+    claude_integration,
+    cursor_integration,
+    goose_integration,
+    shortwave_integration,
     validate_project_path,
     vscode_integration,
-    goose_integration,
-    cursor_integration,
-    claude_integration,
-    windsurf_integration,
-    zed_integration,
-    shortwave_integration,
-    claude_cli_integration,
     warp_instructions,
     warp_sse_json,
     warp_stdio_json,
+    windsurf_integration,
+    zed_integration,
 )
-from .integration import Integration, mcp_integration_types
-from pieces.headless.models.mcp import MCPRepairResult, create_mcp_repair_success
 
 # NOTE: the key should be the same as the parameter name in the handle_mcp function
 supported_mcps: Dict[mcp_integration_types, Integration] = {
@@ -109,7 +112,7 @@ def handle_mcp(
         return PiecesSelectMenu(
             menu,
             handle_mcp,
-        ).run()
+        ).run()  # type: ignore[reportReturnType]
 
     args = {}
     # Run the setup and check if it was successful
@@ -151,7 +154,9 @@ def handle_mcp(
             args.get("mcp_path") or integration_instance.get_settings_path(**args),
             integration_instance.text_end,
             stdio_text,
-            location_type=args.get("option", "global"),
+            location_type=cast(
+                Literal["local", "global"], args.get("option", "global")
+            ),
         )
     else:
         return ErrorResponse(
@@ -245,6 +250,11 @@ def handle_repair(
                     f"Failed to repair {integration_name}: {error_msg}"
                 )
                 Settings.show_error(f"Failed to repair {integration_name}: {error_msg}")
+                return MCPRepairResult(
+                    integration_name=integration_name,
+                    status="failed",
+                    configuration_path=None,
+                )
 
     if ide == "all":
         for integration_name in supported_mcps:
