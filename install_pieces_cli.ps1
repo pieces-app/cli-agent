@@ -255,11 +255,13 @@ function Install-PiecesCLI {
     }
 
     $createVenvCmd = $pythonCmd.Split(' ') + @("-m", "venv", $venvDir)
-    & $createVenvCmd[0] $createVenvCmd[1..($createVenvCmd.Length-1)]
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to create virtual environment."
-        Write-Error "Please ensure you have the 'venv' module available."
+    try {
+        & $createVenvCmd[0] $createVenvCmd[1..($createVenvCmd.Length-1)]
+        if ($LASTEXITCODE -ne 0) { throw "Venv creation failed" }
+    }
+    catch {
+        if (Test-Path $venvDir) { Remove-Item -Path $venvDir -Recurse -Force }
+        Write-Error $_
         return
     }
 
