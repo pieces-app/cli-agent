@@ -900,7 +900,7 @@ jobs:
           $cloneDelay = 10
 
           for ($i = 1; $i -le $cloneAttempts; $i++) {
-            Write-Output "Attempt $i: Cloning forked repo..."
+            Write-Output "Attempt $i Cloning forked repo..."
             try {
               git clone https://$env:WINGET_TOKEN@github.com/$username/winget-pkgs.git $tempRepoPath
               $cloneSuccess = $true
@@ -923,7 +923,7 @@ jobs:
           git merge upstream/main
           git push origin main
           cd $env:GITHUB_WORKSPACE
-      
+
       - name: Create/Update WinGet Manifest
         env:
           WINGET_TOKEN: ${{ secrets.personal_access_token }}
