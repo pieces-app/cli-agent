@@ -838,7 +838,25 @@ jobs:
               Write-Output "Found existing fork, deleting..."
               Invoke-RestMethod -Uri "https://api.github.com/repos/$username/winget-pkgs" -Method DELETE -Headers $headers
               Write-Output "Fork deleted successfully"
-              Start-Sleep -Seconds 5  # Wait a bit for GitHub to process the deletion
+          
+              # Wait longer for GitHub to fully process the deletion
+              Write-Output "Waiting 30 seconds for GitHub to process fork deletion..."
+              Start-Sleep -Seconds 30
+          
+              # Verify deletion completed
+              $retryCount = 0
+              do {
+                try {
+                  $checkFork = Invoke-RestMethod -Uri "https://api.github.com/repos/$username/winget-pkgs" -Headers $headers -ErrorAction Stop
+                  Write-Output "Fork still exists, waiting 10 more seconds..."
+                  Start-Sleep -Seconds 10
+                  $retryCount++
+                } catch {
+                  Write-Output "Fork deletion confirmed (404 received)"
+                  break
+                }
+              } while ($retryCount -lt 6)  # Max 1 minute additional wait
+          
             } catch {
               Write-Output "No existing fork found or error deleting: $($_.Exception.Message)"
             }
@@ -850,7 +868,33 @@ jobs:
           try {
             $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI"
             Write-Output "Package exists, updating..."
-            wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
+          
+            # Retry logic for wingetcreate in case of timing issues
+            $maxRetries = 3
+            $retryCount = 0
+            $success = $false
+          
+            do {
+              try {
+                wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
+                $success = $true
+                Write-Output "WinGet manifest submitted successfully"
+              } catch {
+                $retryCount++
+                Write-Output "Attempt $retryCount failed: $($_.Exception.Message)"
+                if ($retryCount -lt $maxRetries) {
+                  Write-Output "Waiting 15 seconds before retry..."
+                  Start-Sleep -Seconds 15
+                }
+              }
+            } while (!$success -and $retryCount -lt $maxRetries)
+          
+            if (!$success) {
+              Write-Output "Failed to submit after $maxRetries attempts"
+              exit 1
+            }
+          
           } catch {
             Write-Output "Package doesn't exist, creating new manifest..."
+            # Add similar retry logic for new package creation if needed
           }
