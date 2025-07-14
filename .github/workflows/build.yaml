@@ -846,27 +846,58 @@ jobs:
         env:
           WINGET_TOKEN: ${{ secrets.personal_access_token }}
         run: |
+          # Ensure fork exists and is synced with upstream
+          Write-Output "Ensuring fork is created and synced..."
+          
           $headers = @{
-            'Authorization' = "token $env:WINGET_TOKEN"
-            'Accept' = 'application/vnd.github.v3+json'
+          'Authorization' = "token $env:WINGET_TOKEN"
+          'Accept' = 'application/vnd.github.v3+json'
           }
-
-          # Get user info
-          $userInfo = Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers
-          $username = $userInfo.login
-
-          # Clone fork and upstream
-          git clone https://$env:WINGET_TOKEN@github.com/$username/winget-pkgs.git
-          cd winget-pkgs
-          git remote add upstream https://github.com/microsoft/winget-pkgs.git
-          git fetch upstream
-
-          # Merge upstream/main into fork/main
-          git checkout main
-          git merge upstream/main
-
-          # Push to sync fork
-          git push origin main
+            $userInfo = Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers
+            $username = $userInfo.login
+          
+            # Create the fork (if it doesn't already exist)
+            try {
+            Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/winget-pkgs/forks" -Method POST -Headers $headers
+            Write-Output "Fork requested successfully"
+          } catch {
+          Write-Output "Fork may already exist or request failed: $($_.Exception.Message)"
+          }
+          
+          # Wait for fork to be available
+            $maxAttempts = 10
+            $attempt = 1
+            $repoUrl = "https://github.com/$username/winget-pkgs"
+            do {
+            Write-Output "Checking for fork existence (Attempt $attempt of $maxAttempts)..."
+            try {
+            Invoke-RestMethod -Uri "https://api.github.com/repos/$username/winget-pkgs" -Headers $headers
+            Write-Output "Fork is now available."
+            break
+          } catch {
+            Start-Sleep -Seconds 5
+            $attempt++
+          }
+          } while ($attempt -le $maxAttempts)
+          
+            if ($attempt -gt $maxAttempts) {
+            Write-Error "Timed out waiting for fork to be created."
+            exit 1
+          }
+          
+          # Clone and sync fork
+            $tempRepoPath = Join-Path $env:TEMP "winget-pkgs-sync"
+            Remove-Item $tempRepoPath -Recurse -Force -ErrorAction SilentlyContinue
+          
+            git clone https://$env:WINGET_TOKEN@github.com/$username/winget-pkgs.git $tempRepoPath
+            cd $tempRepoPath
+            git remote add upstream https://github.com/microsoft/winget-pkgs.git
+            git fetch upstream
+            git checkout main
+            git merge upstream/main
+            git push origin main
+          
+            cd $env:GITHUB_WORKSPACE
 
       - name: Create/Update WinGet Manifest
         env:
