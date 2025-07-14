@@ -88,7 +88,7 @@ profile_default/
 ipython_config.py
 
 # Virtual environment
-myenv 
+myenv
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
@@ -175,3 +175,8 @@ logs
 ./completion_script/generated/
 # Generated completion scripts for the commands interface (when running pieces completion install)
 src/pieces/completions/
+
+
+/choco/tools/pieces
+Mesh_Intelligent_Technologies_Inc_6_24_22.pfx
+certificate.txt
