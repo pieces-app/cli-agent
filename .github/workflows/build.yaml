@@ -810,6 +810,38 @@ jobs:
           --accept-source-agreements `
           --accept-package-agreements
 
+      - name: Test PAT permissions
+        env:
+          WINGET_TOKEN: ${{ secrets.personal_access_token }}
+        run: |
+          $headers = @{
+            'Authorization' = "token $env:WINGET_TOKEN"
+            'Accept' = 'application/vnd.github.v3+json'
+          }
+
+          # Test basic API access
+          Write-Output "Testing PAT permissions..."
+          $userInfo = Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers
+          Write-Output "Authenticated as: $($userInfo.login)"
+
+          # Test ability to list user repos
+          $repos = Invoke-RestMethod -Uri "https://api.github.com/user/repos?per_page=1" -Headers $headers
+          Write-Output "Can access user repos: True"
+
+          # Test ability to fork (this will actually create a fork for testing)
+          Write-Output "Testing fork creation..."
+          try {
+            $forkResult = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/winget-pkgs/forks" -Method POST -Headers $headers
+            Write-Output "Fork test successful: $($forkResult.html_url)"
+
+            # Clean up test fork immediately
+            Start-Sleep -Seconds 2
+            Invoke-RestMethod -Uri "https://api.github.com/repos/$($userInfo.login)/winget-pkgs" -Method DELETE -Headers $headers
+            Write-Output "Test fork cleaned up"
+          } catch {
+            Write-Output "Fork test failed: $($_.Exception.Message)"
+          }
+
       - name: Create/Update WinGet Manifest
         env:
           # Use PAT instead of GITHUB_TOKEN for external repository access
