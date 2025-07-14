@@ -844,7 +844,6 @@ jobs:
 
       - name: Create/Update WinGet Manifest
         env:
-          # Use PAT instead of GITHUB_TOKEN for external repository access
           WINGET_TOKEN: ${{ secrets.personal_access_token }}
         run: |
           $version = "${{ steps.get_version.outputs.VERSION }}"
@@ -856,7 +855,6 @@ jobs:
           # Clean up any existing forks to avoid NonFastForwardException
           Write-Output "Cleaning up existing forks..."
           try {
-            # Delete existing fork if it exists (this helps with sync issues)
             $headers = @{
               'Authorization' = "token $env:WINGET_TOKEN"
               'Accept' = 'application/vnd.github.v3+json'
@@ -870,25 +868,7 @@ jobs:
               Write-Output "Found existing fork, deleting..."
               Invoke-RestMethod -Uri "https://api.github.com/repos/$username/winget-pkgs" -Method DELETE -Headers $headers
               Write-Output "Fork deleted successfully"
-          
-              # Wait longer for GitHub to fully process the deletion
-              Write-Output "Waiting 30 seconds for GitHub to process fork deletion..."
-              Start-Sleep -Seconds 30
-          
-              # Verify deletion completed
-              $retryCount = 0
-              do {
-                try {
-                  $checkFork = Invoke-RestMethod -Uri "https://api.github.com/repos/$username/winget-pkgs" -Headers $headers -ErrorAction Stop
-                  Write-Output "Fork still exists, waiting 10 more seconds..."
-                  Start-Sleep -Seconds 10
-                  $retryCount++
-                } catch {
-                  Write-Output "Fork deletion confirmed (404 received)"
-                  break
-                }
-              } while ($retryCount -lt 6)  # Max 1 minute additional wait
-          
+              Start-Sleep -Seconds 10
             } catch {
               Write-Output "No existing fork found or error deleting: $($_.Exception.Message)"
             }
@@ -896,37 +876,25 @@ jobs:
             Write-Output "Error in cleanup process: $($_.Exception.Message)"
           }
           
-          # Check if this is a new package or update
+          # Create a temporary directory to run wingetcreate from
+          $tempDir = New-TemporaryFile | ForEach-Object { Remove-Item $_; New-Item -ItemType Directory -Path $_ }
+          Write-Output "Working from temporary directory: $tempDir"
+          
           try {
-            $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI"
-            Write-Output "Package exists, updating..."
+            Set-Location $tempDir
           
-            # Retry logic for wingetcreate in case of timing issues
-            $maxRetries = 3
-            $retryCount = 0
-            $success = $false
-          
-            do {
-              try {
-                wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
-                $success = $true
-                Write-Output "WinGet manifest submitted successfully"
-              } catch {
-                $retryCount++
-                Write-Output "Attempt $retryCount failed: $($_.Exception.Message)"
-                if ($retryCount -lt $maxRetries) {
-                  Write-Output "Waiting 15 seconds before retry..."
-                  Start-Sleep -Seconds 15
-                }
-              }
-            } while (!$success -and $retryCount -lt $maxRetries)
-          
-            if (!$success) {
-              Write-Output "Failed to submit after $maxRetries attempts"
-              exit 1
+            # Check if this is a new package or update
+            try {
+              $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI"
+              Write-Output "Package exists, updating..."
+              wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
+            } catch {
+              Write-Output "Package doesn't exist, creating new manifest..."
+              wingetcreate new --id "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
             }
           
-          } catch {
-            Write-Output "Package doesn't exist, creating new manifest..."
-            # Add similar retry logic for new package creation if needed
+          } finally {
+            # Clean up temp directory
+            Set-Location $env:GITHUB_WORKSPACE
+            Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
           }
