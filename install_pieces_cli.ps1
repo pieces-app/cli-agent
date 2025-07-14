@@ -142,6 +142,21 @@ function Setup-PowerShellPath {
     $pathSeparator = Get-PathSeparator
 
     # Check if directory is already in PATH
+    # Validate InstallDir existence
+    if (!(Test-Path $InstallDir)) {
+        Write-Error "Installation directory does not exist: $InstallDir"
+        return $false
+    }
+
+    # Check PATH length limit (Windows-specific)
+    if (Test-Windows) {
+        $maxPathLength = 2048  # Typical safe maximum for PATH
+        if (($env:PATH.Length + $InstallDir.Length + 1) -ge $maxPathLength) {
+            Write-Error "Adding the installation directory would exceed the PATH length limit."
+            return $false
+        }
+    }
+
     if ($env:PATH -split $pathSeparator | Where-Object { $_ -eq $InstallDir }) {
         Write-Info "Pieces CLI directory already in PATH"
         return $true
@@ -169,6 +184,21 @@ function Setup-PowerShellPath {
         # Check if PATH is already in profile
         if (Test-Path $shellProfile) {
             $profileContent = Get-Content $shellProfile -ErrorAction SilentlyContinue
+            # Validate InstallDir existence
+            if (!(Test-Path $InstallDir)) {
+                Write-Error "Installation directory does not exist: $InstallDir"
+                return $false
+            }
+            
+            # Check PATH length limit (Windows-specific)
+            if (Test-Windows) {
+                $maxPathLength = 2048  # Typical safe maximum for PATH
+                if (($env:PATH.Length + $InstallDir.Length + 1) -ge $maxPathLength) {
+                    Write-Error "Adding the installation directory would exceed the PATH length limit."
+                    return $false
+                }
+            }
+            
             if ($profileContent | Select-String $InstallDir) {
                 Write-Info "PATH already configured in $shellProfile"
                 return $true
@@ -297,23 +327,24 @@ function Install-PiecesCLI {
         $wrapperScript = Join-Path $installDir "pieces.cmd"
         $wrapperContent = @"
 @echo off
+setlocal enabledelayedexpansion
 set "SCRIPT_DIR=%~dp0"
 set "VENV_DIR=%SCRIPT_DIR%venv"
-set "PIECES_EXECUTABLE=%VENV_DIR%\Scripts\pieces.exe"
+set "PIECES_EXE=%VENV_DIR%\Scripts\pieces.exe"
 
 if not exist "%VENV_DIR%" (
-    echo Error: Pieces CLI virtual environment not found at %VENV_DIR%
+    echo Error: Pieces CLI virtual environment not found at "%VENV_DIR%"
     echo Please reinstall Pieces CLI.
     exit /b 1
 )
 
-if not exist "%PIECES_EXECUTABLE%" (
-    echo Error: Pieces CLI executable not found at %PIECES_EXECUTABLE%
+if not exist "%PIECES_EXE%" (
+    echo Error: Pieces CLI executable not found at "%PIECES_EXE%"
     echo Please reinstall Pieces CLI.
     exit /b 1
 )
 
-"%PIECES_EXECUTABLE%" %*
+"%PIECES_EXE%" %*
 "@
     } else {
         $wrapperScript = Join-Path $installDir "pieces"
