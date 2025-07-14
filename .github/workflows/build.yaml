@@ -800,9 +800,6 @@ jobs:
           VERSION=${VERSION#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Update winget
-        run: winget upgrade winget --accept-package-agreements --accept-source-agreements --disable-interactivity
-
       - name: Install WinGet Create
         run: winget install Microsoft.WingetCreate
 
