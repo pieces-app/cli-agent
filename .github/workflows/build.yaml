@@ -802,8 +802,8 @@ jobs:
           VERSION=${VERSION#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Install winget
-        uses: Cyberboss/install-winget@v1
+      #      - name: Install winget
+      #        uses: Cyberboss/install-winget@v1
 
       - name: Install WinGet Create
         # https://learn.microsoft.com/en-us/windows/package-manager/winget/install
