@@ -43,6 +43,8 @@ on:
         required: false
       sm_keypair_alias:
         required: false
+      personal_access_token:
+        required: false
 
 jobs:
   build:
@@ -800,15 +802,20 @@ jobs:
           VERSION=${VERSION#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Update winget
-        run: winget upgrade winget --accept-package-agreements --accept-source-agreements --disable-interactivity
+      - name: Install winget
+        uses: Cyberboss/install-winget@v1
 
       - name: Install WinGet Create
-        run: winget install Microsoft.WingetCreate
+        # https://learn.microsoft.com/en-us/windows/package-manager/winget/install
+        # --accept-package-agreements: Used to accept the license agreement, and avoid the prompt.
+        # --accept-source-agreements: Used to accept the source license agreement, and avoid the prompt.
+        run: winget install Microsoft.WingetCreate `
+          --accept-source-agreements `
+          --accept-package-agreements
 
       - name: Create/Update WinGet Manifest
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WINGET_TOKEN: ${{ secrets.personal_access_token }}
         run: |
           $version = "${{ steps.get_version.outputs.VERSION }}"
           $zipUrl = "https://storage.googleapis.com/app-releases-production/pieces_cli/winget/pieces-cli-win_x86_64-$version.zip"
@@ -820,7 +827,7 @@ jobs:
           try {
             $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI"
             Write-Output "Package exists, updating..."
-            wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:GITHUB_TOKEN --submit
+            wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
           } catch {
             Write-Output "Error checking existing package or package doesn't exist"
           }

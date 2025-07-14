@@ -29,3 +29,4 @@ jobs:
       sm_client_cert_password: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
       sm_code_signing_cert_sha1_hash: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
       sm_keypair_alias: ${{ secrets.SM_KEYPAIR_ALIAS }}
+      personal_access_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
