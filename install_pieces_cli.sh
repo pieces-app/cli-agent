@@ -4,6 +4,8 @@
 # This script installs the Pieces CLI tool in a virtual environment
 # and optionally sets up shell completion.
 #
+# POSIX compliant shell script - works with sh, bash, zsh, dash, etc.
+#
 
 echo "Welcome to the Pieces CLI Installer!"
 echo "======================================"
@@ -32,9 +34,9 @@ print_error() {
   echo "${RED}[ERROR]${NC} $1"
 }
 
-# Wrapper around 'which' and 'command -v', tries which first, then falls back to command -v
+# Wrapper around 'which' and 'command -v', tries command -v first (POSIX), then falls back to which
 _pieces_which() {
-  which "$1" 2>/dev/null || command -v "$1" 2>/dev/null
+  command -v "$1" 2>/dev/null || which "$1" 2>/dev/null
 }
 
 # Check if a Python version meets minimum requirements (3.11+)
@@ -177,8 +179,23 @@ check_shell_available() {
   esac
 }
 
+# Cleanup function for trap
+cleanup() {
+  # Deactivate virtual environment if active
+  deactivate 2>/dev/null || true
+  
+  # Remove partial installations on failure
+  if [ -n "$CLEANUP_ON_EXIT" ] && [ -d "$INSTALL_DIR" ]; then
+    print_warning "Cleaning up partial installation..."
+    rm -rf "$INSTALL_DIR"
+  fi
+}
+
 # Main installation function
 main() {
+  # Set up trap for cleanup on exit
+  trap cleanup EXIT INT TERM
+  
   print_info "Starting Pieces CLI installation..."
 
   # Step 1: Find Python executable
@@ -199,11 +216,16 @@ main() {
   # Step 2: Set installation directory
   INSTALL_DIR="$HOME/.pieces-cli"
   VENV_DIR="$INSTALL_DIR/venv"
+  CLEANUP_ON_EXIT="true"  # Enable cleanup on failure
 
   print_info "Installation directory: $INSTALL_DIR"
 
   # Create installation directory
-  mkdir -p "$INSTALL_DIR"
+  if ! mkdir -p "$INSTALL_DIR"; then
+    print_error "Failed to create installation directory: $INSTALL_DIR"
+    print_error "Please check permissions and try again."
+    exit 1
+  fi
 
   # Step 3: Create virtual environment
   print_info "Creating virtual environment..."
@@ -212,10 +234,14 @@ main() {
     rm -rf "$VENV_DIR"
   fi
 
-  "$PYTHON_CMD" -m venv "$VENV_DIR"
-  if [ $? -ne 0 ]; then
+  if ! "$PYTHON_CMD" -m venv "$VENV_DIR"; then
     print_error "Failed to create virtual environment."
     print_error "Please ensure you have the 'venv' module available."
+    print_error "On some systems, you may need to install python3-venv package:"
+    print_error "  Ubuntu/Debian: sudo apt-get install python3-venv"
+    print_error "  Fedora: sudo dnf install python3-venv"
+    # Clean up partial venv if it exists
+    [ -d "$VENV_DIR" ] && rm -rf "$VENV_DIR"
     exit 1
   fi
 
@@ -225,20 +251,34 @@ main() {
   print_info "Installing Pieces CLI..."
 
   # Activate virtual environment
-  . "$VENV_DIR/bin/activate"
+  if [ -f "$VENV_DIR/bin/activate" ]; then
+    . "$VENV_DIR/bin/activate"
+  else
+    print_error "Failed to find activation script at $VENV_DIR/bin/activate"
+    print_error "Virtual environment may be corrupted."
+    exit 1
+  fi
 
   # Upgrade pip first
-  pip install --upgrade pip
+  print_info "Upgrading pip..."
+  if ! pip install --upgrade pip --quiet; then
+    print_warning "Failed to upgrade pip, continuing with existing version..."
+  fi
 
   # Install pieces-cli
-  pip install pieces-cli
-  if [ $? -ne 0 ]; then
+  print_info "Installing pieces-cli package..."
+  if ! pip install pieces-cli --quiet; then
     print_error "Failed to install pieces-cli."
     print_error "Please check your internet connection and try again."
+    print_error "If the problem persists, check if pypi.org is accessible."
+    deactivate 2>/dev/null || true
     exit 1
   fi
 
   print_success "Pieces CLI installed successfully!"
+  
+  # Disable cleanup on exit since installation succeeded
+  CLEANUP_ON_EXIT=""
 
   # Step 5: Create wrapper script
   # Used to run pieces-cli from the command line without activating the virtual environment
@@ -248,25 +288,45 @@ main() {
   cat >"$WRAPPER_SCRIPT" <<'EOF'
 #!/bin/sh
 # Pieces CLI Wrapper Script
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+set -e  # Exit on error
+
+# Get the real path of the script (handle symlinks)
+# Note: readlink -f doesn't work on macOS, so we try multiple methods
+if [ -L "$0" ]; then
+    if command -v realpath >/dev/null 2>&1; then
+        SCRIPT_PATH="$(realpath "$0")"
+    elif command -v readlink >/dev/null 2>&1; then
+        # Try GNU readlink -f first, fall back to basic readlink
+        SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || readlink "$0")"
+    else
+        # Fallback: just use the symlink as-is
+        SCRIPT_PATH="$0"
+    fi
+else
+    SCRIPT_PATH="$0"
+fi
+
+# Get script directory - handle spaces and special characters
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/venv"
 PIECES_EXECUTABLE="$VENV_DIR/bin/pieces"
 
 # Check if virtual environment exists
 if [ ! -d "$VENV_DIR" ]; then
-    echo "Error: Pieces CLI virtual environment not found at $VENV_DIR"
-    echo "Please reinstall Pieces CLI."
+    echo "Error: Pieces CLI virtual environment not found at '$VENV_DIR'" >&2
+    echo "Please reinstall Pieces CLI." >&2
     exit 1
 fi
 
 # Check if pieces executable exists
 if [ ! -f "$PIECES_EXECUTABLE" ]; then
-    echo "Error: Pieces CLI executable not found at $PIECES_EXECUTABLE"
-    echo "Please reinstall Pieces CLI."
+    echo "Error: Pieces CLI executable not found at '$PIECES_EXECUTABLE'" >&2
+    echo "Please reinstall Pieces CLI." >&2
     exit 1
 fi
 
 # Run pieces directly from venv without activation
+# exec replaces the shell process with pieces, preserving signals and exit codes
 exec "$PIECES_EXECUTABLE" "$@"
 EOF
 
@@ -373,8 +433,7 @@ EOF
   echo ""
   print_info "If you encounter any issues, visit:"
   print_info "  https://github.com/pieces-app/cli-agent"
-
-  deactivate 2>/dev/null || true
+  echo ""
 }
 
 # Check if running as root

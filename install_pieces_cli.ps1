@@ -65,15 +65,13 @@ function Test-Command {
 function Test-PythonVersion {
     param($PythonCmd)
     try {
-        $meetsRequirement = & $PythonCmd -c "import sys; print('true' if sys.version_info >= (3, 11) else 'false')" 2>$null
-        if ($meetsRequirement -eq 'true') {
-            return $true
+        # Handle both string and array inputs
+        if ($PythonCmd -is [array]) {
+            $result = & $PythonCmd[0] $PythonCmd[1..($PythonCmd.Length-1)] -c "import sys; print('true' if sys.version_info >= (3, 11) else 'false')" 2>$null
+        } else {
+            $result = & $PythonCmd -c "import sys; print('true' if sys.version_info >= (3, 11) else 'false')" 2>$null
         }
-        if ($version) {
-            $major, $minor = $version.Split('.')
-            return ([int]$major -eq 3) -and ([int]$minor -ge 11)
-        }
-        return $false
+        return $result -eq 'true'
     }
     catch {
         return $false
@@ -163,42 +161,53 @@ function Setup-PowerShellPath {
     }
 
     if (Test-Windows) {
-        # Windows-specific PATH setup
-        $currentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
-        if ($currentPath) {
-            $newPath = "$InstallDir;$currentPath"
-        } else {
-            $newPath = $InstallDir
+        # Validate InstallDir existence
+        if (!(Test-Path $InstallDir)) {
+            Write-Error "Installation directory does not exist: $InstallDir"
+            return $false
         }
 
-        [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
-        Write-Success "Added Pieces CLI to user PATH"
+        # Windows-specific PATH setup
+        $currentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+        
+        # Check PATH length limit
+        $maxPathLength = 2048
+        if ($currentPath -and ($currentPath.Length + $InstallDir.Length + 1) -ge $maxPathLength) {
+            Write-Error "Adding the installation directory would exceed the PATH length limit."
+            return $false
+        }
 
-        # Update current session PATH
-        $env:PATH = "$InstallDir;$env:PATH"
+        try {
+            if ($currentPath) {
+                $newPath = "$InstallDir;$currentPath"
+            } else {
+                $newPath = $InstallDir
+            }
+
+            [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+            Write-Success "Added Pieces CLI to user PATH"
+
+            # Update current session PATH
+            $env:PATH = "$InstallDir;$env:PATH"
+        }
+        catch {
+            Write-Error "Failed to update PATH: $_"
+            return $false
+        }
     } else {
         # Unix-like systems - add to shell profile
         $homeDir = Get-HomeDirectory
         $shellProfile = "$homeDir/.profile"
 
+        # Validate InstallDir existence
+        if (!(Test-Path $InstallDir)) {
+            Write-Error "Installation directory does not exist: $InstallDir"
+            return $false
+        }
+
         # Check if PATH is already in profile
         if (Test-Path $shellProfile) {
             $profileContent = Get-Content $shellProfile -ErrorAction SilentlyContinue
-            # Validate InstallDir existence
-            if (!(Test-Path $InstallDir)) {
-                Write-Error "Installation directory does not exist: $InstallDir"
-                return $false
-            }
-            
-            # Check PATH length limit (Windows-specific)
-            if (Test-Windows) {
-                $maxPathLength = 2048  # Typical safe maximum for PATH
-                if (($env:PATH.Length + $InstallDir.Length + 1) -ge $maxPathLength) {
-                    Write-Error "Adding the installation directory would exceed the PATH length limit."
-                    return $false
-                }
-            }
-            
             if ($profileContent | Select-String $InstallDir) {
                 Write-Info "PATH already configured in $shellProfile"
                 return $true
@@ -284,14 +293,21 @@ function Install-PiecesCLI {
         Remove-Item -Path $venvDir -Recurse -Force
     }
 
-    $createVenvCmd = $pythonCmd.Split(' ') + @("-m", "venv", $venvDir)
+    # Handle python command properly (could be "python" or "py -3.11")
     try {
-        & $createVenvCmd[0] $createVenvCmd[1..($createVenvCmd.Length-1)]
-        if ($LASTEXITCODE -ne 0) { throw "Venv creation failed" }
+        if ($pythonCmd -contains ' ') {
+            $cmdParts = $pythonCmd.Split(' ')
+            & $cmdParts[0] $cmdParts[1..($cmdParts.Length-1)] -m venv $venvDir
+        } else {
+            & $pythonCmd -m venv $venvDir
+        }
+        if ($LASTEXITCODE -ne 0) { throw "Virtual environment creation failed with exit code $LASTEXITCODE" }
     }
     catch {
-        if (Test-Path $venvDir) { Remove-Item -Path $venvDir -Recurse -Force }
-        Write-Error $_
+        if (Test-Path $venvDir) { 
+            try { Remove-Item -Path $venvDir -Recurse -Force -ErrorAction SilentlyContinue } catch { }
+        }
+        Write-Error "Failed to create virtual environment: $_"
         return
     }
 
@@ -307,14 +323,33 @@ function Install-PiecesCLI {
         $venvPip = Join-Path $venvDir "bin/pip"
     }
 
+    # Verify pip exists
+    if (!(Test-Path $venvPip)) {
+        Write-Error "Pip executable not found at: $venvPip"
+        Write-Error "Virtual environment may be corrupted. Please try again."
+        return
+    }
+
     # Upgrade pip first
-    & $venvPip install --upgrade pip
+    Write-Info "Upgrading pip..."
+    try {
+        & $venvPip install --upgrade pip --quiet
+        if ($LASTEXITCODE -ne 0) { throw "Pip upgrade failed" }
+    }
+    catch {
+        Write-Warning "Failed to upgrade pip, continuing with existing version..."
+    }
 
     # Install pieces-cli
-    & $venvPip install pieces-cli
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to install pieces-cli."
+    Write-Info "Installing pieces-cli package..."
+    try {
+        & $venvPip install pieces-cli --quiet
+        if ($LASTEXITCODE -ne 0) { throw "pieces-cli installation failed" }
+    }
+    catch {
+        Write-Error "Failed to install pieces-cli: $_"
         Write-Error "Please check your internet connection and try again."
+        Write-Error "If the problem persists, check if pypi.org is accessible."
         return
     }
 
@@ -327,49 +362,73 @@ function Install-PiecesCLI {
         $wrapperScript = Join-Path $installDir "pieces.cmd"
         $wrapperContent = @"
 @echo off
-setlocal enabledelayedexpansion
+setlocal
 set "SCRIPT_DIR=%~dp0"
 set "VENV_DIR=%SCRIPT_DIR%venv"
 set "PIECES_EXE=%VENV_DIR%\Scripts\pieces.exe"
 
+REM Check if virtual environment exists
 if not exist "%VENV_DIR%" (
-    echo Error: Pieces CLI virtual environment not found at "%VENV_DIR%"
-    echo Please reinstall Pieces CLI.
+    echo Error: Pieces CLI virtual environment not found at "%VENV_DIR%" >&2
+    echo Please reinstall Pieces CLI. >&2
     exit /b 1
 )
 
+REM Check if pieces executable exists
 if not exist "%PIECES_EXE%" (
-    echo Error: Pieces CLI executable not found at "%PIECES_EXE%"
-    echo Please reinstall Pieces CLI.
+    echo Error: Pieces CLI executable not found at "%PIECES_EXE%" >&2
+    echo Please reinstall Pieces CLI. >&2
     exit /b 1
 )
 
+REM Execute pieces.exe and preserve exit code
 "%PIECES_EXE%" %*
+exit /b %ERRORLEVEL%
 "@
     } else {
         $wrapperScript = Join-Path $installDir "pieces"
         $wrapperContent = @"
 #!/bin/sh
 # Pieces CLI Wrapper Script
-SCRIPT_DIR="`$(cd "`$(dirname "`$0")" && pwd)"
+set -e  # Exit on error
+
+# Get the real path of the script (handle symlinks)
+# Note: readlink -f doesn't work on macOS, so we try multiple methods
+if [ -L "`$0" ]; then
+    if command -v realpath >/dev/null 2>&1; then
+        SCRIPT_PATH="`$(realpath "`$0")"
+    elif command -v readlink >/dev/null 2>&1; then
+        # Try GNU readlink -f first, fall back to basic readlink
+        SCRIPT_PATH="`$(readlink -f "`$0" 2>/dev/null || readlink "`$0")"
+    else
+        # Fallback: just use the symlink as-is
+        SCRIPT_PATH="`$0"
+    fi
+else
+    SCRIPT_PATH="`$0"
+fi
+
+# Get script directory - handle spaces and special characters
+SCRIPT_DIR="`$(cd "`$(dirname "`$SCRIPT_PATH")" && pwd)"
 VENV_DIR="`$SCRIPT_DIR/venv"
 PIECES_EXECUTABLE="`$VENV_DIR/bin/pieces"
 
 # Check if virtual environment exists
 if [ ! -d "`$VENV_DIR" ]; then
-    echo "Error: Pieces CLI virtual environment not found at `$VENV_DIR"
-    echo "Please reinstall Pieces CLI."
+    echo "Error: Pieces CLI virtual environment not found at '`$VENV_DIR'" >&2
+    echo "Please reinstall Pieces CLI." >&2
     exit 1
 fi
 
 # Check if pieces executable exists
 if [ ! -f "`$PIECES_EXECUTABLE" ]; then
-    echo "Error: Pieces CLI executable not found at `$PIECES_EXECUTABLE"
-    echo "Please reinstall Pieces CLI."
+    echo "Error: Pieces CLI executable not found at '`$PIECES_EXECUTABLE'" >&2
+    echo "Please reinstall Pieces CLI." >&2
     exit 1
 fi
 
 # Run pieces directly from venv without activation
+# exec replaces the shell process with pieces, preserving signals and exit codes
 exec "`$PIECES_EXECUTABLE" "`$@"
 "@
     }
