@@ -34,11 +34,6 @@ print_error() {
   echo "${RED}[ERROR]${NC} $1"
 }
 
-# Wrapper around 'which' and 'command -v', tries command -v first (POSIX), then falls back to which
-_pieces_which() {
-  command -v "$1" 2>/dev/null || which "$1" 2>/dev/null
-}
-
 # Check if a Python version meets minimum requirements (3.11+)
 check_python_version() {
   python_cmd="$1"
@@ -53,7 +48,7 @@ check_python_version() {
 find_python() {
   # Try to find Python in order of preference
   for python_version in python3.12 python3.11 python3 python; do
-    if _pieces_which "$python_version" >/dev/null; then
+    if command -v "$python_version" >/dev/null; then
       if check_python_version "$python_version"; then
         echo "$python_version"
         return 0
@@ -165,13 +160,13 @@ check_shell_available() {
 
   case "$shell_type" in
   "bash")
-    _pieces_which bash >/dev/null && [ -f "$HOME/.bashrc" -o ! -f "$HOME/.bash_profile" ]
+    command -v bash >/dev/null && [ -f "$HOME/.bashrc" -o ! -f "$HOME/.bash_profile" ]
     ;;
   "zsh")
-    _pieces_which zsh >/dev/null
+    command -v zsh >/dev/null
     ;;
   "fish")
-    _pieces_which fish >/dev/null
+    command -v fish >/dev/null
     ;;
   *)
     return 1
@@ -210,7 +205,7 @@ main() {
   fi
 
   # Get Python version for display
-  PYTHON_VERSION=$("$PYTHON_CMD" --version 2>&1)
+  PYTHON_VERSION=$("$PYTHON_CMD" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')")
   print_success "Found Python: $PYTHON_CMD ($PYTHON_VERSION)"
 
   # Step 2: Set installation directory
@@ -250,14 +245,23 @@ main() {
   # Step 4: Activate virtual environment and install pieces-cli
   print_info "Installing Pieces CLI..."
 
-  # Activate virtual environment
-  if [ -f "$VENV_DIR/bin/activate" ]; then
-    . "$VENV_DIR/bin/activate"
-  else
-    print_error "Failed to find activation script at $VENV_DIR/bin/activate"
+  # Activate virtual environment with security checks
+  ACTIVATE_SCRIPT="$VENV_DIR/bin/activate"
+  if [ ! -f "$ACTIVATE_SCRIPT" ]; then
+    print_error "Failed to find activation script at $ACTIVATE_SCRIPT"
     print_error "Virtual environment may be corrupted."
     exit 1
   fi
+
+  # Verify the activation script contains expected content for safety
+  if ! grep -q "VIRTUAL_ENV" "$ACTIVATE_SCRIPT" || ! grep -q "deactivate" "$ACTIVATE_SCRIPT"; then
+    print_error "Activation script appears to be corrupted or malicious."
+    print_error "Expected virtual environment activation script not found."
+    exit 1
+  fi
+
+  # Source the activation script using absolute path
+  . "$ACTIVATE_SCRIPT"
 
   # Upgrade pip first
   print_info "Upgrading pip..."
