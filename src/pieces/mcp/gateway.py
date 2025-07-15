@@ -1,11 +1,8 @@
 import asyncio
-from typing import Tuple
+import signal
+from typing import Tuple, Callable, Awaitable
 from pieces.mcp.utils import get_mcp_latest_url
-from pieces.mcp.tools_cache import (
-    get_available_tools,
-    MCPToolsCache,
-    PIECES_MCP_TOOLS_CACHE,
-)
+from pieces.mcp.tools_cache import PIECES_MCP_TOOLS_CACHE
 from pieces.settings import Settings
 from .._vendor.pieces_os_client.wrapper.version_compatibility import (
     UpdateEnum,
@@ -25,7 +22,9 @@ from mcp.server.models import InitializationOptions
 class PosMcpConnection:
     """Manages connection to the Pieces MCP server."""
 
-    def __init__(self, upstream_url):
+    def __init__(
+        self, upstream_url: str, tools_changed_callback: Callable[[], Awaitable[None]]
+    ):
         self.upstream_url = (
             upstream_url  # Can be None if PiecesOS wasn't running at startup
         )
@@ -35,8 +34,9 @@ class PosMcpConnection:
         self.connection_lock = asyncio.Lock()
         self._pieces_os_running = None
         self._ltm_enabled = None
-        self.cache_manager = MCPToolsCache()
         self.result = None
+        self._previous_tools_hash = None
+        self._tools_changed_callback = tools_changed_callback
 
     def _try_get_upstream_url(self):
         """Try to get the upstream URL if we don't have it yet."""
@@ -51,17 +51,25 @@ class PosMcpConnection:
         """Clean up a stale session and its resources."""
         try:
             if self.session:
-                await self.session.__aexit__(None, None, None)
+                try:
+                    await self.session.__aexit__(None, None, None)
+                except Exception as e:
+                    Settings.logger.debug(f"Error cleaning up stale session: {e}")
         except Exception as e:
-            Settings.logger.debug(f"Error cleaning up stale session: {e}")
+            Settings.logger.debug(f"Error accessing stale session: {e}")
 
         try:
             if self.sse_client:
-                await self.sse_client.__aexit__(None, None, None)
+                try:
+                    await self.sse_client.__aexit__(None, None, None)
+                except Exception as e:
+                    Settings.logger.debug(f"Error cleaning up stale SSE client: {e}")
         except Exception as e:
-            Settings.logger.debug(f"Error cleaning up stale SSE client: {e}")
+            Settings.logger.debug(f"Error accessing stale SSE client: {e}")
 
         # Reset connection state
+        self.session = None
+        self.sse_client = None
         self.discovered_tools = []
 
     def _check_version_compatibility(self) -> Tuple[bool, str]:
@@ -175,7 +183,61 @@ class PosMcpConnection:
             "`pieces restart`"
         )
 
-    async def connect(self):
+    def _get_tools_hash(self, tools):
+        """Generate a hash of the tools list for change detection."""
+        if not tools:
+            return None
+        # Create a stable hash based on tool names and descriptions
+        tool_strings = []
+        for tool in tools:
+            tool_strings.append(f"{tool.name}:{tool.description}")
+        return hash(tuple(sorted(tool_strings)))
+
+    def _tools_have_changed(self, new_tools):
+        """Check if the tools have changed since last check."""
+        new_hash = self._get_tools_hash(new_tools)
+        if self._previous_tools_hash is None:
+            # First time, consider as changed if we have tools
+            self._previous_tools_hash = new_hash
+            return bool(new_tools)
+
+        if new_hash != self._previous_tools_hash:
+            Settings.logger.debug(
+                f"Tools changed: old hash {self._previous_tools_hash}, new hash {new_hash}"
+            )
+            self._previous_tools_hash = new_hash
+            return True
+        return False
+
+    async def get_tools(self, session, send_notification: bool = True):
+        """Fetch tools from the session and handle change detection."""
+        try:
+            self.tools = await session.list_tools()
+            new_discovered_tools = [
+                tool[1] for tool in self.tools if tool[0] == "tools"
+            ][0]
+
+            # Check if tools have changed and store the result
+            tools_changed = self._tools_have_changed(new_discovered_tools)
+            self.discovered_tools = new_discovered_tools
+
+            Settings.logger.info(
+                f"Discovered {len(self.discovered_tools)} tools from upstream server"
+            )
+
+            # If tools changed, call the callback
+            if send_notification and tools_changed:
+                try:
+                    Settings.logger.info("Tools have changed - sending notification")
+                    await self._tools_changed_callback()
+                except Exception as e:
+                    Settings.logger.error(f"Error in tools changed callback: {e}")
+
+        except Exception as e:
+            Settings.logger.error(f"Error fetching tools: {e}", exc_info=True)
+            raise
+
+    async def connect(self, send_notification: bool = True):
         """Ensures a connection to the POS server exists and returns it."""
         async with self.connection_lock:
             if self.session is not None:
@@ -208,32 +270,9 @@ class PosMcpConnection:
 
                 session = ClientSession(read_stream, write_stream)
                 await session.__aenter__()
-
                 self.session = session
-
-                self.tools = await session.list_tools()
-                self.discovered_tools = [
-                    tool[1] for tool in self.tools if tool[0] == "tools"
-                ][0]
-
-                Settings.logger.info(
-                    f"Discovered {len(self.discovered_tools)} tools from upstream server"
-                )
-
-                # Save the discovered tools to cache for future offline use
-                try:
-                    cache_saved = self.cache_manager.save_tools_cache(
-                        self.discovered_tools
-                    )
-                    if cache_saved:
-                        Settings.logger.debug(
-                            "Successfully updated tools cache with live data"
-                        )
-                    else:
-                        Settings.logger.debug("Failed to save tools cache")
-                except Exception as e:
-                    Settings.logger.error(f"Error saving tools cache: {e}")
-
+                await self.get_tools(session, send_notification)
+                await self.setup_notification_handler(session)
                 return session
 
             except Exception as e:
@@ -242,6 +281,23 @@ class PosMcpConnection:
                     f"Error connecting to upstream server: {e}", exc_info=True
                 )
                 raise
+
+    async def setup_notification_handler(self, session):
+        """Setup the notification handler for the session."""
+        if not hasattr(self, "main_notification_handler"):
+            self.main_notification_handler = session._received_notification
+
+        async def received_notification_handler(
+            notification: types.ServerNotification,
+        ):
+            """Handle received notifications from the SSE client."""
+            Settings.logger.debug(f"Received notification: {notification.root}")
+            if isinstance(notification.root, types.ToolListChangedNotification):
+                self.discovered_tools = await session.list_tools()
+                await self._tools_changed_callback()
+            await self.main_notification_handler(notification)
+
+        session._received_notification = received_notification_handler
 
     async def cleanup(self):
         """Cleans up the upstream connection."""
@@ -253,16 +309,27 @@ class PosMcpConnection:
                     self.session = None
                     self.sse_client = None
 
-                    await session.__aexit__(None, None, None)
+                    # Try to close the session first
+                    if session:
+                        try:
+                            await session.__aexit__(None, None, None)
+                        except Exception as e:
+                            Settings.logger.debug(f"Error closing session: {e}")
+
+                    # Then close the SSE client
                     if sse:
-                        await sse.__aexit__(None, None, None)
+                        try:
+                            await sse.__aexit__(None, None, None)
+                        except Exception as e:
+                            Settings.logger.debug(f"Error closing SSE client: {e}")
+
                     Settings.logger.info("Closed upstream connection")
                 except Exception as e:
-                    Settings.logger.error(
-                        f"Error closing upstream connection: {e}", exc_info=True
-                    )
-                    sse = None
-                    session = None
+                    Settings.logger.debug(f"Error during connection cleanup: {e}")
+                finally:
+                    self.session = None
+                    self.sse_client = None
+                    self.discovered_tools = []
 
     async def call_tool(self, name, arguments):
         """Calls a tool on the POS MCP server."""
@@ -301,8 +368,30 @@ class MCPGateway:
 
     def __init__(self, server_name, upstream_url):
         self.server = Server(server_name)
-        self.upstream = PosMcpConnection(upstream_url)
+        self.upstream = PosMcpConnection(
+            upstream_url, self.send_tools_changed_notification
+        )
         self.setup_handlers()
+
+    async def send_tools_changed_notification(self):
+        """Send a tools/list_changed notification to the client."""
+        try:
+            ctx = self.server.request_context
+            await ctx.session.send_notification(
+                notification=types.ServerNotification(
+                    root=types.ToolListChangedNotification(
+                        method="notifications/tools/list_changed"
+                    )
+                )
+            )
+            Settings.logger.info("Sent tools/list_changed notification to client")
+        except LookupError:
+            Settings.logger.info("No active request context — can't send notification.")
+        except Exception as e:
+            Settings.logger.error(f"Failed to send tools changed notification: {e}")
+            Settings.logger.info(
+                "Tools have changed - clients will receive updated tools on next request"
+            )
 
     def setup_handlers(self):
         """Sets up the request handlers for the gateway server."""
@@ -312,31 +401,28 @@ class MCPGateway:
         async def list_tools() -> list[types.Tool]:
             Settings.logger.debug("Received list_tools request")
 
-            # First, check if we already have discovered tools from a previous connection
-            if self.upstream.discovered_tools:
-                Settings.logger.debug(
-                    f"Returning cached discovered tools: {len(self.upstream.discovered_tools)} tools"
-                )
-                return self.upstream.discovered_tools
-
             if Settings.pieces_client.is_pieces_running():
-                await self.upstream.connect()
+                # Always fetch fresh tools when PiecesOS is running to detect changes
+                await self.upstream.connect(send_notification=False)
+
                 Settings.logger.debug(
                     f"Successfully connected - returning {len(self.upstream.discovered_tools)} live tools"
                 )
                 return self.upstream.discovered_tools
             else:
-                Settings.logger.debug("Returning cached/fallback tools")
-                # Use the smart cache system that tries saved cache first, then hardcoded
-                try:
-                    fallback_tools = get_available_tools()
+                # Only use cached/fallback tools when PiecesOS is not running
+                if self.upstream.discovered_tools:
                     Settings.logger.debug(
-                        f"Returning {len(fallback_tools)} cached/fallback tools"
+                        f"PiecesOS not running - returning cached tools: {len(self.upstream.discovered_tools)} tools"
                     )
-                    return fallback_tools
-                except Exception as cache_error:
-                    Settings.logger.error(f"Couldn't get the cache {cache_error}")
-                    return PIECES_MCP_TOOLS_CACHE
+                    return self.upstream.discovered_tools
+
+                Settings.logger.debug("PiecesOS not running - returning fallback tools")
+                # Use the hardcoded fallback tools
+                Settings.logger.debug(
+                    f"Returning {len(PIECES_MCP_TOOLS_CACHE)} fallback tools"
+                )
+                return PIECES_MCP_TOOLS_CACHE
 
         @self.server.call_tool()
         async def call_tool(
@@ -355,7 +441,7 @@ class MCPGateway:
             Settings.logger.info("Starting MCP Gateway server")
             if self.upstream.upstream_url:
                 try:
-                    await self.upstream.connect()
+                    await self.upstream.connect(send_notification=False)
                 except Exception as e:
                     Settings.logger.error(f"Failed to connect to upstream server {e}")
 
@@ -368,22 +454,52 @@ class MCPGateway:
                         server_name=self.server.name,
                         server_version="0.2.0",
                         capabilities=self.server.get_capabilities(
-                            notification_options=NotificationOptions(),
+                            notification_options=NotificationOptions(
+                                tools_changed=True
+                            ),
                             experimental_capabilities={},
                         ),
                     ),
                 )
+        except KeyboardInterrupt:
+            Settings.logger.info("Gateway interrupted by user")
         except Exception as e:
-            Settings.logger.error(f"Error running gateway server: {e}", exc_info=True)
+            # Handle specific MCP-related errors more gracefully
+            if "BrokenResourceError" in str(
+                e
+            ) or "unhandled errors in a TaskGroup" in str(e):
+                Settings.logger.debug(f"Gateway server shutdown cleanly: {e}")
+            else:
+                Settings.logger.error(
+                    f"Error running gateway server: {e}", exc_info=True
+                )
         finally:
             # Ensure we clean up the connection when the gateway exits
+            # But do it in a way that doesn't interfere with stdio cleanup
             Settings.logger.info("Gateway shutting down, cleaning up connections")
-            await self.upstream.cleanup()
+            try:
+                await self.upstream.cleanup()
+            except Exception as e:
+                Settings.logger.debug(f"Error during cleanup: {e}")
 
 
 async def main():
     # Just initialize settings without starting services
     Settings.logger.info("Starting MCP Gateway")
+
+    # Set up signal handlers for graceful shutdown
+    shutdown_event = asyncio.Event()
+
+    def signal_handler():
+        Settings.logger.info("Received shutdown signal")
+        shutdown_event.set()
+
+    # Register signal handlers
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, lambda s, f: signal_handler())
+    if hasattr(signal, "SIGINT"):
+        signal.signal(signal.SIGINT, lambda s, f: signal_handler())
+
     ltm_vision = LTMVisionWS(Settings.pieces_client, lambda x: None)
     health_ws = HealthWS(
         Settings.pieces_client, lambda x: None, lambda ws: ltm_vision.start()
@@ -400,4 +516,11 @@ async def main():
         upstream_url=upstream_url,
     )
 
-    await gateway.run()
+    try:
+        await gateway.run()
+    except KeyboardInterrupt:
+        Settings.logger.info("Gateway interrupted by user")
+    except Exception as e:
+        Settings.logger.error(f"Unexpected error in main: {e}", exc_info=True)
+    finally:
+        Settings.logger.info("MCP Gateway shutting down")
