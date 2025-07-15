@@ -310,7 +310,7 @@ class MCPCommandGroup(CommandGroup):
     def get_examples(self) -> list[str]:
         return [
             "pieces mcp",
-            "pieces mcp setup --vscode",
+            "pieces mcp setup vscode",
             "pieces mcp list",
             "pieces mcp status",
         ]

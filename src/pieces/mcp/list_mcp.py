@@ -21,7 +21,7 @@ def print_setup_status(integration: Integration, key: str) -> str:
 
     return (
         f"❌ {integration} MCP is not set up. "
-        f"Use `pieces mcp setup --ide {key}` to set it up."
+        f"Use `pieces mcp setup {key}` to set it up."
     )
 
 
@@ -37,9 +37,7 @@ def handle_list(
                 text.append(print_setup_status(integration, key))
         elif available_for_setup:
             if not integration.is_set_up():
-                text.append(
-                    f"{integration}, Use `pieces mcp setup --{key}` to set it up"
-                )
+                text.append(f"{integration}, Use `pieces mcp setup {key}` to set it up")
     for t in text:
         Settings.logger.print(Markdown(t))
 
