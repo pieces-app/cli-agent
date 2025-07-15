@@ -40,6 +40,7 @@ class PiecesCLI:
             not config.get("skip_onboarding", False)
             and not onboarded
             and not ignore_onboarding
+            and not command == "completion"
         ):
             res = Settings.logger.print(
                 (
