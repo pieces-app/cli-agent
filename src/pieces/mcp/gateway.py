@@ -1,7 +1,7 @@
 import asyncio
 from typing import Tuple
 from pieces.mcp.utils import get_mcp_latest_url
-from pieces.mcp.tools_cache import get_available_tools, MCPToolsCache
+from pieces.mcp.tools_cache import get_available_tools, MCPToolsCache, PIECES_MCP_TOOLS_CACHE
 from pieces.settings import Settings
 from .._vendor.pieces_os_client.wrapper.version_compatibility import (
     UpdateEnum,
@@ -42,6 +42,23 @@ class PosMcpConnection:
                 return True
             return False
         return True
+
+    async def _cleanup_stale_session(self):
+        """Clean up a stale session and its resources."""
+        try:
+            if self.session:
+                await self.session.__aexit__(None, None, None)
+        except Exception as e:
+            Settings.logger.debug(f"Error cleaning up stale session: {e}")
+
+        try:
+            if self.sse_client:
+                await self.sse_client.__aexit__(None, None, None)
+        except Exception as e:
+            Settings.logger.debug(f"Error cleaning up stale SSE client: {e}")
+
+        # Reset connection state
+        self.discovered_tools = []
 
     def _check_version_compatibility(self) -> Tuple[bool, str]:
         """
@@ -160,8 +177,19 @@ class PosMcpConnection:
         """Ensures a connection to the POS server exists and returns it."""
         async with self.connection_lock:
             if self.session is not None:
-                Settings.logger.debug("Using existing upstream connection")
-                return self.session
+                # Validate the existing session is still alive
+                try:
+                    await self.session.send_ping()
+                    Settings.logger.debug("Using existing upstream connection")
+                    return self.session
+                except Exception as e:
+                    Settings.logger.debug(
+                        f"Existing connection is stale: {e}, creating new connection"
+                    )
+                    # Clean up the stale connection
+                    await self._cleanup_stale_session()
+                    self.session = None
+                    self.sse_client = None
 
             # Try to get upstream URL if we don't have it
             if not self._try_get_upstream_url():
@@ -282,23 +310,31 @@ class MCPGateway:
         async def list_tools() -> list[types.Tool]:
             Settings.logger.debug("Received list_tools request")
 
-            try:
-                # Try to connect and get real tools
+            # First, check if we already have discovered tools from a previous connection
+            if self.upstream.discovered_tools:
+                Settings.logger.debug(
+                    f"Returning cached discovered tools: {len(self.upstream.discovered_tools)} tools"
+                )
+                return self.upstream.discovered_tools
+
+            if Settings.pieces_client.is_pieces_running():
                 await self.upstream.connect()
                 Settings.logger.debug(
                     f"Successfully connected - returning {len(self.upstream.discovered_tools)} live tools"
                 )
                 return self.upstream.discovered_tools
-            except Exception as e:
-                Settings.logger.debug(f"Could not connect to upstream server: {e}")
+            else:
                 Settings.logger.debug("Returning cached/fallback tools")
-
                 # Use the smart cache system that tries saved cache first, then hardcoded
-                fallback_tools = get_available_tools()
-                Settings.logger.debug(
-                    f"Returning {len(fallback_tools)} cached/fallback tools"
-                )
-                return fallback_tools
+                try:
+                    fallback_tools = get_available_tools()
+                    Settings.logger.debug(
+                        f"Returning {len(fallback_tools)} cached/fallback tools"
+                    )
+                    return fallback_tools
+                except Exception as cache_error:
+                    Settings.logger.error(f"Couldn't get the cache {cache_error}")
+                    return PIECES_MCP_TOOLS_CACHE
 
         @self.server.call_tool()
         async def call_tool(
