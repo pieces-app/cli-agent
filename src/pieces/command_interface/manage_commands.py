@@ -70,7 +70,10 @@ def detect_installation_type():
             text=True,
             check=False,
         )
-        if result.returncode == 0 and "MeshIntelligentTechnologies.PiecesCLI" in result.stdout:
+        if (
+            result.returncode == 0
+            and "MeshIntelligentTechnologies.PiecesCLI" in result.stdout
+        ):
             return "winget"
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
@@ -218,7 +221,9 @@ class ManageUpdateCommand(BaseCommand):
             help="Force update even if already up to date",
         )
 
-    def _check_updates(self, source: Literal["pip", "homebrew", "chocolatey", "winget"]) -> bool:
+    def _check_updates(
+        self, source: Literal["pip", "homebrew", "chocolatey", "winget"]
+    ) -> bool:
         """Check if updates are available."""
         Settings.logger.print("[blue]Checking for updates...")
 
@@ -357,10 +362,28 @@ class ManageUpdateCommand(BaseCommand):
             Settings.logger.print("[blue]Updating Pieces CLI via winget...")
             if force:
                 # For winget, we can uninstall and then install to force update
-                subprocess.run(["winget", "uninstall", "MeshIntelligentTechnologies.PiecesCLI", "--silent"], check=True)
-                cmd = ["winget", "install", "MeshIntelligentTechnologies.PiecesCLI", "--silent"]
+                subprocess.run(
+                    [
+                        "winget",
+                        "uninstall",
+                        "MeshIntelligentTechnologies.PiecesCLI",
+                        "--silent",
+                    ],
+                    check=True,
+                )
+                cmd = [
+                    "winget",
+                    "install",
+                    "MeshIntelligentTechnologies.PiecesCLI",
+                    "--silent",
+                ]
             else:
-                cmd = ["winget", "upgrade", "MeshIntelligentTechnologies.PiecesCLI", "--silent"]
+                cmd = [
+                    "winget",
+                    "upgrade",
+                    "MeshIntelligentTechnologies.PiecesCLI",
+                    "--silent",
+                ]
             subprocess.run(cmd, check=True)
             Settings.logger.print("[green]✓ Pieces CLI updated successfully!")
             return 0
@@ -379,7 +402,9 @@ class ManageUpdateCommand(BaseCommand):
                 kw.get("force", False)
             ),
             "pip": lambda **kw: self._update_pip_version(kw.get("force", False)),
-            "chocolatey": lambda **kw: self._update_chocolatey_version(kw.get("force", False)),
+            "chocolatey": lambda **kw: self._update_chocolatey_version(
+                kw.get("force", False)
+            ),
             "winget": lambda **kw: self._update_winget_version(kw.get("force", False)),
         }
 
@@ -434,12 +459,20 @@ class ManageStatusCommand(BaseCommand):
         """Get the latest version of pieces-cli from WinGet."""
         try:
             result = subprocess.run(
-                ["winget", "search", "MeshIntelligentTechnologies.PiecesCLI", "--exact"],
+                [
+                    "winget",
+                    "search",
+                    "MeshIntelligentTechnologies.PiecesCLI",
+                    "--exact",
+                ],
                 capture_output=True,
                 text=True,
                 check=False,
             )
-            if result.returncode == 0 and "MeshIntelligentTechnologies.PiecesCLI" in result.stdout:
+            if (
+                result.returncode == 0
+                and "MeshIntelligentTechnologies.PiecesCLI" in result.stdout
+            ):
                 # Extract version from the search output
                 # The output format varies, but we need to find the version
                 lines = result.stdout.splitlines()
@@ -527,11 +560,9 @@ class ManageStatusCommand(BaseCommand):
         color = "white"
         if status == UpdatingStatusEnum.UP_TO_DATE:
             color = "green"
-        elif status == [UpdatingStatusEnum.DOWNLOADING, UpdatingStatusEnum.AVAILABLE]:
+        elif status in [UpdatingStatusEnum.DOWNLOADING, UpdatingStatusEnum.AVAILABLE]:
             color = "yellow"
-        elif status in [
-            UpdatingStatusEnum.READY_TO_RESTART,
-        ]:
+        elif status == UpdatingStatusEnum.READY_TO_RESTART:
             color = "blue"
         elif status in [
             UpdatingStatusEnum.CONTACT_SUPPORT,
@@ -680,7 +711,12 @@ class ManageUninstallCommand(BaseCommand):
         try:
             Settings.logger.print("[blue]Uninstalling Pieces CLI via winget...")
             subprocess.run(
-                ["winget", "uninstall", "MeshIntelligentTechnologies.PiecesCLI", "--silent"],
+                [
+                    "winget",
+                    "uninstall",
+                    "MeshIntelligentTechnologies.PiecesCLI",
+                    "--silent",
+                ],
                 check=True,
             )
             self._post_uninstall_cleanup(remove_config)
