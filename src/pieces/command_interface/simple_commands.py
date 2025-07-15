@@ -233,6 +233,6 @@ class RestartPiecesOSCommand(BaseCommand):
             return 0
         else:
             Settings.logger.print(
-                "[red]Failed to restart PiecesOS. Please running `pieces open`."
+                "[red]Failed to restart PiecesOS. Please run `pieces open`."
             )
         return 1
