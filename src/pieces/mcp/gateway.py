@@ -1,7 +1,11 @@
 import asyncio
 from typing import Tuple
 from pieces.mcp.utils import get_mcp_latest_url
-from pieces.mcp.tools_cache import get_available_tools, MCPToolsCache, PIECES_MCP_TOOLS_CACHE
+from pieces.mcp.tools_cache import (
+    get_available_tools,
+    MCPToolsCache,
+    PIECES_MCP_TOOLS_CACHE,
+)
 from pieces.settings import Settings
 from .._vendor.pieces_os_client.wrapper.version_compatibility import (
     UpdateEnum,
@@ -105,9 +109,7 @@ class PosMcpConnection:
                     health_ws.start()
                 else:
                     # This should not happen as we initialized health_ws in main
-                    Settings.show_error(
-                        "Unexpected error healthWS is not inilitialized"
-                    )
+                    Settings.show_error("Unexpected error healthWS is not initialized")
                 ## Update the ltm status cache
                 Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
                 return True
