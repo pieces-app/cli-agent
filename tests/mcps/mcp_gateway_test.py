@@ -276,7 +276,8 @@ class TestMCPGatewayValidation:
 
             # Should have cached the result
             assert mock_connection.result == mock_result
-            assert is_compatible1 == is_compatible2 == True
+            assert is_compatible1 == is_compatible2
+            assert is_compatible1 is True
             assert msg1 == msg2 == ""
             # VersionChecker should only be called once due to caching
             mock_version_checker.assert_called_once()
@@ -347,7 +348,8 @@ class TestMCPGatewayValidation:
             is_valid1, msg1 = mock_connection._validate_system_status("ask_pieces_ltm")
             is_valid2, msg2 = mock_connection._validate_system_status("ask_pieces_ltm")
 
-            assert is_valid1 == is_valid2 == True
+            assert is_valid1 == is_valid2
+            assert is_valid1 is True
             assert msg1 == msg2 == ""
 
     @pytest.mark.asyncio

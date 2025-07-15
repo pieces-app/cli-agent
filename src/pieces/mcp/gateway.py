@@ -118,7 +118,7 @@ class PosMcpConnection:
                 else:
                     # This should not happen as we initialized health_ws in main
                     Settings.show_error("Unexpected error healthWS is not initialized")
-                ## Update the ltm status cache
+                # Update the ltm status cache
                 Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
                 return True
             except Exception as e:
@@ -209,7 +209,7 @@ class PosMcpConnection:
             return True
         return False
 
-    async def get_tools(self, session, send_notification: bool = True):
+    async def update_tools(self, session, send_notification: bool = True):
         """Fetch tools from the session and handle change detection."""
         try:
             self.tools = await session.list_tools()
@@ -243,7 +243,7 @@ class PosMcpConnection:
             if self.session is not None:
                 # Validate the existing session is still alive
                 try:
-                    await self.session.send_ping()
+                    # await self.session.send_ping() # TODO: Uncomment when ping is implemented
                     Settings.logger.debug("Using existing upstream connection")
                     return self.session
                 except Exception as e:
@@ -271,7 +271,7 @@ class PosMcpConnection:
                 session = ClientSession(read_stream, write_stream)
                 await session.__aenter__()
                 self.session = session
-                await self.get_tools(session, send_notification)
+                await self.update_tools(session, send_notification)
                 await self.setup_notification_handler(session)
                 return session
 
@@ -293,7 +293,7 @@ class PosMcpConnection:
             """Handle received notifications from the SSE client."""
             Settings.logger.debug(f"Received notification: {notification.root}")
             if isinstance(notification.root, types.ToolListChangedNotification):
-                self.discovered_tools = await session.list_tools()
+                await self.update_tools(session, send_notification=False)
                 await self._tools_changed_callback()
             await self.main_notification_handler(notification)
 
@@ -401,8 +401,7 @@ class MCPGateway:
         async def list_tools() -> list[types.Tool]:
             Settings.logger.debug("Received list_tools request")
 
-            if Settings.pieces_client.is_pieces_running():
-                # Always fetch fresh tools when PiecesOS is running to detect changes
+            if self.upstream._check_pieces_os_status():
                 await self.upstream.connect(send_notification=False)
 
                 Settings.logger.debug(
