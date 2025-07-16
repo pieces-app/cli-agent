@@ -20,6 +20,7 @@ from .integrations import (
     zed_integration,
     shortwave_integration,
     claude_cli_integration,
+    kiro_integration,
     warp_instructions,
     warp_sse_json,
     warp_stdio_json,
@@ -36,6 +37,7 @@ supported_mcps: Dict[mcp_integration_types, Integration] = {
     "zed": zed_integration,
     "shortwave": shortwave_integration,
     "claude_code": claude_cli_integration,
+    "kiro": kiro_integration,
 }
 
 
@@ -50,6 +52,7 @@ def handle_mcp(
     warp: bool = False,
     shortwave: bool = False,
     claude_code: bool = False,
+    kiro: bool = False,
     stdio: bool = False,
     **kwargs,
 ):
@@ -80,7 +83,8 @@ def handle_mcp(
     if cursor:
         supported_mcps["cursor"].run(stdio, **args)
 
-    if claude or zed or raycast or claude_code or shortwave:
+    # All of that should be refactored in other PR
+    if claude or zed or raycast or claude_code or shortwave or kiro:
         if not stdio:
             Settings.logger.print(
                 "[yellow]Warning: Using stdio instead of sse because sse connection is not supported"
@@ -96,6 +100,8 @@ def handle_mcp(
             mcp = "claude_code"
         elif shortwave:
             mcp = "shortwave"
+        elif kiro:
+            mcp = "kiro"
         else:
             return
         supported_mcps[mcp].run(stdio=True)
@@ -112,7 +118,7 @@ def handle_mcp(
         Settings.logger.print(Markdown(text))
 
     if not any(
-        [claude, cursor, vscode, goose, zed, windsurf, raycast, warp, shortwave]
+        [claude, cursor, vscode, goose, zed, windsurf, raycast, warp, shortwave, kiro]
     ):
         menu = [
             (val.readable, {key: True, "stdio": stdio})
