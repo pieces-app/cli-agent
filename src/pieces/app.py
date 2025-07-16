@@ -25,7 +25,6 @@ class PiecesCLI:
         config = ConfigCommands.load_config()
         Settings.logger = Logger(__version__ == "dev", Settings.pieces_data_dir)
 
-        # Parse arguments early using argparser instead of manual parsing
         try:
             args = self.parser.parse_args()
         except SystemExit:
@@ -57,7 +56,7 @@ class PiecesCLI:
                 markup=False,
             )
 
-            res = Settings.logger.prompt(choices=["y", "n", "skip"], default="n")
+            res = Settings.logger.prompt(choices=["y", "n", "skip"], _default="n")
             if res.lower() == "y":
                 return OnboardingCommand.instance.execute()  # noqa: F405
             elif res.lower() == "skip":

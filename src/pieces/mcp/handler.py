@@ -295,6 +295,7 @@ def handle_status(**kwargs):
         if integration.need_repair():
             response = Settings.logger.confirm(
                 f"[yellow]{integration.readable} needs to be repaired. Do you want to repair it?[/yellow]",
+                _default=True,
             )
             if response:
                 handle_repair(key)

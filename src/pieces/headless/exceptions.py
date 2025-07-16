@@ -40,9 +40,9 @@ class HeadlessMissingInputError(HeadlessError):
 class HeadlessPromptError(HeadlessError):
     """Raised when a prompt is required in headless mode without a default."""
 
-    def __init__(self):
+    def __init__(self, details: Optional[str] = None):
         super().__init__(
-            "Prompt required in headless mode",
+            f"Prompt required in headless mode\n details: {details}",
             ErrorCode.PROMPT_REQUIRED,
         )
 
@@ -95,4 +95,3 @@ class HeadlessLTMNotEnabledError(HeadlessError):
             "LTM is not enabled",
             ErrorCode.LTM_NOT_ENABLED,
         )
-

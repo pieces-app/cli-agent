@@ -2,7 +2,8 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Self, Any
+from typing import Optional, Self, Any, Callable
+from functools import wraps
 
 from rich import prompt
 from rich.console import Console
@@ -27,6 +28,11 @@ class Logger:
         self.console_error = Console(stderr=True)
         self._confirm = prompt.Confirm(console=self.console)
         self._prompt = Prompt(console=self.console)
+
+        # Wrap the ask methods with proper typing
+        self.confirm: Callable[..., bool] = self.headless_wrapper(self._confirm.ask)
+        self.prompt: Callable[..., str] = self.headless_wrapper(self._prompt.ask)
+        self.input: Callable[..., str] = self.headless_wrapper(self.console.input)
 
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.DEBUG if debug_mode else logging.ERROR)
@@ -72,42 +78,32 @@ class Logger:
         exc_info = kwargs.pop("exc_info", True)
         self.logger.error(message, exc_info=exc_info, *args, **kwargs)
 
-    @property
-    def input(self):
-        """Get user input with a prompt."""
-        if not self._is_headless_mode():
-            return self.console.input
-        raise HeadlessPromptError()
+    @staticmethod
+    def headless_wrapper(ask_fn: Callable) -> Callable[..., Any]:
+        """Wrap a Rich ask function to support headless mode with optional default fallback."""
+
+        @wraps(ask_fn)
+        def wrapper(*args, _default: Optional[Any] = None, **kwargs) -> Any:
+            from pieces.settings import Settings
+
+            if Settings.headless_mode:
+                if _default is not None:
+                    return _default
+                raise HeadlessPromptError(
+                    f"{getattr(ask_fn, __name__, ask_fn)}({kwargs=}, {args=})"
+                )
+
+            return ask_fn(*args, **kwargs)
+
+        return wrapper
 
     @property
     def print(self):
-        if not self._is_headless_mode():
-            return self.console.print
-        return lambda *args, **kwargs: None
-
-    def handle_input(self, default: Optional[str] = None, *args, **kwargs) -> str:
-        """Handle user input with an optional default value."""
-        if default:
-            return default
-        raise HeadlessPromptError()
-
-    @property
-    def prompt(self):
-        if not self._is_headless_mode():
-            return self._prompt.ask
-        return self.handle_input
-
-    @property
-    def confirm(self):
-        if not self._is_headless_mode():
-            return self._confirm.ask
-        return self.handle_input
-
-    def _is_headless_mode(self) -> bool:
-        """Check if currently in headless mode."""
         from pieces.settings import Settings
 
-        return Settings.headless_mode
+        if not Settings.headless_mode:
+            return self.console.print
+        return lambda *args, **kwargs: None
 
     @classmethod
     def get_instance(cls):

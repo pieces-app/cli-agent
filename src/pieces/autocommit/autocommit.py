@@ -184,7 +184,7 @@ def prompt_commit_message(
     )
 
     if r_message == "c":
-        edit = Settings.logger.prompt(
+        edit = Settings.logger.input(
             f"Enter the new commit message [generated message is: '{commit_message}']"
         )
         if edit:

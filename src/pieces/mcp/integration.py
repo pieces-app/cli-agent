@@ -205,7 +205,8 @@ class Integration:
             stdio = True
 
         if not self.exists() and not Settings.logger.confirm(
-            "This integration is not installed are you sure you want to proceed?"
+            "This integration is not installed are you sure you want to proceed?",
+            _default=True,
         ):
             return False
 
@@ -265,6 +266,7 @@ class Integration:
             and not Settings.logger.confirm(
                 f"{mcp_type} is already used as your {self.readable} MCP\n"
                 f"Do you want to replace the {old_mcp_type} mcp with the {mcp_type} mcp?",
+                _default=True,
             )
         ):
             return False
