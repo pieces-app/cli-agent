@@ -1,24 +1,28 @@
 import argparse
 import asyncio
+from typing import Union
 from pieces.base_command import BaseCommand, CommandGroup
-from pieces.urls import URLs
+from pieces.headless.models.base import BaseResponse, CommandResult
 from pieces.mcp import (
-    handle_mcp,
+    handle_gateway,
     handle_list,
+    handle_mcp,
     handle_mcp_docs,
     handle_repair,
     handle_status,
-    handle_gateway,
+    handle_list_headless,
 )
-from pieces.mcp.integration import mcp_integrations
 from pieces.mcp.handler import supported_mcps
+from pieces.mcp.integration import mcp_integrations
 from pieces.settings import Settings
+from pieces.urls import URLs
 
 
 class MCPSetupCommand(BaseCommand):
     """Subcommand to set up MCP integrations."""
 
     _is_command_group = True
+    support_headless = True
 
     def get_name(self) -> str:
         return "setup"
@@ -31,39 +35,23 @@ class MCPSetupCommand(BaseCommand):
 
     def get_examples(self) -> list[str]:
         return [
-            "pieces mcp setup --vscode",
-            "pieces mcp setup --cursor --globally",
-            "pieces mcp setup --claude --stdio",
+            "pieces mcp setup vscode",
+            "pieces mcp setup cursor --globally",
+            "pieces mcp setup claude --stdio",
         ]
 
     def get_docs(self) -> str:
         return URLs.CLI_MCP_SETUP_DOCS.value
 
     def add_arguments(self, parser: argparse.ArgumentParser):
-        for mcp_integration in mcp_integrations:
-            parser.add_argument(
-                f"--{mcp_integration}",
-                dest=mcp_integration,
-                action="store_true",
-                help=f"Set up the MCP for {supported_mcps[mcp_integration].readable}",
-            )
-
-        # Raycast does not allow checking for the mcp stuff only adding mcp and only via deeplinks
-        # So we won't include it in the rest commands as a normal mcp because we can't access the json config
         parser.add_argument(
-            "--raycast",
-            dest="raycast",
-            action="store_true",
-            help="Set up the MCP for Raycast",
+            "integration",
+            type=str,
+            choices=mcp_integrations + ["raycast", "wrap"],
+            help="The integration to set up",
+            default=None,
+            nargs="?",
         )
-
-        parser.add_argument(
-            "--wrap",
-            dest="wrap",
-            action="store_true",
-            help="Set up the MCP for Wrap",
-        )
-
         parser.add_argument(
             "--globally",
             dest="global",
@@ -73,7 +61,8 @@ class MCPSetupCommand(BaseCommand):
         parser.add_argument(
             "--specific-workspace",
             dest="local",
-            action="store_true",
+            nargs="?",
+            const=True,
             help="For VS Code or Cursor to set the Local MCP",
         )
         parser.add_argument(
@@ -83,15 +72,20 @@ class MCPSetupCommand(BaseCommand):
             help="Use the stdio MCP instead of sse",
         )
 
-    def execute(self, **kwargs) -> int:
-        handle_mcp(**kwargs)
-        return 0
+    def execute(self, **kwargs) -> CommandResult:
+        """Execute the MCP setup command."""
+        result = handle_mcp(**kwargs)
+        return CommandResult(
+            0,
+            result,
+        )
 
 
 class MCPListCommand(BaseCommand):
     """Subcommand to list MCP integrations."""
 
     _is_command_group = True
+    support_headless = True
 
     def get_name(self) -> str:
         return "list"
@@ -126,9 +120,12 @@ class MCPListCommand(BaseCommand):
             help="Display the list of the ready to be registered MCPs",
         )
 
-    def execute(self, **kwargs) -> int:
-        handle_list(**kwargs)
-        return 0
+    def execute(self, **kwargs) -> Union[int, CommandResult]:
+        if not Settings.headless_mode:
+            handle_list(**kwargs)
+            return 0
+        else:
+            return CommandResult(0, handle_list_headless(**kwargs))
 
 
 class MCPDocsCommand(BaseCommand):
@@ -229,6 +226,7 @@ class MCPRepairCommand(BaseCommand):
     """Subcommand to repair MCP configurations."""
 
     _is_command_group = True
+    support_headless = True
 
     def get_name(self) -> str:
         return "repair"
@@ -260,9 +258,13 @@ class MCPRepairCommand(BaseCommand):
             help="The integration to repair",
         )
 
-    def execute(self, **kwargs) -> int:
-        handle_repair(**kwargs)
-        return 0
+    def execute(self, **kwargs) -> Union[int, CommandResult]:
+        if not Settings.headless_mode:
+            handle_repair(**kwargs)
+            return 0
+        else:
+            result = handle_repair(**kwargs)
+            return CommandResult(0, result)
 
 
 class MCPStatusCommand(BaseCommand):
@@ -308,7 +310,7 @@ class MCPCommandGroup(CommandGroup):
     def get_examples(self) -> list[str]:
         return [
             "pieces mcp",
-            "pieces mcp setup --vscode",
+            "pieces mcp setup vscode",
             "pieces mcp list",
             "pieces mcp status",
         ]
