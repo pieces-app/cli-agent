@@ -802,9 +802,6 @@ jobs:
           VERSION=${VERSION#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Install winget
-        uses: Cyberboss/install-winget@v1
-
       - name: Install WinGet Create
         # https://learn.microsoft.com/en-us/windows/package-manager/winget/install
         # --accept-package-agreements: Used to accept the license agreement, and avoid the prompt.
@@ -812,6 +809,120 @@ jobs:
         run: winget install Microsoft.WingetCreate `
           --accept-source-agreements `
           --accept-package-agreements
+
+      - name: Test PAT permissions
+        env:
+          WINGET_TOKEN: ${{ secrets.personal_access_token }}
+        run: |
+          $headers = @{
+            'Authorization' = "token $env:WINGET_TOKEN"
+            'Accept' = 'application/vnd.github.v3+json'
+          }
+
+          # Test basic API access
+          Write-Output "Testing PAT permissions..."
+          $userInfo = Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers
+          Write-Output "Authenticated as: $($userInfo.login)"
+
+          # Test ability to list user repos
+          $repos = Invoke-RestMethod -Uri "https://api.github.com/user/repos?per_page=1" -Headers $headers
+          Write-Output "Can access user repos: True"
+
+          # Test ability to fork (this will actually create a fork for testing)
+          Write-Output "Testing fork creation..."
+          try {
+            $forkResult = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/winget-pkgs/forks" -Method POST -Headers $headers
+            Write-Output "Fork test successful: $($forkResult.html_url)"
+
+            # Clean up test fork immediately
+            Start-Sleep -Seconds 2
+            Invoke-RestMethod -Uri "https://api.github.com/repos/$($userInfo.login)/winget-pkgs" -Method DELETE -Headers $headers
+            Write-Output "Test fork cleaned up"
+          } catch {
+            Write-Output "Fork test failed: $($_.Exception.Message)"
+          }
+
+      - name: Sync fork with upstream
+        env:
+          WINGET_TOKEN: ${{ secrets.personal_access_token }}
+        run: |
+          # Ensure fork exists and is synced with upstream
+          Write-Output "Ensuring fork is created and synced..."
+
+          $headers = @{
+            'Authorization' = "token $env:WINGET_TOKEN"
+            'Accept' = 'application/vnd.github.v3+json'
+          }
+
+          $userInfo = Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers
+          $username = $userInfo.login
+
+          # Create the fork (if it doesn't already exist)
+          try {
+            Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/winget-pkgs/forks" -Method POST -Headers $headers
+            Write-Output "Fork requested successfully"
+          } catch {
+            Write-Output "Fork may already exist or request failed: $($_.Exception.Message)"
+          }
+
+          # Wait for fork to be available via API
+          $maxAttempts = 10
+          $attempt = 1
+          $repoUrl = "https://github.com/$username/winget-pkgs"
+
+          do {
+            Write-Output "Checking for fork existence (Attempt $attempt of $maxAttempts)..."
+            try {
+              Invoke-RestMethod -Uri "https://api.github.com/repos/$username/winget-pkgs" -Headers $headers
+              Write-Output "Fork is now available via API."
+              break
+            } catch {
+              Start-Sleep -Seconds 5
+              $attempt++
+            }
+          } while ($attempt -le $maxAttempts)
+
+          if ($attempt -gt $maxAttempts) {
+            Write-Error "Timed out waiting for fork to become available via API."
+            exit 1
+          }
+
+          # Extra wait to allow Git backend to catch up
+          Write-Output "Waiting extra time to ensure fork is Git-cloneable..."
+          Start-Sleep -Seconds 15
+
+          # Clone and sync fork
+          $tempRepoPath = Join-Path $env:TEMP "winget-pkgs-sync"
+          Remove-Item $tempRepoPath -Recurse -Force -ErrorAction SilentlyContinue
+
+          $cloneSuccess = $false
+          $cloneAttempts = 5
+          $cloneDelay = 10
+
+          for ($i = 1; $i -le $cloneAttempts; $i++) {
+            Write-Output "Attempt $i Cloning forked repo..."
+            try {
+              git clone https://$env:WINGET_TOKEN@github.com/$username/winget-pkgs.git $tempRepoPath
+              $cloneSuccess = $true
+              break
+            } catch {
+              Write-Output "Clone attempt $i failed: $($_.Exception.Message)"
+              Start-Sleep -Seconds $cloneDelay
+            }
+          }
+
+          if (-not $cloneSuccess) {
+            Write-Error "Failed to clone the forked repository after $cloneAttempts attempts."
+            exit 1
+          }
+
+          cd $tempRepoPath
+          git remote add upstream https://github.com/microsoft/winget-pkgs.git
+          git fetch upstream
+          git checkout master
+          git merge upstream/master
+          git push origin master
+          cd $env:GITHUB_WORKSPACE
 
       - name: Create/Update WinGet Manifest
         env:
@@ -822,12 +933,30 @@ jobs:
           
           Write-Output "Creating/updating manifest for version $version"
           Write-Output "Using zip URL: $zipUrl"
+
+          # No longer deleting the fork — it should have been synced already
+          Write-Output "Skipping fork deletion; relying on pre-synced fork from earlier step."
+
+          # Create a temporary directory to run wingetcreate from
+          $tempDir = New-TemporaryFile | ForEach-Object { Remove-Item $_; New-Item -ItemType Directory -Path $_ }
+          Write-Output "Working from temporary directory: $tempDir"
           
-          # Check if this is a new package or update
           try {
-            $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI"
-            Write-Output "Package exists, updating..."
-            wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
-          } catch {
-            Write-Output "Error checking existing package or package doesn't exist"
+            Set-Location $tempDir
+
+            # Check if this is a new package or update
+            try {
+              $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI"
+              Write-Output "Package exists, updating..."
+              wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
+            } catch {
+              Write-Output "Package doesn't exist, creating new manifest..."
+              wingetcreate new --id "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
+            }
+
+          } finally {
+            # Clean up temp directory
+            Set-Location $env:GITHUB_WORKSPACE
+            Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
           }
+
