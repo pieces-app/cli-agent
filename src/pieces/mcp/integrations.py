@@ -293,6 +293,19 @@ warp_sse_json = """
 }}
 """
 
+
+text_success_kiro = """
+### Use Pieces LTM in Kiro
+
+1. Restart Kiro
+2. **Ask a prompt:**
+
+        What I was working on yesterday?
+        Summarize it with 5 bullet points and timestamps.
+
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
 text_success_short_wave = """
 ### Use Pieces LTM in Shortwave
 
@@ -449,6 +462,20 @@ claude_cli_integration = Integration(
     readable="Claude Code",
     docs=URLs.CLAUDE_CLI_MCP_DOCS.value,
     get_settings_path=lambda: claude_cli_path,
+    mcp_properties=MCPProperties(
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=["mcpServers", "Pieces"],
+        sse_property={},
+        stdio_property={},
+    ),
+)
+
+kiro_integration = Integration(
+    options=[],
+    text_success=text_success_kiro,
+    readable="Kiro",
+    docs=URLs.KIRO_MCP_DOCS.value,
+    get_settings_path=lambda: os.path.expanduser("~/.kiro/settings/mcp.json"),
     mcp_properties=MCPProperties(
         stdio_path=["mcpServers", "Pieces"],
         sse_path=["mcpServers", "Pieces"],
