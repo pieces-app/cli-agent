@@ -1,5 +1,6 @@
 import argparse
 from pieces.base_command import BaseCommand
+from pieces.core.update_pieces_os import update_pieces_os
 from pieces.urls import URLs
 from pieces.core import (
     loop,
@@ -199,3 +200,29 @@ class VersionCommand(BaseCommand):
         else:
             pass
         return 0
+
+
+class UpdatePiecesCommand(BaseCommand):
+    """Command to update Pieces CLI."""
+
+    def get_name(self) -> str:
+        return "update"
+
+    def get_help(self) -> str:
+        return "Update PiecesOS"
+
+    def get_description(self) -> str:
+        return "Update PiecesOS"
+
+    def get_examples(self) -> list[str]:
+        return ["pieces update"]
+
+    def get_docs(self) -> str:
+        return URLs.CLI_UPDATE_DOCS.value
+
+    def add_arguments(self, parser: argparse.ArgumentParser):
+        pass
+
+    def execute(self, **kwargs) -> int:
+        """Execute the update command."""
+        return 0 if update_pieces_os() else 1
