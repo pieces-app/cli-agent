@@ -18,7 +18,15 @@ MCP_types = Literal["sse", "stdio"]
 IntegrationDict = Dict[str, MCP_types]
 
 mcp_integration_types = Literal[
-    "vscode", "goose", "cursor", "claude", "windsurf", "zed", "shortwave", "claude_code"
+    "vscode",
+    "goose",
+    "cursor",
+    "claude",
+    "windsurf",
+    "zed",
+    "shortwave",
+    "claude_code",
+    "kiro",
 ]
 mcp_integrations: List[mcp_integration_types] = list(get_args(mcp_integration_types))
 
@@ -33,6 +41,7 @@ class ConfigDict(TypedDict, total=False):
     zed: IntegrationDict
     shortwave: IntegrationDict
     claude_code: IntegrationDict
+    kiro: IntegrationDict
 
 
 class MCPLocalConfig:
@@ -294,7 +303,7 @@ class Integration:
             with open(path, "w") as f:
                 self.saver(settings, f)
             Settings.logger.print(
-                f"Successfully updated {path} with Pieces configuration"
+                Markdown(f"Successfully updated `{path}` with Pieces configuration")
             )
         except Exception as e:
             Settings.logger.print(f"Error writing {self.readable} {dirname}")

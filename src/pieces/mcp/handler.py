@@ -31,6 +31,7 @@ from .integrations import (
     shortwave_integration,
     validate_project_path,
     vscode_integration,
+    kiro_integration,
     warp_instructions,
     warp_sse_json,
     warp_stdio_json,
@@ -48,6 +49,7 @@ supported_mcps: Dict[mcp_integration_types, Integration] = {
     "zed": zed_integration,
     "shortwave": shortwave_integration,
     "claude_code": claude_cli_integration,
+    "kiro": kiro_integration,
 }
 
 

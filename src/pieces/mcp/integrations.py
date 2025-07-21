@@ -25,15 +25,13 @@ def get_global_vs_settings():
     system = platform.system()
 
     if system == "Windows":
-        settings_path = os.path.join(
-            os.environ["APPDATA"], "Code", "User", "settings.json"
-        )
+        settings_path = os.path.join(os.environ["APPDATA"], "Code", "User", "mcp.json")
     elif system == "Darwin":  # macOS
         settings_path = os.path.expanduser(
-            "~/Library/Application Support/Code/User/settings.json"
+            "~/Library/Application Support/Code/User/mcp.json"
         )
     elif system == "Linux":
-        settings_path = os.path.expanduser("~/.config/Code/User/settings.json")
+        settings_path = os.path.expanduser("~/.config/Code/User/mcp.json")
     else:
         Settings.show_error(f"Unsupported platform {system}")
         raise ValueError
@@ -312,6 +310,19 @@ warp_sse_json = """
 }}
 """
 
+
+text_success_kiro = """
+### Use Pieces LTM in Kiro
+
+1. Restart Kiro
+2. **Ask a prompt:**
+
+        What I was working on yesterday?
+        Summarize it with 5 bullet points and timestamps.
+
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
 text_success_short_wave = """
 ### Use Pieces LTM in Shortwave
 
@@ -355,9 +366,9 @@ vscode_integration = Integration(
     get_settings_path=get_vscode_path,
     mcp_properties=MCPProperties(
         stdio_property={"type": "stdio"},
-        stdio_path=["mcp", "servers", "Pieces"],
+        stdio_path=["servers", "Pieces"],
         sse_property={"type": "sse"},
-        sse_path=["mcp", "servers", "Pieces"],
+        sse_path=["servers", "Pieces"],
     ),
     check_existence_command="code",
 )
@@ -484,4 +495,18 @@ claude_cli_integration = Integration(
         stdio_property={},
     ),
     check_existence_command="claude",
+)
+
+kiro_integration = Integration(
+    options=[],
+    text_success=text_success_kiro,
+    readable="Kiro",
+    docs=URLs.KIRO_MCP_DOCS.value,
+    get_settings_path=lambda: os.path.expanduser("~/.kiro/settings/mcp.json"),
+    mcp_properties=MCPProperties(
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=["mcpServers", "Pieces"],
+        sse_property={},
+        stdio_property={},
+    ),
 )
