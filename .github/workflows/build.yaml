@@ -293,38 +293,39 @@ jobs:
           poetry run pyinstaller pieces.spec --clean --log-level=WARN
           
           # Check if pieces.exe was created successfully (in directory mode)
-          if (Test-Path ".\dist\pieces\pieces.exe") {
-              Write-Output "✅ pieces.exe created successfully in directory mode"
-              $exeInfo = Get-Item ".\dist\pieces\pieces.exe"
-              Write-Output "File size: $($exeInfo.Length) bytes"
+                     if (Test-Path ".\dist\pieces\pieces.exe") {
+               Write-Output "[SUCCESS] pieces.exe created successfully in directory mode"
+               $exeInfo = Get-Item ".\dist\pieces\pieces.exe"
+               Write-Output "File size: $($exeInfo.Length) bytes"
               
-              # List all files in the distribution directory
-              Write-Output "`nDistribution directory contents:"
-              Get-ChildItem ".\dist\pieces" -Recurse | ForEach-Object {
-                  $relativePath = $_.FullName.Replace("$PWD\dist\pieces\", "")
-                  if ($_.PSIsContainer) {
-                      Write-Output "  📁 $relativePath/"
-                  } else {
-                      $sizeKB = [math]::Round($_.Length / 1KB, 2)
-                      Write-Output "  📄 $relativePath ($sizeKB KB)"
-                  }
-              }
+                             # List all files in the distribution directory
+               Write-Output "`nDistribution directory contents:"
+               $basePath = (Get-Item ".\dist\pieces").FullName
+               Get-ChildItem ".\dist\pieces" -Recurse | ForEach-Object {
+                   $relativePath = $_.FullName.Replace($basePath + "\", "")
+                   if ($_.PSIsContainer) {
+                       Write-Output "  [DIR] $relativePath/"
+                   } else {
+                       $sizeKB = [math]::Round($_.Length / 1KB, 2)
+                       Write-Output "  [FILE] $relativePath ($($sizeKB) KB)"
+                   }
+               }
               
-              # Check for critical files
-              $criticalFiles = @("pieces.exe", "_internal\python311.dll", "_internal\base_library.zip")
-              foreach ($file in $criticalFiles) {
-                  if (Test-Path ".\dist\pieces\$file") {
-                      Write-Output "✅ Critical file exists: $file"
-                  } else {
-                      Write-Warning "⚠️ Critical file missing: $file"
-                  }
-              }
-          } else {
-              Write-Error "❌ pieces.exe was not created in expected location"
-              Write-Output "Current directory structure:"
-              Get-ChildItem ".\dist" -Recurse
-              exit 1
-          }
+                             # Check for critical files
+               $criticalFiles = @("pieces.exe", "_internal\python311.dll", "_internal\base_library.zip")
+               foreach ($file in $criticalFiles) {
+                   if (Test-Path ".\dist\pieces\$file") {
+                       Write-Output "[OK] Critical file exists: $file"
+                   } else {
+                       Write-Warning "[WARNING] Critical file missing: $file"
+                   }
+               }
+                     } else {
+               Write-Error "[ERROR] pieces.exe was not created in expected location"
+               Write-Output "Current directory structure:"
+               Get-ChildItem ".\dist" -Recurse
+               exit 1
+           }
         shell: powershell
 
       ### Package binary to zip file for macOS
@@ -405,10 +406,10 @@ jobs:
               exit 1
           }
           
-          Write-Output "✅ Pieces EXE signed successfully with timestamp"
-          Write-Output "Signature Status: $($signResult.Status)"
-          Write-Output "Certificate Subject: $($signResult.SignerCertificate.Subject)"
-          Write-Output "Timestamp: $($signResult.TimeStamperCertificate.NotAfter)"
+                     Write-Output "[SUCCESS] Pieces EXE signed successfully with timestamp"
+           Write-Output "Signature Status: $($signResult.Status)"
+           Write-Output "Certificate Subject: $($signResult.SignerCertificate.Subject)"
+           Write-Output "Timestamp: $($signResult.TimeStamperCertificate.NotAfter)"
         shell: pwsh
 
       ### Scan executable for false positives before packaging
@@ -420,17 +421,17 @@ jobs:
           # Update Windows Defender signatures
           try {
             Update-MpSignature -ErrorAction SilentlyContinue
-            Write-Output "✅ Defender signatures updated"
-          } catch {
-            Write-Output "⚠️ Could not update Defender signatures (may not be available in CI)"
+                         Write-Output "[OK] Defender signatures updated"
+           } catch {
+             Write-Output "[WARNING] Could not update Defender signatures (may not be available in CI)"
           }
           
           # Quick scan of the executable directory
           try {
-            $scanResult = Start-MpScan -ScanType CustomScan -ScanPath ".\dist\pieces" -ErrorAction SilentlyContinue
-            Write-Output "✅ Windows Defender scan completed - no threats detected"
-          } catch {
-            Write-Output "⚠️ Windows Defender scan not available in CI environment"
+                         $scanResult = Start-MpScan -ScanType CustomScan -ScanPath ".\dist\pieces" -ErrorAction SilentlyContinue
+             Write-Output "[OK] Windows Defender scan completed - no threats detected"
+           } catch {
+             Write-Output "[WARNING] Windows Defender scan not available in CI environment"
           }
           
           # Display file information for verification
@@ -439,10 +440,10 @@ jobs:
           Write-Output "📄 Created: $($fileInfo.CreationTime)"
           
           # Check if file has proper signature (for production builds)
-          if ("${{ inputs.deploy }}" -eq "true") {
-            $signature = Get-AuthenticodeSignature ".\dist\pieces.exe"
-            Write-Output "🔐 Signature Status: $($signature.Status)"
-          }
+                     if ("${{ inputs.deploy }}" -eq "true") {
+             $signature = Get-AuthenticodeSignature ".\dist\pieces.exe"
+             Write-Output "[SIGNATURE] Status: $($signature.Status)"
+           }
         shell: pwsh
 
       ### Package binary to zip file for Windows using PowerShell
@@ -482,24 +483,24 @@ jobs:
               Write-Host "--- Checking code signature ---"
               $signature = Get-AuthenticodeSignature ".\pieces.exe"
               Write-Host "Signature Status: $($signature.Status)"
-              if ($signature.Status -eq "Valid") {
-                  Write-Host "✅ Executable is properly signed"
-              } else {
-                  Write-Host "⚠️ Executable signature status: $($signature.Status)"
-              }
+                             if ($signature.Status -eq "Valid") {
+                   Write-Host "[OK] Executable is properly signed"
+               } else {
+                   Write-Host "[WARNING] Executable signature status: $($signature.Status)"
+               }
           }
 
           Write-Host "`n--- Testing 'pieces.exe --version' command ---"
           try {
               $output = .\pieces.exe --ignore-onboarding --version 2>&1
               Write-Host "Version output: $output"
-              if ($LASTEXITCODE -eq 0) {
-                  Write-Host "✅ Version command succeeded"
-              } else {
-                  Write-Host "❌ Version command failed with exit code: $LASTEXITCODE"
-              }
-          } catch {
-              Write-Host "❌ Exception running version command: $_"
+                             if ($LASTEXITCODE -eq 0) {
+                   Write-Host "[OK] Version command succeeded"
+               } else {
+                   Write-Host "[ERROR] Version command failed with exit code: $LASTEXITCODE"
+               }
+           } catch {
+               Write-Host "[ERROR] Exception running version command: $_"
           }
 
           Write-Host "`n--- Testing 'pieces.exe help' command ---"
@@ -507,13 +508,13 @@ jobs:
               $output = .\pieces.exe --ignore-onboarding help 2>&1 | Select-Object -First 10
               Write-Host "Help output (first 10 lines): $output"
               # Help commands often exit with non-zero codes, check if we got output instead
-              if ($output -and $output.Count -gt 0) {
-                  Write-Host "✅ Help command returned expected output"
-              } else {
-                  Write-Host "❌ Help command returned no output"
-              }
-          } catch {
-              Write-Host "❌ Exception running help command: $_"
+                             if ($output -and $output.Count -gt 0) {
+                   Write-Host "[OK] Help command returned expected output"
+               } else {
+                   Write-Host "[ERROR] Help command returned no output"
+               }
+           } catch {
+               Write-Host "[ERROR] Exception running help command: $_"
           }
 
           Write-Host "`n--- Executable test summary ---"
@@ -526,12 +527,12 @@ jobs:
               }
           } catch { }
           
-          if ($versionWorked) {
-              Write-Host "✅ Executable is functional - version command works properly"
-          } else {
-              Write-Host "❌ Executable appears to be non-functional"
-              exit 1
-          }
+                     if ($versionWorked) {
+               Write-Host "[OK] Executable is functional - version command works properly"
+           } else {
+               Write-Host "[ERROR] Executable appears to be non-functional"
+               exit 1
+           }
         shell: powershell
 
   ### Pushing the built packages to GCP and GitHub
