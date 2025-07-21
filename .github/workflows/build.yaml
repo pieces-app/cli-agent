@@ -333,10 +333,10 @@ jobs:
         if: runner.os == 'Windows' && inputs.deploy == true
         run: |
           # Sign using keypair alias with RFC 3161 timestamp for better AV validation
-          smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" \
-            --input ".\dist\pieces.exe" \
-            --timestamp-url "http://timestamp.digicert.com" \
-            --hash-algorithm SHA256 \
+          smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" `
+            --input ".\dist\pieces.exe" `
+            --timestamp-url "http://timestamp.digicert.com" `
+            --hash-algorithm SHA256 `
             -v
           
           # Check if signing was successful
