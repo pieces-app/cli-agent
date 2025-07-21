@@ -332,12 +332,8 @@ jobs:
       - name: Sign EXE
         if: runner.os == 'Windows' && inputs.deploy == true
         run: |
-          # Sign using keypair alias with RFC 3161 timestamp for better AV validation
-          smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" `
-            --input ".\dist\pieces.exe" `
-            --timestamp-url "http://timestamp.digicert.com" `
-            --hash-algorithm SHA256 `
-            -v
+          # Sign using keypair alias for better AV validation
+          smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" --input ".\dist\pieces.exe"
           
           # Check if signing was successful
           if ($LASTEXITCODE -ne 0) {
