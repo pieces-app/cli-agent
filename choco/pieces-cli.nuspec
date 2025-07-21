@@ -7,7 +7,7 @@
     <owners>Pieces</owners>
     <title>Pieces CLI</title>
     <authors>Pieces</authors>
-    <projectUrl>https://github.com/pieces-app/cli-agent</projectUrl>
+    <projectUrl>https://pieces.app</projectUrl>
     <copyright>2024 Pieces</copyright>
     <licenseUrl>https://github.com/pieces-app/cli-agent/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>

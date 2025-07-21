@@ -406,10 +406,10 @@ jobs:
               exit 1
           }
           
-                     Write-Output "[SUCCESS] Pieces EXE signed successfully with timestamp"
-           Write-Output "Signature Status: $($signResult.Status)"
-           Write-Output "Certificate Subject: $($signResult.SignerCertificate.Subject)"
-           Write-Output "Timestamp: $($signResult.TimeStamperCertificate.NotAfter)"
+          Write-Output "✅ Pieces EXE signed successfully with timestamp"
+          Write-Output "Signature Status: $($signResult.Status)"
+          Write-Output "Certificate Subject: $($signResult.SignerCertificate.Subject)"
+          Write-Output "Timestamp: $($signResult.TimeStamperCertificate.NotAfter)"
         shell: pwsh
 
       ### Scan executable for false positives before packaging
@@ -434,14 +434,14 @@ jobs:
              Write-Output "[WARNING] Windows Defender scan not available in CI environment"
           }
           
-          # Display file information for verification
-          $fileInfo = Get-Item ".\dist\pieces\pieces.exe"
-          Write-Output "📄 File Size: $([math]::Round($fileInfo.Length / 1MB, 2)) MB"
-          Write-Output "📄 Created: $($fileInfo.CreationTime)"
-          
-          # Check if file has proper signature (for production builds)
-                     if ("${{ inputs.deploy }}" -eq "true") {
-             $signature = Get-AuthenticodeSignature ".\dist\pieces.exe"
+                     # Display file information for verification
+           $fileInfo = Get-Item ".\dist\pieces\pieces.exe"
+           Write-Output "📄 File Size: $([math]::Round($fileInfo.Length / 1MB, 2)) MB"
+           Write-Output "📄 Created: $($fileInfo.CreationTime)"
+           
+           # Check if file has proper signature (for production builds)
+           if ("${{ inputs.deploy }}" -eq "true") {
+             $signature = Get-AuthenticodeSignature ".\dist\pieces\pieces.exe"
              Write-Output "[SIGNATURE] Status: $($signature.Status)"
            }
         shell: pwsh
@@ -476,31 +476,39 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           Get-ChildItem dist
-          Set-Location dist
+          
+          # Navigate to the correct directory based on build mode
+          if (Test-Path ".\dist\pieces\pieces.exe") {
+              Write-Host "Found single-directory distribution"
+              Set-Location "dist\pieces"
+          } else {
+              Write-Host "Found single-file distribution (legacy)"
+              Set-Location dist
+          }
           
           # Check if the executable is signed (for production builds)
           if ("${{ inputs.deploy }}" -eq "true") {
               Write-Host "--- Checking code signature ---"
               $signature = Get-AuthenticodeSignature ".\pieces.exe"
               Write-Host "Signature Status: $($signature.Status)"
-                             if ($signature.Status -eq "Valid") {
-                   Write-Host "[OK] Executable is properly signed"
-               } else {
-                   Write-Host "[WARNING] Executable signature status: $($signature.Status)"
-               }
+              if ($signature.Status -eq "Valid") {
+                  Write-Host "[OK] Executable is properly signed"
+              } else {
+                  Write-Host "[WARNING] Executable signature status: $($signature.Status)"
+              }
           }
 
           Write-Host "`n--- Testing 'pieces.exe --version' command ---"
           try {
               $output = .\pieces.exe --ignore-onboarding --version 2>&1
               Write-Host "Version output: $output"
-                             if ($LASTEXITCODE -eq 0) {
-                   Write-Host "[OK] Version command succeeded"
-               } else {
-                   Write-Host "[ERROR] Version command failed with exit code: $LASTEXITCODE"
-               }
-           } catch {
-               Write-Host "[ERROR] Exception running version command: $_"
+              if ($LASTEXITCODE -eq 0) {
+                  Write-Host "[OK] Version command succeeded"
+              } else {
+                  Write-Host "[ERROR] Version command failed with exit code: $LASTEXITCODE"
+              }
+          } catch {
+              Write-Host "[ERROR] Exception running version command: $_"
           }
 
           Write-Host "`n--- Testing 'pieces.exe help' command ---"
@@ -508,13 +516,13 @@ jobs:
               $output = .\pieces.exe --ignore-onboarding help 2>&1 | Select-Object -First 10
               Write-Host "Help output (first 10 lines): $output"
               # Help commands often exit with non-zero codes, check if we got output instead
-                             if ($output -and $output.Count -gt 0) {
-                   Write-Host "[OK] Help command returned expected output"
-               } else {
-                   Write-Host "[ERROR] Help command returned no output"
-               }
-           } catch {
-               Write-Host "[ERROR] Exception running help command: $_"
+              if ($output -and $output.Count -gt 0) {
+                  Write-Host "[OK] Help command returned expected output"
+              } else {
+                  Write-Host "[ERROR] Help command returned no output"
+              }
+          } catch {
+              Write-Host "[ERROR] Exception running help command: $_"
           }
 
           Write-Host "`n--- Executable test summary ---"
@@ -527,12 +535,12 @@ jobs:
               }
           } catch { }
           
-                     if ($versionWorked) {
-               Write-Host "[OK] Executable is functional - version command works properly"
-           } else {
-               Write-Host "[ERROR] Executable appears to be non-functional"
-               exit 1
-           }
+          if ($versionWorked) {
+              Write-Host "[OK] Executable is functional - version command works properly"
+          } else {
+              Write-Host "[ERROR] Executable appears to be non-functional"
+              exit 1
+          }
         shell: powershell
 
   ### Pushing the built packages to GCP and GitHub
