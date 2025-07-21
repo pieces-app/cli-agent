@@ -1,5 +1,7 @@
 import asyncio
+import hashlib
 import signal
+import threading
 from typing import Tuple, Callable, Awaitable
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.mcp.tools_cache import PIECES_MCP_TOOLS_CACHE
@@ -37,6 +39,7 @@ class PosMcpConnection:
         self.result = None
         self._previous_tools_hash = None
         self._tools_changed_callback = tools_changed_callback
+        self._health_check_lock = threading.Lock()
 
     def _try_get_upstream_url(self):
         """Try to get the upstream URL if we don't have it yet."""
@@ -93,39 +96,42 @@ class PosMcpConnection:
         if self.result.update == UpdateEnum.Plugin:
             return (
                 False,
-                "Please update the CLI version to be able to run the tool call, run 'pieces manage update' to get the latest version. then retry your request again after updating.",
+                "Please update the CLI version to be able to run the tool call, run 'pieces manage update' to get the latest version. Then retry your request again after updating.",
             )
         else:
             return (
                 False,
-                "Please update PiecesOS to a compatible version to be able to run the tool call. run 'pieces update' to get the latest version. then retry your request again after updating.",
+                "Please update PiecesOS to a compatible version to be able to run the tool call. run 'pieces update' to get the latest version. Then retry your request again after updating.",
             )
 
     def _check_pieces_os_status(self):
         """Check if PiecesOS is running using health WebSocket"""
         # First check if health_ws is already running and connected
-        if HealthWS.is_running() and getattr(
-            Settings.pieces_client, "is_pos_stream_running", False
-        ):
-            return True
-
-        # If health_ws is not running, check if PiecesOS is available
-        if Settings.pieces_client.is_pieces_running():
-            try:
-                # Try to start the health WebSocket
-                if health_ws := Settings.pieces_client.health_ws:
-                    health_ws.start()
-                else:
-                    # This should not happen as we initialized health_ws in main
-                    Settings.show_error("Unexpected error healthWS is not initialized")
-                # Update the ltm status cache
-                Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
+        with self._health_check_lock:
+            if HealthWS.is_running() and getattr(
+                Settings.pieces_client, "is_pos_stream_running", False
+            ):
                 return True
-            except Exception as e:
-                Settings.logger.debug(f"Failed to start health WebSocket: {e}")
-                return False
 
-        return False
+            # If health_ws is not running, check if PiecesOS is available
+            if Settings.pieces_client.is_pieces_running():
+                try:
+                    # Try to start the health WebSocket
+                    if health_ws := Settings.pieces_client.health_ws:
+                        health_ws.start()
+                    else:
+                        # This should not happen as we initialized health_ws in main
+                        Settings.show_error(
+                            "Unexpected error healthWS is not initialized"
+                        )
+                    # Update the ltm status cache
+                    Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
+                    return True
+                except Exception as e:
+                    Settings.logger.debug(f"Failed to start health WebSocket: {e}")
+                    return False
+
+            return False
 
     def _check_ltm_status(self):
         """Check if LTM is enabled."""
@@ -144,7 +150,7 @@ class PosMcpConnection:
         # Step 1: Check health WebSocket / PiecesOS status
         if not self._check_pieces_os_status():
             return False, (
-                f"PiecesOS is not running. To use the '{tool_name}' tool, please run:\n\n"
+                "PiecesOS is not running. To use this tool, please run:\n\n"
                 "`pieces open`\n\n"
                 "This will start PiecesOS, then you can retry your request."
             )
@@ -159,8 +165,8 @@ class PosMcpConnection:
             ltm_enabled = self._check_ltm_status()
             if not ltm_enabled:
                 return False, (
-                    f"PiecesOS is running but Long Term Memory (LTM) is not enabled. "
-                    f"To use the '{tool_name}' tool, please run:\n\n"
+                    "PiecesOS is running but Long Term Memory (LTM) is not enabled. "
+                    "To use this tool, please run:\n\n"
                     "`pieces open --ltm`\n\n"
                     "This will enable LTM, then you can retry your request."
                 )
@@ -187,11 +193,23 @@ class PosMcpConnection:
         """Generate a hash of the tools list for change detection."""
         if not tools:
             return None
-        # Create a stable hash based on tool names and descriptions
-        tool_strings = []
-        for tool in tools:
-            tool_strings.append(f"{tool.name}:{tool.description}")
-        return hash(tuple(sorted(tool_strings)))
+
+        # Create a stable hash using SHA256
+        hasher = hashlib.sha256()
+
+        # Sort tools by name for consistency
+        sorted_tools = sorted(tools, key=lambda t: t.name)
+
+        for tool in sorted_tools:
+            # Use truncated description to catch content changes while avoiding memory issues
+            description = tool.description or ""
+            truncated_desc = (
+                description[:200] if len(description) > 200 else description
+            )
+            tool_sig = f"{tool.name}:{truncated_desc}"
+            hasher.update(tool_sig.encode("utf-8"))
+
+        return hasher.hexdigest()
 
     def _tools_have_changed(self, new_tools):
         """Check if the tools have changed since last check."""
@@ -217,8 +235,14 @@ class PosMcpConnection:
                 tool[1] for tool in self.tools if tool[0] == "tools"
             ][0]
 
-            # Check if tools have changed and store the result
+            # Check if tools have changed
             tools_changed = self._tools_have_changed(new_discovered_tools)
+
+            # Clean up old tool data if changed
+            if tools_changed and self.discovered_tools:
+                # Clear references to old tools to prevent memory buildup
+                self.discovered_tools.clear()
+
             self.discovered_tools = new_discovered_tools
 
             Settings.logger.info(
