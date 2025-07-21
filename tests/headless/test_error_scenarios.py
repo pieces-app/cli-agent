@@ -308,31 +308,6 @@ class TestHeadlessErrorScenarios:
             assert parsed["success"] is False
             assert parsed["data"]["error_message"] == "Test error"
 
-    def test_error_output_with_different_indentation(self):
-        """Test error output with different indentation settings."""
-        error = HeadlessError(message="Test error", error_code=ErrorCode.GENERAL_ERROR)
-
-        error_response = ErrorResponse(
-            command="test",
-            error_code=ErrorCode.GENERAL_ERROR,
-            error_message="Test error",
-        )
-
-        # Test with different indentation settings
-        indent_settings = [None, 0, 2, 4, 8]
-
-        for indent in indent_settings:
-            with patch("builtins.print") as mock_print:
-                HeadlessOutput.output_response(error_response, indent=indent)
-
-                mock_print.assert_called_once()
-                printed_output = mock_print.call_args[0][0]
-
-                # Should always be valid JSON regardless of indentation
-                parsed = json.loads(printed_output)
-                assert parsed["success"] is False
-                assert parsed["data"]["error_type"] == ErrorCode.GENERAL_ERROR
-
     def test_error_with_empty_command_name(self):
         """Test error handling with empty command name."""
         error = HeadlessError(message="Test error", error_code=ErrorCode.GENERAL_ERROR)
@@ -489,4 +464,3 @@ class TestHeadlessErrorScenarios:
                 assert parsed["success"] is False
                 # Error message should be present (might be escaped)
                 assert "error_message" in parsed["data"]
-

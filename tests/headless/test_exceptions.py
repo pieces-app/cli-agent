@@ -5,7 +5,7 @@ Tests for all HeadlessError subclasses and their error handling behavior.
 """
 
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from pieces.headless.exceptions import (
     HeadlessError,
@@ -16,6 +16,8 @@ from pieces.headless.exceptions import (
     HeadlessCompatibilityError,
     HeadlessLTMNotEnabledError,
 )
+from pieces.headless.output import HeadlessOutput
+import json
 from pieces.headless.models.base import ErrorCode
 from pieces._vendor.pieces_os_client.wrapper.version_compatibility import (
     VersionCheckResult,
@@ -103,13 +105,81 @@ class TestHeadlessMissingInputError:
 class TestHeadlessPromptError:
     """Test HeadlessPromptError class."""
 
-    def test_prompt_error_creation(self):
-        """Test HeadlessPromptError creation."""
+    def test_prompt_error_creation_no_details(self):
+        """Test HeadlessPromptError creation without details."""
         error = HeadlessPromptError()
 
         assert str(error) == "Prompt required in headless mode"
         assert error.error_code == ErrorCode.PROMPT_REQUIRED
         assert error.default_value is None
+
+    def test_prompt_error_creation_with_details(self):
+        """Test HeadlessPromptError creation with details."""
+        details = "User needs to select an option"
+        error = HeadlessPromptError(details=details)
+
+        assert str(error) == f"Prompt required in headless mode\ndetails: {details}"
+        assert error.error_code == ErrorCode.PROMPT_REQUIRED
+
+    def test_prompt_error_with_edge_cases(self):
+        """Test HeadlessPromptError with edge case inputs."""
+        test_cases = [
+            (None, "Prompt required in headless mode"),
+            ("", "Prompt required in headless mode"),
+            ("A" * 1000, f"Prompt required in headless mode\ndetails: {'A' * 1000}"),
+            (
+                "Line1\nLine2",
+                "Prompt required in headless mode\ndetails: Line1\nLine2",
+            ),
+            ("Tab\there", "Prompt required in headless mode\ndetails: Tab\there"),
+        ]
+
+        for details, expected_message in test_cases:
+            error = HeadlessPromptError(details=details)
+            assert str(error) == expected_message, "failed for details: " + str(details)
+
+    def test_prompt_error_with_special_characters(self):
+        """Test HeadlessPromptError with special characters."""
+        special_chars = "Special: \x00\x01\x02 Unicode: 世界 Emoji: 🎉"
+        error = HeadlessPromptError(details=special_chars)
+
+        # Should handle special characters gracefully
+        error_str = str(error)
+        assert "Prompt required in headless mode" in error_str
+        assert "details:" in error_str
+
+    def test_prompt_error_json_serialization(self):
+        """Test that HeadlessPromptError can be serialized in error responses."""
+        error = HeadlessPromptError(details="Test details")
+
+        with patch("builtins.print") as mock_print:
+            HeadlessOutput.output_headless_error(error, command="test")
+
+            printed_output = mock_print.call_args[0][0]
+            parsed = json.loads(printed_output)
+
+            assert parsed["success"] is False
+            assert parsed["data"]["error_type"] == ErrorCode.PROMPT_REQUIRED
+            assert "Test details" in parsed["data"]["error_message"]
+
+    @pytest.mark.parametrize(
+        "details,expected_in_message",
+        [
+            ("Simple text", "Simple text"),
+            ("<script>alert('xss')</script>", "script"),  # Should be in message
+            ("${variable}", "${variable}"),  # Should not be evaluated
+            ("%(format)s", "%(format)s"),  # Should not be formatted
+            ("../../etc/passwd", "../../etc/passwd"),  # Path traversal attempt
+        ],
+    )
+    def test_prompt_error_no_injection(self, details, expected_in_message):
+        """Test that HeadlessPromptError doesn't allow injection attacks."""
+        error = HeadlessPromptError(details=details)
+        error_message = str(error)
+
+        assert expected_in_message in error_message
+        # Verify the message is safely constructed
+        assert error_message.startswith("Prompt required in headless mode")
 
     def test_prompt_error_inheritance(self):
         """Test HeadlessPromptError inheritance."""
@@ -379,4 +449,3 @@ class TestExceptionRaising:
         assert str(caught_error) == "Test message"
         assert caught_error.error_code == ErrorCode.TIMEOUT_ERROR
         assert caught_error.default_value == "default"
-

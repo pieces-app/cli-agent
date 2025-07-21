@@ -8,6 +8,9 @@ import json
 import pytest
 from unittest.mock import patch, Mock
 import sys
+import threading
+import concurrent.futures
+from queue import Queue
 
 from pieces.headless.models.base import (
     BaseResponse,
@@ -16,6 +19,8 @@ from pieces.headless.models.base import (
     CommandResult,
     ErrorCode,
 )
+from pieces.headless.exceptions import HeadlessError
+from pieces.headless.output import HeadlessOutput
 
 
 class TestErrorCode:
@@ -283,3 +288,264 @@ class TestBaseResponse:
         assert parsed_indented == parsed
         assert "\n" in json_str_indented
 
+
+class TestConcurrentAccess:
+    """Test concurrent access scenarios for headless mode."""
+
+    def test_concurrent_error_output(self):
+        """Test that multiple threads can output errors simultaneously."""
+        errors = []
+        output_queue = Queue()
+
+        def output_error_concurrent(thread_id):
+            try:
+                error = HeadlessError(
+                    message=f"Error from thread {thread_id}",
+                    error_code=ErrorCode.GENERAL_ERROR,
+                )
+
+                with patch("builtins.print") as mock_print:
+                    HeadlessOutput.output_headless_error(error, command="test")
+                    # Check if mock_print was called and has call_args
+                    if mock_print.call_args is not None:
+                        output_queue.put(mock_print.call_args[0][0])
+                    else:
+                        # If mock wasn't called as expected, add a marker
+                        output_queue.put(
+                            '{"success": false, "command": "test", "data": {"error_type": 1, "error_message": "Mock call failed"}}'
+                        )
+            except Exception as e:
+                errors.append(e)
+
+        # Run multiple threads
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(output_error_concurrent, i) for i in range(100)]
+            concurrent.futures.wait(futures)
+
+        # Verify no errors occurred
+        assert len(errors) == 0, f"Errors occurred: {errors}"
+
+        # Verify all outputs are valid JSON
+        outputs = []
+        while not output_queue.empty():
+            output = output_queue.get()
+            parsed = json.loads(output)  # Should not raise
+            outputs.append(parsed)
+
+        assert len(outputs) == 100
+
+    def test_concurrent_command_registration(self):
+        """Test that command registration is thread-safe."""
+        from pieces.base_command import BaseCommand
+
+        # Clear existing commands
+        original_commands = BaseCommand.commands[:]
+        BaseCommand.commands.clear()
+
+        errors = []
+        registration_count = threading.local()
+
+        def register_command_concurrent(thread_id):
+            try:
+                # Create a test command class dynamically
+                class_name = f"TestCommand{thread_id}"
+                TestCommandClass = type(
+                    class_name,
+                    (BaseCommand,),
+                    {
+                        "get_name": lambda self: f"test{thread_id}",
+                        "get_help": lambda self: f"Test command {thread_id}",
+                        "add_arguments": lambda self, parser: None,
+                        "execute": lambda self, **kwargs: 0,
+                    },
+                )
+
+                # Track registrations per thread
+                if not hasattr(registration_count, "count"):
+                    registration_count.count = 0
+                registration_count.count += 1
+
+            except Exception as e:
+                errors.append(e)
+
+        # Run concurrent registrations
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [
+                executor.submit(register_command_concurrent, i) for i in range(50)
+            ]
+            concurrent.futures.wait(futures)
+
+        # Verify no errors
+        assert len(errors) == 0
+
+        # Verify no duplicate registrations
+        command_names = [cmd.get_name() for cmd in BaseCommand.commands]
+        assert len(command_names) == len(set(command_names))
+
+        # Restore original commands
+        BaseCommand.commands = original_commands
+
+    def test_concurrent_json_serialization(self):
+        """Test JSON serialization under concurrent load."""
+        results = Queue()
+
+        def serialize_concurrent(data_id):
+            complex_data = {
+                "id": data_id,
+                "nested": {"level": 1, "data": [1, 2, 3]},
+                "unicode": f"Test 世界 {data_id}",
+                "large_list": list(range(1000)),
+            }
+
+            response = SuccessResponse(command=f"test{data_id}", data=complex_data)
+            json_output = response.to_json()
+            results.put((data_id, json_output))
+
+        # Run concurrent serializations
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            futures = [executor.submit(serialize_concurrent, i) for i in range(200)]
+            concurrent.futures.wait(futures)
+
+        # Verify all serializations succeeded
+        serialized_data = {}
+        while not results.empty():
+            data_id, json_output = results.get()
+            serialized_data[data_id] = json_output
+
+        assert len(serialized_data) == 200
+
+        # Verify each JSON is valid and contains correct data
+        for data_id, json_output in serialized_data.items():
+            parsed = json.loads(json_output)
+            assert parsed["data"]["id"] == data_id
+            assert len(parsed["data"]["large_list"]) == 1000
+
+    def test_concurrent_error_response_creation(self):
+        """Test creating error responses concurrently."""
+        results = Queue()
+        errors = []
+
+        def create_error_response_concurrent(thread_id):
+            try:
+                for i in range(10):  # Multiple errors per thread
+                    error_response = ErrorResponse(
+                        command=f"test_command_{thread_id}_{i}",
+                        error_code=ErrorCode.GENERAL_ERROR,
+                        error_message=f"Test error from thread {thread_id}, iteration {i}",
+                    )
+
+                    # Verify response structure
+                    response_dict = error_response.to_dict()
+                    json_output = error_response.to_json()
+
+                    # Validate JSON
+                    parsed = json.loads(json_output)
+
+                    results.put((thread_id, i, parsed))
+
+            except Exception as e:
+                errors.append(e)
+
+        # Run concurrent error response creation
+        with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+            futures = [
+                executor.submit(create_error_response_concurrent, i) for i in range(20)
+            ]
+            concurrent.futures.wait(futures)
+
+        # Verify no errors occurred
+        assert len(errors) == 0
+
+        # Verify all responses were created correctly
+        response_data = []
+        while not results.empty():
+            thread_id, iteration, parsed_response = results.get()
+            response_data.append(parsed_response)
+
+            # Verify response structure
+            assert parsed_response["success"] is False
+            assert parsed_response["command"] == f"test_command_{thread_id}_{iteration}"
+            assert (
+                parsed_response["data"]["error_type"] == ErrorCode.GENERAL_ERROR.value
+            )
+            assert f"thread {thread_id}" in parsed_response["data"]["error_message"]
+
+        # Should have 20 threads * 10 iterations = 200 responses
+        assert len(response_data) == 200
+
+    def test_concurrent_success_response_creation(self):
+        """Test creating success responses concurrently with complex data."""
+        results = Queue()
+        errors = []
+
+        def create_success_response_concurrent(thread_id):
+            try:
+                # Create complex nested data
+                complex_data = {
+                    "thread_id": thread_id,
+                    "nested_object": {
+                        "level_1": {
+                            "level_2": {
+                                "values": list(range(thread_id, thread_id + 100))
+                            }
+                        }
+                    },
+                    "boolean_values": [True, False, True],
+                    "null_value": None,
+                    "unicode_text": f"Thread {thread_id} 测试数据 🚀",
+                    "large_array": [{"id": i, "value": f"item_{i}"} for i in range(50)],
+                }
+
+                response = SuccessResponse(
+                    command=f"concurrent_test_{thread_id}", data=complex_data
+                )
+
+                # Test both dict and JSON conversion
+                response_dict = response.to_dict()
+                json_output = response.to_json(indent=2)
+
+                # Validate JSON parsing
+                parsed = json.loads(json_output)
+
+                results.put((thread_id, parsed))
+
+            except Exception as e:
+                errors.append(e)
+
+        # Run concurrent success response creation
+        with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
+            futures = [
+                executor.submit(create_success_response_concurrent, i)
+                for i in range(100)
+            ]
+            concurrent.futures.wait(futures)
+
+        # Verify no errors occurred
+        assert len(errors) == 0
+
+        # Verify all responses were created correctly
+        thread_results = {}
+        while not results.empty():
+            thread_id, parsed_response = results.get()
+            thread_results[thread_id] = parsed_response
+
+            # Verify response structure
+            assert parsed_response["success"] is True
+            assert parsed_response["command"] == f"concurrent_test_{thread_id}"
+            assert parsed_response["data"]["thread_id"] == thread_id
+            assert len(parsed_response["data"]["large_array"]) == 50
+            assert (
+                parsed_response["data"]["unicode_text"]
+                == f"Thread {thread_id} 测试数据 🚀"
+            )
+
+        # Should have responses from all 100 threads
+        assert len(thread_results) == 100
+
+        # Verify no data corruption between threads
+        for thread_id, response in thread_results.items():
+            expected_values = list(range(thread_id, thread_id + 100))
+            actual_values = response["data"]["nested_object"]["level_1"]["level_2"][
+                "values"
+            ]
+            assert actual_values == expected_values

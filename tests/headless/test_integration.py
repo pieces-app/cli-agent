@@ -6,9 +6,7 @@ interaction between different headless components.
 """
 
 import json
-import pytest
-from unittest.mock import patch, Mock, MagicMock
-from io import StringIO
+from unittest.mock import patch, Mock
 
 from pieces.headless.models.base import (
     SuccessResponse,
@@ -20,7 +18,6 @@ from pieces.headless.exceptions import (
     HeadlessError,
     HeadlessPromptError,
     HeadlessConfirmationError,
-    HeadlessInteractiveOperationError,
 )
 from pieces.headless.output import HeadlessOutput
 from pieces.settings import Settings
@@ -353,37 +350,6 @@ class TestHeadlessIntegration:
             assert parsed["data"]["error_type"] == ErrorCode.SERIALIZATION_ERROR
             assert "Failed to serialize response" in parsed["data"]["error_message"]
 
-    def test_output_indentation_consistency(self):
-        """Test that output indentation is consistent across components."""
-        response = SuccessResponse(command="test", data={"key": "value"})
-
-        # Test default indentation (2 spaces)
-        with patch("builtins.print") as mock_print:
-            HeadlessOutput.output_response(response)
-            default_output = mock_print.call_args[0][0]
-
-        # Test custom indentation
-        with patch("builtins.print") as mock_print:
-            HeadlessOutput.output_response(response, indent=4)
-            custom_output = mock_print.call_args[0][0]
-
-        # Test no indentation
-        with patch("builtins.print") as mock_print:
-            HeadlessOutput.output_response(response, indent=None)
-            no_indent_output = mock_print.call_args[0][0]
-
-        # All should parse to the same data
-        default_parsed = json.loads(default_output)
-        custom_parsed = json.loads(custom_output)
-        no_indent_parsed = json.loads(no_indent_output)
-
-        assert default_parsed == custom_parsed == no_indent_parsed
-
-        # But formatting should be different
-        assert "\n" in default_output
-        assert "\n" in custom_output
-        assert "\n" not in no_indent_output
-
     def test_headless_mode_command_flow(self):
         """Test the complete command flow in headless mode."""
         # Simulate a command that succeeds in headless mode
@@ -403,4 +369,3 @@ class TestHeadlessIntegration:
                 assert parsed["success"] is True
                 assert parsed["command"] == "test_command"
                 assert parsed["data"]["result"] == "success"
-

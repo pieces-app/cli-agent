@@ -5,9 +5,7 @@ Tests for HeadlessOutput class including JSON formatting, error output, and exce
 """
 
 import json
-import pytest
 from unittest.mock import patch, Mock
-from io import StringIO
 
 from pieces.headless.output import HeadlessOutput
 from pieces.headless.models.base import (
@@ -68,31 +66,12 @@ class TestHeadlessOutput:
             }
             assert parsed == expected
 
-    def test_output_response_with_indent(self):
-        """Test outputting response with custom indentation."""
-        response = SuccessResponse(command="test", data={"key": "value"})
-
-        with patch("builtins.print") as mock_print:
-            HeadlessOutput.output_response(response, indent=4)
-
-            mock_print.assert_called_once()
-            printed_output = mock_print.call_args[0][0]
-
-            # Should contain newlines and 4-space indentation
-            assert "\n" in printed_output
-            assert "    " in printed_output
-
-            # Should still be valid JSON
-            parsed = json.loads(printed_output)
-            expected = {"success": True, "command": "test", "data": {"key": "value"}}
-            assert parsed == expected
-
     def test_output_response_no_indent(self):
         """Test outputting response without indentation."""
         response = SuccessResponse(command="test", data={"key": "value"})
 
         with patch("builtins.print") as mock_print:
-            HeadlessOutput.output_response(response, indent=None)
+            HeadlessOutput.output_response(response)
 
             mock_print.assert_called_once()
             printed_output = mock_print.call_args[0][0]
@@ -432,4 +411,3 @@ class TestHeadlessOutput:
             call_args = mock_output_response.call_args[0][0]
             assert isinstance(call_args, ErrorResponse)
             assert call_args.command == "test"
-
