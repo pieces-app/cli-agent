@@ -469,8 +469,17 @@ jobs:
 
       ### Getting either the git tag or branch name to be set in the json
       - name: Get the version
+        shell: bash
         id: get_version
-        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+        run: |
+          # Check if OVERRIDE_VERSION is set (for testing)
+          if [ -n "$OVERRIDE_VERSION" ]; then
+            echo "Using override version: $OVERRIDE_VERSION"
+            echo "VERSION=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "Using version from git ref: $GITHUB_REF"
+            echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+          fi
 
       ### Installing some machine deps
       - name: Install Dependencies
@@ -587,9 +596,16 @@ jobs:
         shell: bash
         id: get_version
         run: |
-          VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
+          # Check if OVERRIDE_VERSION is set (for testing)
+          if [ -n "$OVERRIDE_VERSION" ]; then
+            echo "Using override version: $OVERRIDE_VERSION"
+            VERSION="$OVERRIDE_VERSION"
+          else
+            echo "Using version from git ref: $GITHUB_REF"
+            VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
+          fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version from GITHUB_REF ($GITHUB_REF): $VERSION"
+          echo "Final version: $VERSION"
 
       ### Get staging version if not a tagged build
       - name: Get staging version
@@ -899,10 +915,18 @@ jobs:
         shell: bash
         id: get_version
         run: |
-          VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
+          # Check if OVERRIDE_VERSION is set (for testing)
+          if [ -n "$OVERRIDE_VERSION" ]; then
+            echo "Using override version: $OVERRIDE_VERSION"
+            VERSION="$OVERRIDE_VERSION"
+          else
+            echo "Using version from git ref: $GITHUB_REF"
+            VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
+          fi
           # Remove 'v' prefix if present
           VERSION=${VERSION#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Final version: $VERSION"
 
       - name: Install WinGet Create
         # https://learn.microsoft.com/en-us/windows/package-manager/winget/install
