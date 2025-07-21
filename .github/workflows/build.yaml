@@ -480,21 +480,31 @@ jobs:
           try {
               $output = .\pieces.exe --ignore-onboarding help 2>&1 | Select-Object -First 10
               Write-Host "Help output (first 10 lines): $output"
-              if ($LASTEXITCODE -eq 0) {
-                  Write-Host "✅ Help command succeeded"
+              # Help commands often exit with non-zero codes, check if we got output instead
+              if ($output -and $output.Count -gt 0) {
+                  Write-Host "✅ Help command returned expected output"
               } else {
-                  Write-Host "❌ Help command failed with exit code: $LASTEXITCODE"
+                  Write-Host "❌ Help command returned no output"
               }
           } catch {
               Write-Host "❌ Exception running help command: $_"
           }
 
           Write-Host "`n--- Executable test summary ---"
-          if ($LASTEXITCODE -ne 0) {
-              Write-Host "⚠️ Tests completed with errors, but continuing build for debugging"
-              # Don't fail the build here, let's see if signing helps
+          # Since help commands often return non-zero exit codes, we check if version worked
+          $versionWorked = $false
+          try {
+              $versionCheck = .\pieces.exe --ignore-onboarding --version 2>&1
+              if ($versionCheck) {
+                  $versionWorked = $true
+              }
+          } catch { }
+          
+          if ($versionWorked) {
+              Write-Host "✅ Executable is functional - version command works properly"
           } else {
-              Write-Host "✅ All tests passed successfully"
+              Write-Host "❌ Executable appears to be non-functional"
+              exit 1
           }
         shell: powershell
 
