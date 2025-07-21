@@ -46,9 +46,19 @@ a = Analysis(
         "pkg_resources",
         "PIL",
         "Pillow",
+        # Additional excludes for smaller, cleaner binary
+        "matplotlib",
+        "IPython",
+        "jupyter",
+        "pandas",
+        "numpy",
+        "scipy",
+        "sklearn",
+        "tensorflow",
+        "torch",
     ],
     noarchive=False,
-    optimize=1,
+    optimize=2,  # Increased optimization level
 )
 pyz = PYZ(a.pure)
 
@@ -61,9 +71,11 @@ exe = EXE(
     a.datas,
     name="pieces",
     debug=False,
-    strip=False,
-    upx=True,
+    strip=True,  # Enable symbol stripping to reduce AV suspicion
+    upx=False,   # Disable UPX compression - major cause of false positives
     runtime_tmpdir=None,
     console=True,
     icon=app_icon,
+    # Add version information to appear more legitimate
+    version="version_info.txt" if sys.platform.startswith("win") else None,
 )

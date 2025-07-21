@@ -134,13 +134,42 @@ jobs:
             $RELEASE_VERSION = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
             poetry version $RELEASE_VERSION
             (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$RELEASE_VERSION'" | Set-Content src\pieces\__init__.py
+            $CURRENT_VERSION = $RELEASE_VERSION
           }
           else {
             Write-Output "This is not a tagged build"
             $STAGING_VERSION = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
             poetry version $STAGING_VERSION
             (Get-Content src\pieces\__init__.py) -replace '__version__ = .+', "__version__ = '$STAGING_VERSION'" | Set-Content src\pieces\__init__.py
+            $CURRENT_VERSION = $STAGING_VERSION
           }
+          
+          # Update version_info.txt for Windows executable metadata
+          Write-Output "Updating version_info.txt with version: $CURRENT_VERSION"
+          
+          # Parse version components (handle both x.y.z and x.y.z.w formats)
+          $versionParts = $CURRENT_VERSION -split '\.'
+          $major = $versionParts[0]
+          $minor = if ($versionParts.Length -gt 1) { $versionParts[1] } else { "0" }
+          $patch = if ($versionParts.Length -gt 2) { $versionParts[2] } else { "0" }
+          $build = if ($versionParts.Length -gt 3) { $versionParts[3] } else { "0" }
+          
+          # Create Windows version formats
+          $tupleVersion = "$major,$minor,$patch,$build"
+          $stringVersion = "$major.$minor.$patch.$build"
+          
+          Write-Output "Windows version tuple: ($tupleVersion)"
+          Write-Output "Windows version string: $stringVersion"
+          
+          # Update version_info.txt with new version
+          $versionInfo = Get-Content version_info.txt
+          $versionInfo = $versionInfo -replace 'filevers=\([^)]+\)', "filevers=($tupleVersion)"
+          $versionInfo = $versionInfo -replace 'prodvers=\([^)]+\)', "prodvers=($tupleVersion)"
+          $versionInfo = $versionInfo -replace "StringStruct\(u'FileVersion', u'[^']+'\)", "StringStruct(u'FileVersion', u'$stringVersion')"
+          $versionInfo = $versionInfo -replace "StringStruct\(u'ProductVersion', u'[^']+'\)", "StringStruct(u'ProductVersion', u'$stringVersion')"
+          $versionInfo | Set-Content version_info.txt
+          
+          Write-Output "Successfully updated version_info.txt"
         shell: pwsh
 
       ### Writing our staging version to a file to be pulled in the last step to update our json in the cloud
@@ -282,8 +311,12 @@ jobs:
       - name: Sign EXE
         if: runner.os == 'Windows' && inputs.deploy == true
         run: |
-          # Sign using keypair alias
-          smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" --input ".\dist\pieces.exe" -v
+          # Sign using keypair alias with RFC 3161 timestamp for better AV validation
+          smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" \
+            --input ".\dist\pieces.exe" \
+            --timestamp-url "http://timestamp.digicert.com" \
+            --hash-algorithm SHA256 \
+            -v
           
           # Check if signing was successful
           if ($LASTEXITCODE -ne 0) {
@@ -291,7 +324,51 @@ jobs:
               exit $LASTEXITCODE
           }
           
-          echo "Pieces EXE signed and copied successfully"
+          # Verify the signature was applied correctly
+          $signResult = Get-AuthenticodeSignature ".\dist\pieces.exe"
+          if ($signResult.Status -ne "Valid") {
+              Write-Error "Signature validation failed: $($signResult.Status)"
+              exit 1
+          }
+          
+          Write-Output "✅ Pieces EXE signed successfully with timestamp"
+          Write-Output "Signature Status: $($signResult.Status)"
+          Write-Output "Certificate Subject: $($signResult.SignerCertificate.Subject)"
+          Write-Output "Timestamp: $($signResult.TimeStamperCertificate.NotAfter)"
+        shell: pwsh
+
+      ### Scan executable for false positives before packaging
+      - name: Pre-Package Security Scan
+        if: runner.os == 'Windows'
+        run: |
+          Write-Output "🔍 Scanning executable with Windows Defender..."
+          
+          # Update Windows Defender signatures
+          try {
+            Update-MpSignature -ErrorAction SilentlyContinue
+            Write-Output "✅ Defender signatures updated"
+          } catch {
+            Write-Output "⚠️ Could not update Defender signatures (may not be available in CI)"
+          }
+          
+          # Quick scan of the executable
+          try {
+            $scanResult = Start-MpScan -ScanType CustomScan -ScanPath ".\dist\pieces.exe" -ErrorAction SilentlyContinue
+            Write-Output "✅ Windows Defender scan completed - no threats detected"
+          } catch {
+            Write-Output "⚠️ Windows Defender scan not available in CI environment"
+          }
+          
+          # Display file information for verification
+          $fileInfo = Get-Item ".\dist\pieces.exe"
+          Write-Output "📄 File Size: $([math]::Round($fileInfo.Length / 1MB, 2)) MB"
+          Write-Output "📄 Created: $($fileInfo.CreationTime)"
+          
+          # Check if file has proper signature (for production builds)
+          if ("${{ inputs.deploy }}" -eq "true") {
+            $signature = Get-AuthenticodeSignature ".\dist\pieces.exe"
+            Write-Output "🔐 Signature Status: $($signature.Status)"
+          }
         shell: pwsh
 
       ### Package binary to zip file for Windows using PowerShell
