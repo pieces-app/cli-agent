@@ -5,7 +5,6 @@ This module provides utilities for outputting structured JSON responses
 in headless mode while maintaining compatibility with normal CLI output.
 """
 
-from typing import Optional
 from .models.base import BaseResponse, ErrorResponse, ErrorCode
 from .exceptions import HeadlessError
 
@@ -14,10 +13,10 @@ class HeadlessOutput:
     """Manages JSON output for headless mode operations."""
 
     @staticmethod
-    def output_response(response: BaseResponse, indent: Optional[int] = 2) -> None:
+    def output_response(response: BaseResponse) -> None:
         """Output a structured response to stdout as JSON."""
         try:
-            json_output = response.to_json(indent=indent)
+            json_output = response.to_json()
             print(json_output)
         except Exception as e:
             # Fallback error response if JSON serialization fails
@@ -26,7 +25,7 @@ class HeadlessOutput:
                 error_code=ErrorCode.SERIALIZATION_ERROR,
                 error_message=f"Failed to serialize response: {str(e)}",
             )
-            print(error_response.to_json(indent=indent))
+            print(error_response.to_json())
 
     @staticmethod
     def output_error(

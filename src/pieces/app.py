@@ -1,4 +1,5 @@
 from pieces.headless.exceptions import HeadlessError
+from pieces.headless.models.base import ErrorCode
 from pieces.headless.output import HeadlessOutput
 from pieces.pieces_argparser import PiecesArgparser
 from pieces.command_registry import CommandRegistry
@@ -11,9 +12,8 @@ from pieces.core import ConfigCommands
 
 
 class PiecesCLI:
-    command = None
-
     def __init__(self):
+        self.command: str
         self.parser = PiecesArgparser(
             description="Pieces CLI for interacting with the PiecesOS",
         )
@@ -36,8 +36,6 @@ class PiecesCLI:
         ignore_onboarding = getattr(args, "ignore_onboarding", False)
 
         onboarded = config.get("onboarded", False)
-
-        Settings.headless_mode = getattr(args, "headless", False)
 
         if (
             not config.get("skip_onboarding", False)
@@ -90,11 +88,16 @@ class PiecesCLI:
 
 
 def main():
+    cli = PiecesCLI()
     try:
-        cli = PiecesCLI()
         cli.run()
     except KeyboardInterrupt:
-        pass
+        if Settings.headless_mode:
+            HeadlessOutput.output_error(
+                command=cli.command if cli else "unknown",
+                error_code=ErrorCode.USER_INTERRUPTED,
+                error_message="Operation cancelled by user",
+            )
     except Exception as e:
         if isinstance(e, HeadlessError):
             HeadlessOutput.handle_exception(e, PiecesCLI.command or "unknown")

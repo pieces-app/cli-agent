@@ -41,8 +41,12 @@ class HeadlessPromptError(HeadlessError):
     """Raised when a prompt is required in headless mode without a default."""
 
     def __init__(self, details: Optional[str] = None):
+        if not details:
+            details = ""
+        else:
+            details = f"\ndetails: {details}"
         super().__init__(
-            f"Prompt required in headless mode\n details: {details}",
+            f"Prompt required in headless mode{details}",
             ErrorCode.PROMPT_REQUIRED,
         )
 
