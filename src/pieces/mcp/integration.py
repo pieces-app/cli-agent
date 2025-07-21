@@ -17,7 +17,15 @@ MCP_types = Literal["sse", "stdio"]
 IntegrationDict = Dict[str, MCP_types]
 
 mcp_integration_types = Literal[
-    "vscode", "goose", "cursor", "claude", "windsurf", "zed", "shortwave", "claude_code"
+    "vscode",
+    "goose",
+    "cursor",
+    "claude",
+    "windsurf",
+    "zed",
+    "shortwave",
+    "claude_code",
+    "kiro",
 ]
 mcp_integrations: List[mcp_integration_types] = list(get_args(mcp_integration_types))
 
@@ -32,6 +40,7 @@ class ConfigDict(TypedDict, total=False):
     zed: IntegrationDict
     shortwave: IntegrationDict
     claude_code: IntegrationDict
+    kiro: IntegrationDict
 
 
 class MCPLocalConfig:
@@ -132,7 +141,11 @@ class MCPProperties:
             mcp_settings[self.url_property_name] = get_mcp_latest_url()
         else:
             mcp_settings[self.command_property_name] = self.pieces_cli_bin_path
-            mcp_settings[self.args_property_name] = ["--ignore-onboarding", "mcp", "start"]
+            mcp_settings[self.args_property_name] = [
+                "--ignore-onboarding",
+                "mcp",
+                "start",
+            ]
         return mcp_settings
 
 

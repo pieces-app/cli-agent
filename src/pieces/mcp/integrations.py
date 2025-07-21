@@ -23,15 +23,13 @@ def get_global_vs_settings():
     system = platform.system()
 
     if system == "Windows":
-        settings_path = os.path.join(
-            os.environ["APPDATA"], "Code", "User", "settings.json"
-        )
+        settings_path = os.path.join(os.environ["APPDATA"], "Code", "User", "mcp.json")
     elif system == "Darwin":  # macOS
         settings_path = os.path.expanduser(
-            "~/Library/Application Support/Code/User/settings.json"
+            "~/Library/Application Support/Code/User/mcp.json"
         )
     elif system == "Linux":
-        settings_path = os.path.expanduser("~/.config/Code/User/settings.json")
+        settings_path = os.path.expanduser("~/.config/Code/User/mcp.json")
     else:
         Settings.show_error(f"Unsupported platform {system}")
         raise ValueError
@@ -108,7 +106,7 @@ def get_vscode_path(option: Literal["global", "local"] = "global"):
     elif option == "local":
         settings_path = input_local_path(".vscode", "VS Code")
         settings_path = os.path.join(
-            settings_path, "settings.json"
+            settings_path, "mcp.json"
         )  # Add the settings.json to the settings path to edit
     create_config(settings_path)
     return settings_path
@@ -293,6 +291,19 @@ warp_sse_json = """
 }}
 """
 
+
+text_success_kiro = """
+### Use Pieces LTM in Kiro
+
+1. Restart Kiro
+2. **Ask a prompt:**
+
+        What I was working on yesterday?
+        Summarize it with 5 bullet points and timestamps.
+
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
 text_success_short_wave = """
 ### Use Pieces LTM in Shortwave
 
@@ -334,9 +345,9 @@ vscode_integration = Integration(
     get_settings_path=get_vscode_path,
     mcp_properties=MCPProperties(
         stdio_property={"type": "stdio"},
-        stdio_path=["mcp", "servers", "Pieces"],
+        stdio_path=["servers", "Pieces"],
         sse_property={"type": "sse"},
-        sse_path=["mcp", "servers", "Pieces"],
+        sse_path=["servers", "Pieces"],
     ),
 )
 goose_integration = Integration(
@@ -449,6 +460,20 @@ claude_cli_integration = Integration(
     readable="Claude Code",
     docs=URLs.CLAUDE_CLI_MCP_DOCS.value,
     get_settings_path=lambda: claude_cli_path,
+    mcp_properties=MCPProperties(
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=["mcpServers", "Pieces"],
+        sse_property={},
+        stdio_property={},
+    ),
+)
+
+kiro_integration = Integration(
+    options=[],
+    text_success=text_success_kiro,
+    readable="Kiro",
+    docs=URLs.KIRO_MCP_DOCS.value,
+    get_settings_path=lambda: os.path.expanduser("~/.kiro/settings/mcp.json"),
     mcp_properties=MCPProperties(
         stdio_path=["mcpServers", "Pieces"],
         sse_path=["mcpServers", "Pieces"],
