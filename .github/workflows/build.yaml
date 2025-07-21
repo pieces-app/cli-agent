@@ -147,17 +147,38 @@ jobs:
           # Update version_info.txt for Windows executable metadata
           Write-Output "Updating version_info.txt with version: $CURRENT_VERSION"
           
-          # Parse version components (handle both x.y.z and x.y.z.w formats)
-          $versionParts = $CURRENT_VERSION -split '\.'
-          $major = $versionParts[0]
-          $minor = if ($versionParts.Length -gt 1) { $versionParts[1] } else { "0" }
-          $patch = if ($versionParts.Length -gt 2) { $versionParts[2] } else { "0" }
-          $build = if ($versionParts.Length -gt 3) { $versionParts[3] } else { "0" }
+          # Parse version components with validation (handle both x.y.z and x.y.z.w formats)
+          if ([string]::IsNullOrEmpty($CURRENT_VERSION)) {
+            Write-Output "Warning: Current version is empty, using fallback version"
+            $CURRENT_VERSION = "1.0.0"
+          }
+          
+          # Clean version string (remove any non-numeric characters except dots)
+          $cleanVersion = $CURRENT_VERSION -replace '[^0-9\.]', ''
+          Write-Output "Cleaned version: $cleanVersion"
+          
+          $versionParts = $cleanVersion -split '\.'
+          
+          # Function to safely convert to integer with fallback
+          function Get-VersionComponent {
+            param([string]$component, [int]$fallback = 0)
+            $result = 0
+            if ([string]::IsNullOrEmpty($component) -or -not [int]::TryParse($component, [ref]$result)) {
+              return $fallback
+            }
+            return $result
+          }
+          
+          $major = Get-VersionComponent $versionParts[0] 1
+          $minor = Get-VersionComponent $versionParts[1] 0
+          $patch = Get-VersionComponent $versionParts[2] 0
+          $build = Get-VersionComponent $versionParts[3] 0
           
           # Create Windows version formats
           $tupleVersion = "$major,$minor,$patch,$build"
           $stringVersion = "$major.$minor.$patch.$build"
           
+          Write-Output "Parsed version components: Major=$major, Minor=$minor, Patch=$patch, Build=$build"
           Write-Output "Windows version tuple: ($tupleVersion)"
           Write-Output "Windows version string: $stringVersion"
           
