@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - fixes-antivirus
-    tags:
-      - '1.1.0'
+
+env:
+  # Override version detection to use 1.1.0 for testing
+  OVERRIDE_VERSION: "1.1.0"
 
 jobs:
   build:
@@ -24,7 +26,6 @@ jobs:
       chocolatey_api_key: ${{ secrets.CHOCOLATEY_API_KEY }}
       code_signing_cert: ${{ secrets.CODE_SIGNING_CERT }}
       cert_password: ${{ secrets.CERT_PASSWORD }}
-      # New DigiCert Software Trust Manager secrets
       sm_host: ${{ secrets.SM_HOST }}
       sm_api_key: ${{ secrets.SM_API_KEY }}
       sm_client_cert_file_b64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}

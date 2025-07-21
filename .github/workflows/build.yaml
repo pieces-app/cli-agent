@@ -73,7 +73,15 @@ jobs:
       - name: Get the version
         shell: bash
         id: get_version
-        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+        run: |
+          # Check if OVERRIDE_VERSION is set (for testing)
+          if [ -n "$OVERRIDE_VERSION" ]; then
+            echo "Using override version: $OVERRIDE_VERSION"
+            echo "VERSION=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "Using version from git ref: $GITHUB_REF"
+            echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+          fi
 
       ### Generating our staging version number if we are not production
       - name: Get staging version
