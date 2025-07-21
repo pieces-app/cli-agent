@@ -5,15 +5,12 @@ on:
     branches:
       - fixes-antivirus
 
-env:
-  # Override version detection to use 1.1.0 for testing
-  OVERRIDE_VERSION: "1.1.0"
-
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
     with:
       deploy: true  # Enable full deployment for testing
+      override_version: "1.1.0"  # Override version for testing
     secrets:
       access_token: ${{ secrets.GITHUB_TOKEN }}
       pypi_token: ${{ secrets.PYPI_TOKEN }}

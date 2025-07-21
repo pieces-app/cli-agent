@@ -7,6 +7,10 @@ on:
         type: boolean
         required: true
         default: false
+      override_version:
+        type: string
+        required: false
+        description: "Override version for testing (e.g., '1.1.0')"
     secrets:
       access_token:
         required: true
@@ -74,10 +78,10 @@ jobs:
         shell: bash
         id: get_version
         run: |
-          # Check if OVERRIDE_VERSION is set (for testing)
-          if [ -n "$OVERRIDE_VERSION" ]; then
-            echo "Using override version: $OVERRIDE_VERSION"
-            echo "VERSION=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+          # Check if override_version input is set (for testing)
+          if [ -n "${{ inputs.override_version }}" ]; then
+            echo "Using override version: ${{ inputs.override_version }}"
+            echo "VERSION=${{ inputs.override_version }}" >> $GITHUB_OUTPUT
           else
             echo "Using version from git ref: $GITHUB_REF"
             echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
@@ -472,10 +476,10 @@ jobs:
         shell: bash
         id: get_version
         run: |
-          # Check if OVERRIDE_VERSION is set (for testing)
-          if [ -n "$OVERRIDE_VERSION" ]; then
-            echo "Using override version: $OVERRIDE_VERSION"
-            echo "VERSION=$OVERRIDE_VERSION" >> $GITHUB_OUTPUT
+          # Check if override_version input is set (for testing)
+          if [ -n "${{ inputs.override_version }}" ]; then
+            echo "Using override version: ${{ inputs.override_version }}"
+            echo "VERSION=${{ inputs.override_version }}" >> $GITHUB_OUTPUT
           else
             echo "Using version from git ref: $GITHUB_REF"
             echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
@@ -596,10 +600,10 @@ jobs:
         shell: bash
         id: get_version
         run: |
-          # Check if OVERRIDE_VERSION is set (for testing)
-          if [ -n "$OVERRIDE_VERSION" ]; then
-            echo "Using override version: $OVERRIDE_VERSION"
-            VERSION="$OVERRIDE_VERSION"
+          # Check if override_version input is set (for testing)
+          if [ -n "${{ inputs.override_version }}" ]; then
+            echo "Using override version: ${{ inputs.override_version }}"
+            VERSION="${{ inputs.override_version }}"
           else
             echo "Using version from git ref: $GITHUB_REF"
             VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
@@ -915,10 +919,10 @@ jobs:
         shell: bash
         id: get_version
         run: |
-          # Check if OVERRIDE_VERSION is set (for testing)
-          if [ -n "$OVERRIDE_VERSION" ]; then
-            echo "Using override version: $OVERRIDE_VERSION"
-            VERSION="$OVERRIDE_VERSION"
+          # Check if override_version input is set (for testing)
+          if [ -n "${{ inputs.override_version }}" ]; then
+            echo "Using override version: ${{ inputs.override_version }}"
+            VERSION="${{ inputs.override_version }}"
           else
             echo "Using version from git ref: $GITHUB_REF"
             VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
