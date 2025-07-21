@@ -292,13 +292,37 @@ jobs:
           # Add --log-level=DEBUG for more diagnostic info
           poetry run pyinstaller pieces.spec --clean --log-level=WARN
           
-          # Check if pieces.exe was created successfully
-          if (Test-Path ".\dist\pieces.exe") {
-              Write-Output "✅ pieces.exe created successfully"
-              $exeInfo = Get-Item ".\dist\pieces.exe"
+          # Check if pieces.exe was created successfully (in directory mode)
+          if (Test-Path ".\dist\pieces\pieces.exe") {
+              Write-Output "✅ pieces.exe created successfully in directory mode"
+              $exeInfo = Get-Item ".\dist\pieces\pieces.exe"
               Write-Output "File size: $($exeInfo.Length) bytes"
+              
+              # List all files in the distribution directory
+              Write-Output "`nDistribution directory contents:"
+              Get-ChildItem ".\dist\pieces" -Recurse | ForEach-Object {
+                  $relativePath = $_.FullName.Replace("$PWD\dist\pieces\", "")
+                  if ($_.PSIsContainer) {
+                      Write-Output "  📁 $relativePath/"
+                  } else {
+                      $sizeKB = [math]::Round($_.Length / 1KB, 2)
+                      Write-Output "  📄 $relativePath ($sizeKB KB)"
+                  }
+              }
+              
+              # Check for critical files
+              $criticalFiles = @("pieces.exe", "_internal\python311.dll", "_internal\base_library.zip")
+              foreach ($file in $criticalFiles) {
+                  if (Test-Path ".\dist\pieces\$file") {
+                      Write-Output "✅ Critical file exists: $file"
+                  } else {
+                      Write-Warning "⚠️ Critical file missing: $file"
+                  }
+              }
           } else {
-              Write-Error "❌ pieces.exe was not created"
+              Write-Error "❌ pieces.exe was not created in expected location"
+              Write-Output "Current directory structure:"
+              Get-ChildItem ".\dist" -Recurse
               exit 1
           }
         shell: powershell
@@ -365,7 +389,8 @@ jobs:
         if: runner.os == 'Windows' && inputs.deploy == true
         run: |
           # Sign using keypair alias for better AV validation
-          smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" --input ".\dist\pieces.exe"
+          # In single directory mode, the exe is in dist\pieces\pieces.exe
+          smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" --input ".\dist\pieces\pieces.exe"
           
           # Check if signing was successful
           if ($LASTEXITCODE -ne 0) {
@@ -374,7 +399,7 @@ jobs:
           }
           
           # Verify the signature was applied correctly
-          $signResult = Get-AuthenticodeSignature ".\dist\pieces.exe"
+          $signResult = Get-AuthenticodeSignature ".\dist\pieces\pieces.exe"
           if ($signResult.Status -ne "Valid") {
               Write-Error "Signature validation failed: $($signResult.Status)"
               exit 1
@@ -400,16 +425,16 @@ jobs:
             Write-Output "⚠️ Could not update Defender signatures (may not be available in CI)"
           }
           
-          # Quick scan of the executable
+          # Quick scan of the executable directory
           try {
-            $scanResult = Start-MpScan -ScanType CustomScan -ScanPath ".\dist\pieces.exe" -ErrorAction SilentlyContinue
+            $scanResult = Start-MpScan -ScanType CustomScan -ScanPath ".\dist\pieces" -ErrorAction SilentlyContinue
             Write-Output "✅ Windows Defender scan completed - no threats detected"
           } catch {
             Write-Output "⚠️ Windows Defender scan not available in CI environment"
           }
           
           # Display file information for verification
-          $fileInfo = Get-Item ".\dist\pieces.exe"
+          $fileInfo = Get-Item ".\dist\pieces\pieces.exe"
           Write-Output "📄 File Size: $([math]::Round($fileInfo.Length / 1MB, 2)) MB"
           Write-Output "📄 Created: $($fileInfo.CreationTime)"
           
@@ -425,11 +450,12 @@ jobs:
         if: runner.os == 'Windows'
         shell: powershell
         run: |
+          # For single directory mode, we need to zip the entire directory
           if ("${{ steps.get_version.outputs.VERSION }}" -match "^\d+\.\d+\.\d+$") {
-            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
+            Compress-Archive -Path ".\dist\pieces\*" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.get_version.outputs.VERSION }}.zip"
           }
           else {
-            Compress-Archive -Path ".\dist\pieces.exe" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
+            Compress-Archive -Path ".\dist\pieces\*" -DestinationPath ".\dist\${{ matrix.zipFileName }}-${{ steps.staging_version.outputs.STAGING_VERSION }}.zip"
           }
 
       ### Upload to github artifacts
@@ -828,23 +854,37 @@ jobs:
           # Copy and extract
           Copy-Item -Path $zipFile.FullName -Destination "choco/tools/pieces-cli.zip" -Force
           
-          # Extract the zip (this should create choco/tools/pieces.exe)
+          # Extract the zip (this should create the pieces directory structure)
           Expand-Archive -Path "choco/tools/pieces-cli.zip" -DestinationPath "choco/tools/temp" -Force
           
-          # Move the pieces.exe to the correct location
+          # The zip should contain the entire pieces directory from single-dir mode
           if (Test-Path "choco/tools/temp/pieces.exe") {
-            # If exe is directly in temp, create pieces directory and move it
+            # Old single-file structure (backward compatibility)
             New-Item -ItemType Directory -Path "choco/tools/pieces" -Force
             Move-Item "choco/tools/temp/pieces.exe" "choco/tools/pieces/" -Force
-            # Move _internal directory if it exists
             if (Test-Path "choco/tools/temp/_internal") {
               Move-Item "choco/tools/temp/_internal" "choco/tools/pieces/" -Force
             }
           } elseif (Test-Path "choco/tools/temp/pieces") {
-            # If pieces directory exists, move it directly
+            # Single-directory structure - expected
+            Move-Item "choco/tools/temp/pieces" "choco/tools/" -Force
+          } elseif (Test-Path "choco/tools/temp/pieces/pieces.exe") {
+            # Nested structure - move the inner pieces directory
             Move-Item "choco/tools/temp/pieces" "choco/tools/" -Force
           } else {
-            throw "pieces.exe not found in extracted zip"
+            # Try to find pieces.exe anywhere in the extracted content
+            $foundExe = Get-ChildItem "choco/tools/temp" -Recurse -Filter "pieces.exe" | Select-Object -First 1
+            if ($foundExe) {
+              Write-Output "Found pieces.exe at: $($foundExe.FullName)"
+              # Move the parent directory containing pieces.exe
+              $parentDir = $foundExe.Directory
+              if ($parentDir.Name -eq "_internal") {
+                $parentDir = $parentDir.Parent
+              }
+              Move-Item $parentDir.FullName "choco/tools/pieces" -Force
+            } else {
+              throw "pieces.exe not found in extracted zip"
+            }
           }
           
           # Clean up
@@ -1125,6 +1165,7 @@ jobs:
       - name: Create/Update WinGet Manifest
         env:
           WINGET_TOKEN: ${{ secrets.personal_access_token }}
+        shell: pwsh
         run: |
           $version = "${{ steps.get_version.outputs.VERSION }}"
           $zipUrl = "https://storage.googleapis.com/app-releases-production/pieces_cli/winget/pieces-cli-win_x86_64-$version.zip"
@@ -1144,14 +1185,40 @@ jobs:
 
             # Check if this is a new package or update
             try {
-              $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI"
+              $showResult = wingetcreate show --id "MeshIntelligentTechnologies.PiecesCLI" 2>$null
               Write-Output "Package exists, updating..."
-              wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
+              # Update with support for directory-based portable
+              wingetcreate update "MeshIntelligentTechnologies.PiecesCLI" `
+                --version $version `
+                --urls $zipUrl `
+                --installer-type zip `
+                --token $env:WINGET_TOKEN `
+                --submit
             } catch {
               Write-Output "Package doesn't exist, creating new manifest..."
-              wingetcreate new --id "MeshIntelligentTechnologies.PiecesCLI" --version $version --urls $zipUrl --token $env:WINGET_TOKEN --submit
+              # Create with support for directory-based portable
+              wingetcreate new `
+                --id "MeshIntelligentTechnologies.PiecesCLI" `
+                --name "Pieces CLI" `
+                --publisher "Mesh Intelligent Technologies" `
+                --version $version `
+                --urls $zipUrl `
+                --installer-type zip `
+                --token $env:WINGET_TOKEN `
+                --submit
             }
+            
+            Write-Output "NOTE: WinGetCreate may not fully support directory-based portable apps configuration."
+            Write-Output "If the manifest needs manual adjustments, add these fields to the installer manifest:"
+            Write-Output ""
+            Write-Output "NestedInstallerType: portable"
+            Write-Output "NestedInstallerFiles:"
+            Write-Output "  - RelativeFilePath: pieces\pieces.exe"
+            Write-Output "    PortableCommandAlias: pieces"
 
+          } catch {
+            Write-Error "Failed to create/update WinGet manifest: $_"
+            throw
           } finally {
             # Clean up temp directory
             Set-Location $env:GITHUB_WORKSPACE
