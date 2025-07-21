@@ -267,7 +267,9 @@ class PosMcpConnection:
             if self.session is not None:
                 # Validate the existing session is still alive
                 try:
-                    # await self.session.send_ping() # TODO: Uncomment when ping is implemented
+                    await (
+                        self.session.send_ping()
+                    )  # TODO: Uncomment when ping is implemented
                     Settings.logger.debug("Using existing upstream connection")
                     return self.session
                 except Exception as e:
