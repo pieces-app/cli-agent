@@ -1,6 +1,5 @@
 import unittest
 import json
-import os
 from unittest.mock import patch, Mock, mock_open, PropertyMock
 from pieces.mcp.integration import Integration, MCPProperties
 from pieces.settings import Settings

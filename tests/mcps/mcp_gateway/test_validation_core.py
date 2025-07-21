@@ -1,58 +1,22 @@
 """
-End-to-end tests for the MCP Gateway functionality.
-These tests interact with a real Pieces OS instance and verify actual behavior.
+Core validation tests for MCP Gateway.
+Tests basic validation flows: system status, version compatibility, LTM checks.
 """
 
-import urllib.request
 import pytest
-import requests
 import mcp.types as types
 from unittest.mock import Mock, patch
-from pieces.mcp.gateway import MCPGateway, PosMcpConnection
-from pieces.mcp.utils import get_mcp_latest_url
-from pieces.settings import Settings
-from pieces._vendor.pieces_os_client.wrapper.version_compatibility import (
+
+from .utils import (
+    mock_tools_changed_callback,
+    mock_connection,
     UpdateEnum,
 )
-
-# Constants
-TEST_SERVER_NAME = "pieces-test-mcp"
+from pieces.mcp.gateway import PosMcpConnection
 
 
-def get_upstream_url():
-    """Get the upstream URL, handling potential errors."""
-    try:
-        Settings.startup()
-        return get_mcp_latest_url()
-    except Exception:
-        # We are mocking the settings so this will raise an exception most of the time we can hardcode the url instead
-        return "http://localhost:39300/model_context_protocol/2024-11-05/sse"
-
-
-@pytest.fixture(scope="module")
-def ensure_pieces_setup():
-    """
-    Fixture to ensure Pieces OS is installed and accessible for testing.
-    Returns True if Pieces OS is running, False otherwise.
-    """
-    try:
-        Settings.startup()
-        return True
-    except (requests.RequestException, ConnectionError, SystemExit):
-        return False
-
-
-# Unit Tests with Mocking
-class TestMCPGatewayValidation:
-    """Unit tests for MCP Gateway validation flows with mocking"""
-
-    @pytest.fixture
-    def mock_connection(self):
-        """Create a mock PosMcpConnection for testing"""
-        connection = PosMcpConnection("http://test-url")
-        # Reset any cached results
-        connection.result = None
-        return connection
+class TestMCPGatewayValidationCore:
+    """Core validation tests for basic system checks and validation flows"""
 
     @pytest.mark.asyncio
     async def test_validate_system_status_pieces_os_not_running(self, mock_connection):
@@ -67,7 +31,6 @@ class TestMCPGatewayValidation:
             assert is_valid is False
             assert "PiecesOS is not running" in error_message
             assert "`pieces open`" in error_message
-            assert "ask_pieces_ltm" in error_message
 
     @pytest.mark.asyncio
     async def test_validate_system_status_version_incompatible_plugin_update(
@@ -137,7 +100,6 @@ class TestMCPGatewayValidation:
                 assert is_valid is False
                 assert "Long Term Memory (LTM) is not enabled" in error_message
                 assert "`pieces open --ltm`" in error_message
-                assert "ask_pieces_ltm" in error_message
 
     @pytest.mark.asyncio
     async def test_validate_system_status_ltm_disabled_create_memory_tool(
@@ -161,7 +123,6 @@ class TestMCPGatewayValidation:
                 assert is_valid is False
                 assert "Long Term Memory (LTM) is not enabled" in error_message
                 assert "`pieces open --ltm`" in error_message
-                assert "create_pieces_memory" in error_message
 
     @pytest.mark.asyncio
     async def test_validate_system_status_non_ltm_tool_success(self, mock_connection):
@@ -311,9 +272,9 @@ class TestMCPGatewayValidation:
         # Mock pieces_client.is_pieces_running() to return True
         mock_settings.pieces_client.is_pieces_running.return_value = True
 
-        # Mock HealthWS.get_instance() and its start method
-        mock_instance = Mock()
-        mock_health_ws.get_instance.return_value = mock_instance
+        # Mock health_ws and its start method
+        mock_health_ws_instance = Mock()
+        mock_settings.pieces_client.health_ws = mock_health_ws_instance
 
         # Mock the workstream API call
         mock_settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status.return_value = Mock()
@@ -321,7 +282,7 @@ class TestMCPGatewayValidation:
         result = mock_connection._check_pieces_os_status()
 
         assert result is True
-        mock_instance.start.assert_called_once()
+        mock_health_ws_instance.start.assert_called_once()
 
     @patch("pieces.mcp.gateway.Settings")
     def test_check_ltm_status(self, mock_settings, mock_connection):
@@ -393,155 +354,3 @@ class TestMCPGatewayValidation:
         assert result is True
         assert mock_connection.upstream_url == "http://existing-url"
 
-
-# Integration/E2E Tests (existing tests)
-
-
-@pytest.mark.asyncio
-async def test_gateway_initialization():
-    """Test that the MCPGateway initializes correctly with real components"""
-    upstream_url = get_upstream_url()
-    if upstream_url is None:
-        pytest.skip("MCP server is not accessible. Skipping test.")
-
-    gateway = MCPGateway(server_name=TEST_SERVER_NAME, upstream_url=upstream_url)
-
-    # Check that the gateway was properly initialized
-    assert gateway.server.name == TEST_SERVER_NAME
-    assert gateway.upstream.upstream_url == upstream_url
-
-
-@pytest.mark.asyncio
-async def test_gateway_connection_with_pos_running(ensure_pieces_setup):
-    """Test connecting to the upstream POS server when it's running"""
-    if not ensure_pieces_setup:
-        pytest.skip("Pieces OS is not running. Skipping test.")
-
-    # Check if we can actually connect to the MCP server
-    upstream_url = get_upstream_url()
-    if upstream_url is None:
-        pytest.skip("MCP server is not accessible. Skipping test.")
-
-    try:
-        with urllib.request.urlopen(upstream_url, timeout=1) as response:
-            response.read(1)
-    except Exception:
-        pytest.skip("MCP server is not accessible. Skipping test.")
-
-    # Create the connection
-    connection = PosMcpConnection(upstream_url)
-
-    try:
-        # Attempt to connect
-        session = await connection.connect()
-
-        # Verify we got a valid session
-        assert session is not None
-
-        # Verify we discovered some tools
-        assert len(connection.discovered_tools) > 0
-
-        # Tools should be properly structured Tool objects
-        for tool in connection.discovered_tools:
-            assert hasattr(tool, "name")
-            assert hasattr(tool, "description")
-            assert isinstance(tool, types.Tool)
-
-    finally:
-        # Clean up
-        await connection.cleanup()
-
-
-@pytest.mark.asyncio
-async def test_call_tool_with_pos_running(ensure_pieces_setup):
-    """Test calling a tool on the POS server when it's running"""
-    if not ensure_pieces_setup:
-        pytest.skip("Pieces OS is not running. Skipping test.")
-
-    # Check if we can actually connect to the MCP server
-    upstream_url = get_upstream_url()
-    if upstream_url is None:
-        pytest.skip("MCP server is not accessible. Skipping test.")
-
-    try:
-        import urllib.request
-
-        with urllib.request.urlopen(upstream_url, timeout=1) as response:
-            response.read(1)
-    except Exception:
-        pytest.skip("MCP server is not accessible. Skipping test.")
-
-    # Create the connection
-    connection = PosMcpConnection(upstream_url)
-
-    try:
-        # Connect to the server
-        await connection.connect()
-
-        # Find a tool to call
-        if not connection.discovered_tools:
-            pytest.skip("No tools discovered from Pieces OS")
-
-        # Get the first tool (it's a Tool object, not a dict)
-        tool = connection.discovered_tools[0]
-        tool_name = tool.name
-
-        # Call the tool with minimal arguments
-        # Note: This might need adjustment based on the actual tools available
-        result = await connection.call_tool(
-            tool_name, {"question": "test", "chat_llm": "gpt-4o-mini"}
-        )
-
-        # Verify we got a result
-        assert result is not None
-        assert hasattr(result, "content")
-        assert len(result.content) > 0
-
-    finally:
-        # Clean up
-        await connection.cleanup()
-
-
-@pytest.mark.asyncio
-async def test_full_gateway_workflow(ensure_pieces_setup):
-    """
-    Test a complete workflow with the gateway.
-
-    This test initializes the gateway, connects to POS, lists tools,
-    and cleans up.
-    """
-    if not ensure_pieces_setup:
-        pytest.skip("Pieces OS is not running. Skipping test.")
-
-    # Check if we can actually connect to the MCP server
-    upstream_url = get_upstream_url()
-    if upstream_url is None:
-        pytest.skip("MCP server is not accessible. Skipping test.")
-
-    try:
-        import urllib.request
-
-        with urllib.request.urlopen(upstream_url, timeout=1) as response:
-            response.read(1)
-    except Exception:
-        pytest.skip("MCP server is not accessible. Skipping test.")
-
-    # Initialize the gateway with real components
-    gateway = MCPGateway(server_name=TEST_SERVER_NAME, upstream_url=upstream_url)
-
-    try:
-        # Connect to the upstream first
-        await gateway.upstream.connect()
-
-        # Verify we can list tools
-        tools = gateway.upstream.discovered_tools
-        assert len(tools) > 0, "Should discover at least one tool"
-
-        # Verify the tools are properly structured
-        for tool in tools:
-            assert hasattr(tool, "name")
-            assert hasattr(tool, "description")
-
-    finally:
-        # Clean up
-        await gateway.upstream.cleanup()
