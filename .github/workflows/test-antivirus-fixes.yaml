@@ -1,0 +1,32 @@
+name: Test Antivirus Fixes
+
+on:
+  push:
+    branches:
+      - fixes-antivirus
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yaml
+    with:
+      deploy: true  # Enable full deployment for testing
+    secrets:
+      access_token: ${{ secrets.GITHUB_TOKEN }}
+      pypi_token: ${{ secrets.PYPI_TOKEN }}
+      pypi_test_token: ${{ secrets.PYPI_TEST_TOKEN }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      apple_app_specific_password: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      fastlane_password: ${{ secrets.FASTLANE_PASSWORD }}
+      match_password: ${{ secrets.MATCH_PASSWORD }}
+      chocolatey_api_key: ${{ secrets.CHOCOLATEY_API_KEY }}
+      code_signing_cert: ${{ secrets.CODE_SIGNING_CERT }}
+      cert_password: ${{ secrets.CERT_PASSWORD }}
+      # New DigiCert Software Trust Manager secrets
+      sm_host: ${{ secrets.SM_HOST }}
+      sm_api_key: ${{ secrets.SM_API_KEY }}
+      sm_client_cert_file_b64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
+      sm_client_cert_password: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+      sm_code_signing_cert_sha1_hash: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
+      sm_keypair_alias: ${{ secrets.SM_KEYPAIR_ALIAS }}
+      personal_access_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }} 
