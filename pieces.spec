@@ -58,7 +58,7 @@ a = Analysis(
         "torch",
     ],
     noarchive=False,
-    optimize=2,  # Increased optimization level
+    optimize=2,
 )
 pyz = PYZ(a.pure)
 
@@ -71,7 +71,7 @@ exe = EXE(
     a.datas,
     name="pieces",
     debug=False,
-    strip=True,  # Enable symbol stripping to reduce AV suspicion
+    strip=False,  # Disable symbol stripping - can cause DLL loading issues on Windows
     upx=False,   # Disable UPX compression - major cause of false positives
     runtime_tmpdir=None,
     console=True,
