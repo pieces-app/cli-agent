@@ -30,7 +30,7 @@ class CompletionTester:
         )
 
         std = subprocess.run(
-            ["python", str(generator_path), f"--{shell}"],
+            ["poetry", "run", "python", str(generator_path), f"--{shell}"],
             capture_output=True,
             text=True,
             cwd=str(test_dir.parent.parent),  # Run from project root
@@ -209,4 +209,3 @@ def expected_integrations_with_meta(expected_integrations):
     """Expected integration names including 'all' and 'current'."""
     # These are meta-options available in the docs command
     return expected_integrations | {"all", "current", "raycast", "wrap"}
-

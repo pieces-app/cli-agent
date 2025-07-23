@@ -49,7 +49,7 @@ def test_open_asset_success(
     mock_sh.return_value = "path_to_editor"
     mock_assets.return_value = [Mock(id="test_id", name="Test Asset")]
     mock_load_config.return_value = {"editor": "<editor_command>"}
-    result = AssetsCommands.open_asset(mock_assets.id, ITEM_INDEX=1, editor=True)
+    result = AssetsCommands.open_asset("test_id", ITEM_INDEX=1, editor=True)
 
     assert result is None
     mock_run.assert_called_once()

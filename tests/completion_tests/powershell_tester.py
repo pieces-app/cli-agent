@@ -18,26 +18,33 @@ class PowerShellCompletionTester(CompletionTester):
     def run_completion_test(self, command_line: str) -> Tuple[bool, List[str], str]:
         """Run PowerShell completion test using subprocess."""
         # Create a test script that sources completions and captures results
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ps1", delete=False, encoding="utf-8"
+        ) as f:
+            # PowerShell script that uses TabExpansion2
             f.write(f"""
-# Source the completion file
-. {self.completion_file}
+# Source the completion file to register the completer
+. '{self.completion_file}'
 
-# Set up the command line
+# Test completion using TabExpansion2
 $commandLine = "{command_line}"
 $cursorPosition = $commandLine.Length
 
-# Call the completion function
-$result = TabExpansion2 -inputScript $commandLine -cursorColumn $cursorPosition
-
-# Output the completions as JSON for easy parsing
-if ($result.CompletionMatches) {{
+try {{
+    $result = TabExpansion2 -inputScript $commandLine -cursorColumn $cursorPosition
+    
     $completions = @()
-    foreach ($match in $result.CompletionMatches) {{
-        $completions += $match.CompletionText
+    if ($result -and $result.CompletionMatches) {{
+        foreach ($match in $result.CompletionMatches) {{
+            $completions += $match.CompletionText
+        }}
     }}
+    
+    # Output as JSON
     ConvertTo-Json -InputObject $completions -Compress
-}} else {{
+}} catch {{
+    # If TabExpansion2 fails, try to get completions directly
+    Write-Error "TabExpansion2 failed: $_"
     ConvertTo-Json -InputObject @() -Compress
 }}
 """)
@@ -45,7 +52,6 @@ if ($result.CompletionMatches) {{
 
         try:
             # Determine the PowerShell executable
-            # Try PowerShell Core first, then Windows PowerShell
             powershell_exe = None
             for exe in ["pwsh", "powershell"]:
                 try:
@@ -60,7 +66,15 @@ if ($result.CompletionMatches) {{
 
             # Run the PowerShell script
             result = subprocess.run(
-                [powershell_exe, "-NoProfile", "-NonInteractive", "-File", script_path],
+                [
+                    powershell_exe,
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    script_path,
+                ],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -71,15 +85,38 @@ if ($result.CompletionMatches) {{
 
             # Parse JSON output
             try:
-                completions = json.loads(result.stdout.strip())
-                if not isinstance(completions, list):
+                output = result.stdout.strip()
+                if output:
+                    # Extract just the JSON part (ignore any other output)
+                    lines = output.split("\n")
+                    json_line = None
+                    for line in lines:
+                        line = line.strip()
+                        if line.startswith("[") or line.startswith('"'):
+                            json_line = line
+                            break
+
+                    if json_line:
+                        completions = json.loads(json_line)
+                        if not isinstance(completions, list):
+                            completions = []
+                    else:
+                        completions = []
+                else:
                     completions = []
-            except json.JSONDecodeError:
-                # Fallback to line-based parsing if JSON fails
-                completions = []
-                for line in result.stdout.strip().split("\n"):
-                    if line and not line.startswith("#"):
-                        completions.append(line)
+            except json.JSONDecodeError as e:
+                # If JSON parsing fails, check if we got file completions (which means our completer didn't work)
+                if "file:" in result.stdout or "./" in result.stdout:
+                    return (
+                        False,
+                        [],
+                        "PowerShell defaulted to file completion - custom completer not working",
+                    )
+                return (
+                    False,
+                    [],
+                    f"Failed to parse JSON output: {e}\nOutput: {result.stdout}",
+                )
 
             return True, completions, ""
 
@@ -92,4 +129,3 @@ if ($result.CompletionMatches) {{
                 os.unlink(script_path)
             except:
                 pass
-
