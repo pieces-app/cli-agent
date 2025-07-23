@@ -106,32 +106,31 @@ class PosMcpConnection:
 
     def _check_pieces_os_status(self):
         """Check if PiecesOS is running using health WebSocket"""
-        # First check if health_ws is already running and connected
         with self._health_check_lock:
-            if HealthWS.is_running() and getattr(
-                Settings.pieces_client, "is_pos_stream_running", False
+            # First check if already connected
+            if (
+                HealthWS.is_running()
+                and hasattr(Settings.pieces_client, "is_pos_stream_running")
+                and Settings.pieces_client.is_pos_stream_running
             ):
                 return True
 
-            # If health_ws is not running, check if PiecesOS is available
-            if Settings.pieces_client.is_pieces_running():
-                try:
-                    # Try to start the health WebSocket
-                    if health_ws := Settings.pieces_client.health_ws:
-                        health_ws.start()
-                    else:
-                        # This should not happen as we initialized health_ws in main
-                        Settings.show_error(
-                            "Unexpected error healthWS is not initialized"
-                        )
-                    # Update the ltm status cache
-                    Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
-                    return True
-                except Exception as e:
-                    Settings.logger.debug(f"Failed to start health WebSocket: {e}")
-                    return False
+            # Check if PiecesOS is available
+            if not Settings.pieces_client.is_pieces_running():
+                return False
 
-            return False
+            try:
+                # Get the health WebSocket instance properly
+                health_ws = HealthWS.get_instance()
+                if health_ws and not health_ws.is_running():
+                    health_ws.start()
+
+                # Update LTM status cache
+                Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
+                return True
+            except Exception as e:
+                Settings.logger.debug(f"Failed to start health WebSocket: {e}")
+                return False
 
     def _check_ltm_status(self):
         """Check if LTM is enabled."""
