@@ -45,8 +45,11 @@ class PosMcpConnection:
         """Try to get the upstream URL if we don't have it yet."""
         if self.upstream_url is None:
             if Settings.pieces_client.is_pieces_running():
-                self.upstream_url = get_mcp_latest_url()
-                return True
+                try:
+                    self.upstream_url = get_mcp_latest_url()
+                    return True
+                except:  # noqa: E722
+                    pass
             return False
         return True
 
