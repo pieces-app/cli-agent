@@ -2,11 +2,14 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Self
+from typing import Optional, Self, Any, Callable
+from functools import wraps
 
 from rich import prompt
 from rich.console import Console
 from rich.prompt import Prompt
+
+from pieces.headless.exceptions import HeadlessPromptError
 
 
 class Logger:
@@ -26,16 +29,20 @@ class Logger:
         self._confirm = prompt.Confirm(console=self.console)
         self._prompt = Prompt(console=self.console)
 
+        # Wrap the ask methods with proper typing
+        self.confirm: Callable[..., bool] = self.headless_wrapper(self._confirm.ask)
+        self.prompt: Callable[..., str] = self.headless_wrapper(self._prompt.ask)
+        self.input: Callable[..., str] = self.headless_wrapper(self.console.input)
+
         self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.DEBUG if debug_mode else logging.CRITICAL)
+        self.logger.setLevel(logging.DEBUG if debug_mode else logging.ERROR)
 
         for handler in self.logger.handlers[:]:
             self.logger.removeHandler(handler)
 
         self.debug_mode = debug_mode
-        if debug_mode and log_dir:
+        if log_dir:
             self._setup_file_logging(os.path.join(log_dir, "logs"), self.name)
-            # self.print("Running in debug mode") Sadly it leads to some issues wit the claude MCP
 
     def _setup_file_logging(self, log_dir, name):
         """Set up file logging to save logs to files."""
@@ -71,22 +78,32 @@ class Logger:
         exc_info = kwargs.pop("exc_info", True)
         self.logger.error(message, exc_info=exc_info, *args, **kwargs)
 
-    @property
-    def input(self):
-        """Get user input with a prompt."""
-        return self.console.input
+    @staticmethod
+    def headless_wrapper(ask_fn: Callable) -> Callable[..., Any]:
+        """Wrap a Rich ask function to support headless mode with optional default fallback."""
+
+        @wraps(ask_fn)
+        def wrapper(*args, _default: Optional[Any] = None, **kwargs) -> Any:
+            from pieces.settings import Settings
+
+            if Settings.headless_mode:
+                if _default is not None:
+                    return _default
+                raise HeadlessPromptError(
+                    f"{getattr(ask_fn, __name__, ask_fn)}({kwargs=}, {args=})"
+                )
+
+            return ask_fn(*args, **kwargs)
+
+        return wrapper
 
     @property
     def print(self):
-        return self.console.print
+        from pieces.settings import Settings
 
-    @property
-    def prompt(self):
-        return self._prompt.ask
-
-    @property
-    def confirm(self):
-        return self._confirm.ask
+        if not Settings.headless_mode:
+            return self.console.print
+        return lambda *args, **kwargs: None
 
     @classmethod
     def get_instance(cls):
