@@ -45,8 +45,11 @@ class PosMcpConnection:
         """Try to get the upstream URL if we don't have it yet."""
         if self.upstream_url is None:
             if Settings.pieces_client.is_pieces_running():
-                self.upstream_url = get_mcp_latest_url()
-                return True
+                try:
+                    self.upstream_url = get_mcp_latest_url()
+                    return True
+                except:  # noqa: E722
+                    pass
             return False
         return True
 
@@ -116,13 +119,12 @@ class PosMcpConnection:
                 return True
 
             # Check if PiecesOS is available
-            if not Settings.pieces_client.is_pieces_running():
+            if not Settings.pieces_client.is_pieces_running(2):
                 return False
 
             try:
-                # Get the health WebSocket instance properly
                 health_ws = HealthWS.get_instance()
-                if health_ws and not health_ws.is_running():
+                if health_ws:
                     health_ws.start()
 
                 # Update LTM status cache
