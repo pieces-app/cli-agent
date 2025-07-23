@@ -4,9 +4,14 @@ from pathlib import Path
 import sys
 from platformdirs import user_data_dir
 
+from pieces.headless.exceptions import HeadlessCompatibilityError
+from pieces.headless.models.base import CommandResult
 from pieces.logger import Logger
 from pieces._vendor.pieces_os_client.wrapper import PiecesClient
-from pieces._vendor.pieces_os_client.wrapper.version_compatibility import VersionChecker, UpdateEnum
+from pieces._vendor.pieces_os_client.wrapper.version_compatibility import (
+    VersionChecker,
+    UpdateEnum,
+)
 from pieces import __version__
 from pieces.gui import (
     print_version_details,
@@ -47,6 +52,7 @@ class Settings:
     config_file = Path(pieces_data_dir, "pieces_config.json")
 
     run_in_loop = False  # is CLI looping?
+    headless_mode = False  # is CLI running in headless mode?
 
     # some useful directories
     # extensions_dir
@@ -138,17 +144,19 @@ class Settings:
         cls.pieces_client.model_name = model_name
 
     @classmethod
-    def startup(cls, bypass_login = False):
+    def startup(cls, bypass_login=False):
         if cls.pieces_client.is_pieces_running():
             cls.version_check()  # Check the version first
             if not bypass_login:
                 cls.check_login()
         else:
-            if cls.pieces_client.open_pieces_os(): # PiecesOS is running
+            if cls.pieces_client.open_pieces_os():  # PiecesOS is running
                 return cls.startup(bypass_login)
             else:
-                if cls.logger.confirm("Pieces OS is required but wasn’t found or couldn’t be launched.\n"
-                    "Do you want to install it now and get started?"):
+                if cls.logger.confirm(
+                    "Pieces OS is required but wasn’t found or couldn’t be launched.\n"
+                    "Do you want to install it now and get started?"
+                ):
                     from .command_interface.simple_commands import InstallCommand
 
                     status_code = InstallCommand.instance.execute()
@@ -165,23 +173,25 @@ class Settings:
         result = VersionChecker(
             cls.PIECES_OS_MIN_VERSION, cls.PIECES_OS_MAX_VERSION, cls.pieces_os_version
         ).version_check()
+        if cls.headless_mode and not result.compatible:
+            raise HeadlessCompatibilityError(result)
 
         # Check compatibility
         if result.update == UpdateEnum.Plugin:
-            print(
+            cls.logger.print(
                 "Please update your cli-agent tool. It is not compatible with the current PiecesOS version"
             )
-            print(
+            cls.logger.print(
                 URLs.DOCS_CLI.value
             )  # TODO: We might need to add a link a better link here
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
         elif result.update == UpdateEnum.PiecesOS:
             # TODO: Use the update POS endpoint
-            print(
+            cls.logger.print(
                 "Please update PiecesOS. It is not compatible with the current cli-agent version"
             )
-            print(URLs.DOCS_INSTALLATION.value)
+            cls.logger.print(URLs.DOCS_INSTALLATION.value)
             print_version_details(cls.pieces_os_version, __version__)
             sys.exit(2)
 
@@ -189,7 +199,9 @@ class Settings:
     def check_login(cls):
         user = cls.pieces_client.user_api.user_snapshot().user
         if not user:
-            if cls.logger.confirm("Please sign into Pieces to use this feature. Do you want to sign in now?"):
+            if cls.logger.confirm(
+                "Please sign into Pieces to use this feature. Do you want to sign in now?"
+            ):
                 cls.pieces_client.user.login(True)
                 user = cls.pieces_client.user_api.user_snapshot().user
         if user:
@@ -199,13 +211,17 @@ class Settings:
     @classmethod
     def show_error(cls, error, error_message=None):
         cls.logger.console_error.print(f"[red]{error}")
-        cls.logger.console_error.print(f"[red]{error_message}") if error_message else None
+        cls.logger.console_error.print(
+            f"[red]{error_message}"
+        ) if error_message else None
         if not cls.run_in_loop:
             sys.exit(2)
 
     @classmethod
     def get_os_id(cls):
-        from pieces._vendor.pieces_os_client.models.application_name_enum import ApplicationNameEnum
+        from pieces._vendor.pieces_os_client.models.application_name_enum import (
+            ApplicationNameEnum,
+        )
 
         if cls._os_id:
             return cls._os_id
