@@ -54,6 +54,12 @@ class OpenCommand(BaseCommand):
             action="store_true",
             help="Opens Pieces Settings",
         )
+        parser.add_argument(
+            "--ltm",
+            dest="ltm",
+            action="store_true",
+            help="Opens Pieces LTM (Long-Term Memory)",
+        )
 
     def execute(self, **kwargs) -> int:
         """Execute the open command."""
