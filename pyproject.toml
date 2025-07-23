@@ -52,6 +52,3 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-# Exclude completion script tests - they are standalone scripts, not pytest tests
-# TODO: Enable these at some point  to check the generated completion scripts
-addopts = "--ignore=completion_scripts/tests"
