@@ -104,6 +104,10 @@ class TestGitCommit(unittest.TestCase):
         )
         self.mock_settings.logger.prompt = prompt
 
+        mock_logger_input = MagicMock()
+        mock_logger_input.side_effect = ["new commit message"]
+        self.mock_settings.logger.input = mock_logger_input
+
         self.mock_settings.get_auto_commit_model.return_value = "OUR_GREAT_MODEL_ID"
         self.mock_settings.pieces_client.model_name = "MY_MODEL_NAME"
 

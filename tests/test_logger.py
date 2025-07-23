@@ -68,6 +68,10 @@ class TestLogger:
             expected_filename = f"Pieces_CLI_{expected_date}.log"
             assert any(log_file.name == expected_filename for log_file in log_files)
 
+            # Close the file handler to release the file lock (important for Windows)
+            logger.file_handler.close()
+            logger.logger.removeHandler(logger.file_handler)
+
     def test_setup_file_logging(self, mock_prompt, mock_confirm, mock_console):
         """Test file logging setup."""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -80,6 +84,10 @@ class TestLogger:
 
             # Check that handler was added to logger
             assert logger.file_handler in logger.logger.handlers
+
+            # Close the file handler to release the file lock (important for Windows)
+            logger.file_handler.close()
+            logger.logger.removeHandler(logger.file_handler)
 
     def test_logging_methods(self, mock_prompt, mock_confirm, mock_console):
         """Test all logging methods."""
@@ -552,6 +560,10 @@ class TestLogger:
             assert "Test info message" in log_content
             assert "Test error message" in log_content
             assert "Test debug message" in log_content
+
+            # Close the file handler to release the file lock (important for Windows)
+            logger.file_handler.close()
+            logger.logger.removeHandler(logger.file_handler)
 
     def test_log_level_filtering(self, mock_prompt, mock_confirm, mock_console):
         """Test that log level filtering works correctly."""

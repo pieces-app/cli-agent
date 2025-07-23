@@ -34,6 +34,13 @@ def mock_pieces_client():
         yield mock_client
 
 
+@pytest.fixture(autouse=True)
+def mock_headless_mode():
+    """Set headless_mode to False by default for all tests."""
+    with patch.object(Settings, "headless_mode", False):
+        yield
+
+
 @pytest.fixture
 def mock_input():
     with patch("builtins.input") as mock:
