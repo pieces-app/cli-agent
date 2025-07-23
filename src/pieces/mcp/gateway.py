@@ -96,12 +96,12 @@ class PosMcpConnection:
         if self.result.update == UpdateEnum.Plugin:
             return (
                 False,
-                "Please update the CLI version to be able to run the tool call, run 'pieces manage update' to get the latest version. Then retry your request again after updating.",
+                "Please update the CLI version to be able to run the tool call, Run 'pieces manage update' to get the latest version. Then retry your request again after updating.",
             )
         else:
             return (
                 False,
-                "Please update PiecesOS to a compatible version to be able to run the tool call. run 'pieces update' to get the latest version. Then retry your request again after updating.",
+                "Please update PiecesOS to a compatible version to be able to run the tool call. Run 'pieces update' to get the latest version. Then retry your request again after updating.",
             )
 
     def _check_pieces_os_status(self):
@@ -180,13 +180,22 @@ class PosMcpConnection:
 
         if not is_valid:
             return error_message
-
+        tool_name = self._sanitize_tool_name(tool_name)
         # If all validations pass but we still have an error, return generic message
+
         return (
             f"Unable to execute '{tool_name}' tool. Please ensure PiecesOS is running "
             "and try again. If the problem persists, run:\n\n"
             "`pieces restart`"
         )
+
+    def _sanitize_tool_name(self, tool_name: str) -> str:
+        """Sanitize tool name for safe inclusion in messages."""
+        import re
+
+        # Remove control characters and limit length
+        sanitized = re.sub(r"[^\w\s\-_.]", "", tool_name)
+        return sanitized[:100]  # Limit to reasonable length
 
     def _get_tools_hash(self, tools):
         """Generate a hash of the tools list for change detection."""
