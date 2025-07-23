@@ -31,24 +31,24 @@ To get started with the Pieces Python CLI Tool, you need to:
 1. Ensure PiecesOS is installed and running on your system.
 2. Install the Python package:
 
-   **Installer Script (Recommended):**
-
-   > **Requirements:** Python 3.11 or higher is required for the installation scripts.
-
-   ```bash
-    # macOS/Linux (Bash)
-    sh <(curl -fsSL https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.sh)
-  ```
-
-     ```fish
-   # macOS/Linux (Fish)
-   sh (curl -fsSL https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.sh | psub)
-   ```
-
-   ```powershell
-   # Windows (PowerShell)
-   irm https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.ps1 | iex
-   ```
+  <!--  **Installer Script (Recommended):** -->
+  <!---->
+  <!--  > **Requirements:** Python 3.11 or higher is required for the installation scripts. -->
+  <!---->
+  <!--  ```bash -->
+  <!--   # macOS/Linux (Bash) -->
+  <!--   sh <(curl -fsSL https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.sh) -->
+  <!-- ``` -->
+  <!---->
+  <!--    ```fish -->
+  <!--  # macOS/Linux (Fish) -->
+  <!--  sh (curl -fsSL https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.sh | psub) -->
+  <!--  ``` -->
+  <!---->
+  <!--  ```powershell -->
+  <!--  # Windows (PowerShell) -->
+  <!--  irm https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.ps1 | iex -->
+  <!--  ``` -->
 
    **Package Managers:**
 
@@ -102,7 +102,7 @@ echo 'pieces completion fish | source' >> ~/.config/fish/config.fish && source ~
 Add-Content $PROFILE '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript'; . $PROFILE
 ```
 
-After setup, restart your terminal or source your configuration file. Then try typing `pieces ` and press **Tab** to test auto-completion!
+After setup, restart your terminal or source your configuration file. Then try typing `pieces` and press **Tab** to test auto-completion!
 
 ## Usage
 
