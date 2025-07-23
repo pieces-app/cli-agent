@@ -251,7 +251,3 @@ class TestPowerShellCompletions:
             assert len(completions) > 0
         else:
             pytest.skip("PowerShell completion not working on Windows")
-
-    def test_powershell_availability(self):
-        """Verify PowerShell is available for testing."""
-        assert has_powershell(), "PowerShell not available"

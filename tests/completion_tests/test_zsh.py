@@ -17,7 +17,7 @@ def zsh_tester():
     platform.system() == "Windows",
     reason="Zsh completion tests are for Linux and macOS only",
 )
-@pytest.mark.skipif(not shutil.which("Zsh"), reason="Zsh not available")
+@pytest.mark.skipif(not shutil.which("zsh"), reason="Zsh not available")
 class TestZshCompletions:
     """Test suite for Zsh shell completions."""
 
@@ -165,9 +165,3 @@ class TestZshCompletions:
                 pytest.skip(
                     "Zsh allows duplicate options - this is shell-specific behavior"
                 )
-
-    @pytest.mark.skipif(not shutil.which("zsh"), reason="Zsh not available")
-    def test_zsh_availability(self):
-        """Verify Zsh is available for testing."""
-        assert shutil.which("zsh") is not None
-

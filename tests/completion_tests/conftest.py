@@ -30,7 +30,7 @@ class CompletionTester:
         )
 
         std = subprocess.run(
-            ["poetry", "run", "python", str(generator_path), f"--{shell}"],
+            [sys.executable, str(generator_path), f"--{shell}"],
             capture_output=True,
             text=True,
             cwd=str(test_dir.parent.parent),  # Run from project root

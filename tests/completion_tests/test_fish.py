@@ -184,8 +184,3 @@ class TestFishCompletions:
         success, completions, error = fish_tester.run_completion_test("pieces ")
         assert success, f"Completion failed: {error}"
         assert len(completions) > 0, "No completions returned"
-
-    @pytest.mark.skipif(not shutil.which("fish"), reason="Fish not available")
-    def test_fish_availability(self):
-        """Verify Fish is available for testing."""
-        assert shutil.which("fish") is not None
