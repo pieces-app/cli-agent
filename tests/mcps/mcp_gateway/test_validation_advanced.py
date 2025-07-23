@@ -393,3 +393,68 @@ class TestMCPGatewayValidationAdvanced:
             "Large description should be truncated to 200 chars"
         )
 
+    @pytest.mark.asyncio
+    async def test_concurrent_connection_and_cleanup(self, mock_connection):
+        """Test concurrent connection attempts and cleanup operations"""
+        # Track connection attempts
+        connection_count = 0
+        cleanup_count = 0
+
+        async def mock_connect():
+            nonlocal connection_count
+            connection_count += 1
+            # Simulate connection work
+            await asyncio.sleep(0.01)
+            return Mock()  # Mock session
+
+        async def mock_cleanup():
+            nonlocal cleanup_count
+            cleanup_count += 1
+            # Simulate cleanup work
+            await asyncio.sleep(0.01)
+
+        # Mock successful validation
+        with patch.object(
+            mock_connection, "_validate_system_status", return_value=(True, "")
+        ):
+            # Mock the connection and cleanup methods
+            original_connect = mock_connection.connect
+            original_cleanup = mock_connection.cleanup
+
+            mock_connection.connect = mock_connect
+            mock_connection.cleanup = mock_cleanup
+
+            try:
+                tasks = []
+
+                # Add connection tasks
+                for i in range(3):
+                    tasks.append(mock_connection.connect())
+
+                # Add cleanup tasks
+                for i in range(3):
+                    tasks.append(mock_connection.cleanup())
+
+                # Add tool call tasks that involve connection
+                for i in range(2):
+                    tasks.append(mock_connection.call_tool(f"tool_{i}", {}))
+
+                # Execute all concurrently
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+
+                # Verify all operations completed
+                assert len(results) == 8  # 3 connects + 3 cleanups + 2 tool calls
+
+                # Check for exceptions
+                exceptions = [r for r in results if isinstance(r, Exception)]
+                assert len(exceptions) == 0, f"Unexpected exceptions: {exceptions}"
+
+                # Verify connection and cleanup methods were called expected number of times
+                # Note: tool calls might also trigger connections
+                assert connection_count >= 3, "Expected at least 3 connection attempts"
+                assert cleanup_count == 3, "Expected exactly 3 cleanup operations"
+
+            finally:
+                # Restore original methods
+                mock_connection.connect = original_connect
+                mock_connection.cleanup = original_cleanup
