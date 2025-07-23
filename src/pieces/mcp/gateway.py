@@ -96,12 +96,12 @@ class PosMcpConnection:
         if self.result.update == UpdateEnum.Plugin:
             return (
                 False,
-                "Please update the CLI version to be able to run the tool call, run 'pieces manage update' to get the latest version. Then retry your request again after updating.",
+                "Please update the CLI version to be able to run the tool call, Run 'pieces manage update' to get the latest version. Then retry your request again after updating.",
             )
         else:
             return (
                 False,
-                "Please update PiecesOS to a compatible version to be able to run the tool call. run 'pieces update' to get the latest version. Then retry your request again after updating.",
+                "Please update PiecesOS to a compatible version to be able to run the tool call. Run 'pieces update' to get the latest version. Then retry your request again after updating.",
             )
 
     def _check_pieces_os_status(self):
