@@ -9,9 +9,7 @@ repository = "https://github.com/pieces-app/cli-agent"
 keywords = ["copilot", "pieces", "ai", "snippets", "materials"]
 packages = [{ include = "pieces", from = "src" }]
 license = "MIT"
-include = [
-    { path = "src/pieces/completions/*", format = ["sdist", "wheel"] }
-]
+include = [{ path = "src/pieces/completions/*", format = ["sdist", "wheel"] }]
 
 
 [tool.ruff]
@@ -46,3 +44,14 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 pieces = "pieces.app:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+# Exclude completion script tests - they are standalone scripts, not pytest tests
+# TODO: Enable these at some point  to check the generated completion scripts
+addopts = "--ignore=completion_scripts/tests"

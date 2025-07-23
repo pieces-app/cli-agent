@@ -32,7 +32,7 @@ def ensure_pieces_setup():
     Returns True if Pieces OS is running, False otherwise.
     """
     try:
-        Settings.startup()
+        Settings.pieces_client.is_pieces_running(3)
         return True
     except (requests.RequestException, ConnectionError, SystemExit):
         return False

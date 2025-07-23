@@ -1,0 +1,62 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        run: |
+          pip install poetry -U
+          poetry install
+      - name: Ignore Onboarding to avoid any issues in the test flow
+        run: |
+          poetry run python -c "from pieces.core import ConfigCommands; config = ConfigCommands.load_config(); config['skip_onboarding']=True; ConfigCommands.save_config(config)"
+
+      # TODO: We might need to add support for the completion tests in the future
+      # - name: Install shell dependencies for completion tests
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y fish zsh
+
+      - name: Show environment info
+        run: |
+          poetry --version
+          python --version
+          poetry show
+          env
+
+      - name: Install PiecesOS
+        run: |
+          sudo apt update
+          sudo apt install snapd
+          sudo snap install pieces-os
+
+      - name: Open PiecesOS
+        run: |
+          poetry run pieces open
+
+      - name: Run tests
+        run: |
+          poetry run pytest tests/ --maxfail=1 --exitfirst -v
