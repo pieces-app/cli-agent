@@ -159,7 +159,7 @@ class TestMCPGatewayE2E:
             )  # we should enhance error handling at some point
 
     @pytest.mark.skip(
-        "It is not working on the CI I believe it maybe something related to the error handling I would like to check it when the PR is merged"
+        "Not working on CI - likely related to error handling. Will investigate after PR merge."
     )
     def test_gateway_json_rpc_list_tools(self):
         """Test sending a list tools request after initialization."""
