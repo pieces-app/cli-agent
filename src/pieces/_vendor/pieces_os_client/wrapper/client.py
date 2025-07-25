@@ -230,11 +230,15 @@ class PiecesClient(PiecesApiClient):
             return True
         try:
             if self.local_os == "WINDOWS":
-                subprocess.run(["start", uri], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                result = subprocess.run(["start", uri], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             elif self.local_os == "MACOS":
-                subprocess.run(["open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                result = subprocess.run(["open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             elif self.local_os == "LINUX":
-                subprocess.run(["xdg-open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                result =subprocess.run(["xdg-open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                raise ValueError("Invalid platform: " + self.local_os)
+            if result.returncode != 0:
+                return False
         except Exception:
             return False
         return self.is_pieces_running(maximum_retries=12)
