@@ -3,6 +3,7 @@ from io import StringIO
 from pieces.app import main
 from tests.utils import run_main_with_args
 from unittest.mock import patch, Mock
+from pieces.settings import Settings
 
 
 def assert_asset_created(mock_basic_asset, content):
@@ -30,9 +31,18 @@ def test_create_asset_invalid_input(mock_basic_asset, mock_pyperclip_paste, mock
     mock_pyperclip_paste.return_value = "Mocked clipboard content"
     mock_input.side_effect = ["x", "x", "x", "x", "n"]
 
-    with patch("pieces.logger.Logger.confirm") as mocked_print:
+    # Mock the Rich Confirm component that the logger uses
+    with patch("pieces.logger.prompt.Confirm") as mock_confirm_class:
+        mock_confirm_instance = Mock()
+        mock_confirm_instance.ask.return_value = (
+            False  # This will return False (like answering "n")
+        )
+        mock_confirm_class.return_value = mock_confirm_instance
+
         run_main_with_args(["create"], main)
-        mocked_print.assert_any_call("Do you want to save this content?")
+        mock_confirm_instance.ask.assert_called_with(
+            "Do you want to save this content?"
+        )
 
 
 def test_create_asset_with_c_flag(mock_basic_asset):

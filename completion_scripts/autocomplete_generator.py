@@ -23,7 +23,7 @@ python3 completion_scripts/autocomplete_generator.py --fish | source
 ```
 
 ```powershell
-python3 completion_scripts/autocomplete_generator.py --powershell | Invoke-Expression
+python3 completion_scripts/autocomplete_generator.py --powershell | Out-String | Invoke-Expression
 ```
 """
 
@@ -72,7 +72,9 @@ def main():
         if shell_arg in ["bash", "zsh", "fish", "powershell"]:
             generate(shell_arg)
     else:
-        print("Usage: python autocomplete_generator.py [--bash|--zsh|--fish|--powershell]")
+        print(
+            "Usage: python autocomplete_generator.py [--bash|--zsh|--fish|--powershell]"
+        )
         print("Generates shell completion scripts for the Pieces CLI")
 
 

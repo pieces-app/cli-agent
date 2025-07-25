@@ -1,0 +1,79 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2025]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: pip install poetry -U
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Ignore Onboarding to avoid any issues in the test flow
+        run: |
+          poetry run python -c "from pieces.core import ConfigCommands; config = ConfigCommands.load_config(); config['skip_onboarding']=True; ConfigCommands.save_config(config)"
+
+      # Linux shell dependencies
+      - name: Install shell dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fish zsh
+
+      # macOS shell dependencies
+      - name: Install shell dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install fish zsh
+
+      - name: Show environment info
+        run: |
+          poetry --version
+          python --version
+          poetry show
+          env
+
+      # Install PiecesOS based on platform
+      - name: Install PiecesOS (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install snapd
+          sudo snap install pieces-os
+
+      - name: Install PiecesOS (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install --cask pieces-os
+
+      - name: Install PiecesOS (Windows)
+        if: matrix.os == 'windows-2025'
+        run: |
+          winget install "Pieces OS" --silent --accept-package-agreements --accept-source-agreements
+
+      - name: Open PiecesOS
+        run: |
+          poetry run pieces open
+
+      - name: Run tests
+        run: |
+          poetry run pytest tests/ --maxfail=1 --exitfirst -v

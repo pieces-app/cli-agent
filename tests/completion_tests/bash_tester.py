@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
-"""Test Bash shell completions."""
+"""Bash-specific completion tester."""
 
 import subprocess
 import tempfile
 import os
 from typing import List, Tuple
 
-from test_base import CompletionTester, run_test
+from .conftest import CompletionTester
 
 
 class BashCompletionTester(CompletionTester):
@@ -133,80 +132,3 @@ done
         finally:
             os.unlink(script_path)
 
-
-def main():
-    """Run Bash completion tests."""
-    print("=" * 60)
-    print("Testing Bash Shell Completions")
-    print("=" * 60)
-
-    tester = BashCompletionTester()
-    passed = 0
-    failed = 0
-
-    # Test 1: Basic command completion
-    if run_test(
-        "Basic command completion",
-        tester,
-        "pieces ",
-        should_contain={"ask", "chat", "list", "mcp", "config", "create"},
-    ):
-        passed += 1
-    else:
-        failed += 1
-
-    # Test 2: MCP subcommand completion
-    if run_test(
-        "MCP subcommand completion",
-        tester,
-        "pieces mcp ",
-        expected=tester.get_expected_subcommands("mcp"),
-    ):
-        passed += 1
-    else:
-        failed += 1
-
-    # Test 3: MCP docs options
-    if run_test(
-        "MCP docs options after command",
-        tester,
-        "pieces mcp docs ",
-        should_contain={"-i", "-o", "--integration", "--open"},
-    ):
-        passed += 1
-    else:
-        failed += 1
-
-    # Test 4: Integration choices after -i
-    expected_integrations = {
-        "vscode",
-        "goose",
-        "cursor",
-        "claude",
-        "windsurf",
-        "zed",
-        "raycast",
-        "wrap",
-    }
-    if run_test(
-        "Integration choices after --integration",
-        tester,
-        "pieces mcp docs --integration ",
-        should_contain=expected_integrations,
-    ):
-        passed += 1
-    else:
-        failed += 1
-
-    # Summary
-    print("\n" + "=" * 60)
-    print(f"Bash Completion Tests: {passed} passed, {failed} failed")
-    print("=" * 60)
-
-    return failed == 0
-
-
-if __name__ == "__main__":
-    import sys
-
-    sys.exit(0 if main() else 1)

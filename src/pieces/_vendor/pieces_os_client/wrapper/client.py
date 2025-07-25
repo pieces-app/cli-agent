@@ -3,9 +3,8 @@ from typing import TYPE_CHECKING, Optional, Dict, Union, Callable
 import platform
 import atexit
 import urllib.request
-import urllib.error
-import webbrowser
 import socket
+import subprocess
 
 from .websockets.base_websocket import BaseWebsocket
 from .api_client import PiecesApiClient
@@ -230,10 +229,13 @@ class PiecesClient(PiecesApiClient):
         if self.is_pieces_running():
             return True
         try:
-            sucess = webbrowser.open(uri)
-            if not sucess:
-                return False
-        except:
+            if self.local_os == "WINDOWS":
+                subprocess.run(["start", uri], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            elif self.local_os == "MACOS":
+                subprocess.run(["open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            elif self.local_os == "LINUX":
+                subprocess.run(["xdg-open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
             return False
         return self.is_pieces_running(maximum_retries=12)
 

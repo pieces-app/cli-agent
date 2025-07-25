@@ -1,11 +1,11 @@
-#!/usr/bin/env python3
-"""Base test utilities for shell completion testing."""
+"""Pytest configuration for completion tests."""
 
+import pytest
 import subprocess
 import sys
 import os
-from typing import List, Set, Tuple, Optional
 from pathlib import Path
+from typing import List, Set, Tuple, Optional, Dict
 
 # Add parent directories to path to import pieces modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -24,12 +24,13 @@ class CompletionTester:
         self._parse_commands()
 
         # Generate completion script
-        # Get the path relative to the test file location
         test_dir = Path(__file__).parent
-        generator_path = test_dir.parent / "autocomplete_generator.py"
+        generator_path = (
+            test_dir.parent.parent / "completion_scripts" / "autocomplete_generator.py"
+        )
 
         std = subprocess.run(
-            ["python", str(generator_path), f"--{shell}"],
+            [sys.executable, str(generator_path), f"--{shell}"],
             capture_output=True,
             text=True,
             cwd=str(test_dir.parent.parent),  # Run from project root
@@ -42,7 +43,7 @@ class CompletionTester:
             raise RuntimeError(f"No output from {shell} completion generator")
 
         # Create generated directory if it doesn't exist
-        generated_dir = Path(__file__).parent / "generated"
+        generated_dir = test_dir / "generated"
         generated_dir.mkdir(exist_ok=True)
 
         # Create a new file with the completions
@@ -55,11 +56,15 @@ class CompletionTester:
         self.commands = {}
         self.command_options = {}
         self.subcommands = {}
+        self.command_aliases = {}
 
         # Get all base commands
         for cmd in BaseCommand.commands:
-            # cmd = cmd_class()  # Instantiate the command
             self.commands[cmd.name] = cmd
+
+            # Store aliases mapping
+            for alias in cmd.aliases:
+                self.command_aliases[alias] = cmd.name
 
             # Handle command groups (like mcp)
             if isinstance(cmd, CommandGroup):
@@ -69,19 +74,35 @@ class CompletionTester:
                         self.subcommands[cmd.name][sub_name] = sub_cmd
 
     def get_expected_commands(self) -> Set[str]:
-        """Get all expected top-level commands."""
+        """Get all expected top-level commands including aliases."""
         commands = set()
         for cmd in BaseCommand.commands:
-            # cmd = cmd_class()  # Instantiate the command
             commands.add(cmd.name)
             commands.update(cmd.aliases)
         return commands
 
+    def get_expected_primary_commands(self) -> Set[str]:
+        """Get only primary command names (no aliases)."""
+        return {cmd.name for cmd in BaseCommand.commands}
+
+    def get_commands_starting_with(self, prefix: str) -> Set[str]:
+        """Get all commands (including aliases) that start with a given prefix."""
+        all_commands = self.get_expected_commands()
+        return {cmd for cmd in all_commands if cmd.startswith(prefix)}
+
     def get_expected_subcommands(self, command: str) -> Set[str]:
         """Get expected subcommands for a command group."""
-        if command in self.subcommands:
-            return set(self.subcommands[command].keys())
+        # Handle aliases
+        actual_command = self.command_aliases.get(command, command)
+
+        if actual_command in self.subcommands:
+            return set(self.subcommands[actual_command].keys())
         return set()
+
+    def get_subcommands_starting_with(self, command: str, prefix: str) -> Set[str]:
+        """Get subcommands that start with a given prefix."""
+        subcommands = self.get_expected_subcommands(command)
+        return {sub for sub in subcommands if sub.startswith(prefix)}
 
     def get_command_options(
         self, command: str, subcommand: Optional[str] = None
@@ -166,88 +187,25 @@ class CompletionTester:
         """
         raise NotImplementedError("Subclasses must implement run_completion_test")
 
-    def validate_completions(
-        self,
-        command_line: str,
-        completions: List[str],
-        expected: Set[str],
-        should_not_contain: Optional[Set[str]] = None,
-    ) -> Tuple[bool, str]:
-        """
-        Validate that completions match expected values.
-        Returns (success, error_message)
-        """
-        completion_set = set(completions)
 
-        # Check for unwanted completions
-        if should_not_contain:
-            unwanted = completion_set.intersection(should_not_contain)
-            if unwanted:
-                return False, f"Found unwanted completions: {unwanted}"
-
-        # Check if we have expected completions
-        missing = expected - completion_set
-        if missing and expected:  # Only fail if we explicitly expected something
-            return False, f"Missing expected completions: {missing}"
-
-        return True, ""
+@pytest.fixture
+def completion_tester(request):
+    """Fixture that provides the appropriate completion tester based on shell."""
+    # This will be overridden in individual test files
+    return None
 
 
-def run_test(
-    test_name: str,
-    tester: CompletionTester,
-    command_line: str,
-    expected: Optional[Set[str]] = None,
-    should_not_contain: Optional[Set[str]] = None,
-    should_contain: Optional[Set[str]] = None,
-) -> bool:
-    """Run a single test and print results."""
-    print(f"\n🧪 {test_name}")
-    print(f"   Command: {command_line}")
+@pytest.fixture
+def expected_integrations():
+    """Dynamically discover available MCP integrations."""
+    # Import here to avoid circular imports
+    from pieces.mcp.integration import mcp_integrations
 
-    success, completions, error = tester.run_completion_test(command_line)
+    return set(mcp_integrations)
 
-    if not success:
-        print(f"   ❌ FAIL: {error}")
-        return False
 
-    if (
-        expected is not None
-        or should_not_contain is not None
-        or should_contain is not None
-    ):
-        completion_set = set(completions)
-
-        # Check for unwanted completions
-        if should_not_contain:
-            unwanted = completion_set.intersection(should_not_contain)
-            if unwanted:
-                print(f"   ❌ FAIL: Found unwanted completions: {unwanted}")
-                return False
-
-        # Check if we have required completions
-        if should_contain:
-            missing = should_contain - completion_set
-            if missing:
-                print(f"   ❌ FAIL: Missing required completions: {missing}")
-                print(
-                    f"   Got: {completions[:10]}{'...' if len(completions) > 10 else ''}"
-                )
-                return False
-
-        # Check exact match if expected is provided
-        if expected is not None:
-            missing = expected - completion_set
-            extra = completion_set - expected
-            if missing or extra:
-                if missing:
-                    print(f"   ❌ FAIL: Missing expected completions: {missing}")
-                if extra:
-                    print(f"   ❌ FAIL: Unexpected completions: {extra}")
-                print(
-                    f"   Got: {completions[:10]}{'...' if len(completions) > 10 else ''}"
-                )
-                return False
-
-    print(f"   ✅ PASS")
-    return True
+@pytest.fixture
+def expected_integrations_with_meta(expected_integrations):
+    """Expected integration names including 'all' and 'current'."""
+    # These are meta-options available in the docs command
+    return expected_integrations | {"all", "current", "raycast", "wrap"}
