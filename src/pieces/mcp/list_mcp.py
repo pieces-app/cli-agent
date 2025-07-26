@@ -17,7 +17,7 @@ def print_setup_status(integration: Integration, key: str) -> str:
         return f"✅ {integration} MCP is set up!"
 
     if not integration.exists():
-        return "ℹ️ Integration not found."
+        return f"ℹ️ {integration} does not exsits."
 
     return (
         f"❌ {integration} MCP is not set up. "
