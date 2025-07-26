@@ -30,7 +30,7 @@ jobs:
 
       - name: Ignore Onboarding to avoid any issues in the test flow
         run: |
-          poetry run python -c "from pieces.core import ConfigCommands; config = ConfigCommands.load_config(); config['skip_onboarding']=True; ConfigCommands.save_config(config)"
+          poetry run python -c "from pieces.settings import Settings; Settings.user_config.skip_onboarding = True"
 
       # Linux shell dependencies
       - name: Install shell dependencies (Linux)
