@@ -1,7 +1,7 @@
 import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
-from pieces.core.config_command import ConfigCommands
+from pieces.settings import Settings
 
 
 class ConfigCommand(BaseCommand):
@@ -40,5 +40,12 @@ class ConfigCommand(BaseCommand):
 
     def execute(self, **kwargs) -> int:
         """Execute the config command."""
-        ConfigCommands.config(**kwargs)
+
+        editor = kwargs.get("editor")
+        if editor:
+            Settings.cli_config.editor = editor
+            Settings.logger.print(f"Editor set to: {editor}")
+        else:
+            Settings.logger.print("Current configuration:")
+            Settings.logger.print(f"Editor: {Settings.cli_config.editor or 'Not set'}")
         return 0

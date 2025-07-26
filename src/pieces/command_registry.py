@@ -1,6 +1,5 @@
 from typing import Dict, List, Optional
 from pieces.base_command import BaseCommand
-from pieces.command_interface.mcp_command_group import MCPCommandGroup
 from pieces.pieces_argparser import PiecesArgparser
 from argparse import _SubParsersAction
 

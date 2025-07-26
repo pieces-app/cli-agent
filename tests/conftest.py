@@ -1,14 +1,17 @@
 import pytest
 from unittest.mock import patch, Mock
+import sys
+from pathlib import Path
 
-from pieces.core.assets_command import AssetsCommands
+SCRIPT_NAME = "src/pieces"
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
 from pieces._vendor.pieces_os_client.models.classification_specific_enum import (
     ClassificationSpecificEnum,
 )
-
-from pieces.settings import Settings
-
-SCRIPT_NAME = "src/pieces"
 
 
 @pytest.fixture(autouse=True)
@@ -21,6 +24,7 @@ def mock_sys_exit():
 @pytest.fixture(autouse=True)
 def mock_settings_startup():
     """Mock Settings.startup to prevent PiecesOS connection during tests."""
+    from pieces.settings import Settings
     with patch.object(Settings, "startup"):
         yield
 
@@ -28,6 +32,7 @@ def mock_settings_startup():
 @pytest.fixture(autouse=True)
 def mock_pieces_client():
     """Mock the pieces client to prevent actual API calls during tests."""
+    from pieces.settings import Settings
     mock_client = Mock()
     mock_client.is_pieces_running.return_value = True
     with patch.object(Settings, "pieces_client", mock_client):
@@ -37,6 +42,7 @@ def mock_pieces_client():
 @pytest.fixture(autouse=True)
 def mock_headless_mode():
     """Set headless_mode to False by default for all tests."""
+    from pieces.settings import Settings
     with patch.object(Settings, "headless_mode", False):
         yield
 
@@ -61,10 +67,13 @@ def mock_pyperclip_paste():
 
 @pytest.fixture
 def mocked_asset():
+    # Import lazily to avoid heavy module import at collection time
+    from pieces.core.assets_command import AssetsCommands  # noqa: E402
+
     mock_asset = Mock()
     mock_asset.name = "Old Asset Name"
     mock_asset.classification = ClassificationSpecificEnum.JS
-    AssetsCommands.current_asset = mock_asset  # noqa: F821
+    AssetsCommands.current_asset = mock_asset
     yield mock_asset
     AssetsCommands.current_asset = None
 
@@ -87,5 +96,6 @@ def mock_api_client(mock_assets):
 
 @pytest.fixture()
 def mock_settings():
+    from pieces.settings import Settings
     with patch("pieces.settings.Settings") as mock:
         Settings.startup = Mock()

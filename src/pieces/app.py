@@ -1,3 +1,7 @@
+import sys
+
+from pieces.config.constants import PIECES_DATA_DIR
+from pieces.config.migration import run_migration
 from pieces.headless.exceptions import HeadlessError
 from pieces.headless.models.base import ErrorCode
 from pieces.headless.output import HeadlessOutput
@@ -6,9 +10,7 @@ from pieces.command_registry import CommandRegistry
 from pieces.settings import Settings
 from pieces.logger import Logger
 from pieces import __version__
-
 from pieces.command_interface import *  # noqa: F403
-from pieces.core import ConfigCommands
 
 
 class PiecesCLI:
@@ -22,9 +24,15 @@ class PiecesCLI:
         PiecesArgparser.parser = self.parser
 
     def run(self):
-        config = ConfigCommands.load_config()
-        Settings.logger = Logger(__version__ == "dev", Settings.pieces_data_dir)
+        Settings.logger = Logger(__version__ == "dev", PIECES_DATA_DIR)
+        if not run_migration():
+            Settings.logger.critical("Migration failed.")
+            Settings.logger.print(
+                "[red]Migration failed. Please contact support@pieces.app[/red]",
+            )
 
+        if len(sys.argv) == 1:
+            return self.parser.print_help()
         try:
             args = self.parser.parse_args()
         except SystemExit:
@@ -35,10 +43,10 @@ class PiecesCLI:
         # Check for ignore onboarding flag from parsed args
         ignore_onboarding = getattr(args, "ignore_onboarding", False)
 
-        onboarded = config.get("onboarded", False)
+        onboarded = Settings.user_config.onboarded
 
         if (
-            not config.get("skip_onboarding", False)
+            not Settings.user_config.skip_onboarding
             and not onboarded
             and not ignore_onboarding
         ):
@@ -58,8 +66,7 @@ class PiecesCLI:
             if res.lower() == "y":
                 return OnboardingCommand.instance.execute()  # noqa: F405
             elif res.lower() == "skip":
-                config["skip_onboarding"] = True
-                ConfigCommands.save_config(config)
+                Settings.user_config.skip_onboarding = True
 
         command = args.command
         PiecesCLI.command = command

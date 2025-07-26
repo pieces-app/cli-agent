@@ -348,6 +348,7 @@ cursor_integration = Integration(
     text_success=text_success_cursor,
     docs=URLs.CURSOR_MCP_DOCS.value,
     readable="Cursor",
+    id="cursor",
     get_settings_path=get_cursor_path,
     mcp_properties=MCPProperties(
         stdio_property={},
@@ -376,6 +377,7 @@ goose_integration = Integration(
     options=[],
     text_success=text_success_goose,
     readable="Goose",
+    id="goose",
     docs=URLs.GOOSE_MCP_DOCS.value,
     get_settings_path=lambda: goose_config_path,
     mcp_properties=MCPProperties(
@@ -415,6 +417,7 @@ claude_integration = Integration(
     readable="Claude Desktop",
     support_sse=False,
     get_settings_path=get_claude_path,
+    id="claude",
     docs=URLs.CLAUDE_MCP_DOCS.value,
     mcp_properties=MCPProperties(
         stdio_property={},
@@ -425,10 +428,10 @@ claude_integration = Integration(
         ],  ## SSE Connection is not supported in claude!
         sse_property={},
     ),
-    id="claude",
 )
 
 windsurf_integration = Integration(
+    id="windsurf",
     options=[],
     text_success=text_success_windsurf,
     readable="Windsurf",
@@ -447,6 +450,7 @@ windsurf_integration = Integration(
 )
 
 zed_integration = Integration(
+    id="zed",
     options=[],
     text_success=text_success_zed,
     readable="Zed",
@@ -466,6 +470,7 @@ zed_integration = Integration(
 )
 
 shortwave_integration = Integration(
+    id="shortwave",
     options=[],
     text_success=text_success_short_wave,
     readable="Shortwave",
@@ -482,6 +487,7 @@ shortwave_integration = Integration(
 
 
 claude_cli_integration = Integration(
+    id="claude_code",
     options=[],  # TODO: Add local and global options
     text_success=text_success_claude_cli,
     readable="Claude Code",
@@ -498,6 +504,7 @@ claude_cli_integration = Integration(
 )
 
 kiro_integration = Integration(
+    id="kiro",
     options=[],
     text_success=text_success_kiro,
     readable="Kiro",
