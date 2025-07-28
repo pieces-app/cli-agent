@@ -48,9 +48,26 @@ class ModelConfigSchema(BaseModel):
     @field_validator("auto_commit_model", "model", mode="before")
     @classmethod
     def validate_model_info(cls, v):
+        # Handle None values (for optional fields)
+        if v is None:
+            return v
+
+        # If it's already a ModelInfo instance, validate its UUID
+        if isinstance(v, ModelInfo):
+            uuid_to_check = v.uuid
+        # If it's a dictionary, extract the UUID
+        elif isinstance(v, dict):
+            uuid_to_check = v.get("uuid")
+            if not uuid_to_check:
+                raise ValueError("ModelInfo dictionary must contain 'uuid' field")
+        else:
+            # For other types (string, etc.), we can't extract a UUID
+            # Let Pydantic handle the conversion and validation
+            return v
+
         from pieces.settings import Settings
 
         for model_name, model_id in Settings.pieces_client.get_models().items():
-            if model_id == v.uuid:
+            if model_id == uuid_to_check:
                 return ModelInfo(name=model_name, uuid=model_id)
-        raise ValueError("Model UUID not found in available models")
+        raise ValueError(f"Model UUID '{uuid_to_check}' not found in available models")

@@ -34,18 +34,31 @@ def _file_lock(path: Path):
     """Context manager that acquires an OS-level exclusive lock on *path*."""
 
     if sys.platform == "win32":
+        # On Windows, use a lock file approach to avoid file handle conflicts
+        lock_file = path.with_suffix(path.suffix + ".lock")
         import msvcrt
 
-        with open(path, "a") as _fh:
-            fd = _fh.fileno()
-            try:
-                msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
-                yield
-            finally:
+        try:
+            # Create and lock a separate lock file
+            with open(lock_file, "w") as _fh:
+                fd = _fh.fileno()
                 try:
-                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
-                except OSError:
-                    pass
+                    msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+                    yield
+                finally:
+                    try:
+                        msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+                    except OSError:
+                        pass
+            # Clean up lock file
+            try:
+                lock_file.unlink(missing_ok=True)
+            except OSError:
+                pass
+        except (FileNotFoundError, PermissionError, OSError):
+            # Fallback: if locking fails, just proceed without OS-level lock
+            # The threading lock should provide basic protection
+            yield
     else:
         import fcntl
 

@@ -162,6 +162,12 @@ def run_migration() -> bool:
                     "Legacy data directory removed after successful migration."
                 )
             except Exception as e:
+                Settings.logger.print(
+                    f"[red]Could not remove legacy directory, Please remove it manually.[/red]"
+                )
+                Settings.logger.print(
+                    f"[yellow]Legacy directory: {OLD_PIECES_DATA_DIR}[/yellow]"
+                )
                 Settings.logger.info(f"Could not remove legacy directory: {e}")
     else:
         Settings.logger.error("Configuration migration failed!")

@@ -28,10 +28,6 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
-      - name: Ignore Onboarding to avoid any issues in the test flow
-        run: |
-          poetry run python -c "from pieces.settings import Settings; Settings.user_config.skip_onboarding = True"
-
       # Linux shell dependencies
       - name: Install shell dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -70,6 +66,45 @@ jobs:
         run: |
           winget install "Pieces OS" --silent --accept-package-agreements --accept-source-agreements
 
+      - name: Fix Windows permissions for config directory
+        if: matrix.os == 'windows-2025'
+        run: |
+          # Create and set permissions on config directory before any Python code runs
+          $configDir = "$env:LOCALAPPDATA\pieces\pieces-cli"
+          $parentDir = "$env:LOCALAPPDATA\pieces"
+          
+          Write-Host "Creating parent directory: $parentDir"
+          New-Item -ItemType Directory -Force -Path $parentDir
+          Write-Host "Creating config directory: $configDir"
+          New-Item -ItemType Directory -Force -Path $configDir
+          
+          Write-Host "Setting permissions on parent directory..."
+          icacls $parentDir /grant "${env:USERNAME}:(OI)(CI)(F)" /T
+          if ($LASTEXITCODE -ne 0) { Write-Error "Failed to set parent permissions"; exit 1 }
+          
+          Write-Host "Setting permissions on config directory..."
+          icacls $configDir /grant "${env:USERNAME}:(OI)(CI)(F)" /T
+          if ($LASTEXITCODE -ne 0) { Write-Error "Failed to set config permissions"; exit 1 }
+          
+          # Test permissions by creating and deleting a test file
+          Write-Host "Testing permissions..."
+          $testFile = Join-Path $configDir "permission_test.json"
+          try {
+            '{"test": true}' | Out-File -FilePath $testFile -Encoding utf8
+            Remove-Item $testFile -Force
+            Write-Host "Permission test successful"
+          } catch {
+            Write-Error "Permission test failed: $_"
+            # Show current permissions for debugging
+            icacls $configDir
+            exit 1
+          }
+        shell: powershell
+
+      - name: Ignore Onboarding for the tests to work
+        run: |
+          poetry run python -c "from pieces.settings import Settings; Settings.user_config.skip_onboarding = True"
+
       - name: Open PiecesOS
         run: |
           poetry run pieces open
@@ -77,3 +112,19 @@ jobs:
       - name: Run tests
         run: |
           poetry run pytest tests/ --maxfail=1 --exitfirst -v
+
+      - name: Collect log directory
+        if: always()
+        run: |
+          LOG_DIR=$(poetry run python -c "import os;from pieces.logger import Logger; from pieces.config.constants import PIECES_DATA_DIR; print(os.path.join(PIECES_DATA_DIR, 'logs'))")
+          echo "Log directory: $LOG_DIR"
+          mkdir -p artifacts/logs
+          cp -r "$LOG_DIR"/* artifacts/logs || echo "No logs found"
+        shell: bash
+
+      - name: Upload logs as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pieces-cli-logs-${{ matrix.os }}
+          path: artifacts/logs

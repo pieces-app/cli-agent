@@ -27,7 +27,3 @@ class CLIConfigSchema(BaseModel):
     @classmethod
     def validate_semver_field(cls, v):
         return validate_semver(v)
-
-    class Config:
-        extra = "forbid"
-
