@@ -1,0 +1,97 @@
+/* Base styles for the Pieces CLI TUI application */
+
+/* Root application styles */
+Screen {
+  background: $background;
+  color: $text;
+}
+
+/* Layout containers */
+.chat-container {
+  dock: top;
+  height: 1fr;
+}
+
+.input-container {
+  dock: bottom;
+  height: 3;
+  background: $surface;
+  border-top: solid $primary;
+}
+
+.controls {
+  dock: bottom;
+  height: 1;
+  background: $surface;
+  color: $text-muted;
+  text-align: center;
+  padding: 0 1;
+}
+
+/* Status bar styles */
+.status-bar {
+  dock: bottom;
+  height: 1;
+  background: $surface;
+  border-top: solid $secondary;
+  padding: 0 1;
+}
+
+.status-item {
+  margin: 0 2 0 0;
+  height: 1;
+}
+
+.status-spacer {
+  width: 1fr;
+}
+
+.status-connection.status-connected {
+  color: $success;
+}
+
+.status-connection.status-disconnected {
+  color: $error;
+}
+
+.status-chat {
+  color: $primary;
+}
+
+.status-model {
+  color: $accent;
+}
+
+.status-context {
+  color: $warning;
+}
+
+.status-help {
+  color: $text-muted;
+  text-style: italic;
+}
+
+/* Global utilities */
+.hidden {
+  display: none;
+}
+
+.highlighted {
+  background: $accent;
+  color: $text;
+}
+
+.error {
+  color: $error;
+  text-style: bold;
+}
+
+.success {
+  color: $success;
+  text-style: bold;
+}
+
+.warning {
+  color: $warning;
+  text-style: bold;
+}

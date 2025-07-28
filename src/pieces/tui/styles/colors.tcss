@@ -1,0 +1,20 @@
+/* Color scheme for Pieces CLI TUI */
+
+/* Core background utilities */
+.bg-primary { background: $primary; color: $text; }
+.bg-secondary { background: $secondary; color: $text; }
+.bg-success { background: $success; color: $text; }
+.bg-error { background: $error; color: $text; }
+
+/* Core text utilities */
+.text-primary { color: $primary; }
+.text-secondary { color: $secondary; }
+.text-success { color: $success; }
+.text-error { color: $error; }
+.text-muted { color: $text-muted; }
+
+/* Core border utilities */
+.border-primary { border: solid $primary; }
+.border-secondary { border: solid $secondary; }
+.border-success { border: solid $success; }
+.border-error { border: solid $error; } 

@@ -1,0 +1,145 @@
+/* Enhanced chat panel, message, and input styles */
+
+/* Main chat panel - now takes 75% width on the right */
+ChatPanel {
+    width: 75%;
+    border: solid $primary;
+    border-title-color: $primary;
+    border-title-style: bold;
+    scrollbar-background: $surface;
+    scrollbar-color: $primary;
+    scrollbar-color-hover: $accent;
+}
+
+/* Chat message container */
+.message-container {
+    margin: 0 0 1 0;
+    padding: 0;
+    width: 100%;
+}
+
+.message-container:hover {
+    background: $surface-active;
+}
+
+/* Message wrapper */
+.message-wrapper {
+    padding: 1;
+    width: 100%;
+}
+
+/* Message header */
+.message-header {
+    height: auto;
+    margin: 0 0 1 0;
+    align: left middle;
+}
+
+/* Message role indicators */
+.message-role {
+    text-style: bold;
+    margin: 0 2 0 0;
+}
+
+.message-role-user { 
+    color: $primary; 
+}
+
+.message-role-assistant { 
+    color: $success; 
+}
+
+.message-role-system { 
+    color: $warning; 
+}
+
+/* Message timestamp */
+.message-timestamp {
+    color: $text-muted;
+    text-style: italic;
+    margin: 0 2 0 0;
+}
+
+/* Message model indicator */
+.message-model {
+    color: $text-muted;
+    text-style: italic;
+}
+
+/* Message content */
+.message-content {
+    margin: 0 0 0 0;
+    padding: 1 2;
+    background: $panel;
+    border-left: thick $accent;
+}
+
+.message-content-user {
+    border-left: thick $primary;
+    background: rgba(30, 144, 255, 0.1);
+}
+
+.message-content-assistant {
+    border-left: thick $success;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.message-content-system {
+    border-left: thick $warning;
+    background: rgba(251, 191, 36, 0.1);
+    text-style: italic;
+}
+
+/* Message states */
+.message-highlighted {
+    background: $accent !important;
+}
+
+.message-user .message-wrapper {
+    align: right top;
+}
+
+.message-assistant .message-wrapper {
+    align: left top;
+}
+
+.message-system .message-wrapper {
+    align: center top;
+}
+
+/* Streaming and thinking indicators */
+.message-streaming { 
+    border-left: thick $accent;
+    text-style: bold;
+}
+
+.message-thinking {
+    color: $warning;
+    text-style: italic bold blink;
+    text-align: center;
+    background: $surface;
+    border: dashed $warning;
+    padding: 1;
+    margin: 1;
+}
+
+/* Chat input styles */
+ChatInput {
+    width: 1fr;
+    height: 3;
+    background: $surface;
+    border: solid $primary;
+    padding: 0 1;
+    margin: 1 0;
+}
+
+ChatInput:focus {
+    border: solid $accent;
+    background: $panel;
+}
+
+ChatInput:disabled {
+    border: solid $primary 50%;
+    background: $background;
+    color: $text-muted;
+}

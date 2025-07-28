@@ -1,0 +1,101 @@
+/* Conversations panel styles */
+
+/* Main conversations panel */
+ConversationsPanel {
+    width: 25%;
+    border: solid $secondary;
+    border-title-color: $secondary;
+    border-title-style: bold;
+    scrollbar-background: $surface;
+    scrollbar-color: $secondary;
+    scrollbar-color-hover: $accent;
+}
+
+/* New conversation button container */
+.new-conversation-container {
+    height: 3;
+    padding: 1;
+    background: $surface;
+    border-bottom: solid $primary;
+}
+
+.new-conversation-btn {
+    width: 1fr;
+    height: 1;
+    background: $primary;
+    color: $text;
+    text-style: bold;
+    text-align: center;
+    border: none;
+}
+
+.new-conversation-btn:hover {
+    background: $accent;
+}
+
+.new-conversation-btn:focus {
+    background: $accent;
+    text-style: reverse;
+}
+
+/* Conversations list container */
+.conversations-list {
+    height: 1fr;
+    padding: 0;
+}
+
+/* Empty state */
+.empty-conversations {
+    color: $text-muted;
+    margin: 2;
+    text-align: center;
+    text-style: italic;
+}
+
+/* Individual conversation items */
+.conversation-item {
+    margin: 0 0 1 0;
+    padding: 1;
+    background: $panel;
+    border-left: thick $surface;
+}
+
+.conversation-item:hover {
+    background: $surface;
+    border-left: thick $primary;
+}
+
+.conversation-item.conversation-active {
+    background: $primary;
+    color: $text;
+    border-left: thick $accent;
+}
+
+.conversation-item.conversation-active:hover {
+    background: $accent;
+}
+
+/* Conversation content */
+.conversation-content {
+    height: auto;
+}
+
+.conversation-title {
+    text-style: bold;
+    margin: 0 0 0 0;
+}
+
+.conversation-active .conversation-title {
+    color: $text;
+}
+
+.conversation-summary {
+    color: $text-muted;
+    margin: 0 0 0 0;
+    text-style: italic;
+}
+
+.conversation-active .conversation-summary {
+    color: $text;
+    opacity: 80%;
+} 

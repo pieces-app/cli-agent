@@ -1,0 +1,12 @@
+/* Essential animations for Textual CSS */
+
+/* Core interaction states */
+.blink { text-style: blink; }
+.pulse { text-style: bold; }
+.pulse:hover { text-style: reverse; }
+
+/* Hover feedback */
+.hover-lift:hover {
+    offset: 0 -1;
+    background: $surface;
+} 
