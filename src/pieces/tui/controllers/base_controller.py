@@ -13,6 +13,7 @@ from typing import (
 from enum import Enum
 from abc import ABC, abstractmethod
 import threading
+from pieces.config.schemas.model import ModelInfo
 from pieces.settings import Settings
 from .event_types import (
     ContextEventData,
@@ -31,7 +32,6 @@ if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import (
         BasicAsset,
     )
-    from pieces._vendor.pieces_os_client.models.model import Model
     from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 
 
@@ -118,7 +118,7 @@ class BaseController(ABC):
     ) -> None: ...
     @overload
     def emit(
-        self, event_type: Literal[EventType.MODEL_CHANGED], data: Optional["Model"]
+        self, event_type: Literal[EventType.MODEL_CHANGED], data: Optional["ModelInfo"]
     ) -> None: ...
     @overload
     def emit(

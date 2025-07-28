@@ -6,7 +6,6 @@ from textual.widgets import Static
 from textual.containers import Horizontal
 from textual.app import ComposeResult
 
-from pieces.settings import Settings
 
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat

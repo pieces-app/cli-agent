@@ -1,6 +1,6 @@
 """Enhanced chat panel widget for displaying conversation history with metadata."""
 
-from typing import List, Tuple, Optional, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 from textual.reactive import reactive
 from textual.containers import ScrollableContainer
 from textual.widgets import Static

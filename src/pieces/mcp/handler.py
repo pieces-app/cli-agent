@@ -22,7 +22,8 @@ from pieces.settings import Settings
 from pieces.urls import URLs
 
 from ..utils import PiecesSelectMenu
-from .integration import Integration, mcp_integration_types
+from .integration import Integration
+from pieces.config.schemas.mcp import mcp_integration_types
 from .integrations import (
     claude_cli_integration,
     claude_integration,

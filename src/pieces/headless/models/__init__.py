@@ -20,4 +20,3 @@ __all__ = [
     "create_mcp_list_success",
     "create_mcp_setup_success",
 ]
-

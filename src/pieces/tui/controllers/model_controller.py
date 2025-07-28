@@ -7,6 +7,7 @@ from .base_controller import BaseController, EventType
 
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.models.model import Model
+    from pieces.config.schemas.model import ModelInfo
 
 
 class ModelController(BaseController):
@@ -15,7 +16,7 @@ class ModelController(BaseController):
     def __init__(self):
         """Initialize the model controller."""
         super().__init__()
-        self._current_model: Optional["Model"] = None
+        self._current_model: Optional["ModelInfo"] = None
         self._available_models: List["Model"] = []
         self._polling_thread: Optional[threading.Thread] = None
         self._stop_polling = threading.Event()
@@ -26,10 +27,10 @@ class ModelController(BaseController):
             return
 
         try:
-            model_id = Settings.get_model_id()
-            for model in Settings.pieces_client.models_object:
-                if model.id == model_id:
-                    self._current_model = model
+            model = Settings.model_config.model
+            if not model:
+                return
+            self._current_model = model
             self._initialized = True
             Settings.logger.info("ModelController initialized")
 
@@ -48,7 +49,7 @@ class ModelController(BaseController):
 
     def _get_current_model_name(self) -> Optional[str]:
         """Get the current model name."""
-        return Settings.get_model()
+        return self._current_model.name if self._current_model else None
 
     def change_model(self, model_name: str) -> bool:
         """
@@ -62,24 +63,14 @@ class ModelController(BaseController):
         """
         try:
             # Find the model in available models
-            model = None
-            for m in self._available_models:
-                if m.name == model_name:
-                    model = m
-                    break
-
-            if not model:
-                Settings.logger.error(f"Model '{model_name}' not found")
-                return False
-
-            # Change the model
-            # TODO: Update the local cache here and the file
-            Settings.pieces_client.model_id = str(model.id)
-
-            self._current_model = model
 
             # Emit event
-            self.emit(EventType.MODEL_CHANGED, model)
+            Settings.pieces_client.model_name = model_name
+            model_info = ModelInfo(
+                name=model_name, uuid=Settings.pieces_client._model_id
+            )
+            Settings.model_config.model = model_info
+            self.emit(EventType.MODEL_CHANGED, model_info)
 
             return True
 
@@ -87,10 +78,10 @@ class ModelController(BaseController):
             Settings.logger.error(f"Error changing model: {e}")
             return False
 
-    def get_current_model(self) -> Optional["Model"]:
+    def get_current_model(self) -> Optional["ModelInfo"]:
         """Get the current model name."""
         return self._current_model
 
     def get_available_models(self) -> List["Model"]:
         """Get list of available models."""
-        return self._available_models.copy()
+        return Settings.pieces_client.models_object

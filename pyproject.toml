@@ -38,6 +38,7 @@ pytest = "^8.0.0"
 pyinstaller = "^6.13.0"
 requests = "^2.31.0"
 pytest-asyncio = "^1.0.0"
+textual-dev = "1.7.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -53,4 +54,3 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-

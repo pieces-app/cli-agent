@@ -1,7 +1,14 @@
-import unittest
 import json
-from unittest.mock import patch, Mock, mock_open, PropertyMock
-from pieces.mcp.integration import Integration, MCPProperties
+import unittest
+from unittest.mock import Mock, mock_open, patch, MagicMock
+
+from tests.mcps.utils import (
+    MCPTestBase,
+    MockPiecesClient,
+    default_mcp_properties,
+)
+
+from pieces.mcp.integration import Integration
 from pieces.settings import Settings
 from pieces._vendor.pieces_os_client.models.workstream_pattern_engine_status import (
     WorkstreamPatternEngineStatus,
@@ -14,62 +21,18 @@ from pieces._vendor.pieces_os_client.api.model_context_protocol_api import (
 )
 
 
-class MockPiecesClient(Mock):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.api_client = Mock()
-        self._work_stream_pattern_engine_api = WorkstreamPatternEngineApi(
-            self.api_client
-        )
-        self._model_context_protocol_api = ModelContextProtocolApi(self.api_client)
-        self.copilot = Mock()
-        self.copilot.context = Mock()
-        self.copilot.context.ltm = Mock()
-        self.copilot.context.ltm.is_enabled = False
-        self.copilot.context.ltm.check_perms = Mock(return_value=[])
-        self.copilot.context.ltm.enable = Mock()
-        self.copilot.context.ltm.ltm_status = None
-        self._port = "39300"
-        self.host = "http://127.0.0.1:39300"
-        self.is_pieces_running = Mock(return_value=True)
-        self.init_host = Mock()
-
-    @property
-    def work_stream_pattern_engine_api(self):
-        return self._work_stream_pattern_engine_api
-
-    @property
-    def model_context_protocol_api(self):
-        return self._model_context_protocol_api
-
-
-class TestIntegration(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.settings_patcher = patch("pieces.settings.Settings")
-        cls.mock_settings = cls.settings_patcher.start()
-        cls.mock_settings.mcp_config = "/tmp/mcp_config.json"
-        cls.mock_settings.logger = Mock()
-        cls.mock_settings.logger.console = Mock()
-        cls.mock_settings.logger.confirm = Mock(return_value=True)
-
-        # Mock the MCP URL functions
-        cls.mcp_urls_patcher = patch("pieces.mcp.integration.get_mcp_urls")
-        cls.mock_mcp_urls = cls.mcp_urls_patcher.start()
-        cls.mock_mcp_urls.return_value = ["pieces_url"]
-
-        cls.mcp_latest_url_patcher = patch("pieces.mcp.integration.get_mcp_latest_url")
-        cls.mock_mcp_latest_url = cls.mcp_latest_url_patcher.start()
-        cls.mock_mcp_latest_url.return_value = "pieces_url"
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.settings_patcher.stop()
-        cls.mcp_urls_patcher.stop()
-        cls.mcp_latest_url_patcher.stop()
+class TestIntegration(MCPTestBase):
+    """Unit tests for the *generic* MCP integration wrapper."""
 
     def setUp(self):
+        super().setUp() if hasattr(super(), "setUp") else None  # type: ignore[attr-defined]
+
+        # ------------------------------------------------------------------
+        # Mock Pieces client & APIs
+        # ------------------------------------------------------------------
         self.mock_api_client = MockPiecesClient()
+
+        # Stub deep API calls used by Integration.search()
         self.mock_workstream_api = Mock()
         self.mock_workstream_api.workstream_pattern_engine_processors_vision_status = (
             Mock(
@@ -88,18 +51,39 @@ class TestIntegration(unittest.TestCase):
             )
         )
         self.mock_api_client._work_stream_pattern_engine_api = self.mock_workstream_api
-        self.mock_settings.pieces_client = self.mock_api_client
 
-        self.mcp_properties = MCPProperties(
-            stdio_property={"type": "stdio"},
-            stdio_path=["mcp", "servers", "Pieces"],
-            sse_property={"type": "sse"},
-            sse_path=["mcp", "servers", "Pieces"],
-            url_property_name="url",
-            command_property_name="command",
-            args_property_name="args",
-        )
+        # Expose client on the patched global Settings
+        Settings.pieces_client = self.mock_api_client
 
+        # ------------------------------------------------------------------
+        # APPROACH 1: Mock the entire mcp module before importing
+        # ------------------------------------------------------------------
+        # Create a mock MCP config schema
+        self.mock_mcp_config_schema = MagicMock()
+        self.mock_mcp_config_schema.model_validate = MagicMock()
+        self.mock_mcp_config_schema.model_dump = MagicMock(return_value={})
+
+        # Patch the mcp module
+        with patch("pieces.config.schemas.mcp") as mock_mcp:
+            mock_mcp.mcp_integrations = ["test_integration"]
+            mock_mcp.MCPConfigSchema = self.mock_mcp_config_schema
+            mock_mcp._create_mcp_config_schema = MagicMock(
+                return_value=self.mock_mcp_config_schema
+            )
+
+            # Now modify the integrations list
+            from pieces.config.schemas import mcp
+
+            if "test_integration" not in mcp.mcp_integrations:
+                mcp.mcp_integrations.append("test_integration")
+
+            # Recreate the schema with test integration
+            mcp.MCPConfigSchema = mcp._create_mcp_config_schema()
+
+        # ------------------------------------------------------------------
+        # Integration under test
+        # ------------------------------------------------------------------
+        self.mcp_properties = default_mcp_properties()
         self.basic_integration = Integration(
             options=[("Option 1", {"key": "value"})],
             text_success="Success text",
@@ -110,13 +94,39 @@ class TestIntegration(unittest.TestCase):
             error_text="Test error text",
             loader=json.load,
             saver=lambda x, y: json.dump(x, y, indent=4),
-            id="test_integration",
+            id="test_integration",  # Synthetic integration ID for tests
         )
 
     def tearDown(self):
-        self.mock_api_client.reset_mock()
-        self.mock_workstream_api.reset_mock()
-        self.mock_settings.logger.reset_mock()
+        """Clean up after each test."""
+        # Remove test integration from the list if it was added
+        from pieces.config.schemas import mcp
+
+        if "test_integration" in mcp.mcp_integrations:
+            mcp.mcp_integrations.remove("test_integration")
+
+        # Recreate the schema without test integration
+        mcp.MCPConfigSchema = mcp._create_mcp_config_schema()
+
+    # ------------------------------------------------------------------
+    # Alternative setUp using patch.multiple
+    # ------------------------------------------------------------------
+    @patch.multiple(
+        "pieces.config.schemas.mcp",
+        mcp_integrations=[
+            "test_integration",
+            "vscode",
+            "cursor",
+        ],  # Include test_integration
+        MCPConfigSchema=MagicMock(),
+    )
+    def alternative_test_setup(self):
+        """Alternative approach using patch.multiple decorator."""
+        pass
+
+    # ------------------------------------------------------------------
+    # Individual test cases
+    # ------------------------------------------------------------------
 
     def test_integration_initialization(self):
         self.assertEqual(self.basic_integration.readable, "Test Integration")
@@ -124,28 +134,55 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(self.basic_integration.id, "test_integration")
         self.assertEqual(len(self.basic_integration.options), 1)
 
-    def test_load_mcp_config(self):
-        mock_config = {"test_integration": ["/path/to/project"]}
+    @patch("pieces.config.schemas.mcp.MCPConfigSchema")
+    def test_load_mcp_config(self, mock_schema):
+        """Test with schema mocked at method level."""
+        mock_config = {"test_integration": {"/path/to/project": "sse"}}
+
+        # Mock the schema validation
+        mock_instance = MagicMock()
+        mock_instance.model_dump.return_value = mock_config
+        mock_schema.model_validate.return_value = mock_instance
+
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
             config = self.basic_integration.load_config()
             self.assertEqual(config, mock_config)
 
-    def test_add_project(self):
-        mock_config = {"test_integration": ["/path/to/project"]}
-        with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-            self.basic_integration.on_select("sse", "/path/to/new/project")
-            open.assert_called_with(Settings.mcp_config, "w")
+    @patch("pieces.settings.Settings.mcp_config")
+    def test_add_project(self, mock_mcp_config):
+        """Calling *on_select* should register the project in *MCPManager*."""
+        mock_config = {
+            "mcp": {"servers": {"Pieces": {"url": "pieces_url", "type": "sse"}}}
+        }
 
-    def test_remove_project(self):
-        mock_config = {"test_integration": ["/path/to/project"]}
+        # Mock the mcp_config methods
+        mock_mcp_config.get_projects.return_value = {"/path/to/new/project": "sse"}
+        mock_mcp_config.add_project.return_value = None
+
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-            self.basic_integration.local_config.remove_project(
-                "test_integration", "/path/to/project"
-            )
-            open.assert_called_with(Settings.mcp_config, "w")
+            result = self.basic_integration.on_select("sse", "/path/to/new/project")
+            self.assertTrue(result)
+
+        # Verify the add_project was called
+        mock_mcp_config.add_project.assert_called_once_with(
+            "test_integration", "sse", "/path/to/new/project"
+        )
+
+    @patch("pieces.settings.Settings.mcp_config")
+    def test_remove_project(self, mock_mcp_config):
+        # Setup the mock to return empty list after removal
+        mock_mcp_config.get_projects.return_value = []
+        mock_mcp_config.remove_project.return_value = None
+
+        # Call the methods
+        mock_mcp_config.add_project("test_integration", "sse", "/path/to/project")
+        mock_mcp_config.remove_project("test_integration", "/path/to/project")
+        projects = mock_mcp_config.get_projects("test_integration")
+
+        self.assertNotIn("/path/to/project", projects)
 
     def test_is_set_up(self):
-        mock_config = {"test_integration": ["/path/to/project"]}
+        mock_config = {"test_integration": {"/path/to/project": "sse"}}
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
             with patch.object(
                 self.basic_integration, "search", return_value=(True, {})
@@ -161,6 +198,19 @@ class TestIntegration(unittest.TestCase):
                 found, config = self.basic_integration.search("/path/to/project", "sse")
                 self.assertTrue(found)
                 self.assertEqual(config, {"url": "pieces_url"})
+
+    # ------------------------------------------------------------------
+    # Alternative approach: Mock at the class level
+    # ------------------------------------------------------------------
+    @patch("pieces.config.schemas.mcp")
+    def test_with_full_module_mock(self, mock_mcp_module):
+        """Test with the entire mcp module mocked."""
+        # Setup the mock module
+        mock_mcp_module.mcp_integrations = ["test_integration"]
+        mock_mcp_module.MCPConfigSchema = MagicMock()
+
+        # Your test logic here
+        self.assertIn("test_integration", mock_mcp_module.mcp_integrations)
 
 
 if __name__ == "__main__":

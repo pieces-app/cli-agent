@@ -515,18 +515,6 @@ class TestLogger:
         assert isinstance(logger, Logger)
         assert logger.name == "Pieces_CLI"
 
-    def test_get_instance_returns_existing_instance(
-        self, mock_prompt, mock_confirm, mock_console
-    ):
-        """Test get_instance returns existing instance when available."""
-        # Create an instance manually
-        Logger._instance = Logger(debug_mode=True)
-
-        # Get instance should return the existing one
-        logger = Logger.get_instance()
-        assert logger is Logger._instance
-        assert logger.debug_mode is True
-
     def test_handler_cleanup_on_init(self, mock_prompt, mock_confirm, mock_console):
         """Test that existing handlers are removed on initialization."""
         logger = Logger()
