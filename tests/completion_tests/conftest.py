@@ -3,9 +3,8 @@
 import pytest
 import subprocess
 import sys
-import os
 from pathlib import Path
-from typing import List, Set, Tuple, Optional, Dict
+from typing import List, Set, Tuple, Optional
 
 # Add parent directories to path to import pieces modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -199,7 +198,7 @@ def completion_tester(request):
 def expected_integrations():
     """Dynamically discover available MCP integrations."""
     # Import here to avoid circular imports
-    from pieces.mcp.integration import mcp_integrations
+    from pieces.config.schemas.mcp import mcp_integrations
 
     return set(mcp_integrations)
 

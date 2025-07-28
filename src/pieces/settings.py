@@ -1,9 +1,14 @@
-import pickle
 import os
 from pathlib import Path
 import sys
 from platformdirs import user_data_dir
 
+from pieces.config.constants import (
+    CLI_CONFIG_PATH,
+    MODEL_CONFIG_PATH,
+    MCP_CONFIG_PATH,
+    USER_CONFIG_PATH,
+)
 from pieces.headless.exceptions import HeadlessCompatibilityError
 from pieces.headless.models.base import CommandResult
 from pieces.logger import Logger
@@ -17,6 +22,13 @@ from pieces.gui import (
     print_version_details,
 )
 from pieces.urls import URLs
+from pieces.config.constants import PIECES_DATA_DIR
+from pieces.config.managers import (
+    CLIManager,
+    ModelManager,
+    MCPManager,
+    UserManager,
+)
 
 
 class Settings:
@@ -30,118 +42,19 @@ class Settings:
     TIMEOUT = 40  # Websocket ask timeout
 
     # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-    BASE_DIR = os.path.dirname(__file__)
+    cli_config = CLIManager(CLI_CONFIG_PATH)
+    model_config = ModelManager(MODEL_CONFIG_PATH)
+    mcp_config = MCPManager(MCP_CONFIG_PATH)
+    user_config = UserManager(USER_CONFIG_PATH)
 
-    # Define the directory path
-    # Check if the directory exists, if not, create it
-    pieces_data_dir = user_data_dir(
-        appauthor="pieces", appname="cli-agent", ensure_exists=True
-    )
-
-    logger = Logger(log_dir=pieces_data_dir)  # Will be set on the app startup
-
-    models_file = Path(
-        pieces_data_dir,
-        "model_data.pkl",
-        # model data file just store the model_id that the user is using (eg. {"model_id": UUID })
-    )
+    logger = Logger(log_dir=PIECES_DATA_DIR)  # Will be set on the app startup
 
     _os_id = None
-    file_cache = {}
-
-    config_file = Path(pieces_data_dir, "pieces_config.json")
 
     run_in_loop = False  # is CLI looping?
     headless_mode = False  # is CLI running in headless mode?
 
-    # some useful directories
-    # extensions_dir
-    extensions_dir = os.path.join(BASE_DIR, "commands", "extensions.json")
-
-    mcp_config = os.path.join(pieces_data_dir, "mcp_config.json")
-
-    # open snippet directory
-    open_snippet_dir = os.path.join(pieces_data_dir, "opened_snippets")
-
-    _model_name = None
-
-    @classmethod
-    def get_model(cls):
-        """
-        Retrives the model name from the saved file
-        """
-        if cls._model_name:
-            return cls._model_name
-
-        model_id = cls.get_from_pickle(cls.models_file, "model_id")
-        if model_id:
-            models_reverse = {v: k for k, v in cls.pieces_client.get_models().items()}
-            cls._model_name = models_reverse.get(model_id)
-        else:
-            cls._model_name = cls.pieces_client.model_name
-
-        try:
-            cls.pieces_client.model_name = cls._model_name
-        except ValueError:
-            return cls.pieces_client.model_name
-        return cls._model_name
-
-    @classmethod
-    def get_auto_commit_model(cls) -> str:
-        cls.pieces_client.model_name
-        return cls.get_from_pickle(
-            cls.models_file, "gemini-2.0-flash-lite-001"
-        ) or cls.get_model_by_unique("gemini-2.0-flash-lite-001")
-
-    @classmethod
-    def get_model_by_unique(cls, unique, save_to_cache=True) -> str:
-        cls.pieces_client.get_models()
-        model = [
-            model.id
-            for model in cls.pieces_client.models_object
-            if model.unique == unique
-        ][0]
-        if save_to_cache:
-            cls.file_cache[unique] = model
-            cls.dump_pickle(cls.models_file)
-
-        return model
-
-    @classmethod
-    def get_model_id(cls):
-        """
-        Retrives the model id from the saved file
-        """
-        cls.pieces_client.model_name  # Let's load the models first
-        return (
-            cls.get_from_pickle(cls.models_file, "model_id")
-            or cls.pieces_client.model_id
-        )
-
-    @classmethod
-    def get_from_pickle(cls, file, key):
-        try:
-            cache = cls.file_cache.get(str(file))
-            if not cache:
-                with open(file, "rb") as f:
-                    cache = pickle.load(f)
-                    cls.file_cache[str(file)] = cache
-            return cache.get(key)
-        except FileNotFoundError:
-            return None
-
-    @classmethod
-    def dump_pickle(cls, file):
-        """Store data in a pickle file."""
-        with open(file, "wb") as f:
-            pickle.dump(cls.file_cache, f)
-
-    @classmethod
-    def update_model(cls, model_name, model_id):
-        cls._model_name = model_name
-        cls.file_cache["model_id"] = model_id
-        cls.dump_pickle(file=cls.models_file)
-        cls.pieces_client.model_name = model_name
+    open_snippet_dir = os.path.join(PIECES_DATA_DIR, "opened_snippets")
 
     @classmethod
     def startup(cls, bypass_login=False):

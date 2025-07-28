@@ -2,7 +2,7 @@ import argparse
 import asyncio
 from typing import Union
 from pieces.base_command import BaseCommand, CommandGroup
-from pieces.headless.models.base import BaseResponse, CommandResult
+from pieces.headless.models.base import CommandResult
 from pieces.mcp import (
     handle_gateway,
     handle_list,
@@ -12,8 +12,7 @@ from pieces.mcp import (
     handle_status,
     handle_list_headless,
 )
-from pieces.mcp.handler import supported_mcps
-from pieces.mcp.integration import mcp_integrations
+from pieces.config.schemas.mcp import mcp_integrations
 from pieces.settings import Settings
 from pieces.urls import URLs
 

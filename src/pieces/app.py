@@ -1,3 +1,8 @@
+import sys
+import os
+
+from pieces.config.constants import PIECES_DATA_DIR
+from pieces.config.migration import run_migration
 from pieces.headless.exceptions import HeadlessError
 from pieces.headless.models.base import ErrorCode
 from pieces.headless.output import HeadlessOutput
@@ -6,9 +11,7 @@ from pieces.command_registry import CommandRegistry
 from pieces.settings import Settings
 from pieces.logger import Logger
 from pieces import __version__
-
 from pieces.command_interface import *  # noqa: F403
-from pieces.core import ConfigCommands
 
 
 class PiecesCLI:
@@ -21,10 +24,43 @@ class PiecesCLI:
         self.registry.setup_parser(self.parser, __version__)
         PiecesArgparser.parser = self.parser
 
-    def run(self):
-        config = ConfigCommands.load_config()
-        Settings.logger = Logger(__version__ == "dev", Settings.pieces_data_dir)
+    def _check_data_dir_permissions(self):
+        """
+        Check if we have read/write permissions to PIECES_DATA_DIR.
 
+        Returns:
+            True if we have read/write access, False otherwise
+        """
+        try:
+            is_accessible = os.access(PIECES_DATA_DIR, os.R_OK | os.W_OK)
+        except (PermissionError, OSError):
+            is_accessible = False
+        if not is_accessible:
+            Settings.logger.print(
+                "[red]Pieces CLI failed to access configuration files.[/red]"
+            )
+            Settings.logger.print(
+                "[yellow]This is likely due to missing file system permissions.[/yellow]"
+            )
+            Settings.logger.print(
+                f"[blue]Please ensure the CLI has read/write access to: {PIECES_DATA_DIR}[/blue]"
+            )
+            sys.exit(128)
+        os.makedirs(PIECES_DATA_DIR, exist_ok=True)
+
+    def run(self):
+        self._check_data_dir_permissions()
+        Settings.logger = Logger(__version__ == "dev", PIECES_DATA_DIR)
+
+        # Run migration - we know we have permissions now
+        if not run_migration():
+            Settings.logger.critical("Migration failed.")
+            Settings.logger.print(
+                "[red]Migration failed. Please contact support@pieces.app[/red]",
+            )
+
+        if len(sys.argv) == 1:
+            return self.parser.print_help()
         try:
             args = self.parser.parse_args()
         except SystemExit:
@@ -35,14 +71,14 @@ class PiecesCLI:
         # Check for ignore onboarding flag from parsed args
         ignore_onboarding = getattr(args, "ignore_onboarding", False)
 
-        onboarded = config.get("onboarded", False)
+        onboarded = Settings.user_config.onboarded
 
         if (
-            not config.get("skip_onboarding", False)
+            not Settings.user_config.skip_onboarding
             and not onboarded
             and not ignore_onboarding
         ):
-            res = Settings.logger.print(
+            Settings.logger.print(
                 (
                     "👋 It looks like this is your first time using the Pieces CLI.\n\n"
                     "Would you like to start the onboarding process?\n"
@@ -58,8 +94,7 @@ class PiecesCLI:
             if res.lower() == "y":
                 return OnboardingCommand.instance.execute()  # noqa: F405
             elif res.lower() == "skip":
-                config["skip_onboarding"] = True
-                ConfigCommands.save_config(config)
+                Settings.user_config.skip_onboarding = True
 
         command = args.command
         PiecesCLI.command = command

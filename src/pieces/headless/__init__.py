@@ -26,4 +26,3 @@ __all__ = [
     "CommandResult",
     "ErrorCode",
 ]
-

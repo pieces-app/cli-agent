@@ -1,27 +1,52 @@
-import unittest
-from unittest.mock import patch, Mock, mock_open
 import json
-from pieces.mcp.integration import Integration, MCPProperties
+import unittest
+from unittest.mock import Mock, mock_open, patch
+
+from tests.mcps.utils import (
+    MCPTestBase,
+    MockPiecesClient,
+    default_mcp_properties,
+)
+
+from pieces.mcp.integration import Integration
+from pieces.settings import Settings
+from pieces._vendor.pieces_os_client.models.workstream_pattern_engine_status import (
+    WorkstreamPatternEngineStatus,
+)
 
 
-class TestMCPHandler(unittest.TestCase):
+class TestMCPHandler(MCPTestBase):
+    """Tests focusing on high-level MCP handler behaviours."""
+
     def setUp(self):
-        self.mock_settings = Mock()
-        self.mock_settings.mcp_config = "/tmp/mcp_config.json"
-        self.mock_settings.logger = Mock()
-        self.mock_settings.logger.console = Mock()
-        self.mock_settings.logger.confirm = Mock(return_value=True)
+        super().setUp() if hasattr(super(), "setUp") else None  # type: ignore[attr-defined]
 
-        self.mcp_properties = MCPProperties(
-            stdio_property={"type": "stdio"},
-            stdio_path=["mcp", "servers", "Pieces"],
-            sse_property={"type": "sse"},
-            sse_path=["mcp", "servers", "Pieces"],
-            url_property_name="url",
-            command_property_name="command",
-            args_property_name="args",
+        # ------------------------------------------------------------------
+        # Mock Pieces client & sub-API
+        # ------------------------------------------------------------------
+        self.mock_api_client = MockPiecesClient()
+        self.mock_workstream_api = Mock()
+        self.mock_workstream_api.workstream_pattern_engine_processors_vision_status = (
+            Mock(
+                return_value=WorkstreamPatternEngineStatus.from_dict(
+                    {
+                        "vision": {
+                            "deactivation": {
+                                "from": {"value": "2025-05-20T12:41:46.211Z"},
+                                "to": {"value": "2025-05-20T18:42:02.407636Z"},
+                                "continuous": True,
+                            },
+                            "degraded": False,
+                        }
+                    }
+                )
+            )
         )
+        self.mock_api_client._work_stream_pattern_engine_api = self.mock_workstream_api
+        Settings.pieces_client = self.mock_api_client
 
+        # Integration instance under test
+        self.mcp_properties = default_mcp_properties()
         self.integration = Integration(
             options=[("Option 1", {"key": "value"})],
             text_success="Success text",
@@ -35,30 +60,29 @@ class TestMCPHandler(unittest.TestCase):
             id="test_integration",
         )
 
+    # ------------------------------------------------------------------
+    # Individual tests
+    # ------------------------------------------------------------------
+
     def test_handle_mcp_server_status(self):
         mock_config = {
             "mcp": {"servers": {"Pieces": {"url": "pieces_url", "type": "sse"}}}
         }
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-            with patch.object(
-                self.integration, "search", return_value=(True, {"type": "sse"})
-            ):
+            with patch.object(self.integration, "search", return_value=(True, {"type": "sse"})):
                 status = self.integration.is_set_up()
                 self.assertTrue(status)
 
     def test_handle_mcp_docs(self):
-        docs = self.integration.docs
-        self.assertEqual(docs, "https://docs.example.com")
+        self.assertEqual(self.integration.docs, "https://docs.example.com")
 
     def test_handle_mcp_repair(self):
-        with patch.object(self.integration, "need_repair") as mock_repair:
-            mock_repair.return_value = {}
+        with patch.object(self.integration, "need_repair", return_value={}):
             self.integration.need_repair()
-            mock_repair.assert_called_once()
+            self.integration.need_repair.assert_called_once()  # type: ignore[attr-defined]
 
     def test_handle_mcp_error(self):
-        error = self.integration.error_text
-        self.assertEqual(error, "Test error text")
+        self.assertEqual(self.integration.error_text, "Test error text")
 
 
 if __name__ == "__main__":
