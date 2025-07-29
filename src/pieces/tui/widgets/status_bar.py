@@ -21,7 +21,9 @@ class StatusBar(Footer):
         super().__init__(**kwargs)
         self._update_status()
 
-
+    def update(self, message: str):
+        """Update the status bar with a message."""
+        pass
 
     def _update_status(self):
         """Update the footer with current status information."""
