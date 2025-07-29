@@ -30,6 +30,16 @@ Screen {
   width: 100%;
 }
 
+/* Status text widget inside footer */
+.status-text {
+  width: auto;
+  height: 1;
+  background: $footer-background;
+  color: $footer-foreground;
+  padding: 0 1;
+  margin-right: 2;
+}
+
 .status-item {
   margin: 0 1 0 0;
   height: 1;

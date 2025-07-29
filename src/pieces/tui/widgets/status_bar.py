@@ -2,7 +2,8 @@
 
 from typing import Optional, TYPE_CHECKING
 from textual.reactive import reactive
-from textual.widgets import Footer
+from textual.widgets import Footer, Static
+from textual.app import ComposeResult
 
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class StatusBar(Footer):
-    """Status bar showing connection status, model info, and context."""
+    """Status bar showing connection status, model info, and context, plus keybindings."""
 
     connection_status: reactive[str] = reactive("Disconnected")
     current_model: reactive[str] = reactive("Unknown")
@@ -19,15 +20,19 @@ class StatusBar(Footer):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._status_widget: Optional[Static] = None
         self._update_status()
 
-    def update(self, message: str):
-        """Update the status bar with a message."""
-        pass
+    def compose(self) -> ComposeResult:
+        # Add our custom status widget first
+        self._status_widget = Static(self._build_status_text(), classes="status-text")
+        yield self._status_widget
+        
+        # Then yield Footer's keybindings
+        yield from super().compose()
 
-    def _update_status(self):
-        """Update the footer with current status information."""
-        # Build status parts
+    def _build_status_text(self) -> str:
+        """Build the status text string."""
         connection_icon = "🟢" if self.connection_status == "Connected" else "🔴"
         
         chat_name = self.current_chat if self.current_chat else "No chat"
@@ -40,11 +45,12 @@ class StatusBar(Footer):
             
         context_text = f"{self.context_count} items" if self.context_count > 0 else "No context"
         
-        # Combine all status information
-        status_text = f"{connection_icon} {self.connection_status} | 💬 {chat_name} | 🤖 {model_name} | 📎 {context_text} | Press ? for help"
-        
-        # Update footer text
-        self.update(status_text)
+        return f"{connection_icon} {self.connection_status} | 💬 {chat_name} | 🤖 {model_name} | 📎 {context_text}"
+
+    def _update_status(self):
+        """Update the status widget with current information."""
+        if self._status_widget:
+            self._status_widget.update(self._build_status_text())
 
     def update_connection_status(self, is_connected: bool = False):
         """Update the connection status."""
@@ -74,11 +80,14 @@ class StatusBar(Footer):
 
     def show_temporary_message(self, message: str, duration: float = 3.0):
         """Show a temporary message in the status bar."""
+        if not self._status_widget:
+            return
+            
         # Store current status
-        current_status = f"🟢 {self.connection_status}" if self.connection_status == "Connected" else f"🔴 {self.connection_status}"
+        current_status = self._build_status_text()
         
         # Show temporary message
-        self.update(f"ℹ️ {message}")
+        self._status_widget.update(f"ℹ️ {message}")
         
         # Schedule restoration after duration
-        self.set_timer(duration, lambda: self._update_status())
+        self.set_timer(duration, lambda: self._status_widget.update(current_status))
