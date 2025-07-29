@@ -1,14 +1,22 @@
-"""TUI (Text User Interface) module for Pieces CLI using Textual."""
+"""TUI module for Pieces CLI."""
 
+from .widgets import (
+    ChatViewPanel,
+    ChatInput,
+    ChatMessage,
+    ChatListPanel,
+    ChatItem,
+    StatusBar,
+)
 from .app import PiecesTUI, run_tui
-from .widgets import ChatPanel, ChatInput, ChatMessage, ChatsPanel
 
 __all__ = [
-    "PiecesTUI",
-    "run_tui",
-    "ChatPanel",
+    "ChatViewPanel",
     "ChatInput",
     "ChatMessage",
-    "ChatsPanel",
+    "ChatListPanel",
+    "ChatItem",
+    "StatusBar",
+    "PiecesTUI",
+    "run_tui",
 ]
-

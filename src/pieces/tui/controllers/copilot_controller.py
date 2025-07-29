@@ -3,12 +3,12 @@
 from typing import Optional, TYPE_CHECKING
 from pieces.settings import Settings
 from .base_controller import BaseController, EventType
+from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.models.qgpt_stream_output import (
         QGPTStreamOutput,
     )
-    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 
 
 class CopilotController(BaseController):
@@ -19,7 +19,7 @@ class CopilotController(BaseController):
         super().__init__()
         self._current_response = ""
         self._current_status: Optional[str] = None
-        self._current_chat: Optional["BasicChat"] = None
+        self._current_chat: Optional[BasicChat] = None
 
     def initialize(self):
         """Initialize the copilot controller."""
@@ -41,9 +41,17 @@ class CopilotController(BaseController):
 
     def cleanup(self):
         """Clean up copilot resources."""
-        self._current_response = ""
-        self._current_status = None
-        self._initialized = False
+        try:
+            # Clear streaming state
+            self._current_response = ""
+            self._current_status = None
+            self._current_chat = None
+
+        except Exception as e:
+            Settings.logger.error(f"Error during copilot cleanup: {e}")
+
+        # Clear all event listeners
+        self._safe_cleanup()
 
     def ask_question(self, query: str):
         """
@@ -60,6 +68,12 @@ class CopilotController(BaseController):
             # Emit thinking started event
             self.emit(EventType.COPILOT_THINKING_STARTED, {"query": query})
 
+            # Get current chat context
+            current_chat = self.get_current_chat()
+            if current_chat:
+                # Set the chat context before asking
+                Settings.pieces_client.copilot.chat = current_chat
+            
             # Start streaming
             Settings.pieces_client.copilot.stream_question(query)
 
@@ -113,7 +127,7 @@ class CopilotController(BaseController):
                             self.emit(
                                 EventType.COPILOT_STREAM_CHUNK,
                                 {
-                                    "text": answer.text,
+                                    "chunk": answer.text,
                                     "full_text": self._current_response,
                                 },
                             )
@@ -130,7 +144,7 @@ class CopilotController(BaseController):
                 self.emit(
                     EventType.COPILOT_STREAM_COMPLETED,
                     {
-                        "text": self._current_response,
+                        "final_text": self._current_response,
                         "conversation": response.conversation,
                     },
                 )
@@ -207,6 +221,6 @@ class CopilotController(BaseController):
         """Check if currently streaming a response."""
         return self._current_status == "IN-PROGRESS"
 
-    def get_current_chat(self) -> Optional["BasicChat"]:
+    def get_current_chat(self) -> Optional[BasicChat]:
         """Get the current active chat."""
         return Settings.pieces_client.copilot.chat if Settings.pieces_client else None

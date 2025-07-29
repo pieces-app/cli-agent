@@ -1,7 +1,7 @@
 /* Enhanced chat panel, message, and input styles */
 
-/* Main chat panel - now takes 75% width on the right */
-ChatPanel {
+/* Main chat view panel - now takes 75% width on the right */
+ChatViewPanel {
     width: 75%;
     border: solid $primary;
     border-title-color: $primary;
@@ -9,6 +9,8 @@ ChatPanel {
     scrollbar-background: $surface;
     scrollbar-color: $primary;
     scrollbar-color-hover: $accent;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* Chat message container */
@@ -16,6 +18,7 @@ ChatPanel {
     margin: 0 0 1 0;
     padding: 0;
     width: 100%;
+    max-width: 100%;
 }
 
 .message-container:hover {
@@ -26,6 +29,7 @@ ChatPanel {
 .message-wrapper {
     padding: 1;
     width: 100%;
+    max-width: 100%;
 }
 
 /* Message header */
@@ -33,12 +37,14 @@ ChatPanel {
     height: auto;
     margin: 0 0 1 0;
     align: left middle;
+    width: 100%;
 }
 
 /* Message role indicators */
 .message-role {
     text-style: bold;
     margin: 0 2 0 0;
+    width: auto;
 }
 
 .message-role-user { 
@@ -58,6 +64,7 @@ ChatPanel {
     color: $text-muted;
     text-style: italic;
     margin: 0 2 0 0;
+    width: auto;
 }
 
 /* Message model indicator */
@@ -66,12 +73,15 @@ ChatPanel {
     text-style: italic;
 }
 
-/* Message content */
+/* Message content - improved responsive layout */
 .message-content {
     margin: 0 0 0 0;
     padding: 1 2;
     background: $panel;
     border-left: thick $accent;
+    width: 100%;
+    max-width: 100%;
+    scrollbar-size: 0 0;
 }
 
 .message-content-user {
@@ -88,6 +98,54 @@ ChatPanel {
     border-left: thick $warning;
     background: rgba(251, 191, 36, 0.1);
     text-style: italic;
+}
+
+/* Markdown-specific styling - improved responsive behavior */
+.message-content Markdown {
+    background: transparent;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    scrollbar-size: 0 0;
+}
+
+/* Static text styling for better wrapping */
+.message-content Static {
+    width: 100%;
+}
+
+/* Code blocks in markdown */
+.message-content Markdown BlockQuote {
+    background: $surface;
+    border-left: thick $accent;
+    padding: 1;
+    margin: 1 0;
+}
+
+.message-content Markdown CodeBlock {
+    background: $background;
+    border: solid $accent;
+    padding: 1;
+    margin: 1 0;
+    scrollbar-color: $accent;
+}
+
+.message-content Markdown InlineCode {
+    background: $surface;
+    color: $accent;
+    text-style: bold;
+}
+
+/* Lists in markdown */
+.message-content Markdown ListItem {
+    margin: 0 0 0 2;
+}
+
+/* Headers in markdown */
+.message-content Markdown Heading {
+    text-style: bold;
+    color: $primary;
+    margin: 1 0;
 }
 
 /* Message states */
@@ -124,22 +182,37 @@ ChatPanel {
 }
 
 /* Chat input styles */
-ChatInput {
-    width: 1fr;
+.chat-input {
+    width: 100%;
     height: 3;
     background: $surface;
     border: solid $primary;
     padding: 0 1;
-    margin: 1 0;
+    margin: 0 0 1 0;
+    dock: bottom;
 }
 
-ChatInput:focus {
+.chat-input:focus {
     border: solid $accent;
     background: $panel;
+    border-title-color: $accent;
 }
 
-ChatInput:disabled {
+.chat-input:disabled {
     border: solid $primary 50%;
     background: $background;
     color: $text-muted;
+}
+
+.input-container {
+    dock: bottom;
+    height: 3;
+    background: $surface;
+    border-top: solid $primary;
+    padding: 0;
+}
+
+/* Focus enhancement for input container */
+.input-container:focus-within {
+    border-top: solid $accent;
 }

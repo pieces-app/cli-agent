@@ -38,14 +38,15 @@ class ModelController(BaseController):
             Settings.logger.error(f"Failed to initialize ModelController: {e}")
 
     def cleanup(self):
-        """Stop monitoring for model changes."""
-        # Stop polling thread
-        if self._polling_thread:
-            self._stop_polling.set()
-            self._polling_thread.join(timeout=2)
-            self._polling_thread = None
+        """Clean up model controller resources."""
+        try:
+            # Clear current model info if needed
+            pass
+        except Exception as e:
+            Settings.logger.error(f"Error during model controller cleanup: {e}")
 
-        self._initialized = False
+        # Clear all event listeners
+        self._safe_cleanup()
 
     def _get_current_model_name(self) -> Optional[str]:
         """Get the current model name."""

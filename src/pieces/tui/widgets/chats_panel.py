@@ -1,6 +1,6 @@
-"""Enhanced chats panel widget with keyboard navigation."""
+"""Enhanced chat list panel widget with keyboard navigation and efficient updates."""
 
-from typing import List, Optional
+from typing import List, Optional, Dict, Set
 from textual.app import ComposeResult
 from textual.widgets import Static, Button
 from textual.containers import ScrollableContainer, Container
@@ -8,81 +8,14 @@ from textual.reactive import reactive
 from textual.message import Message
 from textual.binding import Binding
 
+from pieces.settings import Settings
 from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
+from .chat_item import ChatItem
+from ..messages import ChatMessages
 
 
-class ChatMessages:
-    """Container for all chat-related messages."""
-
-    class ChatSelected(Message):
-        """Message sent when a chat is selected."""
-
-        def __init__(self, chat: BasicChat):
-            super().__init__()
-            self.chat = chat
-
-    class NewChatRequested(Message):
-        """Message sent when new chat is requested."""
-
-        pass
-
-    class ChatSwitched(Message):
-        """Message sent when chat is switched."""
-
-        def __init__(self, chat: BasicChat):
-            super().__init__()
-            self.chat = chat
-
-
-class ChatItem(Container):
-    """A single chat item in the list."""
-
-    def __init__(
-        self,
-        chat: BasicChat,
-        title: str,
-        summary: str = "",
-        is_active: bool = False,
-        is_selected: bool = False,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.chat = chat
-        self.title = title
-        self.summary = summary
-        self.is_active = is_active
-        self.is_selected = is_selected
-        self.add_class("conversation-item")
-
-        if is_active:
-            self.add_class("conversation-active")
-        if is_selected:
-            self.add_class("conversation-selected")
-
-    def compose(self) -> ComposeResult:
-        """Compose the chat item."""
-        with Container(classes="conversation-content"):
-            yield Static(self.title, classes="conversation-title")
-            if self.summary:
-                yield Static(self.summary, classes="conversation-summary")
-
-    def on_click(self) -> None:
-        """Handle chat item click."""
-        self.post_message(ChatMessages.ChatSelected(self.chat))
-
-    def select(self):
-        """Select this chat item."""
-        self.is_selected = True
-        self.add_class("conversation-selected")
-
-    def deselect(self):
-        """Deselect this chat item."""
-        self.is_selected = False
-        self.remove_class("conversation-selected")
-
-
-class ChatsPanel(ScrollableContainer):
-    """Enhanced chats panel with keyboard navigation."""
+class ChatListPanel(ScrollableContainer):
+    """Enhanced chat list panel with keyboard navigation and efficient incremental updates."""
 
     chats: reactive[List[tuple]] = reactive([])  # (chat, title, summary)
     active_chat: reactive[Optional[BasicChat]] = reactive(None)
@@ -100,99 +33,286 @@ class ChatsPanel(ScrollableContainer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.border_title = "Chats"
-        self.add_class("conversations-panel")
-        self.chat_items: List[ChatItem] = []
+        self.add_class("chats-panel")
+
+        # Efficient tracking: chat_id -> ChatItem widget
+        self._chat_widgets: Dict[str, ChatItem] = {}
+        # Track current chat order for positioning
+        self._chat_order: List[str] = []
 
     def compose(self) -> ComposeResult:
         """Compose the chats panel."""
-        # New chat button
-        with Container(classes="new-conversation-container"):
-            yield Button("+ New Chat", id="new-chat", classes="new-conversation-btn")
+        # Chats list container (use regular Container since parent is already ScrollableContainer)
+        with Container(classes="chats-list", id="chats-container"):
+            yield Static("No chats yet...", classes="empty-chats", id="empty-state")
 
-        # Chats list container
-        with Container(classes="conversations-list", id="chats-container"):
-            yield Static("No chats yet...", classes="empty-conversations")
+    def load_chats(self, chats):
+        """Load chats with efficient incremental updates."""
+        if chats and not isinstance(chats[0], tuple):
+            converted_chats = []
+            for chat in chats:
+                title = chat.name or "Untitled"
+                summary = chat.summary or ""
+                if len(summary) > 50:
+                    summary = summary[:47] + "..."
+                converted_chats.append((chat, title, summary))
+            self.chats = converted_chats
+        else:
+            # Already in tuple format
+            self.chats = chats
 
-    def add_chat(self, chat: BasicChat, title: str, summary: str = ""):
-        """Add a new chat to the list."""
-        self.chats.append((chat, title, summary))
-        self.refresh_chats()
+        self._update_chats_incrementally()
 
-    def load_chats(self, chats_list: List[BasicChat]):
-        """Load a list of chat objects."""
-        self.chats.clear()
-
-        for idx, chat in enumerate(chats_list, 1):
-            title = getattr(chat, "name", f"Chat {idx}")
-            summary = getattr(chat, "summary", "")
-            if summary and len(summary) > 50:
-                summary = summary[:47] + "..."
-
-            self.chats.append((chat, title, summary))
-
-        self.refresh_chats()
-
-        # Select first chat if available
+        # Select first chat if available and none selected
         if self.chats and self.selected_index == -1:
             self.selected_index = 0
             self._update_selection()
 
-    def set_active_chat(self, chat: Optional[BasicChat]):
-        """Set the active chat."""
-        self.active_chat = chat
-        self.refresh_chats()
-
-    def refresh_chats(self):
-        """Refresh the chats display."""
+    def _update_chats_incrementally(self):
+        """Efficiently update chats - only add/remove/update what changed."""
         chats_container = self.query_one("#chats-container")
-        chats_container.remove_children()
-        self.chat_items.clear()
+        
+        # Get current chat IDs from the new data
+        new_chat_ids = {chat.id for chat, _, _ in self.chats}
+        current_chat_ids = set(self._chat_widgets.keys())
 
-        if not self.chats:
-            chats_container.mount(
-                Static("No chats yet...", classes="empty-conversations")
-            )
+        # Calculate what changed
+        chats_to_add = new_chat_ids - current_chat_ids
+        chats_to_remove = current_chat_ids - new_chat_ids
+        chats_to_update = new_chat_ids & current_chat_ids
+
+        # Remove deleted chats
+        for chat_id in chats_to_remove:
+            if chat_id in self._chat_widgets:
+                widget = self._chat_widgets[chat_id]
+                if widget.is_mounted:
+                    widget.remove()
+                del self._chat_widgets[chat_id]
+                if chat_id in self._chat_order:
+                    self._chat_order.remove(chat_id)
+
+        # Hide/show empty state based on whether we have chats
+        empty_state = chats_container.query_one("#empty-state")
+        if self.chats:
+            empty_state.display = False
+        else:
+            empty_state.display = True
+            # Clear everything when no chats
+            self._chat_widgets.clear()
+            self._chat_order.clear()
             return
 
-        for idx, (chat, title, summary) in enumerate(self.chats):
-            is_active = chat == self.active_chat
-            is_selected = idx == self.selected_index
+        # Create mapping for efficient lookup
+        chat_data_by_id = {
+            chat.id: (chat, title, summary) for chat, title, summary in self.chats
+        }
 
-            chat_item = ChatItem(
-                chat=chat,
+        # Add new chats
+        for chat_id in chats_to_add:
+            if chat_id in chat_data_by_id:
+                chat, title, summary = chat_data_by_id[chat_id]
+                self._add_chat_widget(chat, title, summary, chats_container)
+
+        # Update existing chats (title, summary, active state)
+        for chat_id in chats_to_update:
+            if chat_id in chat_data_by_id and chat_id in self._chat_widgets:
+                chat, title, summary = chat_data_by_id[chat_id]
+                self._update_chat_widget(chat_id, chat, title, summary)
+
+        # Reorder widgets to match the new chat order
+        self._reorder_chat_widgets(chats_container, chat_data_by_id)
+
+    def _add_chat_widget(
+        self, chat: BasicChat, title: str, summary: str, container: Container
+    ):
+        """Add a new chat widget efficiently."""
+        is_active = chat == self.active_chat
+
+        chat_item = ChatItem(
+            chat=chat,
                 title=title,
                 summary=summary,
                 is_active=is_active,
-                is_selected=is_selected,
-            )
-            self.chat_items.append(chat_item)
-            chats_container.mount(chat_item)
+            is_selected=False,
+        )
+
+        # Use chat ID for unique identification
+        chat_item.id = f"chat-item-{chat.id}"
+        self._chat_widgets[chat.id] = chat_item
+        self._chat_order.append(chat.id)
+
+        container.mount(chat_item)
+
+    def _update_chat_widget(
+        self, chat_id: str, chat: BasicChat, title: str, summary: str
+    ):
+        """Update an existing chat widget efficiently."""
+        if chat_id not in self._chat_widgets:
+            return
+
+        widget = self._chat_widgets[chat_id]
+
+        # Update widget data if changed
+        if widget.title != title:
+            widget.title = title
+            # Update the title widget in the UI
+            title_widget = widget.query_one(".chat-title")
+            title_widget.update(title)
+
+        if widget.summary != summary:
+            widget.summary = summary
+            # Update summary widget if it exists
+            summary_widgets = widget.query(".chat-summary")
+            if summary_widgets and summary:
+                summary_widgets[0].update(summary)
+
+        # Update active state
+        is_active = chat == self.active_chat
+        if widget.is_active != is_active:
+            widget.is_active = is_active
+            if is_active:
+                widget.add_class("chat-active")
+            else:
+                widget.remove_class("chat-active")
+
+    def _reorder_chat_widgets(
+        self, container: Container, chat_data_by_id: Dict[str, tuple]
+    ):
+        """Reorder widgets to match the new chat order efficiently."""
+        # Build new order based on current chats list
+        new_order = []
+        for chat, _, _ in self.chats:
+            if chat.id in self._chat_widgets:
+                new_order.append(chat.id)
+
+        # Only reorder if the order actually changed
+        if new_order != self._chat_order:
+            self._chat_order = new_order
+
+            # Move widgets to correct positions
+            # Textual doesn't have an easy reorder, so we'll use the move_child method
+            for i, chat_id in enumerate(self._chat_order):
+                if chat_id in self._chat_widgets:
+                    widget = self._chat_widgets[chat_id]
+                    try:
+                        # Move widget to the correct position
+                        container.move_child(widget, after=i - 1 if i > 0 else None)
+                    except Exception:
+                        # If move fails, it's probably already in the right place
+                        pass
+
+    def add_chat(self, chat: BasicChat, title: str, summary: str = ""):
+        """Add a single new chat efficiently."""
+        # Add to data
+        self.chats = list(self.chats) + [(chat, title, summary)]
+
+        # Add widget incrementally
+        if chat.id not in self._chat_widgets:
+            chats_container = self.query_one("#chats-container")
+            self._add_chat_widget(chat, title, summary, chats_container)
+
+            # Hide empty state
+            empty_state = chats_container.query_one("#empty-state")
+            empty_state.display = False
+
+    def remove_chat(self, chat: BasicChat):
+        """Remove a single chat efficiently."""
+
+        # Remove from data
+        self.chats = [item for item in self.chats if item[0] != chat]
+
+        # Remove widget incrementally
+        if chat.id in self._chat_widgets:
+            widget = self._chat_widgets[chat.id]
+            if widget.is_mounted:
+                widget.remove()
+            del self._chat_widgets[chat.id]
+            if chat.id in self._chat_order:
+                self._chat_order.remove(chat.id)
+
+        # Show empty state if no chats left
+        if not self.chats:
+            chats_container = self.query_one("#chats-container")
+            empty_state = chats_container.query_one("#empty-state")
+            empty_state.display = True
+
+    def update_chat(self, chat: BasicChat, title: str, summary: str = ""):
+        """Update a single chat efficiently."""
+
+        # Update data
+        updated_chats = []
+        for existing_chat, existing_title, existing_summary in self.chats:
+            if existing_chat == chat:
+                updated_chats.append((chat, title, summary))
+            else:
+                updated_chats.append((existing_chat, existing_title, existing_summary))
+        self.chats = updated_chats
+
+        # Update widget incrementally
+        self._update_chat_widget(chat.id, chat, title, summary)
+
+    def set_active_chat(self, chat: Optional[BasicChat]):
+        """Set the active chat efficiently - only update affected widgets."""
+        if self.active_chat != chat:  # Only update if actually changing
+            old_active_id = self.active_chat.id if self.active_chat else None
+            new_active_id = chat.id if chat else None
+
+            self.active_chat = chat
+
+            # Update only the affected widgets
+            if old_active_id and old_active_id in self._chat_widgets:
+                old_widget = self._chat_widgets[old_active_id]
+                old_widget.is_active = False
+                old_widget.remove_class("chat-active")
+
+            if new_active_id and new_active_id in self._chat_widgets:
+                new_widget = self._chat_widgets[new_active_id]
+                new_widget.is_active = True
+                new_widget.add_class("chat-active")
+
+    def refresh_chats(self):
+        """Legacy method - now just triggers incremental update."""
+        self._update_chats_incrementally()
 
     def clear_chats(self):
-        """Clear all chats."""
+        """Clear all chats efficiently."""
+        # Remove all widgets
+        for widget in self._chat_widgets.values():
+            if widget.is_mounted:
+                widget.remove()
+
+        # Clear tracking
+        self._chat_widgets.clear()
+        self._chat_order.clear()
+
+        # Clear data
         self.chats.clear()
         self.active_chat = None
         self.selected_index = -1
-        self.chat_items.clear()
-        self.refresh_chats()
+
+        # Show empty state
+        chats_container = self.query_one("#chats-container")
+        empty_state = chats_container.query_one("#empty-state")
+        empty_state.display = True
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
         if event.button.id == "new-chat":
-            self.post_message(ChatMessages.NewChatRequested())
+            # Post Textual message that will bubble up to parent handlers
+            self.post_message(ChatMessages.NewRequested())
 
-    async def on_chat_item_chat_selected(
-        self, message: ChatMessages.ChatSelected
-    ) -> None:
+    async def on_chat_messages_selected(self, message: ChatMessages.Selected) -> None:
         """Handle chat selection."""
-        # Find and update selected index
+        # Find and update selected index efficiently
         for idx, (chat, _, _) in enumerate(self.chats):
-            if chat == message.chat:
+            if chat.id == message.chat.id:
                 self.selected_index = idx
                 break
 
         self.set_active_chat(message.chat)
-        self.post_message(ChatMessages.ChatSwitched(message.chat))
+        
+        # Post Textual message that will bubble up to parent handlers
+        self.post_message(ChatMessages.Switched(message.chat))
 
     # Keyboard navigation
     def action_select_next(self):
@@ -211,11 +331,13 @@ class ChatsPanel(ScrollableContainer):
         """Open the selected chat."""
         if 0 <= self.selected_index < len(self.chats):
             chat, _, _ = self.chats[self.selected_index]
-            self.post_message(ChatMessages.ChatSelected(chat))
+            # Post Textual message that will bubble up to parent handlers
+            self.post_message(ChatMessages.Selected(chat))
 
     def action_new_chat(self):
         """Request a new chat."""
-        self.post_message(ChatMessages.NewChatRequested())
+        # Post Textual message that will bubble up to parent handlers
+        self.post_message(ChatMessages.NewRequested())
 
     def action_rename_chat(self):
         """Rename the selected chat."""
@@ -224,15 +346,25 @@ class ChatsPanel(ScrollableContainer):
 
     def action_delete_chat(self):
         """Delete the selected chat."""
-        # TODO: Implement delete functionality
-        pass
+        if 0 <= self.selected_index < len(self.chats):
+            chat, _, _ = self.chats[self.selected_index]
+            self.remove_chat(chat)
+            # TODO: Send delete message to backend
 
     def _update_selection(self):
-        """Update the visual selection."""
-        # Update all chat items
-        for idx, item in enumerate(self.chat_items):
-            if idx == self.selected_index:
-                item.select()
-                self.scroll_to_widget(item)
-            else:
-                item.deselect()
+        """Update visual selection efficiently."""
+        # Clear all selections first
+        for widget in self._chat_widgets.values():
+            widget.is_selected = False
+            widget.remove_class("chat-selected")
+
+        # Set new selection
+        if 0 <= self.selected_index < len(self.chats):
+            chat, _, _ = self.chats[self.selected_index]
+            if chat.id in self._chat_widgets:
+                widget = self._chat_widgets[chat.id]
+                widget.is_selected = True
+                widget.add_class("chat-selected")
+
+                # Scroll to selected widget
+                self.scroll_to_widget(widget)

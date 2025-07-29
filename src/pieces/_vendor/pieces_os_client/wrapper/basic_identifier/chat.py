@@ -103,12 +103,21 @@ class BasicChat(Basic):
         """
         from .message import BasicMessage
 
-        out = []
-        for message_id, index in (self.conversation.messages.indices or {}).items():
-            if index == -1:  # Deleted message
-                continue
-            out.append(BasicMessage(ConversationsSnapshot.pieces_client, message_id))
-        return out
+        indices = self.conversation.messages.indices or {}
+
+        if not indices:
+            return []
+
+        max_index = max(i for i in indices.values() if i >= 0)
+        out: List[Optional[BasicMessage]] = [None] * (max_index + 1)
+
+        pieces_client = ConversationsSnapshot.pieces_client
+        for message_id, index in indices.items():
+            if index != -1:
+                out[index] = BasicMessage(pieces_client, message_id)
+
+        # Only filter if you're okay skipping holes
+        return [msg for msg in out if msg is not None]
 
     @property
     def annotations(self) -> List["BasicAnnotation"]:

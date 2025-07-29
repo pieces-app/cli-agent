@@ -9,9 +9,6 @@ if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import (
         BasicAsset,
     )
-    from pieces._vendor.pieces_os_client.wrapper.websockets.assets_identifiers_ws import (
-        AssetsIdentifiersWS,
-    )
 
 
 class MaterialController(BaseController):
@@ -25,6 +22,10 @@ class MaterialController(BaseController):
 
     def initialize(self):
         """Set up WebSocket listeners for material events."""
+        from pieces._vendor.pieces_os_client.wrapper.websockets.assets_identifiers_ws import (
+            AssetsIdentifiersWS,
+        )
+
         if self._initialized:
             return
 
@@ -49,15 +50,19 @@ class MaterialController(BaseController):
 
     def cleanup(self):
         """Stop listening to material events."""
-        if self._asset_ws:
-            try:
+        try:
+            if self._asset_ws:
                 self._asset_ws.close()
-            except Exception as e:
-                Settings.logger.error(f"Error closing asset WebSocket: {e}")
-            finally:
-                self._asset_ws = None
+        except Exception as e:
+            Settings.logger.error(f"Error closing asset WebSocket: {e}")
+        finally:
+            self._asset_ws = None
 
-        self._initialized = False
+        # Clear context materials
+        self._context_materials.clear()
+
+        # Clear all event listeners
+        self._safe_cleanup()
 
     def _on_asset_update(self, asset: "Asset"):
         """Handle material update from WebSocket."""

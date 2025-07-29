@@ -12,6 +12,7 @@ Screen {
   height: 1fr;
 }
 
+/* Input area at bottom - above status bar */
 .input-container {
   dock: bottom;
   height: 3;
@@ -19,39 +20,36 @@ Screen {
   border-top: solid $primary;
 }
 
-.controls {
-  dock: bottom;
-  height: 1;
-  background: $surface;
-  color: $text-muted;
-  text-align: center;
-  padding: 0 1;
-}
-
-/* Status bar styles */
+/* Status bar styles - at very bottom */
 .status-bar {
   dock: bottom;
   height: 1;
   background: $surface;
   border-top: solid $secondary;
   padding: 0 1;
+  width: 100%;
 }
 
 .status-item {
-  margin: 0 2 0 0;
+  margin: 0 1 0 0;
   height: 1;
+  content-align: left middle;
+  overflow: hidden;
 }
 
 .status-spacer {
   width: 1fr;
+  height: 1;
 }
 
 .status-connection.status-connected {
   color: $success;
+  text-style: bold;
 }
 
 .status-connection.status-disconnected {
   color: $error;
+  text-style: bold;
 }
 
 .status-chat {
@@ -69,6 +67,25 @@ Screen {
 .status-help {
   color: $text-muted;
   text-style: italic;
+}
+
+/* Focus styles for better UX - using Textual's built-in :focus */
+*:focus {
+  border: solid $accent;
+  border-title-color: $accent;
+}
+
+/* Specific focus styles for panels */
+ChatListPanel:focus {
+  border: solid $accent;
+  border-title-color: $accent;
+  border-title-style: bold;
+}
+
+ChatViewPanel:focus {
+  border: solid $accent;
+  border-title-color: $accent;
+  border-title-style: bold;
 }
 
 /* Global utilities */

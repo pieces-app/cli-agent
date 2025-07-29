@@ -1,7 +1,7 @@
-/* Conversations panel styles */
+/* Chats panel styles */
 
-/* Main conversations panel */
-ConversationsPanel {
+/* Main chats panel */
+ChatListPanel {
     width: 25%;
     border: solid $secondary;
     border-title-color: $secondary;
@@ -11,91 +11,122 @@ ConversationsPanel {
     scrollbar-color-hover: $accent;
 }
 
-/* New conversation button container */
-.new-conversation-container {
-    height: 3;
-    padding: 1;
-    background: $surface;
-    border-bottom: solid $primary;
+/* Focus styling for chat list panel */
+ChatListPanel:focus {
+    border: solid $accent;
+    border-title-color: $accent;
+    border-title-style: bold;
 }
 
-.new-conversation-btn {
-    width: 1fr;
+/* New chat button container */
+.new-chat-container {
+    padding: 1;
+    height: 3;
+    margin: 0 0 1 0;
+    width: 100%;
+}
+
+.new-chat-btn {
+    width: 100%;
     height: 1;
+    border: solid $primary;
+    background: $surface;
+    color: $primary;
+    text-style: bold;
+}
+
+.new-chat-btn:hover {
     background: $primary;
+    color: $background;
+}
+
+.new-chat-btn:focus {
+    border: solid $accent;
+    background: $accent;
     color: $text;
     text-style: bold;
-    text-align: center;
-    border: none;
 }
 
-.new-conversation-btn:hover {
-    background: $accent;
-}
-
-.new-conversation-btn:focus {
-    background: $accent;
-    text-style: reverse;
-}
-
-/* Conversations list container */
-.conversations-list {
+/* Chats list container */
+.chats-list {
+    width: 100%;
     height: 1fr;
-    padding: 0;
+    overflow-y: auto;
 }
 
-/* Empty state */
-.empty-conversations {
-    color: $text-muted;
-    margin: 2;
+.empty-chats {
+    width: 100%;
     text-align: center;
+    padding: 2;
+    color: $text-muted;
     text-style: italic;
-}
-
-/* Individual conversation items */
-.conversation-item {
-    margin: 0 0 1 0;
-    padding: 1;
-    background: $panel;
-    border-left: thick $surface;
-}
-
-.conversation-item:hover {
-    background: $surface;
-    border-left: thick $primary;
-}
-
-.conversation-item.conversation-active {
-    background: $primary;
-    color: $text;
-    border-left: thick $accent;
-}
-
-.conversation-item.conversation-active:hover {
-    background: $accent;
-}
-
-/* Conversation content */
-.conversation-content {
     height: auto;
 }
 
-.conversation-title {
+/* Individual chat items */
+.chat-item {
+    width: 100%;
+    height: auto;
+    min-height: 3;
+    margin: 0 0 1 0;
+    padding: 0;
+    border: none;
+    background: $surface;
+}
+
+.chat-item:hover {
+    background: $surface-active;
+}
+
+.chat-item.chat-active {
+    border-left: thick $primary;
+    background: rgba(30, 144, 255, 0.1);
+}
+
+.chat-item.chat-active:hover {
+    background: rgba(30, 144, 255, 0.2);
+}
+
+/* Chat content */
+.chat-content {
+    padding: 1;
+    width: 100%;
+    height: auto;
+}
+
+.chat-title {
     text-style: bold;
-    margin: 0 0 0 0;
-}
-
-.conversation-active .conversation-title {
     color: $text;
+    height: 1;
+    width: 100%;
 }
 
-.conversation-summary {
+.chat-active .chat-title {
+    color: $primary;
+}
+
+.chat-summary {
     color: $text-muted;
-    margin: 0 0 0 0;
     text-style: italic;
+    margin: 1 0 0 0;
+    height: auto;
+    width: 100%;
 }
 
-.conversation-active .conversation-summary {
-    color: $text;
-    opacity: 80%;
+.chat-active .chat-summary {
+    color: rgba(30, 144, 255, 0.8);
+}
+
+/* Chat selection highlighting */
+.chat-selected {
+    background: $accent !important;
+    color: $text !important;
+}
+
+.chat-selected .chat-title {
+    color: $text !important;
+}
+
+.chat-selected .chat-summary {
+    color: $text-muted !important;
 } 

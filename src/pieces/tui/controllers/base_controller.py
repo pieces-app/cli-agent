@@ -42,6 +42,11 @@ class EventType(Enum):
     CHAT_UPDATED = "chat.updated"
     CHAT_DELETED = "chat.deleted"
     CHAT_SWITCHED = "chat.switched"
+    CHAT_SELECTED = "chat.selected"
+    CHAT_NEW_REQUESTED = "chat.new_requested"
+
+    # User input events
+    USER_INPUT_SUBMITTED = "user.input_submitted"
 
     # Model events
     MODEL_CHANGED = "model.changed"
@@ -145,6 +150,14 @@ class BaseController(ABC):
     @overload
     def emit(
         self,
+        event_type: Literal[
+            EventType.CHAT_UPDATED, EventType.CHAT_DELETED, EventType.CHAT_SWITCHED
+        ],
+        data: "BasicChat",
+    ) -> None: ...
+    @overload
+    def emit(
+        self,
         event_type: Literal[EventType.CONNECTION_LOST],
         data: Optional[ConnectionLostData],
     ) -> None: ...
@@ -239,6 +252,24 @@ class BaseController(ABC):
     def cleanup(self):
         """Clean up resources and stop listening to events."""
         pass
+
+    def __del__(self):
+        """Ensure cleanup is called when object is destroyed."""
+        try:
+            if self._initialized:
+                self.cleanup()
+        except Exception:
+            # Ignore errors during cleanup in destructor
+            pass
+
+    def _safe_cleanup(self):
+        """Safely clean up base controller resources."""
+        try:
+            # Clear all event listeners
+            self.clear_listeners()
+            self._initialized = False
+        except Exception as e:
+            Settings.logger.error(f"Error during base controller cleanup: {e}")
 
     @property
     def is_initialized(self) -> bool:

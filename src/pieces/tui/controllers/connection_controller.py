@@ -25,12 +25,20 @@ class ConnectionController(BaseController):
 
     def cleanup(self):
         """Stop monitoring connection health."""
-        # Stop health check thread
-        if self._health_websocket:
-            self._health_websocket.close()
+        try:
+            # Stop health check thread
+            if self._health_websocket:
+                self._health_websocket.close()
+        except Exception as e:
+            Settings.logger.error(f"Error closing health WebSocket: {e}")
+        finally:
             self._health_websocket = None
 
-        self._initialized = False
+        # Reset connection state
+        self._is_connected = False
+
+        # Clear all event listeners
+        self._safe_cleanup()
 
     def _check_connection(self, health_message: str):
         """Check if Pieces OS is connected and healthy."""

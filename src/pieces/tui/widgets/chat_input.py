@@ -1,30 +1,32 @@
-"""Chat input widget for message composition."""
+"""Chat input widget for user message entry."""
 
 from textual.widgets import Input
-from textual.message import Message
+from ..messages import UserMessages
 
 
 class ChatInput(Input):
-    """Custom input widget for chat messages with enhanced functionality."""
+    """Enhanced input widget for chat messages."""
 
     def __init__(self, **kwargs):
-        super().__init__(
-            placeholder="Type your message here... (Press Enter to send)", **kwargs
-        )
+        super().__init__(placeholder="Type your message here...", **kwargs)
         self.add_class("chat-input")
-
-    class MessageSubmitted(Message):
-        """Message sent when user submits a chat message."""
-
-        def __init__(self, text: str):
-            super().__init__()
-            self.text = text
+        self.add_class("input-container")
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle input submission."""
         if event.value.strip():
-            self.post_message(self.MessageSubmitted(event.value.strip()))
+            # Post Textual message that will bubble up to parent handlers
+            self.post_message(UserMessages.InputSubmitted(event.value.strip()))
+
+            # Clear the input
             self.value = ""
+
+            # Prevent default handling
+            event.stop()
+
+    def on_mount(self) -> None:
+        """Focus the input when mounted."""
+        self.focus()
 
     def clear_input(self):
         """Clear the input field."""
@@ -43,4 +45,4 @@ class ChatInput(Input):
     def enable_input(self):
         """Enable the input field."""
         self.disabled = False
-        self.set_placeholder("Type your message here... (Press Enter to send)")
+        self.set_placeholder("Type your message here...")

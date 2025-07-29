@@ -1,10 +1,10 @@
-"""Enhanced chat message widget with metadata display for the TUI."""
+"""Enhanced chat message widget with metadata display and markdown support for the TUI."""
 
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.widgets import Static
+from textual.widgets import Static, Markdown
 from textual.containers import Container, Horizontal, Vertical
 
 if TYPE_CHECKING:
@@ -14,17 +14,19 @@ if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.models.grouped_timestamp import (
         GroupedTimestamp,
     )
+    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.message import (
+        BasicMessage,
+    )
 
 
 class ChatMessage(Container):
-    """An enhanced chat message widget with role-based styling and metadata."""
+    """An enhanced chat message widget with role-based styling, metadata, and markdown support."""
 
     def __init__(
         self,
         role: str,
         content: str,
         timestamp: Optional[str] = None,
-        model_name: Optional[str] = None,
         message_id: Optional[str] = None,
         **kwargs,
     ):
@@ -32,13 +34,12 @@ class ChatMessage(Container):
         self.role = role
         self.content = content
         self.timestamp = timestamp
-        self.model_name = model_name
         self.message_id = message_id
         self.add_class("message-container")
         self.add_class(f"message-{role.lower()}")
 
     def compose(self) -> ComposeResult:
-        """Compose the chat message with enhanced layout."""
+        """Compose the chat message with enhanced layout and markdown support."""
         with Vertical(classes="message-wrapper"):
             # Header with role and metadata
             with Horizontal(classes="message-header"):
@@ -53,15 +54,11 @@ class ChatMessage(Container):
                 if self.timestamp:
                     yield Static(self.timestamp, classes="message-timestamp")
 
-                # Model name for assistant messages
-                if self.role.lower() == "assistant" and self.model_name:
-                    yield Static(f"[{self.model_name}]", classes="message-model")
-
-            # Message content
-            yield Static(
+            yield Markdown(
                 self.content,
                 classes=f"message-content message-content-{self.role.lower()}",
             )
+            
 
     def _get_role_display(self) -> str:
         """Get the display string for the role."""
@@ -80,16 +77,10 @@ class ChatMessage(Container):
         if hasattr(basic_message.message, "created") and basic_message.message.created:
             timestamp = cls._format_timestamp(basic_message.message.created)
 
-        # Get model name
-        model_name = None
-        if hasattr(basic_message.message, "model") and basic_message.message.model:
-            model_name = getattr(basic_message.message.model, "name", None)
-
         return cls(
             role=basic_message.role,
             content=basic_message.raw_content or "",
             timestamp=timestamp,
-            model_name=model_name,
             message_id=basic_message.id,
         )
 

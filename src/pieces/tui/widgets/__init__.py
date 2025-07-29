@@ -2,14 +2,16 @@
 
 from .chat_input import ChatInput
 from .chat_message import ChatMessage
-from .chat_panel import ChatPanel
-from .chats_panel import ChatsPanel
+from .chat_panel import ChatViewPanel
+from .chats_panel import ChatListPanel
+from .chat_item import ChatItem
 from .status_bar import StatusBar
 
 __all__ = [
     "ChatInput",
     "ChatMessage", 
-    "ChatPanel",
-    "ChatsPanel",
+    "ChatViewPanel",
+    "ChatListPanel",
+    "ChatItem",
     "StatusBar",
 ] 

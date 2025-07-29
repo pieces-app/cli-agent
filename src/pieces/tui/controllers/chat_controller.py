@@ -7,10 +7,10 @@ from .base_controller import BaseController, EventType
 from pieces._vendor.pieces_os_client.wrapper.websockets.conversations_ws import (
     ConversationWS,
 )
+from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.models.conversation import Conversation
-    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 
 
 class ChatController(BaseController):
@@ -38,11 +38,13 @@ class ChatController(BaseController):
 
     def cleanup(self):
         """Stop listening to chat events."""
-        if self._conversation_ws:
-            self._conversation_ws.close()
-        self._conversation_ws = None
-
-        self._initialized = False
+        try:
+            if self._conversation_ws:
+                self._conversation_ws.close()
+        except Exception as e:
+            Settings.logger.error(f"Error closing conversation WebSocket: {e}")
+        finally:
+            self._conversation_ws = None
 
     def _on_conversation_update(self, conversation: "Conversation"):
         """Handle conversation update from WebSocket."""
