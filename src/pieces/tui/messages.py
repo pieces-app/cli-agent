@@ -199,4 +199,3 @@ class ContextMessages:
         def __init__(self, count: int) -> None:
             super().__init__()
             self.count = count
-

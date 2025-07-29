@@ -1,13 +1,11 @@
 """Status bar widget for displaying application state and context."""
 
 from typing import Optional, TYPE_CHECKING
-from textual.containers import Container
 from textual.reactive import reactive
 from textual.widgets import Footer, Static
 from textual.app import ComposeResult
 
 if TYPE_CHECKING:
-    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
     from pieces._vendor.pieces_os_client.models.model import Model
 
 
@@ -72,4 +70,9 @@ class StatusBar(Footer):
         self._status_widget.update(f"ℹ️ {message}")
 
         # Schedule restoration after duration
-        self.set_timer(duration, lambda: self._status_widget.update(current_status))
+        self.set_timer(
+            duration,
+            lambda: self._status_widget.update(current_status)
+            if self._status_widget
+            else None,
+        )

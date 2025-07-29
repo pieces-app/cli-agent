@@ -21,7 +21,6 @@ class ChatViewPanel(ScrollableContainer):
 
     DEFAULT_CSS = """
     ChatViewPanel {
-        width: 75%;
         border: solid $primary;
         border-title-color: $primary;
         border-title-style: bold;
@@ -56,13 +55,16 @@ class ChatViewPanel(ScrollableContainer):
 
     messages: reactive[List[ChatMessage]] = reactive([])
     current_chat: Optional["BasicChat"] = None
-    selected_message_index: int = -1
 
     BINDINGS = [
-        Binding("j", "select_next", "Next message", show=False),
-        Binding("k", "select_previous", "Previous message", show=False),
+        Binding("j", "scroll_down", "Scroll down", show=False),
+        Binding("k", "scroll_up", "Scroll up", show=False), 
+        Binding("d", "scroll_down_half", "Scroll down half page", show=False),
+        Binding("u", "scroll_up_half", "Scroll up half page", show=False),
         Binding("g g", "jump_to_start", "Jump to start", show=False),
         Binding("G", "jump_to_end", "Jump to end", show=False),
+        Binding("ctrl+f", "page_down", "Page down", show=False),
+        Binding("ctrl+b", "page_up", "Page up", show=False),
     ]
 
     def __init__(self, **kwargs):
@@ -239,7 +241,6 @@ class ChatViewPanel(ScrollableContainer):
 
         # Clear message list
         self.messages.clear()
-        self.selected_message_index = -1
 
         # Reset message count tracking for incremental updates
         self._last_message_count = 0
@@ -266,9 +267,6 @@ class ChatViewPanel(ScrollableContainer):
             # Clear current chat reference
             self.current_chat = None
 
-            # Reset state
-            self.selected_message_index = -1
-
         except Exception as e:
             Settings.logger.error(f"Error during ChatViewPanel cleanup: {e}")
 
@@ -289,39 +287,34 @@ class ChatViewPanel(ScrollableContainer):
         return self.messages[-1] if self.messages else None
 
     # Navigation methods
-    def action_select_next(self):
-        """Select the next message."""
-        if self.messages:
-            self._update_selection(
-                min(self.selected_message_index + 1, len(self.messages) - 1)
-            )
+    def action_scroll_down(self):
+        """Scroll down one line."""
+        self.scroll_relative(y=1)
 
-    def action_select_previous(self):
-        """Select the previous message."""
-        if self.messages:
-            self._update_selection(max(self.selected_message_index - 1, 0))
+    def action_scroll_up(self):
+        """Scroll up one line."""
+        self.scroll_relative(y=-1)
+
+    def action_scroll_down_half(self):
+        """Scroll down half a page."""
+        self.scroll_relative(y=self.size.height // 2)
+
+    def action_scroll_up_half(self):
+        """Scroll up half a page."""
+        self.scroll_relative(y=-(self.size.height // 2))
+
+    def action_page_down(self):
+        """Page down."""
+        self.scroll_relative(y=self.size.height)
+
+    def action_page_up(self):
+        """Page up."""
+        self.scroll_relative(y=-self.size.height)
 
     def action_jump_to_start(self):
-        """Jump to the first message."""
-        if self.messages:
-            self._update_selection(0)
-            self.scroll_to_widget(self.messages[0])
+        """Jump to the start of the conversation."""
+        self.scroll_home(animate=False)
 
     def action_jump_to_end(self):
-        """Jump to the last message."""
-        if self.messages:
-            self._update_selection(len(self.messages) - 1)
-            self.scroll_to_widget(self.messages[-1])
-
-    def _update_selection(self, new_index: int):
-        """Update the selected message."""
-        # Unhighlight previous
-        if 0 <= self.selected_message_index < len(self.messages):
-            self.messages[self.selected_message_index].unhighlight()
-
-        # Highlight new
-        self.selected_message_index = new_index
-        if 0 <= self.selected_message_index < len(self.messages):
-            selected = self.messages[self.selected_message_index]
-            selected.highlight()
-            self.scroll_to_widget(selected)
+        """Jump to the end of the conversation."""
+        self.scroll_end(animate=False)

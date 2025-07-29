@@ -1,14 +1,13 @@
 """Enhanced chat list panel widget with keyboard navigation and efficient updates."""
 
-from typing import List, Optional, Dict, Set
+from typing import List, Optional, Dict
 from textual.app import ComposeResult
+from textual.widget import Widget
 from textual.widgets import Static, Button
 from textual.containers import ScrollableContainer, Container
 from textual.reactive import reactive
-from textual.message import Message
 from textual.binding import Binding
 
-from pieces.settings import Settings
 from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 from .chat_item import ChatItem
 from ..messages import ChatMessages
@@ -19,7 +18,6 @@ class ChatListPanel(ScrollableContainer):
 
     DEFAULT_CSS = """
     ChatListPanel {
-        width: 25%;
         border: solid $secondary;
         border-title-color: $secondary;
         border-title-style: bold;
@@ -31,6 +29,24 @@ class ChatListPanel(ScrollableContainer):
             border: solid $accent;
             border-title-color: $accent;
             border-title-style: bold;
+        }
+    }
+    
+    ChatListPanel .new-chat-button {
+        width: 100%;
+        height: 3;
+        margin: 0 0 1 0;
+        background: $primary;
+        color: $text;
+        border: none;
+        text-style: bold;
+        
+        &:hover {
+            background: $primary-lighten-1;
+        }
+        
+        &:focus {
+            background: $primary-lighten-2;
         }
     }
     
@@ -74,6 +90,13 @@ class ChatListPanel(ScrollableContainer):
 
     def compose(self) -> ComposeResult:
         """Compose the chats panel."""
+        # New Chat button at the top
+        new_chat_btn = Button(
+            "➕ New Chat", classes="new-chat-button", id="new-chat-btn"
+        )
+        new_chat_btn.can_focus = False  # Don't interfere with tab navigation
+        yield new_chat_btn
+
         # Chats list container (use regular Container since parent is already ScrollableContainer)
         with Container(classes="chats-list", id="chats-container"):
             yield Static("No chats yet...", classes="empty-chats", id="empty-state")
@@ -103,7 +126,7 @@ class ChatListPanel(ScrollableContainer):
     def _update_chats_incrementally(self):
         """Efficiently update chats - only add/remove/update what changed."""
         chats_container = self.query_one("#chats-container")
-        
+
         # Get current chat IDs from the new data
         new_chat_ids = {chat.id for chat, _, _ in self.chats}
         current_chat_ids = set(self._chat_widgets.keys())
@@ -155,16 +178,16 @@ class ChatListPanel(ScrollableContainer):
         self._reorder_chat_widgets(chats_container, chat_data_by_id)
 
     def _add_chat_widget(
-        self, chat: BasicChat, title: str, summary: str, container: Container
+        self, chat: BasicChat, title: str, summary: str, container: Widget
     ):
         """Add a new chat widget efficiently."""
         is_active = chat == self.active_chat
 
         chat_item = ChatItem(
             chat=chat,
-                title=title,
-                summary=summary,
-                is_active=is_active,
+            title=title,
+            summary=summary,
+            is_active=is_active,
             is_selected=False,
         )
 
@@ -329,9 +352,10 @@ class ChatListPanel(ScrollableContainer):
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
-        if event.button.id == "new-chat":
+        if event.button.id == "new-chat-btn":
             # Post Textual message that will bubble up to parent handlers
             self.post_message(ChatMessages.NewRequested())
+            event.stop()  # Prevent further propagation
 
     async def on_chat_messages_selected(self, message: ChatMessages.Selected) -> None:
         """Handle chat selection."""
@@ -342,7 +366,7 @@ class ChatListPanel(ScrollableContainer):
                 break
 
         self.set_active_chat(message.chat)
-        
+
         # Post Textual message that will bubble up to parent handlers
         self.post_message(ChatMessages.Switched(message.chat))
 

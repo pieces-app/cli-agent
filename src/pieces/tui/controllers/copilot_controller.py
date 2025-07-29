@@ -73,7 +73,7 @@ class CopilotController(BaseController):
             if current_chat:
                 # Set the chat context before asking
                 Settings.pieces_client.copilot.chat = current_chat
-            
+
             # Start streaming
             Settings.pieces_client.copilot.stream_question(query)
 

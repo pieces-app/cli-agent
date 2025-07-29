@@ -9,9 +9,10 @@ from .status_bar import StatusBar
 
 __all__ = [
     "ChatInput",
-    "ChatMessage", 
+    "ChatMessage",
     "ChatViewPanel",
     "ChatListPanel",
     "ChatItem",
     "StatusBar",
-] 
+]
+

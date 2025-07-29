@@ -5,7 +5,7 @@ from typing import Optional
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.widgets import Header
+from textual.widgets import Header, Static
 
 from pieces.settings import Settings
 from .widgets import ChatViewPanel, ChatInput, ChatListPanel, StatusBar
@@ -41,6 +41,27 @@ class PiecesTUI(App):
         border-top: solid $primary;
     }
     
+    .chat-layout {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .chat-layout-with-sidebar .chat-view {
+        width: 75%;
+    }
+    
+    .chat-layout-with-sidebar .chat-list {
+        width: 25%;
+    }
+    
+    .chat-layout-no-sidebar .chat-view {
+        width: 100%;
+    }
+    
+    .chat-layout-no-sidebar .chat-list {
+        display: none;
+    }
+    
     .hidden {
         display: none;
     }
@@ -64,12 +85,22 @@ class PiecesTUI(App):
         color: $warning;
         text-style: bold;
     }
+    
+    .welcome-message {
+        text-align: center;
+        margin: 4 2;
+        padding: 3;
+        border: dashed $primary;
+        background: $primary 10%;
+        color: $text;
+        width: 100%;
+        height: auto;
+    }
     """
 
     BINDINGS = [
         Binding("ctrl+c", "quit", "Quit"),
         Binding("ctrl+n", "new_chat", "New Chat"),
-        Binding("ctrl+l", "focus_chats", "Focus Chats"),
         Binding("ctrl+r", "refresh", "Refresh"),
         Binding("ctrl+s", "toggle_sidebar", "Toggle Sidebar"),
     ]
@@ -81,6 +112,8 @@ class PiecesTUI(App):
         self.chat_input: Optional[ChatInput] = None
         self.status_bar: Optional[StatusBar] = None
         self.event_hub: Optional[EventHub] = None
+        self.sidebar_visible = True  # Track sidebar state
+        self.main_layout: Optional[Horizontal] = None
 
     # Status bar helper methods to reduce code duplication
     def _update_status_connection(self, is_connected: bool):
@@ -103,14 +136,17 @@ class PiecesTUI(App):
         yield Header(name="Pieces Copilot")
 
         # Main content area - chat list on left, chat view on right
-        with Horizontal():
+        self.main_layout = Horizontal(classes="chat-layout chat-layout-with-sidebar")
+        with self.main_layout:
             # Chat list panel (25% width)
-            self.chat_list_panel = ChatListPanel()
+            self.chat_list_panel = ChatListPanel(classes="chat-list")
             yield self.chat_list_panel
 
             # Main chat view panel (75% width)
-            self.chat_view_panel = ChatViewPanel()
+            self.chat_view_panel = ChatViewPanel(classes="chat-view")
             yield self.chat_view_panel
+
+        yield self.main_layout
 
         # Input area at bottom (above status bar)
         self.chat_input = ChatInput()
@@ -143,12 +179,9 @@ class PiecesTUI(App):
         if current_chat and self.chat_view_panel:
             self.chat_view_panel.load_conversation(current_chat)
         else:
-            # Add welcome message for new chat
+            # Add welcome message for new chat - not as system role
             if self.chat_view_panel:
-                self.chat_view_panel.add_message(
-                    "system",
-                    "Welcome to Pieces CLI TUI! Type your questions below or press ? for help.",
-                )
+                self._show_welcome_message()
 
     def _load_chats(self):
         """Load chats into the chats panel."""
@@ -178,10 +211,16 @@ class PiecesTUI(App):
         """Handle user input submission."""
         Settings.logger.info(f"App: User submitted question: {message.text[:50]}...")
         if not self.chat_view_panel or not self.event_hub:
-            Settings.logger.warning(
-                "Missing chat_view_panel or event_hub for user input"
-            )
+            Settings.logger.info("Missing chat_view_panel or event_hub for user input")
             return
+
+        # Remove welcome message if it exists
+        try:
+            welcome_widget = self.chat_view_panel.query_one("#welcome-static", Static)
+            if welcome_widget:
+                welcome_widget.remove()
+        except:
+            pass  # Welcome message not found, that's fine
 
         # Add user message to chat with timestamp
         from datetime import datetime
@@ -206,13 +245,25 @@ class PiecesTUI(App):
     async def on_chat_messages_switched(self, message: ChatMessages.Switched) -> None:
         """Handle chat switched."""
         if self.chat_view_panel:
-            self.chat_view_panel.load_conversation(message.chat)
+            if message.chat:
+                # Load existing conversation
+                self.chat_view_panel.load_conversation(message.chat)
+            else:
+                # None chat means new chat - show welcome message
+                self.chat_view_panel.clear_messages()
+                self.chat_view_panel.border_title = "Chat: New Conversation"
+                self._show_welcome_message()
 
         if self.chat_input:
             self.chat_input.focus()
 
     async def on_chat_messages_updated(self, message: ChatMessages.Updated) -> None:
         """Handle chat updated from backend."""
+        if not message.chat:
+            # None chat in update message doesn't make sense, log and return
+            Settings.logger.info("Received chat update with None chat - ignoring")
+            return
+
         if self.chat_list_panel:
             # Check if this chat already exists in our list
             chat_exists = any(
@@ -291,9 +342,7 @@ class PiecesTUI(App):
         if self.chat_view_panel:
             self.chat_view_panel.add_thinking_indicator()
         else:
-            Settings.logger.warning(
-                "No chat_view_panel available for thinking indicator"
-            )
+            Settings.logger.info("No chat_view_panel available for thinking indicator")
 
     async def on_copilot_messages_stream_started(
         self, message: CopilotMessages.StreamStarted
@@ -345,15 +394,18 @@ class PiecesTUI(App):
             # Create new chat through EventHub
             self.event_hub.create_new_chat()
 
-        # Clear the chat panel
+        # Check if chat panel is already empty/new
         if self.chat_view_panel:
+            # If there are no messages (except maybe welcome), this is already a new chat
+            has_real_messages = len(self.chat_view_panel.messages) > 0
+
+            # Clear the chat panel
             self.chat_view_panel.clear_messages()
             self.chat_view_panel.border_title = "Chat: New Conversation"
-            self.chat_view_panel.add_message(
-                "system", "New conversation started. Ask me anything!"
-            )
 
-        # Update status bar
+            # Only show welcome if there were actual messages before (not already new)
+            if has_real_messages:
+                self._show_welcome_message()
 
         # Clear active chat in sidebar
         if self.chat_list_panel:
@@ -373,17 +425,51 @@ class PiecesTUI(App):
 
         self._show_status_message("✅ Refreshed")
 
-    def action_focus_chats(self):
-        """Focus the chats panel."""
-        if self.chat_list_panel:
-            self.chat_list_panel.focus()
-
     def action_toggle_sidebar(self):
-        """Toggle the sidebar visibility."""
-        if self.chat_list_panel:
-            self.chat_list_panel.display = not self.chat_list_panel.display
-            status = "visible" if self.chat_list_panel.display else "hidden"
+        """Toggle the sidebar visibility and adjust layout accordingly."""
+        if self.chat_list_panel and self.main_layout:
+            self.sidebar_visible = not self.sidebar_visible
+
+            if self.sidebar_visible:
+                # Show sidebar and adjust layout
+                self.main_layout.remove_class("chat-layout-no-sidebar")
+                self.main_layout.add_class("chat-layout-with-sidebar")
+                status = "visible"
+            else:
+                # Hide sidebar and expand chat view
+                self.main_layout.remove_class("chat-layout-with-sidebar")
+                self.main_layout.add_class("chat-layout-no-sidebar")
+                status = "hidden"
+
             self._show_status_message(f"📁 Sidebar {status}")
+
+    def _show_welcome_message(self):
+        """Show a welcoming help message as static centered text."""
+        welcome_text = """🎯 Pieces TUI
+
+Type your message below to start chatting, or use these shortcuts:
+
+• Ctrl+N - New conversation  • Ctrl+S - Toggle sidebar
+• Ctrl+R - Refresh
+
+Ready to assist with code, questions, and more!"""
+
+        if self.chat_view_panel:
+            # Remove any existing welcome message first to prevent duplicates
+            try:
+                existing_welcome = self.chat_view_panel.query_one(
+                    "#welcome-static", Static
+                )
+                if existing_welcome:
+                    existing_welcome.remove()
+            except:
+                pass  # No existing welcome message, that's fine
+
+            # Add welcome as a static widget, not a message
+            welcome_widget = Static(
+                welcome_text, classes="welcome-message", id="welcome-static"
+            )
+            self.chat_view_panel.mount(welcome_widget)
 
     def on_unmount(self):
         """Clean up when app is unmounted."""

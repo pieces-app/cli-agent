@@ -24,34 +24,31 @@ class ChatMessage(Container):
 
     DEFAULT_CSS = """
     ChatMessage {
-        margin: 0 0 1 0;
+        margin: 1;
         padding: 0;
         width: 100%;
+        height: auto;
         
         &:hover {
             background: $surface-darken-1;
         }
-        
-        &.message-highlighted {
-            background: $accent !important;
-        }
     }
     
     ChatMessage .message-wrapper {
-        padding: 1;
+        padding: 0 1;
         width: 100%;
+        height: auto;
     }
     
     ChatMessage .message-header {
         height: auto;
-        margin: 0 0 1 0;
-        align: left middle;
+        margin: 0 0 0 0;
         width: 100%;
     }
     
     ChatMessage .message-role {
         text-style: bold;
-        margin: 0 2 0 0;
+        margin: 0 1 0 0;
         width: auto;
         
         &.message-role-user { color: $primary; }
@@ -62,31 +59,30 @@ class ChatMessage(Container):
     ChatMessage .message-timestamp {
         color: $text-muted;
         text-style: italic;
-        margin: 0 2 0 0;
+        margin: 0;
         width: auto;
     }
     
     ChatMessage .message-content {
         margin: 0;
-        padding: 1 2;
-        background: $panel;
-        border-left: thick $accent;
+        padding: 1;
         width: 100%;
         height: auto;
+        border-left: thick $accent;
         
         &.message-content-user {
             border-left: thick $primary;
-            background: $primary 10%;
+            background: $primary 20%;
         }
         
         &.message-content-assistant {
             border-left: thick $success;
-            background: $success 10%;
+            background: $success 20%;
         }
         
         &.message-content-system {
             border-left: thick $warning;
-            background: $warning 10%;
+            background: $warning 20%;
             text-style: italic;
         }
     }
@@ -134,7 +130,6 @@ class ChatMessage(Container):
                 self.content,
                 classes=f"message-content message-content-{self.role.lower()}",
             )
-            
 
     def _get_role_display(self) -> str:
         """Get the display string for the role."""
@@ -186,11 +181,3 @@ class ChatMessage(Container):
             pass
 
         return ""
-
-    def highlight(self):
-        """Highlight this message."""
-        self.add_class("message-highlighted")
-
-    def unhighlight(self):
-        """Remove highlight from this message."""
-        self.remove_class("message-highlighted")
