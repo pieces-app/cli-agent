@@ -117,8 +117,8 @@ class ConfigMigrator:
     def get_migration_status(self) -> Dict[str, bool]:
         """Get status of what needs migration."""
         return {
-            "cli_config": (self.pieces_data_dir / "pieces_config.json").exists(),
-            "mcp_config": (self.pieces_data_dir / "mcp_config.json").exists(),
+            "cli_config": not (self.pieces_data_dir / "pieces_config.json").exists(),
+            "mcp_config": not (self.pieces_data_dir / "mcp_config.json").exists(),
         }
 
 

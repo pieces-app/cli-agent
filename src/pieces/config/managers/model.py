@@ -52,7 +52,10 @@ class ModelManager(BaseConfigManager[ModelConfigSchema]):
             name: Human-readable model name
             uuid: Model UUID
         """
+        from pieces.settings import Settings
+
         self.config.model = model_info
+        Settings.pieces_client.model_name = model_info.name
         self.save()
 
     def clear_model(self) -> None:
