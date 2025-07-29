@@ -7,10 +7,32 @@ from ..messages import UserMessages
 class ChatInput(Input):
     """Enhanced input widget for chat messages."""
 
+    DEFAULT_CSS = """
+    ChatInput {
+        width: 100%;
+        height: 3;
+        background: $surface;
+        border: solid $primary;
+        padding: 0 1;
+        margin: 0 0 1 0;
+        dock: bottom;
+        
+        &:focus {
+            border: solid $accent;
+            background: $panel;
+            border-title-color: $accent;
+        }
+        
+        &:disabled {
+            border: solid $primary 50%;
+            background: $background;
+            color: $text-muted;
+        }
+    }
+    """
+
     def __init__(self, **kwargs):
         super().__init__(placeholder="Type your message here...", **kwargs)
-        self.add_class("chat-input")
-        self.add_class("input-container")
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle input submission."""

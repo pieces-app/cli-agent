@@ -17,6 +17,39 @@ from ..messages import ChatMessages
 class ChatListPanel(ScrollableContainer):
     """Enhanced chat list panel with keyboard navigation and efficient incremental updates."""
 
+    DEFAULT_CSS = """
+    ChatListPanel {
+        width: 25%;
+        border: solid $secondary;
+        border-title-color: $secondary;
+        border-title-style: bold;
+        scrollbar-background: $surface;
+        scrollbar-color: $secondary;
+        scrollbar-color-hover: $accent;
+        
+        &:focus {
+            border: solid $accent;
+            border-title-color: $accent;
+            border-title-style: bold;
+        }
+    }
+    
+    ChatListPanel .chats-list {
+        width: 100%;
+        height: 1fr;
+        overflow-y: auto;
+    }
+    
+    ChatListPanel .empty-chats {
+        width: 100%;
+        text-align: center;
+        padding: 2;
+        color: $text-muted;
+        text-style: italic;
+        height: auto;
+    }
+    """
+
     chats: reactive[List[tuple]] = reactive([])  # (chat, title, summary)
     active_chat: reactive[Optional[BasicChat]] = reactive(None)
     selected_index: int = -1
@@ -33,7 +66,6 @@ class ChatListPanel(ScrollableContainer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.border_title = "Chats"
-        self.add_class("chats-panel")
 
         # Efficient tracking: chat_id -> ChatItem widget
         self._chat_widgets: Dict[str, ChatItem] = {}

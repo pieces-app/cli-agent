@@ -19,6 +19,41 @@ if TYPE_CHECKING:
 class ChatViewPanel(ScrollableContainer):
     """Enhanced chat view panel to display conversation messages with metadata."""
 
+    DEFAULT_CSS = """
+    ChatViewPanel {
+        width: 75%;
+        border: solid $primary;
+        border-title-color: $primary;
+        border-title-style: bold;
+        scrollbar-background: $surface;
+        scrollbar-color: $primary;
+        scrollbar-color-hover: $accent;
+        overflow-y: auto;
+        overflow-x: hidden;
+        
+        &:focus {
+            border: solid $accent;
+            border-title-color: $accent;
+            border-title-style: bold;
+        }
+    }
+    
+    ChatViewPanel .message-streaming { 
+        border-left: thick $accent;
+        text-style: bold;
+    }
+    
+    ChatViewPanel .message-thinking {
+        color: $warning;
+        text-style: italic bold blink;
+        text-align: center;
+        background: $surface;
+        border: dashed $warning;
+        padding: 1;
+        margin: 1;
+    }
+    """
+
     messages: reactive[List[ChatMessage]] = reactive([])
     current_chat: Optional["BasicChat"] = None
     selected_message_index: int = -1
@@ -33,8 +68,6 @@ class ChatViewPanel(ScrollableContainer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.border_title = "Chat"
-        self.add_class("main-chat")
-        self.add_class("chat-view-panel")
         self._streaming_widget: Optional[Static] = None
         self._thinking_widget: Optional[Static] = None
         self._last_message_count = 0  # Track message count for incremental updates

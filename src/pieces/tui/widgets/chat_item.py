@@ -12,6 +12,73 @@ from ..messages import ChatMessages
 class ChatItem(Container):
     """A single chat item in the list showing chat details."""
 
+    DEFAULT_CSS = """
+    ChatItem {
+        width: 100%;
+        height: auto;
+        min-height: 3;
+        margin: 0 0 1 0;
+        padding: 0;
+        border: none;
+        background: $surface;
+        
+        &:hover {
+            background: $surface-lighten-1;
+        }
+        
+        &.chat-active {
+            border-left: thick $primary;
+            background: $primary 10%;
+            
+            &:hover {
+                background: $primary 20%;
+            }
+        }
+        
+        &.chat-selected {
+            background: $accent !important;
+            color: $text !important;
+        }
+    }
+    
+    ChatItem .chat-content {
+        padding: 1;
+        width: 100%;
+        height: auto;
+    }
+    
+    ChatItem .chat-title {
+        text-style: bold;
+        color: $text;
+        height: 1;
+        width: 100%;
+    }
+    
+    ChatItem.chat-active .chat-title {
+        color: $primary;
+    }
+    
+    ChatItem.chat-selected .chat-title {
+        color: $text !important;
+    }
+    
+    ChatItem .chat-summary {
+        color: $text-muted;
+        text-style: italic;
+        margin: 1 0 0 0;
+        height: auto;
+        width: 100%;
+    }
+    
+    ChatItem.chat-active .chat-summary {
+        color: $primary 80%;
+    }
+    
+    ChatItem.chat-selected .chat-summary {
+        color: $text-muted !important;
+    }
+    """
+
     def __init__(
         self,
         chat: BasicChat,
@@ -27,7 +94,6 @@ class ChatItem(Container):
         self.summary = summary
         self.is_active = is_active
         self.is_selected = is_selected
-        self.add_class("chat-item")
 
         if is_active:
             self.add_class("chat-active")

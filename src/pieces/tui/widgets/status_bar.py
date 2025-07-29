@@ -1,6 +1,7 @@
 """Status bar widget for displaying application state and context."""
 
 from typing import Optional, TYPE_CHECKING
+from textual.containers import Container
 from textual.reactive import reactive
 from textual.widgets import Footer, Static
 from textual.app import ComposeResult
@@ -15,8 +16,6 @@ class StatusBar(Footer):
 
     connection_status: reactive[str] = reactive("Disconnected")
     current_model: reactive[str] = reactive("Unknown")
-    context_count: reactive[int] = reactive(0)
-    current_chat: reactive[Optional[str]] = reactive(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -25,27 +24,23 @@ class StatusBar(Footer):
 
     def compose(self) -> ComposeResult:
         # Add our custom status widget first
-        self._status_widget = Static(self._build_status_text(), classes="status-text")
-        yield self._status_widget
-        
+        # self._status_widget = Static(self._build_status_text())
+        # yield self._status_widget
+
         # Then yield Footer's keybindings
         yield from super().compose()
 
     def _build_status_text(self) -> str:
         """Build the status text string."""
         connection_icon = "🟢" if self.connection_status == "Connected" else "🔴"
-        
-        chat_name = self.current_chat if self.current_chat else "No chat"
-        if chat_name and len(chat_name) > 15:
-            chat_name = chat_name[:12] + "..."
-            
-        model_name = self.current_model if self.current_model != "Unknown" else "No model"
+
+        model_name = (
+            self.current_model if self.current_model != "Unknown" else "No model"
+        )
         if model_name and len(model_name) > 20:
             model_name = model_name[:17] + "..."
-            
-        context_text = f"{self.context_count} items" if self.context_count > 0 else "No context"
-        
-        return f"{connection_icon} {self.connection_status} | 💬 {chat_name} | 🤖 {model_name} | 📎 {context_text}"
+
+        return f"{connection_icon} {self.connection_status} | 🤖 {model_name}"
 
     def _update_status(self):
         """Update the status widget with current information."""
@@ -65,29 +60,16 @@ class StatusBar(Footer):
             self.current_model = "Unknown"
         self._update_status()
 
-    def update_chat_info(self, chat: Optional["BasicChat"] = None):
-        """Update current chat information."""
-        if chat:
-            self.current_chat = chat.name if chat.name else "Untitled"
-        else:
-            self.current_chat = None
-        self._update_status()
-
-    def update_context_count(self, materials: int = 0, files: int = 0):
-        """Update the context items count."""
-        self.context_count = materials + files
-        self._update_status()
-
     def show_temporary_message(self, message: str, duration: float = 3.0):
         """Show a temporary message in the status bar."""
         if not self._status_widget:
             return
-            
+
         # Store current status
         current_status = self._build_status_text()
-        
+
         # Show temporary message
         self._status_widget.update(f"ℹ️ {message}")
-        
+
         # Schedule restoration after duration
         self.set_timer(duration, lambda: self._status_widget.update(current_status))

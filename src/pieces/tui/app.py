@@ -4,11 +4,10 @@ from typing import Optional
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal
+from textual.containers import Horizontal
 from textual.widgets import Header
 
 from pieces.settings import Settings
-from .styles import FULL_CSS
 from .widgets import ChatViewPanel, ChatInput, ChatListPanel, StatusBar
 from .controllers import EventHub
 from .messages import (
@@ -24,7 +23,48 @@ from .messages import (
 class PiecesTUI(App):
     """Main TUI application for Pieces CLI."""
 
-    CSS = FULL_CSS
+    DEFAULT_CSS = """
+    Screen {
+        background: $background;
+        color: $text;
+    }
+    
+    .chat-container {
+        dock: top;
+        height: 1fr;
+    }
+    
+    .input-container {
+        dock: bottom;
+        height: 3;
+        background: $surface;
+        border-top: solid $primary;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .highlighted {
+        background: $accent;
+        color: $text;
+    }
+    
+    .error {
+        color: $error;
+        text-style: bold;
+    }
+    
+    .success {
+        color: $success;
+        text-style: bold;
+    }
+    
+    .warning {
+        color: $warning;
+        text-style: bold;
+    }
+    """
 
     BINDINGS = [
         Binding("ctrl+c", "quit", "Quit"),
@@ -52,21 +92,6 @@ class PiecesTUI(App):
         """Update model info in status bar."""
         if self.status_bar:
             self.status_bar.update_model_info(model_info)
-
-    def _update_status_chat(self, chat):
-        """Update chat info in status bar."""
-        if self.status_bar:
-            self.status_bar.update_chat_info(chat)
-
-    def _update_status_context(self):
-        """Update context count in status bar."""
-        if self.status_bar and self.event_hub:
-            try:
-                materials = len(self.event_hub.material.get_context_materials())
-                self.status_bar.update_context_count(materials=materials)
-            except Exception as e:
-                Settings.logger.error(f"Error getting context count: {e}")
-                self.status_bar.update_context_count(materials=0)
 
     def _show_status_message(self, message: str, duration: int = 3):
         """Show temporary message in status bar."""
@@ -117,7 +142,6 @@ class PiecesTUI(App):
         current_chat = self.event_hub.get_current_chat()
         if current_chat and self.chat_view_panel:
             self.chat_view_panel.load_conversation(current_chat)
-            self._update_status_chat(current_chat)
         else:
             # Add welcome message for new chat
             if self.chat_view_panel:
@@ -125,7 +149,6 @@ class PiecesTUI(App):
                     "system",
                     "Welcome to Pieces CLI TUI! Type your questions below or press ? for help.",
                 )
-            self._update_status_chat(None)
 
     def _load_chats(self):
         """Load chats into the chats panel."""
@@ -155,7 +178,9 @@ class PiecesTUI(App):
         """Handle user input submission."""
         Settings.logger.info(f"App: User submitted question: {message.text[:50]}...")
         if not self.chat_view_panel or not self.event_hub:
-            Settings.logger.warning("Missing chat_view_panel or event_hub for user input")
+            Settings.logger.warning(
+                "Missing chat_view_panel or event_hub for user input"
+            )
             return
 
         # Add user message to chat with timestamp
@@ -183,8 +208,6 @@ class PiecesTUI(App):
         if self.chat_view_panel:
             self.chat_view_panel.load_conversation(message.chat)
 
-        self._update_status_chat(message.chat)
-
         if self.chat_input:
             self.chat_input.focus()
 
@@ -197,7 +220,7 @@ class PiecesTUI(App):
             )
 
             title = message.chat.name
-            summary = message.chat.summary
+            summary = message.chat.summary or ""
 
             if chat_exists:
                 # Update existing chat efficiently
@@ -212,7 +235,9 @@ class PiecesTUI(App):
                 self.chat_view_panel
                 and self.chat_list_panel.active_chat == message.chat
             ):
-                Settings.logger.info(f"Using incremental update for active chat: {message.chat.name}")
+                Settings.logger.info(
+                    f"Using incremental update for active chat: {message.chat.name}"
+                )
                 self.chat_view_panel.update_conversation_incrementally(message.chat)
 
     async def on_chat_messages_deleted(self, message: ChatMessages.Deleted) -> None:
@@ -235,7 +260,6 @@ class PiecesTUI(App):
                         self.chat_view_panel.load_conversation(first_chat)
                 else:
                     self.chat_list_panel.set_active_chat(None)
-                    self._update_status_chat(None)
 
     async def on_model_messages_changed(self, message: ModelMessages.Changed) -> None:
         """Handle model change."""
@@ -261,11 +285,15 @@ class PiecesTUI(App):
         self, message: CopilotMessages.ThinkingStarted
     ) -> None:
         """Handle copilot thinking started."""
-        Settings.logger.info(f"App: Received thinking started for question: {message.question[:50]}...")
+        Settings.logger.info(
+            f"App: Received thinking started for question: {message.question[:50]}..."
+        )
         if self.chat_view_panel:
             self.chat_view_panel.add_thinking_indicator()
         else:
-            Settings.logger.warning("No chat_view_panel available for thinking indicator")
+            Settings.logger.warning(
+                "No chat_view_panel available for thinking indicator"
+            )
 
     async def on_copilot_messages_stream_started(
         self, message: CopilotMessages.StreamStarted
@@ -297,19 +325,18 @@ class PiecesTUI(App):
 
     async def on_context_messages_added(self, message: ContextMessages.Added) -> None:
         """Handle context added."""
-        self._update_status_context()
+        pass
 
     async def on_context_messages_removed(
         self, message: ContextMessages.Removed
     ) -> None:
         """Handle context removed."""
-        self._update_status_context()
+        pass
 
     async def on_context_messages_cleared(
         self, message: ContextMessages.Cleared
     ) -> None:
         """Handle context cleared."""
-        self._update_status_context()
         self._show_status_message(f"🗑️ Cleared {message.count} context items")
 
     def action_new_chat(self):
@@ -327,7 +354,6 @@ class PiecesTUI(App):
             )
 
         # Update status bar
-        self._update_status_chat(None)
 
         # Clear active chat in sidebar
         if self.chat_list_panel:

@@ -22,6 +22,83 @@ if TYPE_CHECKING:
 class ChatMessage(Container):
     """An enhanced chat message widget with role-based styling, metadata, and markdown support."""
 
+    DEFAULT_CSS = """
+    ChatMessage {
+        margin: 0 0 1 0;
+        padding: 0;
+        width: 100%;
+        
+        &:hover {
+            background: $surface-darken-1;
+        }
+        
+        &.message-highlighted {
+            background: $accent !important;
+        }
+    }
+    
+    ChatMessage .message-wrapper {
+        padding: 1;
+        width: 100%;
+    }
+    
+    ChatMessage .message-header {
+        height: auto;
+        margin: 0 0 1 0;
+        align: left middle;
+        width: 100%;
+    }
+    
+    ChatMessage .message-role {
+        text-style: bold;
+        margin: 0 2 0 0;
+        width: auto;
+        
+        &.message-role-user { color: $primary; }
+        &.message-role-assistant { color: $success; }
+        &.message-role-system { color: $warning; }
+    }
+    
+    ChatMessage .message-timestamp {
+        color: $text-muted;
+        text-style: italic;
+        margin: 0 2 0 0;
+        width: auto;
+    }
+    
+    ChatMessage .message-content {
+        margin: 0;
+        padding: 1 2;
+        background: $panel;
+        border-left: thick $accent;
+        width: 100%;
+        height: auto;
+        
+        &.message-content-user {
+            border-left: thick $primary;
+            background: $primary 10%;
+        }
+        
+        &.message-content-assistant {
+            border-left: thick $success;
+            background: $success 10%;
+        }
+        
+        &.message-content-system {
+            border-left: thick $warning;
+            background: $warning 10%;
+            text-style: italic;
+        }
+    }
+    
+    ChatMessage Markdown {
+        background: transparent;
+        padding: 0;
+        width: 100%;
+        height: auto;
+    }
+    """
+
     def __init__(
         self,
         role: str,
@@ -35,7 +112,6 @@ class ChatMessage(Container):
         self.content = content
         self.timestamp = timestamp
         self.message_id = message_id
-        self.add_class("message-container")
         self.add_class(f"message-{role.lower()}")
 
     def compose(self) -> ComposeResult:
