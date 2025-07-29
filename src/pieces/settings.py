@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import sys
 from platformdirs import user_data_dir
+from rich.progress import Progress, TextColumn, SpinnerColumn
 
 from pieces.config.constants import (
     CLI_CONFIG_PATH,
@@ -10,7 +11,6 @@ from pieces.config.constants import (
     USER_CONFIG_PATH,
 )
 from pieces.headless.exceptions import HeadlessCompatibilityError
-from pieces.headless.models.base import CommandResult
 from pieces.logger import Logger
 from pieces._vendor.pieces_os_client.wrapper import PiecesClient
 from pieces._vendor.pieces_os_client.wrapper.version_compatibility import (
@@ -63,19 +63,18 @@ class Settings:
             if not bypass_login:
                 cls.check_login()
         else:
-            if cls.pieces_client.open_pieces_os():  # PiecesOS is running
+            if cls.pieces_client.is_pieces_running() or cls.open_pieces_widget():
                 return cls.startup(bypass_login)
-            else:
-                if cls.logger.confirm(
-                    "Pieces OS is required but wasn’t found or couldn’t be launched.\n"
-                    "Do you want to install it now and get started?"
-                ):
-                    from .command_interface.simple_commands import InstallCommand
+            if cls.logger.confirm(
+                "Pieces OS is required but wasn’t found or couldn’t be launched.\n"
+                "Do you want to install it now and get started?"
+            ):
+                from .command_interface.simple_commands import InstallCommand
 
-                    status_code = InstallCommand.instance.execute()
-                    if status_code == 0:
-                        return cls.startup(bypass_login)
-                    sys.exit(status_code)
+                status_code = InstallCommand.instance.execute()
+                if status_code == 0:
+                    return cls.startup(bypass_login)
+                sys.exit(status_code)
 
             sys.exit(2)  # Exit the program
 
@@ -142,3 +141,21 @@ class Settings:
             if app.name == ApplicationNameEnum.OS_SERVER:
                 cls._os_id = app.id
                 return app.id
+
+    @classmethod
+    def open_pieces_widget(cls):
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=cls.logger.console,
+            transient=False,
+        ) as progress:
+            pos_task = progress.add_task(
+                "[cyan]Launching PiecesOS...",
+            )
+            if cls.pieces_client.open_pieces_os():
+                progress.update(pos_task, visible=False)
+                return True
+
+            progress.update(pos_task, description="[red]PiecesOS is not installed")
+            return False
