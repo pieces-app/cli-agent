@@ -40,6 +40,45 @@ Screen {
   margin-right: 2;
 }
 
+.status-item {
+  margin: 0 1 0 0;
+  height: 1;
+  content-align: left middle;
+  overflow: hidden;
+}
+
+.status-spacer {
+  width: 1fr;
+  height: 1;
+}
+
+.status-connection.status-connected {
+  color: $success;
+  text-style: bold;
+}
+
+.status-connection.status-disconnected {
+  color: $error;
+  text-style: bold;
+}
+
+.status-chat {
+  color: $primary;
+}
+
+.status-model {
+  color: $accent;
+}
+
+.status-context {
+  color: $warning;
+}
+
+.status-help {
+  color: $text-muted;
+  text-style: italic;
+}
+
 /* Focus styles for better UX - using Textual's built-in :focus */
 *:focus {
   border: solid $accent;

@@ -6,8 +6,8 @@ from textual.widgets import Footer, Static
 from textual.app import ComposeResult
 
 if TYPE_CHECKING:
+    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
     from pieces._vendor.pieces_os_client.models.model import Model
-    from textual.screen import Screen
 
 
 class StatusBar(Footer):
@@ -28,29 +28,24 @@ class StatusBar(Footer):
         self._status_widget = Static(self._build_status_text(), classes="status-text")
         yield self._status_widget
         
-        # Then yield Footer's keybindings (only if bindings are ready)
+        # Then yield Footer's keybindings
         yield from super().compose()
-
-    async def bindings_changed(self, screen: "Screen") -> None:
-        """Called when bindings change - recompose to show both status and keybindings."""
-        # Call parent to handle binding logic
-        await super().bindings_changed(screen)
-        
-        # Force recompose to show both status widget and keybindings
-        if self.is_attached and self._bindings_ready:
-            await self.recompose()
 
     def _build_status_text(self) -> str:
         """Build the status text string."""
         connection_icon = "🟢" if self.connection_status == "Connected" else "🔴"
-
-        model_name = (
-            self.current_model if self.current_model != "Unknown" else "No model"
-        )
+        
+        chat_name = self.current_chat if self.current_chat else "No chat"
+        if chat_name and len(chat_name) > 15:
+            chat_name = chat_name[:12] + "..."
+            
+        model_name = self.current_model if self.current_model != "Unknown" else "No model"
         if model_name and len(model_name) > 20:
             model_name = model_name[:17] + "..."
-
-        return f"{connection_icon} {self.connection_status} | 🤖 {model_name}"
+            
+        context_text = f"{self.context_count} items" if self.context_count > 0 else "No context"
+        
+        return f"{connection_icon} {self.connection_status} | 💬 {chat_name} | 🤖 {model_name} | 📎 {context_text}"
 
     def _update_status(self):
         """Update the status widget with current information."""
@@ -70,16 +65,29 @@ class StatusBar(Footer):
             self.current_model = "Unknown"
         self._update_status()
 
+    def update_chat_info(self, chat: Optional["BasicChat"] = None):
+        """Update current chat information."""
+        if chat:
+            self.current_chat = chat.name if chat.name else "Untitled"
+        else:
+            self.current_chat = None
+        self._update_status()
+
+    def update_context_count(self, materials: int = 0, files: int = 0):
+        """Update the context items count."""
+        self.context_count = materials + files
+        self._update_status()
+
     def show_temporary_message(self, message: str, duration: float = 3.0):
         """Show a temporary message in the status bar."""
         if not self._status_widget:
             return
-
+            
         # Store current status
         current_status = self._build_status_text()
-
+        
         # Show temporary message
         self._status_widget.update(f"ℹ️ {message}")
-
+        
         # Schedule restoration after duration
         self.set_timer(duration, lambda: self._status_widget.update(current_status))
