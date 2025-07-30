@@ -245,7 +245,19 @@ class ChatViewPanel(ScrollableContainer):
         # Reset message count tracking for incremental updates
         self._last_message_count = 0
 
-        # Remove all children
+        # Remove ALL children widgets (including welcome messages)
+        try:
+            # Get all child widgets and remove them
+            children_to_remove = list(self.children)
+            for child in children_to_remove:
+                try:
+                    child.remove()
+                except:
+                    pass  # Widget may already be removed
+        except:
+            pass
+            
+        # Ensure we're completely clean
         self.remove_children()
 
     def _clear_streaming_widget(self):

@@ -1,15 +1,17 @@
 """Enhanced chat list panel widget with keyboard navigation and efficient updates."""
 
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Set
 from textual.app import ComposeResult
-from textual.widget import Widget
 from textual.widgets import Static, Button
 from textual.containers import ScrollableContainer, Container
 from textual.reactive import reactive
+from textual.message import Message
 from textual.binding import Binding
 
+from pieces.settings import Settings
 from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 from .chat_item import ChatItem
+from .dialogs import ConfirmDeleteDialog, EditNameDialog
 from ..messages import ChatMessages
 
 
@@ -178,7 +180,7 @@ class ChatListPanel(ScrollableContainer):
         self._reorder_chat_widgets(chats_container, chat_data_by_id)
 
     def _add_chat_widget(
-        self, chat: BasicChat, title: str, summary: str, container: Widget
+        self, chat: BasicChat, title: str, summary: str, container: Container
     ):
         """Add a new chat widget efficiently."""
         is_active = chat == self.active_chat
@@ -397,15 +399,59 @@ class ChatListPanel(ScrollableContainer):
 
     def action_rename_chat(self):
         """Rename the selected chat."""
-        # TODO: Implement rename functionality
-        pass
+        if 0 <= self.selected_index < len(self.chats):
+            chat, title, _ = self.chats[self.selected_index]
+            self.app.run_worker(self._rename_chat_worker(chat, title))
+    
+    async def _rename_chat_worker(self, chat: BasicChat, current_title: str):
+        """Worker method to handle rename chat dialog."""
+        dialog = EditNameDialog(current_title)
+        new_name = await self.app.push_screen_wait(dialog)
+        
+        if new_name:  # User confirmed and entered a name
+            try:
+                # Update chat name via API
+                chat.name = new_name
+                Settings.logger.info(f"Renamed chat to: {new_name}")
+                
+                # Update the widget
+                self.update_chat(chat, new_name, chat.summary or "")
+                
+            except Exception as e:
+                Settings.logger.error(f"Error renaming chat: {e}")
 
     def action_delete_chat(self):
         """Delete the selected chat."""
         if 0 <= self.selected_index < len(self.chats):
-            chat, _, _ = self.chats[self.selected_index]
-            self.remove_chat(chat)
-            # TODO: Send delete message to backend
+            chat, title, _ = self.chats[self.selected_index]
+            self.app.run_worker(self._delete_chat_worker(chat, title))
+    
+    async def _delete_chat_worker(self, chat: BasicChat, title: str):
+        """Worker method to handle delete chat dialog."""
+        dialog = ConfirmDeleteDialog(title)
+        confirmed = await self.app.push_screen_wait(dialog)
+        
+        if confirmed:  # User confirmed deletion
+            try:
+                # Delete chat via API
+                chat.delete()
+                Settings.logger.info(f"Deleted chat: {title}")
+                
+                # Remove from UI
+                self.remove_chat(chat)
+                
+                # Adjust selected index if needed
+                if self.selected_index >= len(self.chats):
+                    self.selected_index = max(0, len(self.chats) - 1)
+                
+                # Update selection
+                if self.chats:
+                    self._update_selection()
+                else:
+                    self.selected_index = -1
+                
+            except Exception as e:
+                Settings.logger.error(f"Error deleting chat: {e}")
 
     def _update_selection(self):
         """Update visual selection efficiently."""

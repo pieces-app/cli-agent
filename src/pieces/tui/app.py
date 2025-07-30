@@ -6,6 +6,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import Header, Static
+from textual.css.query import NoMatches
 
 from pieces.settings import Settings
 from .widgets import ChatViewPanel, ChatInput, ChatListPanel, StatusBar
@@ -181,7 +182,7 @@ class PiecesTUI(App):
         else:
             # Add welcome message for new chat - not as system role
             if self.chat_view_panel:
-                self._show_welcome_message()
+                self.call_later(self._show_welcome_message)
 
     def _load_chats(self):
         """Load chats into the chats panel."""
@@ -218,8 +219,8 @@ class PiecesTUI(App):
         try:
             welcome_widget = self.chat_view_panel.query_one("#welcome-static", Static)
             if welcome_widget:
-                welcome_widget.remove()
-        except:
+                await welcome_widget.remove()
+        except NoMatches:
             pass  # Welcome message not found, that's fine
 
         # Add user message to chat with timestamp
@@ -236,7 +237,7 @@ class PiecesTUI(App):
         self, message: ChatMessages.NewRequested
     ) -> None:
         """Handle new chat request."""
-        self.action_new_chat()
+        await self.action_new_chat()
 
     async def on_chat_messages_selected(self, message: ChatMessages.Selected) -> None:
         """Handle chat selection - this will trigger a Switched message."""
@@ -252,7 +253,7 @@ class PiecesTUI(App):
                 # None chat means new chat - show welcome message
                 self.chat_view_panel.clear_messages()
                 self.chat_view_panel.border_title = "Chat: New Conversation"
-                self._show_welcome_message()
+                await self._show_welcome_message()
 
         if self.chat_input:
             self.chat_input.focus()
@@ -265,6 +266,10 @@ class PiecesTUI(App):
             return
 
         if self.chat_list_panel:
+            try:
+                message.chat.id
+            except AttributeError:
+                return  # Chat is deleted or not valid
             # Check if this chat already exists in our list
             chat_exists = any(
                 chat.id == message.chat.id for chat, _, _ in self.chat_list_panel.chats
@@ -388,8 +393,10 @@ class PiecesTUI(App):
         """Handle context cleared."""
         self._show_status_message(f"🗑️ Cleared {message.count} context items")
 
-    def action_new_chat(self):
+    async def action_new_chat(self):
         """Create a new chat."""
+        Settings.pieces_client.copilot.chat = None
+
         if self.event_hub:
             # Create new chat through EventHub
             self.event_hub.create_new_chat()
@@ -399,13 +406,12 @@ class PiecesTUI(App):
             # If there are no messages (except maybe welcome), this is already a new chat
             has_real_messages = len(self.chat_view_panel.messages) > 0
 
-            # Clear the chat panel
+            # Clear the chat panel completely
             self.chat_view_panel.clear_messages()
             self.chat_view_panel.border_title = "Chat: New Conversation"
 
-            # Only show welcome if there were actual messages before (not already new)
-            if has_real_messages:
-                self._show_welcome_message()
+            # Always show welcome for new chat (since we're explicitly creating new)
+            await self._show_welcome_message()
 
         # Clear active chat in sidebar
         if self.chat_list_panel:
@@ -443,7 +449,7 @@ class PiecesTUI(App):
 
             self._show_status_message(f"📁 Sidebar {status}")
 
-    def _show_welcome_message(self):
+    async def _show_welcome_message(self):
         """Show a welcoming help message as static centered text."""
         welcome_text = """🎯 Pieces TUI
 
@@ -457,15 +463,15 @@ Ready to assist with code, questions, and more!"""
         if self.chat_view_panel:
             # Remove any existing welcome message first to prevent duplicates
             try:
-                existing_welcome = self.chat_view_panel.query_one(
-                    "#welcome-static", Static
-                )
+                existing_welcome = self.chat_view_panel.query_one("#welcome-static")
                 if existing_welcome:
-                    existing_welcome.remove()
-            except:
-                pass  # No existing welcome message, that's fine
+                    await existing_welcome.recompose()
+                    return
+            except NoMatches:
+                # No existing welcome message found, that's fine
+                pass
 
-            # Add welcome as a static widget, not a message
+            # Always add a fresh welcome message
             welcome_widget = Static(
                 welcome_text, classes="welcome-message", id="welcome-static"
             )

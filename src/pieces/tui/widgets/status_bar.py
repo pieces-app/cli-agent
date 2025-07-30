@@ -22,6 +22,8 @@ class StatusBar(Footer):
 
     def compose(self) -> ComposeResult:
         # Add our custom status widget first
+        # TODO: Add a status widget that shows the current model and connection status
+        # I couldn't add a status widget to the footer
         # self._status_widget = Static(self._build_status_text())
         # yield self._status_widget
 
