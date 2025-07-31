@@ -8,9 +8,6 @@ from textual.widgets import Static, Markdown
 from textual.containers import Container, Horizontal, Vertical
 
 if TYPE_CHECKING:
-    from pieces._vendor.pieces_os_client.models.conversation_message import (
-        ConversationMessage,
-    )
     from pieces._vendor.pieces_os_client.models.grouped_timestamp import (
         GroupedTimestamp,
     )
@@ -165,19 +162,21 @@ class ChatMessage(Container):
         try:
             if hasattr(grouped_timestamp, "value") and grouped_timestamp.value:
                 # Assuming value is milliseconds since epoch
-                dt = datetime.fromtimestamp(grouped_timestamp.value / 1000)
-                now = datetime.now()
+                timestamp_value = grouped_timestamp.value
+                if isinstance(timestamp_value, (int, float)):
+                    dt = datetime.fromtimestamp(timestamp_value / 1000)
+                    now = datetime.now()
 
-                # Format based on how recent
-                if dt.date() == now.date():
-                    return dt.strftime("Today %I:%M %p")
-                elif (now - dt).days == 1:
-                    return dt.strftime("Yesterday %I:%M %p")
-                elif (now - dt).days < 7:
-                    return dt.strftime("%A %I:%M %p")
-                else:
-                    return dt.strftime("%b %d, %Y %I:%M %p")
-        except:
+                    # Format based on how recent
+                    if dt.date() == now.date():
+                        return dt.strftime("Today %I:%M %p")
+                    elif (now - dt).days == 1:
+                        return dt.strftime("Yesterday %I:%M %p")
+                    elif (now - dt).days < 7:
+                        return dt.strftime("%A %I:%M %p")
+                    else:
+                        return dt.strftime("%b %d, %Y %I:%M %p")
+        except (OSError, OverflowError, ValueError):
             pass
 
         return ""

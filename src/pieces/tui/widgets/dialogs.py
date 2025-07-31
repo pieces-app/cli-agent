@@ -214,4 +214,3 @@ class EditNameDialog(ModalScreen):
 
     def action_cancel_edit(self) -> None:
         self.dismiss(None)
-

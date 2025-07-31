@@ -42,25 +42,16 @@ class ConnectionController(BaseController):
 
     def _check_connection(self, health_message: str):
         """Check if Pieces OS is connected and healthy."""
-        try:
-            health = health_message.lower() == "ok"
+        health = health_message.lower() == "ok"
 
-            if health and not self._is_connected:
-                self._is_connected = True
-                self.emit(
-                    EventType.CONNECTION_ESTABLISHED,
-                    {"health": health, "version": Settings.pieces_os_version},
-                )
+        if health and not self._is_connected:
+            self._is_connected = True
+            self.emit(EventType.CONNECTION_ESTABLISHED, None)
 
-            elif not health and self._is_connected:
-                # Connection lost
-                self._is_connected = False
-                self.emit(EventType.CONNECTION_LOST, None)
-
-        except Exception as e:
-            if self._is_connected:
-                self._is_connected = False
-                self.emit(EventType.CONNECTION_LOST, {"error": str(e)})
+        elif not health and self._is_connected:
+            # Connection lost
+            self._is_connected = False
+            self.emit(EventType.CONNECTION_LOST, None)
 
     def is_connected(self) -> bool:
         """Check if currently connected."""

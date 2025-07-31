@@ -1,6 +1,5 @@
 """Chat item widget for displaying chat details in the chat list."""
 
-from typing import Optional
 from textual.app import ComposeResult
 from textual.widgets import Static
 from textual.containers import Container
@@ -123,7 +122,9 @@ class ChatItem(Container):
     def on_click(self) -> None:
         """Handle chat item click."""
         # Post Textual message that will bubble up to parent handlers
-        self.post_message(ChatMessages.Selected(self.chat))
+        if not self.chat:
+            return
+        self.post_message(ChatMessages.Switched(self.chat))
 
     def select(self):
         """Select this chat item."""

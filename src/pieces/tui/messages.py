@@ -1,25 +1,15 @@
 """Textual messages for the TUI application."""
 
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from textual.message import Message
 
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
-    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import (
-        BasicAsset,
-    )
     from pieces.config.schemas.model import ModelInfo
 
 
 class ChatMessages:
     """Chat-related messages."""
-
-    class Selected(Message):
-        """Chat was selected."""
-
-        def __init__(self, chat: "BasicChat") -> None:
-            super().__init__()
-            self.chat = chat
 
     class Switched(Message):
         """Chat was switched to."""
@@ -43,9 +33,9 @@ class ChatMessages:
     class Deleted(Message):
         """Chat was deleted."""
 
-        def __init__(self, chat: "BasicChat") -> None:
+        def __init__(self, chat_id: str) -> None:
             super().__init__()
-            self.chat = chat
+            self.chat_id = chat_id
 
 
 class UserMessages:
@@ -66,44 +56,42 @@ class ModelMessages:
     class Changed(Message):
         """Model was changed."""
 
-        def __init__(
-            self, new_model: "ModelInfo", old_model: Optional["ModelInfo"] = None
-        ) -> None:
+        def __init__(self, new_model: "ModelInfo") -> None:
             super().__init__()
             self.new_model = new_model
-            self.old_model = old_model
 
 
-class MaterialMessages:
-    """Material/asset-related messages."""
-
-    class Created(Message):
-        """Material was created."""
-
-        def __init__(self, asset: "BasicAsset") -> None:
-            super().__init__()
-            self.asset = asset
-
-    class Updated(Message):
-        """Material was updated."""
-
-        def __init__(self, asset: "BasicAsset") -> None:
-            super().__init__()
-            self.asset = asset
-
-    class Deleted(Message):
-        """Material was deleted."""
-
-        def __init__(self, asset: "BasicAsset") -> None:
-            super().__init__()
-            self.asset = asset
-
-    class SearchCompleted(Message):
-        """Material search completed."""
-
-        def __init__(self, results: List["BasicAsset"]) -> None:
-            super().__init__()
-            self.results = results
+# class MaterialMessages:
+#     """Material/asset-related messages."""
+#
+#     class Created(Message):
+#         """Material was created."""
+#
+#         def __init__(self, asset: "BasicAsset") -> None:
+#             super().__init__()
+#             self.asset = asset
+#
+#     class Updated(Message):
+#         """Material was updated."""
+#
+#         def __init__(self, asset: "BasicAsset") -> None:
+#             super().__init__()
+#             self.asset = asset
+#
+#     class Deleted(Message):
+#         """Material was deleted."""
+#
+#         def __init__(self, asset: "BasicAsset") -> None:
+#             super().__init__()
+#             self.asset = asset
+#
+#     class SearchCompleted(Message):
+#         """Material search completed."""
+#
+#         def __init__(self, results: List["BasicAsset"]) -> None:
+#             super().__init__()
+#             self.results = results
+#
 
 
 class ConnectionMessages:
@@ -112,16 +100,14 @@ class ConnectionMessages:
     class Established(Message):
         """Connection was established."""
 
-        def __init__(self, endpoint: str) -> None:
+        def __init__(self) -> None:
             super().__init__()
-            self.endpoint = endpoint
 
     class Lost(Message):
         """Connection was lost."""
 
-        def __init__(self, reason: Optional[str] = None) -> None:
+        def __init__(self) -> None:
             super().__init__()
-            self.reason = reason
 
     class Reconnecting(Message):
         """Connection is reconnecting."""
@@ -135,9 +121,8 @@ class CopilotMessages:
     class ThinkingStarted(Message):
         """Copilot started thinking."""
 
-        def __init__(self, question: str) -> None:
+        def __init__(self) -> None:
             super().__init__()
-            self.question = question
 
     class ThinkingEnded(Message):
         """Copilot finished thinking."""

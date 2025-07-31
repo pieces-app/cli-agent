@@ -1,11 +1,11 @@
 """Enhanced chat list panel widget with keyboard navigation and efficient updates."""
 
-from typing import List, Optional, Dict, Set
+from typing import List, Optional, Dict
 from textual.app import ComposeResult
 from textual.widgets import Static, Button
 from textual.containers import ScrollableContainer, Container
 from textual.reactive import reactive
-from textual.message import Message
+from textual.widget import Widget
 from textual.binding import Binding
 
 from pieces.settings import Settings
@@ -177,10 +177,10 @@ class ChatListPanel(ScrollableContainer):
                 self._update_chat_widget(chat_id, chat, title, summary)
 
         # Reorder widgets to match the new chat order
-        self._reorder_chat_widgets(chats_container, chat_data_by_id)
+        self._reorder_chat_widgets(chats_container)
 
     def _add_chat_widget(
-        self, chat: BasicChat, title: str, summary: str, container: Container
+        self, chat: BasicChat, title: str, summary: str, container: Widget
     ):
         """Add a new chat widget efficiently."""
         is_active = chat == self.active_chat
@@ -213,7 +213,7 @@ class ChatListPanel(ScrollableContainer):
         if widget.title != title:
             widget.title = title
             # Update the title widget in the UI
-            title_widget = widget.query_one(".chat-title")
+            title_widget = widget.query_one(".chat-title", Static)
             title_widget.update(title)
 
         if widget.summary != summary:
@@ -221,7 +221,12 @@ class ChatListPanel(ScrollableContainer):
             # Update summary widget if it exists
             summary_widgets = widget.query(".chat-summary")
             if summary_widgets and summary:
-                summary_widgets[0].update(summary)
+                # Cast to Static to satisfy type checker
+                summary_widget = summary_widgets[0]
+                if hasattr(summary_widget, "update"):
+                    summary_widget.update(  # pyright: ignore[reportAttributeAccessIssue]
+                        summary
+                    )
 
         # Update active state
         is_active = chat == self.active_chat
@@ -232,9 +237,7 @@ class ChatListPanel(ScrollableContainer):
             else:
                 widget.remove_class("chat-active")
 
-    def _reorder_chat_widgets(
-        self, container: Container, chat_data_by_id: Dict[str, tuple]
-    ):
+    def _reorder_chat_widgets(self, container: Widget):
         """Reorder widgets to match the new chat order efficiently."""
         # Build new order based on current chats list
         new_order = []
@@ -253,7 +256,17 @@ class ChatListPanel(ScrollableContainer):
                     widget = self._chat_widgets[chat_id]
                     try:
                         # Move widget to the correct position
-                        container.move_child(widget, after=i - 1 if i > 0 else None)
+                        if i == 0:
+                            # Move to beginning - use before the first child
+                            children = list(container.children)
+                            if children:
+                                container.move_child(widget, before=children[0])
+                        else:
+                            # Move after the previous widget
+                            prev_chat_id = self._chat_order[i - 1]
+                            if prev_chat_id in self._chat_widgets:
+                                prev_widget = self._chat_widgets[prev_chat_id]
+                                container.move_child(widget, after=prev_widget)
                     except Exception:
                         # If move fails, it's probably already in the right place
                         pass
@@ -272,20 +285,37 @@ class ChatListPanel(ScrollableContainer):
             empty_state = chats_container.query_one("#empty-state")
             empty_state.display = False
 
-    def remove_chat(self, chat: BasicChat):
+    def add_chat_at_top(self, chat: BasicChat, title: str, summary: str = ""):
+        """Add a single new chat at the top of the list efficiently."""
+        # Add to data at the beginning
+        self.chats = [(chat, title, summary)] + list(self.chats)
+
+        # Add widget incrementally
+        if chat.id not in self._chat_widgets:
+            chats_container = self.query_one("#chats-container")
+            self._add_chat_widget(chat, title, summary, chats_container)
+
+            # Hide empty state
+            empty_state = chats_container.query_one("#empty-state")
+            empty_state.display = False
+
+            # Move the new chat widget to the top
+            self._reorder_chat_widgets(chats_container)
+
+    def remove_chat(self, chat_id: str):
         """Remove a single chat efficiently."""
 
         # Remove from data
-        self.chats = [item for item in self.chats if item[0] != chat]
+        self.chats = [item for item in self.chats if item[0].exists()]
 
         # Remove widget incrementally
-        if chat.id in self._chat_widgets:
-            widget = self._chat_widgets[chat.id]
+        if chat_id in self._chat_widgets:
+            widget = self._chat_widgets[chat_id]
             if widget.is_mounted:
                 widget.remove()
-            del self._chat_widgets[chat.id]
-            if chat.id in self._chat_order:
-                self._chat_order.remove(chat.id)
+            del self._chat_widgets[chat_id]
+            if chat_id in self._chat_order:
+                self._chat_order.remove(chat_id)
 
         # Show empty state if no chats left
         if not self.chats:
@@ -328,7 +358,6 @@ class ChatListPanel(ScrollableContainer):
                 new_widget.add_class("chat-active")
 
     def refresh_chats(self):
-        """Legacy method - now just triggers incremental update."""
         self._update_chats_incrementally()
 
     def clear_chats(self):
@@ -359,7 +388,7 @@ class ChatListPanel(ScrollableContainer):
             self.post_message(ChatMessages.NewRequested())
             event.stop()  # Prevent further propagation
 
-    async def on_chat_messages_selected(self, message: ChatMessages.Selected) -> None:
+    async def on_chat_messages_switched(self, message: ChatMessages.Switched) -> None:
         """Handle chat selection."""
         # Find and update selected index efficiently
         for idx, (chat, _, _) in enumerate(self.chats):
@@ -368,9 +397,6 @@ class ChatListPanel(ScrollableContainer):
                 break
 
         self.set_active_chat(message.chat)
-
-        # Post Textual message that will bubble up to parent handlers
-        self.post_message(ChatMessages.Switched(message.chat))
 
     # Keyboard navigation
     def action_select_next(self):
@@ -390,7 +416,7 @@ class ChatListPanel(ScrollableContainer):
         if 0 <= self.selected_index < len(self.chats):
             chat, _, _ = self.chats[self.selected_index]
             # Post Textual message that will bubble up to parent handlers
-            self.post_message(ChatMessages.Selected(chat))
+            self.post_message(ChatMessages.Switched(chat))
 
     def action_new_chat(self):
         """Request a new chat."""
@@ -402,21 +428,17 @@ class ChatListPanel(ScrollableContainer):
         if 0 <= self.selected_index < len(self.chats):
             chat, title, _ = self.chats[self.selected_index]
             self.app.run_worker(self._rename_chat_worker(chat, title))
-    
+
     async def _rename_chat_worker(self, chat: BasicChat, current_title: str):
         """Worker method to handle rename chat dialog."""
         dialog = EditNameDialog(current_title)
         new_name = await self.app.push_screen_wait(dialog)
-        
+
         if new_name:  # User confirmed and entered a name
             try:
-                # Update chat name via API
                 chat.name = new_name
                 Settings.logger.info(f"Renamed chat to: {new_name}")
-                
-                # Update the widget
-                self.update_chat(chat, new_name, chat.summary or "")
-                
+
             except Exception as e:
                 Settings.logger.error(f"Error renaming chat: {e}")
 
@@ -425,31 +447,28 @@ class ChatListPanel(ScrollableContainer):
         if 0 <= self.selected_index < len(self.chats):
             chat, title, _ = self.chats[self.selected_index]
             self.app.run_worker(self._delete_chat_worker(chat, title))
-    
+
     async def _delete_chat_worker(self, chat: BasicChat, title: str):
         """Worker method to handle delete chat dialog."""
         dialog = ConfirmDeleteDialog(title)
         confirmed = await self.app.push_screen_wait(dialog)
-        
+
         if confirmed:  # User confirmed deletion
             try:
                 # Delete chat via API
                 chat.delete()
                 Settings.logger.info(f"Deleted chat: {title}")
-                
-                # Remove from UI
-                self.remove_chat(chat)
-                
+
                 # Adjust selected index if needed
                 if self.selected_index >= len(self.chats):
                     self.selected_index = max(0, len(self.chats) - 1)
-                
+
                 # Update selection
                 if self.chats:
                     self._update_selection()
                 else:
                     self.selected_index = -1
-                
+
             except Exception as e:
                 Settings.logger.error(f"Error deleting chat: {e}")
 

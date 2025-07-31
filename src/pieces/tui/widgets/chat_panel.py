@@ -58,7 +58,7 @@ class ChatViewPanel(ScrollableContainer):
 
     BINDINGS = [
         Binding("j", "scroll_down", "Scroll down", show=False),
-        Binding("k", "scroll_up", "Scroll up", show=False), 
+        Binding("k", "scroll_up", "Scroll up", show=False),
         Binding("d", "scroll_down_half", "Scroll down half page", show=False),
         Binding("u", "scroll_up_half", "Scroll up half page", show=False),
         Binding("g g", "jump_to_start", "Jump to start", show=False),
@@ -116,30 +116,38 @@ class ChatViewPanel(ScrollableContainer):
             # Get all messages
             messages = chat.messages()
             current_count = len(messages)
-            last_count = getattr(self, '_last_message_count', 0)
-            
-            Settings.logger.info(f"Incremental update: {last_count} -> {current_count} messages")
-            
+            last_count = getattr(self, "_last_message_count", 0)
+
+            Settings.logger.info(
+                f"Incremental update: {last_count} -> {current_count} messages"
+            )
+
             if current_count <= last_count:
                 # No new messages or messages were deleted - do full reload for safety
-                Settings.logger.info("No new messages or messages deleted - doing full reload")
+                Settings.logger.info(
+                    "No new messages or messages deleted - doing full reload"
+                )
                 self.load_conversation(chat)
                 return
-            
+
             # Add only the new messages
             new_messages = messages[last_count:]
-            Settings.logger.info(f"Adding {len(new_messages)} new messages incrementally")
-            
+            Settings.logger.info(
+                f"Adding {len(new_messages)} new messages incrementally"
+            )
+
             for i, message in enumerate(new_messages):
-                Settings.logger.debug(f"Adding new message {last_count + i}: {message.role}")
+                Settings.logger.debug(
+                    f"Adding new message {last_count + i}: {message.role}"
+                )
                 self._add_message_from_basic(message)
-            
+
             # Update message count
             self._last_message_count = current_count
-            
+
             # Scroll to show new messages
             self.scroll_end(animate=False)
-            
+
         except Exception as e:
             Settings.logger.error(f"Error in incremental update: {e}")
             # Fall back to full reload on error
@@ -174,17 +182,30 @@ class ChatViewPanel(ScrollableContainer):
         self.scroll_end(animate=False)
 
     def add_thinking_indicator(self):
-        """Add a thinking indicator."""
+        """Add a thinking indicator at the bottom of the chat."""
         Settings.logger.info("Adding thinking indicator...")
         self._clear_thinking_indicator()
 
         self._thinking_widget = Static("🤔 Thinking...", classes="message-thinking")
         self.mount(self._thinking_widget)
-        self.scroll_end(animate=False)
+        
+        # Ensure we scroll to bottom after the widget is mounted
+        self.call_after_refresh(self._scroll_to_thinking_indicator)
         Settings.logger.info("Thinking indicator added and mounted")
+    
+    def _scroll_to_thinking_indicator(self):
+        """Scroll to the thinking indicator after it's properly mounted."""
+        if self._thinking_widget and self._thinking_widget.is_mounted:
+            # Scroll to the end to show the thinking indicator
+            self.scroll_end(animate=True)
+            # Also try scrolling to the specific widget
+            try:
+                self.scroll_to_widget(self._thinking_widget, animate=True)
+            except Exception:
+                pass  # Fallback if scroll_to_widget fails
 
     def add_streaming_message(self, role: str, content: str):
-        """Add a new streaming message (shows with cursor)."""
+        """Add a new streaming message (shows with cursor) at the bottom."""
         # Remove thinking indicator if present
         self._clear_thinking_indicator()
 
@@ -194,7 +215,20 @@ class ChatViewPanel(ScrollableContainer):
             classes=f"message-content message-content-{role} message-streaming",
         )
         self.mount(self._streaming_widget)
-        self.scroll_end(animate=False)
+        
+        # Ensure streaming message appears at bottom
+        self.call_after_refresh(self._scroll_to_streaming_message)
+    
+    def _scroll_to_streaming_message(self):
+        """Scroll to the streaming message after it's properly mounted."""
+        if self._streaming_widget and self._streaming_widget.is_mounted:
+            # Scroll to the end to show the streaming message
+            self.scroll_end(animate=True)
+            # Also try scrolling to the specific widget
+            try:
+                self.scroll_to_widget(self._streaming_widget, animate=True)
+            except Exception:
+                pass  # Fallback if scroll_to_widget fails
 
     def update_streaming_message(self, content: str):
         """Update the current streaming message."""
@@ -252,11 +286,11 @@ class ChatViewPanel(ScrollableContainer):
             for child in children_to_remove:
                 try:
                     child.remove()
-                except:
+                except (RuntimeError, ValueError):
                     pass  # Widget may already be removed
-        except:
+        except (RuntimeError, AttributeError):
             pass
-            
+
         # Ensure we're completely clean
         self.remove_children()
 
@@ -265,7 +299,7 @@ class ChatViewPanel(ScrollableContainer):
         if self._streaming_widget:
             try:
                 self._streaming_widget.remove()
-            except Exception:
+            except (RuntimeError, ValueError):
                 pass  # Widget may already be removed
             finally:
                 self._streaming_widget = None

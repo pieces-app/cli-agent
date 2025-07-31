@@ -10,7 +10,7 @@ from .dialogs import ConfirmDeleteDialog, EditNameDialog
 
 __all__ = [
     "ChatViewPanel",
-    "ChatListPanel", 
+    "ChatListPanel",
     "ChatInput",
     "ChatMessage",
     "ChatItem",
@@ -18,4 +18,3 @@ __all__ = [
     "ConfirmDeleteDialog",
     "EditNameDialog",
 ]
-

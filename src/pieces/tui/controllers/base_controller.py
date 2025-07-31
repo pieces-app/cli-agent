@@ -18,12 +18,7 @@ from pieces.settings import Settings
 from .event_types import (
     ContextEventData,
     ContextClearedData,
-    ConnectionEstablishedData,
-    ConnectionLostData,
-    CopilotThinkingData,
-    CopilotStreamStartedData,
     CopilotStreamChunkData,
-    CopilotStreamCompletedData,
     CopilotStreamErrorData,
 )
 
@@ -42,11 +37,6 @@ class EventType(Enum):
     CHAT_UPDATED = "chat.updated"
     CHAT_DELETED = "chat.deleted"
     CHAT_SWITCHED = "chat.switched"
-    CHAT_SELECTED = "chat.selected"
-    CHAT_NEW_REQUESTED = "chat.new_requested"
-
-    # User input events
-    USER_INPUT_SUBMITTED = "user.input_submitted"
 
     # Model events
     MODEL_CHANGED = "model.changed"
@@ -85,7 +75,112 @@ class BaseController(ABC):
         self._lock = threading.Lock()
         self._initialized = False
 
-    def on(self, event_type: EventType, callback: Callable[[Any], None]) -> Callable:
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.CONNECTION_RECONNECTING],
+        callback: Callable[[None], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.MODEL_CHANGED],
+        callback: Callable[["ModelInfo"], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[
+            EventType.MATERIAL_CREATED,
+            EventType.MATERIAL_UPDATED,
+            EventType.MATERIAL_DELETED,
+        ],
+        callback: Callable[["Asset"], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.MATERIALS_SEARCH_COMPLETED],
+        callback: Callable[[List["BasicAsset"]], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.CONNECTION_ESTABLISHED],
+        callback: Callable[[None], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.CHAT_UPDATED, EventType.CHAT_SWITCHED],
+        callback: Callable[["BasicChat"], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.CHAT_DELETED],
+        callback: Callable[[str], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.CONNECTION_LOST],
+        callback: Callable[[None], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.CONTEXT_ADDED, EventType.CONTEXT_REMOVED],
+        callback: Callable[[ContextEventData], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.CONTEXT_CLEARED],
+        callback: Callable[[ContextClearedData], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.COPILOT_THINKING_STARTED],
+        callback: Callable[[None], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.COPILOT_THINKING_ENDED],
+        callback: Callable[[None], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.COPILOT_STREAM_STARTED],
+        callback: Callable[[str], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.COPILOT_STREAM_CHUNK],
+        callback: Callable[[CopilotStreamChunkData], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.COPILOT_STREAM_COMPLETED],
+        callback: Callable[[str], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.COPILOT_STREAM_ERROR],
+        callback: Callable[[CopilotStreamErrorData], bool],
+    ) -> None: ...
+
+    # TODO: Add overloads for missing event types when models are ready:
+    # - CHAT_SELECTED: needs BasicChat callback type
+    # - CHAT_NEW_REQUESTED: needs None callback type
+
+    def on(self, event_type: EventType, callback: Callable[[Any], bool]) -> None:
         """
         Register an event listener.
 
@@ -100,9 +195,103 @@ class BaseController(ABC):
             if event_type not in self._listeners:
                 self._listeners[event_type] = []
             self._listeners[event_type].append(callback)
-        return callback
 
-    def off(self, event_type: EventType, callback: Callable[[Any], None]):
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.MODEL_CHANGED],
+        callback: Callable[[Optional["ModelInfo"]], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[
+            EventType.MATERIAL_CREATED,
+            EventType.MATERIAL_UPDATED,
+            EventType.MATERIAL_DELETED,
+        ],
+        callback: Callable[["Asset"], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.MATERIALS_SEARCH_COMPLETED],
+        callback: Callable[[List["BasicAsset"]], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.CONNECTION_ESTABLISHED],
+        callback: Callable[[None], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.CHAT_UPDATED, EventType.CHAT_SWITCHED],
+        callback: Callable[["BasicChat"], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.CHAT_DELETED],
+        callback: Callable[[str], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.CONNECTION_LOST],
+        callback: Callable[[None], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.CONTEXT_ADDED, EventType.CONTEXT_REMOVED],
+        callback: Callable[[ContextEventData], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.CONTEXT_CLEARED],
+        callback: Callable[[ContextClearedData], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.COPILOT_THINKING_STARTED],
+        callback: Callable[[None], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.COPILOT_THINKING_ENDED],
+        callback: Callable[[None], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.COPILOT_STREAM_STARTED],
+        callback: Callable[[str], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.COPILOT_STREAM_CHUNK],
+        callback: Callable[[CopilotStreamChunkData], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.COPILOT_STREAM_COMPLETED],
+        callback: Callable[[str], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.COPILOT_STREAM_ERROR],
+        callback: Callable[[CopilotStreamErrorData], bool],
+    ) -> None: ...
+
+    def off(self, event_type: EventType, callback: Callable[[Any], bool]):
         """
         Remove an event listener.
 
@@ -119,11 +308,7 @@ class BaseController(ABC):
 
     @overload
     def emit(
-        self, event_type: Literal[EventType.CHAT_SWITCHED], data: Optional["BasicChat"]
-    ) -> None: ...
-    @overload
-    def emit(
-        self, event_type: Literal[EventType.MODEL_CHANGED], data: Optional["ModelInfo"]
+        self, event_type: Literal[EventType.MODEL_CHANGED], data: "ModelInfo"
     ) -> None: ...
     @overload
     def emit(
@@ -145,25 +330,25 @@ class BaseController(ABC):
     def emit(
         self,
         event_type: Literal[EventType.CONNECTION_ESTABLISHED],
-        data: ConnectionEstablishedData,
+        data: None,
     ) -> None: ...
     @overload
     def emit(
         self,
-        event_type: Literal[
-            EventType.CHAT_UPDATED, EventType.CHAT_DELETED, EventType.CHAT_SWITCHED
-        ],
+        event_type: Literal[EventType.CHAT_UPDATED, EventType.CHAT_SWITCHED],
         data: "BasicChat",
     ) -> None: ...
     @overload
     def emit(
         self,
-        event_type: Literal[EventType.CONNECTION_LOST],
-        data: Optional[ConnectionLostData],
+        event_type: Literal[EventType.CHAT_DELETED],
+        data: str,
     ) -> None: ...
     @overload
     def emit(
-        self, event_type: Literal[EventType.CONNECTION_RECONNECTING], data: None
+        self,
+        event_type: Literal[EventType.CONNECTION_LOST],
+        data: None,
     ) -> None: ...
     @overload
     def emit(
@@ -179,7 +364,7 @@ class BaseController(ABC):
     def emit(
         self,
         event_type: Literal[EventType.COPILOT_THINKING_STARTED],
-        data: CopilotThinkingData,
+        data: None,
     ) -> None: ...
     @overload
     def emit(
@@ -189,7 +374,7 @@ class BaseController(ABC):
     def emit(
         self,
         event_type: Literal[EventType.COPILOT_STREAM_STARTED],
-        data: CopilotStreamStartedData,
+        data: str,
     ) -> None: ...
     @overload
     def emit(
@@ -200,8 +385,14 @@ class BaseController(ABC):
     @overload
     def emit(
         self,
+        event_type: Literal[EventType.CONNECTION_RECONNECTING],
+        data: None,
+    ) -> None: ...
+    @overload
+    def emit(
+        self,
         event_type: Literal[EventType.COPILOT_STREAM_COMPLETED],
-        data: CopilotStreamCompletedData,
+        data: str,
     ) -> None: ...
     @overload
     def emit(

@@ -9,6 +9,7 @@ from textual.widgets import Header, Static
 from textual.css.query import NoMatches
 
 from pieces.settings import Settings
+from pieces.tui.controllers.base_controller import EventType
 from .widgets import ChatViewPanel, ChatInput, ChatListPanel, StatusBar
 from .controllers import EventHub
 from .messages import (
@@ -18,6 +19,9 @@ from .messages import (
     CopilotMessages,
     ConnectionMessages,
     ContextMessages,
+)
+from pieces._vendor.pieces_os_client.wrapper.streamed_identifiers import (
+    ConversationsSnapshot,
 )
 
 
@@ -193,7 +197,7 @@ class PiecesTUI(App):
             return
 
         try:
-            chats = self.event_hub.get_chats()
+            chats = Settings.pieces_client.copilot.chats()
             Settings.logger.info(f"Found {len(chats)} chats to load")
             self.chat_list_panel.load_chats(chats)
 
@@ -215,6 +219,21 @@ class PiecesTUI(App):
             Settings.logger.info("Missing chat_view_panel or event_hub for user input")
             return
 
+        # Check if no chat is selected, create one automatically
+        if self.chat_list_panel and self.chat_list_panel.active_chat is None:
+            Settings.logger.info("No active chat selected, creating new chat...")
+            try:
+                new_chat = Settings.pieces_client.copilot.create_chat()
+                Settings.logger.info(f"Created new chat: {new_chat.id}")
+
+                # Emit chat switched event to notify the system
+                if self.event_hub:
+                    self.event_hub.chat.emit(EventType.CHAT_SWITCHED, new_chat)
+
+            except Exception as e:
+                Settings.logger.error(f"Error creating new chat: {e}")
+                return
+
         # Remove welcome message if it exists
         try:
             welcome_widget = self.chat_view_panel.query_one("#welcome-static", Static)
@@ -223,31 +242,18 @@ class PiecesTUI(App):
         except NoMatches:
             pass  # Welcome message not found, that's fine
 
-        # Add user message to chat with timestamp
-        from datetime import datetime
-
-        timestamp = datetime.now().strftime("Today %I:%M %p")
-        self.chat_view_panel.add_message("user", message.text, timestamp=timestamp)
-
-        # Send to copilot through EventHub
         Settings.logger.info("Sending question to EventHub...")
         self.event_hub.ask_question(message.text)
-
-    async def on_chat_messages_new_requested(
-        self, message: ChatMessages.NewRequested
-    ) -> None:
-        """Handle new chat request."""
-        await self.action_new_chat()
-
-    async def on_chat_messages_selected(self, message: ChatMessages.Selected) -> None:
-        """Handle chat selection - this will trigger a Switched message."""
-        pass
 
     async def on_chat_messages_switched(self, message: ChatMessages.Switched) -> None:
         """Handle chat switched."""
         if self.chat_view_panel:
+            Settings.logger.info(
+                f"Updating conversation: {message.chat.id} - {message.chat.name}"
+            )
             if message.chat:
                 # Load existing conversation
+                Settings.pieces_client.copilot.chat = message.chat
                 self.chat_view_panel.load_conversation(message.chat)
             else:
                 # None chat means new chat - show welcome message
@@ -270,21 +276,20 @@ class PiecesTUI(App):
                 message.chat.id
             except AttributeError:
                 return  # Chat is deleted or not valid
-            # Check if this chat already exists in our list
-            chat_exists = any(
-                chat.id == message.chat.id for chat, _, _ in self.chat_list_panel.chats
-            )
+            chat_exists = message.chat.id in self.chat_list_panel._chat_widgets
 
             title = message.chat.name
             summary = message.chat.summary or ""
 
             if chat_exists:
-                # Update existing chat efficiently
                 self.chat_list_panel.update_chat(message.chat, title, summary)
             else:
-                # This is a new chat - add it to the list
-                self.chat_list_panel.add_chat(message.chat, title, summary)
-                self._show_status_message(f"📝 New chat: {title}")
+                if ConversationsSnapshot.first_shot:
+                    self.chat_list_panel.add_chat(message.chat, title, summary)
+                else:
+                    # New chat created - add at top
+                    self.chat_list_panel.add_chat_at_top(message.chat, title, summary)
+                    self._show_status_message(f"📝 New chat: {title}")
 
             # If this is the active chat, update the view panel incrementally
             if (
@@ -299,11 +304,10 @@ class PiecesTUI(App):
     async def on_chat_messages_deleted(self, message: ChatMessages.Deleted) -> None:
         """Handle chat deleted from backend."""
         if self.chat_list_panel:
-            # Remove the chat from the list efficiently
-            self.chat_list_panel.remove_chat(message.chat)
+            self.chat_list_panel.remove_chat(message.chat_id)
 
             # If this was the active chat, clear the view and switch to another
-            if self.chat_list_panel.active_chat == message.chat:
+            if self.chat_list_panel.active_chat == message.chat_id:
                 if self.chat_view_panel:
                     self.chat_view_panel.clear_messages()
                     self.chat_view_panel.border_title = "Chat"
@@ -323,27 +327,22 @@ class PiecesTUI(App):
         self._show_status_message(f"🤖 Model changed to {message.new_model.name}")
 
     async def on_connection_messages_established(
-        self, message: ConnectionMessages.Established
+        self, _: ConnectionMessages.Established
     ) -> None:
         """Handle connection established."""
         self._update_status_connection(is_connected=True)
-        self._show_status_message(f"✅ Connected to {message.endpoint}")
+        self._show_status_message("✅ Connected")
 
-    async def on_connection_messages_lost(
-        self, message: ConnectionMessages.Lost
-    ) -> None:
+    async def on_connection_messages_lost(self, _: ConnectionMessages.Lost) -> None:
         """Handle connection lost."""
         self._update_status_connection(is_connected=False)
-        reason = f": {message.reason}" if message.reason else ""
-        self._show_status_message(f"❌ Connection lost{reason}", 5)
+        self._show_status_message("❌ Connection lost", 5)
 
     async def on_copilot_messages_thinking_started(
-        self, message: CopilotMessages.ThinkingStarted
+        self, _: CopilotMessages.ThinkingStarted
     ) -> None:
         """Handle copilot thinking started."""
-        Settings.logger.info(
-            f"App: Received thinking started for question: {message.question[:50]}..."
-        )
+        Settings.logger.info("App: Received thinking started for question:")
         if self.chat_view_panel:
             self.chat_view_panel.add_thinking_indicator()
         else:
@@ -364,11 +363,13 @@ class PiecesTUI(App):
             self.chat_view_panel.update_streaming_message(message.full_text)
 
     async def on_copilot_messages_stream_completed(
-        self, message: CopilotMessages.StreamCompleted
+        self, _: CopilotMessages.StreamCompleted
     ) -> None:
         """Handle copilot stream completed."""
+        # Don't finalize streaming message here - let the server update handle it
+        # to prevent duplicate messages. Just clear the streaming widget.
         if self.chat_view_panel:
-            self.chat_view_panel.finalize_streaming_message()
+            self.chat_view_panel._clear_streaming_widget()
 
     async def on_copilot_messages_stream_error(
         self, message: CopilotMessages.StreamError
@@ -377,13 +378,11 @@ class PiecesTUI(App):
         if self.chat_view_panel:
             self.chat_view_panel.add_message("system", f"❌ Error: {message.error}")
 
-    async def on_context_messages_added(self, message: ContextMessages.Added) -> None:
+    async def on_context_messages_added(self, _: ContextMessages.Added) -> None:
         """Handle context added."""
         pass
 
-    async def on_context_messages_removed(
-        self, message: ContextMessages.Removed
-    ) -> None:
+    async def on_context_messages_removed(self, _: ContextMessages.Removed) -> None:
         """Handle context removed."""
         pass
 
@@ -403,9 +402,6 @@ class PiecesTUI(App):
 
         # Check if chat panel is already empty/new
         if self.chat_view_panel:
-            # If there are no messages (except maybe welcome), this is already a new chat
-            has_real_messages = len(self.chat_view_panel.messages) > 0
-
             # Clear the chat panel completely
             self.chat_view_panel.clear_messages()
             self.chat_view_panel.border_title = "Chat: New Conversation"

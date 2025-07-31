@@ -60,39 +60,19 @@ class CopilotController(BaseController):
         Args:
             query: The question to ask
         """
-        try:
-            # Reset state
-            self._current_response = ""
-            self._current_status = None
+        self._current_response = ""
+        self._current_status = None
 
-            # Emit thinking started event
-            self.emit(EventType.COPILOT_THINKING_STARTED, {"query": query})
+        # Emit thinking started event
+        self.emit(EventType.COPILOT_THINKING_STARTED, None)
 
-            # Get current chat context
-            current_chat = self.get_current_chat()
-            if current_chat:
-                # Set the chat context before asking
-                Settings.pieces_client.copilot.chat = current_chat
-
-            # Start streaming
-            Settings.pieces_client.copilot.stream_question(query)
-
-        except Exception as e:
-            Settings.logger.error(f"Error asking question: {e}")
-            self.emit(
-                EventType.COPILOT_STREAM_ERROR,
-                {
-                    "error": str(e),
-                    "partial_response": "",
-                    "status": None,
-                    "query": query,
-                },
-            )
+        # Start streaming
+        Settings.pieces_client.copilot.stream_question(query)
 
     def _on_stream_message(self, response: "QGPTStreamOutput"):
         """Handle streaming messages from copilot."""
         try:
-            current_status = response.status if response.status else "UNKNOWN"
+            current_status = response.status
 
             # Track status transitions
             if self._current_status != current_status:
@@ -115,26 +95,24 @@ class CopilotController(BaseController):
                 for answer in answers:
                     if answer.text:
                         if not self._current_response:
-                            # First response chunk
+                            # First chunk - start streaming
                             self._current_response = answer.text
                             self.emit(
                                 EventType.COPILOT_STREAM_STARTED,
-                                {"text": self._current_response},
+                                self._current_response,
                             )
                         else:
-                            # Subsequent chunks
+                            # Subsequent chunks - update accumulated response and emit chunk event
                             self._current_response += answer.text
                             self.emit(
                                 EventType.COPILOT_STREAM_CHUNK,
                                 {
-                                    "chunk": answer.text,
+                                    "text": answer.text,
                                     "full_text": self._current_response,
                                 },
                             )
 
-            # Handle completion statuses
-            if current_status == "COMPLETED":
-                # Update chat state
+            elif current_status == "COMPLETED":
                 if response.conversation:
                     Settings.pieces_client.copilot.chat = BasicChat(
                         response.conversation
@@ -143,25 +121,25 @@ class CopilotController(BaseController):
                 # Emit completion event
                 self.emit(
                     EventType.COPILOT_STREAM_COMPLETED,
-                    {
-                        "final_text": self._current_response,
-                        "conversation": response.conversation,
-                    },
+                    self._current_response,
                 )
 
                 # Reset state
                 self._current_response = ""
                 self._current_status = None
 
-            elif current_status in ["FAILED", "STOPPED", "CANCELED"]:
+            elif (
+                current_status == "FAILED"
+                or current_status == "STOPPED"
+                or current_status == "CANCELED"
+            ):
                 # Handle error/cancellation
                 self.emit(
                     EventType.COPILOT_STREAM_ERROR,
                     {
-                        "error": f"Stream {current_status.lower()}",
+                        "error": f"Stream {response.error_message}",
                         "partial_response": self._current_response,
                         "status": current_status,
-                        "query": None,
                     },
                 )
 
@@ -176,8 +154,7 @@ class CopilotController(BaseController):
                 {
                     "error": str(e),
                     "partial_response": self._current_response,
-                    "status": None,
-                    "query": None,
+                    "status": "FAILED",
                 },
             )
             self._current_response = ""
@@ -206,7 +183,6 @@ class CopilotController(BaseController):
                         "error": "Stream stopped by user",
                         "partial_response": self._current_response,
                         "status": "STOPPED",
-                        "query": None,
                     },
                 )
 
@@ -220,7 +196,3 @@ class CopilotController(BaseController):
     def is_streaming(self) -> bool:
         """Check if currently streaming a response."""
         return self._current_status == "IN-PROGRESS"
-
-    def get_current_chat(self) -> Optional[BasicChat]:
-        """Get the current active chat."""
-        return Settings.pieces_client.copilot.chat if Settings.pieces_client else None

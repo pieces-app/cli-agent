@@ -5,7 +5,6 @@ from pieces.settings import Settings
 from .base_controller import BaseController, EventType
 from .chat_controller import ChatController
 from .model_controller import ModelController
-from .material_controller import MaterialController
 from .connection_controller import ConnectionController
 from .copilot_controller import CopilotController
 
@@ -30,7 +29,6 @@ class EventHub:
         # Create controllers
         self._controllers["chat"] = ChatController()
         self._controllers["model"] = ModelController()
-        self._controllers["material"] = MaterialController()
         self._controllers["connection"] = ConnectionController()
         self._controllers["copilot"] = CopilotController()
 
@@ -57,28 +55,19 @@ class EventHub:
         # Import here to avoid circular imports
         from ..messages import (
             ChatMessages,
-            UserMessages,
             ModelMessages,
             CopilotMessages,
             ConnectionMessages,
-            MaterialMessages,
-            ContextMessages,
         )
 
         # Connection events
         self.connection.on(
             EventType.CONNECTION_ESTABLISHED,
-            lambda data: self.app.post_message(
-                ConnectionMessages.Established(
-                    data.get("endpoint", "Pieces OS") if data else "Pieces OS"
-                )
-            ),
+            lambda _: self.app.post_message(ConnectionMessages.Established()),
         )
         self.connection.on(
             EventType.CONNECTION_LOST,
-            lambda data: self.app.post_message(
-                ConnectionMessages.Lost(data.get("reason") if data else None)
-            ),
+            lambda _: self.app.post_message(ConnectionMessages.Lost()),
         )
         self.connection.on(
             EventType.CONNECTION_RECONNECTING,
@@ -98,22 +87,6 @@ class EventHub:
             EventType.CHAT_SWITCHED,
             lambda chat: self.app.post_message(ChatMessages.Switched(chat)),
         )
-        self.chat.on(
-            EventType.CHAT_SELECTED,
-            lambda chat: self.app.post_message(ChatMessages.Selected(chat)),
-        )
-        self.chat.on(
-            EventType.CHAT_NEW_REQUESTED,
-            lambda _: self.app.post_message(ChatMessages.NewRequested()),
-        )
-
-        # User input events
-        self.chat.on(
-            EventType.USER_INPUT_SUBMITTED,
-            lambda data: self.app.post_message(
-                UserMessages.InputSubmitted(data["text"], data.get("timestamp"))
-            ),
-        )
 
         # Model events
         self.model.on(
@@ -122,29 +95,27 @@ class EventHub:
         )
 
         # Material/Context events
-        self.material.on(
-            EventType.CONTEXT_ADDED,
-            lambda data: self.app.post_message(
-                ContextMessages.Added(data["context_type"], data["context_data"])
-            ),
-        )
-        self.material.on(
-            EventType.CONTEXT_REMOVED,
-            lambda data: self.app.post_message(
-                ContextMessages.Removed(data["context_type"], data["context_data"])
-            ),
-        )
-        self.material.on(
-            EventType.CONTEXT_CLEARED,
-            lambda data: self.app.post_message(ContextMessages.Cleared(data["count"])),
-        )
+        # self.material.on(
+        #     EventType.CONTEXT_ADDED,
+        #     lambda data: self.app.post_message(
+        #         ContextMessages.Added(data["context_type"], data["context_data"])
+        #     ),
+        # )
+        # self.material.on(
+        #     EventType.CONTEXT_REMOVED,
+        #     lambda data: self.app.post_message(
+        #         ContextMessages.Removed(data["context_type"], data["context_data"])
+        #     ),
+        # )
+        # self.material.on(
+        #     EventType.CONTEXT_CLEARED,
+        #     lambda data: self.app.post_message(ContextMessages.Cleared(data["count"])),
+        # )
 
         # Copilot events
         self.copilot.on(
             EventType.COPILOT_THINKING_STARTED,
-            lambda data: self.app.post_message(
-                CopilotMessages.ThinkingStarted(data["query"])
-            ),
+            lambda _: self.app.post_message(CopilotMessages.ThinkingStarted()),
         )
         self.copilot.on(
             EventType.COPILOT_THINKING_ENDED,
@@ -152,21 +123,17 @@ class EventHub:
         )
         self.copilot.on(
             EventType.COPILOT_STREAM_STARTED,
-            lambda data: self.app.post_message(
-                CopilotMessages.StreamStarted(data["text"])
-            ),
+            lambda data: self.app.post_message(CopilotMessages.StreamStarted(data)),
         )
         self.copilot.on(
             EventType.COPILOT_STREAM_CHUNK,
             lambda data: self.app.post_message(
-                CopilotMessages.StreamChunk(data["chunk"], data["full_text"])
+                CopilotMessages.StreamChunk(data["text"], data["full_text"])
             ),
         )
         self.copilot.on(
             EventType.COPILOT_STREAM_COMPLETED,
-            lambda data: self.app.post_message(
-                CopilotMessages.StreamCompleted(data["final_text"])
-            ),
+            lambda data: self.app.post_message(CopilotMessages.StreamCompleted(data)),
         )
         self.copilot.on(
             EventType.COPILOT_STREAM_ERROR,
@@ -198,11 +165,6 @@ class EventHub:
     def model(self) -> ModelController:
         """Get the model controller."""
         return self._controllers["model"]  # pyright: ignore[reportReturnType]
-
-    @property
-    def material(self) -> MaterialController:
-        """Get the material controller."""
-        return self._controllers["material"]  # pyright: ignore[reportReturnType]
 
     @property
     def connection(self) -> ConnectionController:
@@ -240,11 +202,7 @@ class EventHub:
 
     def get_current_chat(self):
         """Get current chat from copilot controller."""
-        return self.copilot.get_current_chat()
-
-    def get_chats(self):
-        """Get all chats from chat controller."""
-        return self.chat.get_chats()
+        return Settings.pieces_client.copilot.chat
 
     def create_new_chat(self):
         """Create new chat via chat controller."""

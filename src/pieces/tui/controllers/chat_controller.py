@@ -1,6 +1,6 @@
 """Controller for handling chat-related events."""
 
-from typing import Optional, TYPE_CHECKING, List
+from typing import Optional, TYPE_CHECKING
 from pieces.settings import Settings
 from .base_controller import BaseController, EventType
 
@@ -50,13 +50,12 @@ class ChatController(BaseController):
         """Handle conversation update from WebSocket."""
         try:
             self.emit(EventType.CHAT_UPDATED, BasicChat(conversation.id))
-
         except Exception as e:
             Settings.logger.error(f"Error handling chat update: {e}")
 
     def _on_conversation_remove(self, conversation: "Conversation"):
         """Handle chat removal from WebSocket."""
-        self.emit(EventType.CHAT_DELETED, BasicChat(conversation.id))
+        self.emit(EventType.CHAT_DELETED, conversation.id)
 
     def switch_chat(self, chat: Optional["BasicChat"]):
         """
@@ -65,13 +64,11 @@ class ChatController(BaseController):
         Args:
             chat: The BasicChat object to switch to (None for new chat)
         """
+        if not chat:
+            chat = Settings.pieces_client.copilot.create_chat()
         Settings.pieces_client.copilot.chat = chat
         self.emit(EventType.CHAT_SWITCHED, chat)
 
     def create_new_chat(self):
         """Create a new chat and notify listeners."""
         self.switch_chat(None)
-
-    def get_chats(self) -> List["BasicChat"]:
-        """Get all chats."""
-        return Settings.pieces_client.copilot.chats()
