@@ -1,7 +1,5 @@
 import os
-from pathlib import Path
 import sys
-from platformdirs import user_data_dir
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
 from pieces.config.constants import (
@@ -62,6 +60,9 @@ class Settings:
             cls.version_check()  # Check the version first
             if not bypass_login:
                 cls.check_login()
+            model_info = Settings.model_config.model
+            if model_info:
+                cls.pieces_client.model_name = model_info.name
         else:
             if cls.pieces_client.is_pieces_running() or cls.open_pieces_widget():
                 return cls.startup(bypass_login)
