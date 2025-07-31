@@ -9,7 +9,6 @@ from textual.widgets import Header, Static
 from textual.css.query import NoMatches
 
 from pieces.settings import Settings
-from pieces.tui.controllers.base_controller import EventType
 from .widgets import ChatViewPanel, ChatInput, ChatListPanel, StatusBar
 from .controllers import EventHub
 from .messages import (
@@ -120,7 +119,6 @@ class PiecesTUI(App):
         self.sidebar_visible = True  # Track sidebar state
         self.main_layout: Optional[Horizontal] = None
 
-    # Status bar helper methods to reduce code duplication
     def _update_status_connection(self, is_connected: bool):
         """Update connection status in status bar."""
         if self.status_bar:
@@ -241,15 +239,12 @@ class PiecesTUI(App):
         self.event_hub.ask_question(message.text)
 
     async def on_chat_messages_switched(self, message: ChatMessages.Switched) -> None:
-        """Handle chat switched."""
+        """Handle chat switch event from backend."""
         if self.chat_view_panel:
             Settings.logger.info(
                 f"Updating conversation: {message.chat.id} - {message.chat.name}"
             )
             if message.chat:
-                # Update the backend chat reference
-                Settings.pieces_client.copilot.chat = message.chat
-                
                 # Check if we're in the middle of streaming - if so, don't reload yet
                 has_streaming_widget = hasattr(self.chat_view_panel, '_streaming_widget') and self.chat_view_panel._streaming_widget
                 has_thinking_widget = hasattr(self.chat_view_panel, '_thinking_widget') and self.chat_view_panel._thinking_widget
@@ -276,9 +271,8 @@ class PiecesTUI(App):
             self.chat_input.focus()
 
     async def on_chat_messages_updated(self, message: ChatMessages.Updated) -> None:
-        """Handle chat updated from backend."""
+        """Handle chat update event from backend."""
         if not message.chat:
-            # None chat in update message doesn't make sense, log and return
             Settings.logger.info("Received chat update with None chat - ignoring")
             return
 
@@ -313,24 +307,16 @@ class PiecesTUI(App):
                 self.chat_view_panel.update_conversation_incrementally(message.chat)
 
     async def on_chat_messages_deleted(self, message: ChatMessages.Deleted) -> None:
-        """Handle chat deleted from backend."""
+        """Handle chat deletion event from backend."""
         if self.chat_list_panel:
             self.chat_list_panel.remove_chat(message.chat_id)
 
-            # If this was the active chat, clear the view and switch to another
-            if self.chat_list_panel.active_chat == message.chat_id:
+            # If this was the active chat, clear the view
+            if self.chat_list_panel.active_chat and self.chat_list_panel.active_chat.id == message.chat_id:
                 if self.chat_view_panel:
                     self.chat_view_panel.clear_messages()
                     self.chat_view_panel.border_title = "Chat"
-
-                # Try to switch to the first available chat
-                if self.chat_list_panel.chats:
-                    first_chat = self.chat_list_panel.chats[0][0]
-                    self.chat_list_panel.set_active_chat(first_chat)
-                    if self.chat_view_panel:
-                        self.chat_view_panel.load_conversation(first_chat)
-                else:
-                    self.chat_list_panel.set_active_chat(None)
+                    await self._show_welcome_message()
 
     async def on_model_messages_changed(self, message: ModelMessages.Changed) -> None:
         """Handle model change."""
@@ -376,16 +362,10 @@ class PiecesTUI(App):
     async def on_copilot_messages_stream_completed(
         self, _: CopilotMessages.StreamCompleted
     ) -> None:
-        """Handle copilot stream completed."""
+        """Handle copilot stream completion."""
         # Finalize the streaming message to convert it to a permanent message
         if self.chat_view_panel:
             self.chat_view_panel.finalize_streaming_message()
-            
-            # After streaming completes, reload the conversation to get complete state from backend
-            current_chat = Settings.pieces_client.copilot.chat
-            if current_chat:
-                Settings.logger.info("Reloading conversation after stream completion to get complete state")
-                self.chat_view_panel.load_conversation(current_chat)
 
     async def on_copilot_messages_stream_error(
         self, message: CopilotMessages.StreamError
@@ -394,14 +374,6 @@ class PiecesTUI(App):
         if self.chat_view_panel:
             self.chat_view_panel.add_message("system", f"❌ Error: {message.error}")
 
-    async def on_context_messages_added(self, _: ContextMessages.Added) -> None:
-        """Handle context added."""
-        pass
-
-    async def on_context_messages_removed(self, _: ContextMessages.Removed) -> None:
-        """Handle context removed."""
-        pass
-
     async def on_context_messages_cleared(
         self, message: ContextMessages.Cleared
     ) -> None:
@@ -409,25 +381,10 @@ class PiecesTUI(App):
         self._show_status_message(f"🗑️ Cleared {message.count} context items")
 
     async def action_new_chat(self):
-        """Create a new chat."""
-        Settings.pieces_client.copilot.chat = None
-
+        """Request creation of a new chat."""
         if self.event_hub:
-            # Create new chat through EventHub
+            # Create new chat through EventHub - let backend handle everything
             self.event_hub.create_new_chat()
-
-        # Check if chat panel is already empty/new
-        if self.chat_view_panel:
-            # Clear the chat panel completely
-            self.chat_view_panel.clear_messages()
-            self.chat_view_panel.border_title = "Chat: New Conversation"
-
-            # Always show welcome for new chat (since we're explicitly creating new)
-            await self._show_welcome_message()
-
-        # Clear active chat in sidebar
-        if self.chat_list_panel:
-            self.chat_list_panel.set_active_chat(None)
 
         # Focus the input
         if self.chat_input:

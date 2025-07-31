@@ -286,11 +286,11 @@ class ChatListPanel(ScrollableContainer):
             empty_state.display = False
 
     def add_chat_at_top(self, chat: BasicChat, title: str, summary: str = ""):
-        """Add a single new chat at the top of the list efficiently."""
+        """Add a chat at the top of the list."""
         # Add to data at the beginning
         self.chats = [(chat, title, summary)] + list(self.chats)
 
-        # Add widget incrementally
+        # Add widget
         if chat.id not in self._chat_widgets:
             chats_container = self.query_one("#chats-container")
             self._add_chat_widget(chat, title, summary, chats_container)
@@ -303,12 +303,20 @@ class ChatListPanel(ScrollableContainer):
             self._reorder_chat_widgets(chats_container)
 
     def remove_chat(self, chat_id: str):
-        """Remove a single chat efficiently."""
+        """Remove a chat from the UI."""
+        # Remove from data - use safe filtering to avoid accessing deleted chat objects
+        valid_chats = []
+        for chat, title, summary in self.chats:
+            try:
+                # Try to access chat.id to check if chat is still valid
+                if chat.id != chat_id:
+                    valid_chats.append((chat, title, summary))
+            except (AttributeError, Exception):
+                # Chat object is invalid/deleted, skip it
+                continue
+        self.chats = valid_chats
 
-        # Remove from data
-        self.chats = [item for item in self.chats if item[0].exists()]
-
-        # Remove widget incrementally
+        # Remove widget
         if chat_id in self._chat_widgets:
             widget = self._chat_widgets[chat_id]
             if widget.is_mounted:
@@ -316,6 +324,15 @@ class ChatListPanel(ScrollableContainer):
             del self._chat_widgets[chat_id]
             if chat_id in self._chat_order:
                 self._chat_order.remove(chat_id)
+                
+        # Update selection if the deleted chat was selected
+        if self._selected_chat_id == chat_id:
+            if self._chat_order:
+                # Select the first available chat
+                self._selected_chat_id = self._chat_order[0]
+                self._update_visual_selection()
+            else:
+                self._selected_chat_id = None
 
         # Show empty state if no chats left
         if not self.chats:
@@ -499,45 +516,17 @@ class ChatListPanel(ScrollableContainer):
             )
 
     async def _delete_chat_worker(self, chat: BasicChat, title: str):
-        """Worker method to handle delete chat dialog."""
+        """Delete chat after user confirmation."""
         dialog = ConfirmDeleteDialog(title)
         confirmed = await self.app.push_screen_wait(dialog)
 
         if confirmed:  # User confirmed deletion
             try:
-                # Delete chat via API
+                # Store chat ID before deletion since chat object becomes invalid after delete()
+                chat_id = chat.id
+                
+                # Delete chat via API - backend will notify us when done
                 chat.delete()
-                Settings.logger.info(f"Deleted chat: {title}")
-
-                # Handle selection after deletion
-                if self._selected_chat_id == chat.id:
-                    # The selected chat was deleted, select another one
-                    if self._chat_order:
-                        # Try to select the next chat in order
-                        try:
-                            current_index = self._chat_order.index(chat.id)
-                            if current_index < len(self._chat_order) - 1:
-                                # Select next chat
-                                self._selected_chat_id = self._chat_order[
-                                    current_index + 1
-                                ]
-                            elif current_index > 0:
-                                # Select previous chat
-                                self._selected_chat_id = self._chat_order[
-                                    current_index - 1
-                                ]
-                            else:
-                                # Only chat, clear selection
-                                self._selected_chat_id = None
-                        except ValueError:
-                            # Chat not in order, clear selection
-                            self._selected_chat_id = None
-                    else:
-                        # No chats left, clear selection
-                        self._selected_chat_id = None
-
-                # Update visual selection
-                self._update_visual_selection()
-
+                Settings.logger.info(f"Requested deletion of chat: {title} (ID: {chat_id})")
             except Exception as e:
                 Settings.logger.error(f"Error deleting chat: {e}")

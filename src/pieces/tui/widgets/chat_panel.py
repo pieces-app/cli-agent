@@ -1,4 +1,4 @@
-"""Enhanced chat view panel widget for displaying conversation history with metadata."""
+"""Chat view panel widget for displaying conversation history."""
 
 from typing import List, Optional, TYPE_CHECKING
 from textual.reactive import reactive
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class ChatViewPanel(ScrollableContainer):
-    """Enhanced chat view panel to display conversation messages with metadata."""
+    """Chat view panel to display conversation messages."""
 
     DEFAULT_CSS = """
     ChatViewPanel {
@@ -72,21 +72,19 @@ class ChatViewPanel(ScrollableContainer):
         self.border_title = "Chat"
         self._streaming_widget: Optional[Static] = None
         self._thinking_widget: Optional[Static] = None
-        self._last_message_count = 0  # Track message count for incremental updates
+        self._last_message_count = 0
 
     def load_conversation(self, chat: "BasicChat"):
-        """Load an entire conversation with full message history."""
+        """Load a conversation from a BasicChat object."""
         self.current_chat = chat
         self.clear_messages()
 
         try:
-            # Update border title with chat name
             self.border_title = f"Chat: {chat.name}"
 
-            # Load all messages in exact order from API
             messages = chat.messages()
             Settings.logger.info(
-                f"Loading {len(messages)} messages in API order for chat: {chat.name}"
+                f"Loading {len(messages)} messages for chat: {chat.name}"
             )
 
             for i, message in enumerate(messages):
@@ -95,10 +93,7 @@ class ChatViewPanel(ScrollableContainer):
                 )
                 self._add_message_from_basic(message)
 
-            # Track message count for incremental updates
             self._last_message_count = len(messages)
-
-            # Scroll to the end
             self.scroll_end(animate=False)
 
         except Exception as e:
@@ -106,14 +101,12 @@ class ChatViewPanel(ScrollableContainer):
             self.add_message("system", f"❌ Error loading conversation: {str(e)}")
 
     def update_conversation_incrementally(self, chat: "BasicChat"):
-        """Add only new messages to the conversation without full reload."""
+        """Add new messages to the conversation without full reload."""
         if not self.current_chat or self.current_chat.id != chat.id:
-            # Different chat - do full reload
             self.load_conversation(chat)
             return
 
         try:
-            # Get all messages
             messages = chat.messages()
             current_count = len(messages)
             last_count = getattr(self, "_last_message_count", 0)
@@ -123,14 +116,12 @@ class ChatViewPanel(ScrollableContainer):
             )
 
             if current_count <= last_count:
-                # No new messages or messages were deleted - do full reload for safety
                 Settings.logger.info(
                     "No new messages or messages deleted - doing full reload"
                 )
                 self.load_conversation(chat)
                 return
 
-            # Add only the new messages
             new_messages = messages[last_count:]
             Settings.logger.info(
                 f"Adding {len(new_messages)} new messages incrementally"
@@ -142,10 +133,7 @@ class ChatViewPanel(ScrollableContainer):
                 )
                 self._add_message_from_basic(message)
 
-            # Update message count
             self._last_message_count = current_count
-
-            # Scroll to show new messages
             self.scroll_end(animate=False)
 
         except Exception as e:
@@ -194,86 +182,67 @@ class ChatViewPanel(ScrollableContainer):
         Settings.logger.info("Thinking indicator added and mounted")
     
     def _scroll_to_thinking_indicator(self):
-        """Scroll to the thinking indicator after it's properly mounted."""
+        """Scroll to the thinking indicator."""
         if self._thinking_widget and self._thinking_widget.is_mounted:
-            # Scroll to the end to show the thinking indicator
-            self.scroll_end(animate=False)  # Use animate=False for immediate response
-            # Also try scrolling to the specific widget
+            self.scroll_end(animate=False)
             try:
                 self.scroll_to_widget(self._thinking_widget, animate=False)
             except Exception:
-                pass  # Fallback if scroll_to_widget fails
+                pass
 
     def add_streaming_message(self, role: str, content: str):
-        """Add a new streaming message (shows with cursor) at the bottom."""
-        # Remove thinking indicator if present
+        """Add a streaming message with cursor indicator."""
         self._clear_thinking_indicator()
 
-        # Create streaming widget (always use Static for streaming to show cursor)
         self._streaming_widget = Static(
             content + " ▌",
             classes=f"message-content message-content-{role} message-streaming",
         )
         self.mount(self._streaming_widget)
-        
-        # Ensure streaming message appears at bottom
         self.call_after_refresh(self._scroll_to_streaming_message)
     
     def _scroll_to_streaming_message(self):
-        """Scroll to the streaming message after it's properly mounted."""
+        """Scroll to the streaming message."""
         if self._streaming_widget and self._streaming_widget.is_mounted:
-            # Scroll to the end to show the streaming message
-            self.scroll_end(animate=False)  # Use animate=False for immediate response
-            # Also try scrolling to the specific widget
+            self.scroll_end(animate=False)
             try:
                 self.scroll_to_widget(self._streaming_widget, animate=False)
             except Exception:
-                pass  # Fallback if scroll_to_widget fails
+                pass
     
     def _scroll_during_streaming(self):
-        """Efficiently scroll during streaming updates."""
+        """Keep streaming message visible during updates."""
         if self._streaming_widget and self._streaming_widget.is_mounted:
-            # Keep the streaming message visible at the bottom
-            # Use animate=False for smoother streaming experience
             self.scroll_end(animate=False)
-            # Ensure the widget is visible
             try:
                 self.scroll_to_widget(self._streaming_widget, animate=False)
             except Exception:
-                pass  # Fallback if scroll_to_widget fails
+                pass
 
     def update_streaming_message(self, content: str):
-        """Update the current streaming message and keep it visible."""
+        """Update the streaming message content."""
         if self._streaming_widget:
             self._streaming_widget.update(content + " ▌")
-            # Immediate scroll to ensure visibility
             self.scroll_end(animate=False)
-            # Also schedule a scroll after refresh for robustness
             self.call_after_refresh(self._scroll_during_streaming)
 
     def finalize_streaming_message(self):
-        """Convert streaming message to final message with markdown support."""
+        """Convert streaming message to permanent message."""
         if self._streaming_widget:
-            # Get the content without cursor
             content = str(self._streaming_widget.renderable).replace(" ▌", "")
 
-            # Get the role from the CSS class
+            # Get the role from CSS class
             role = "assistant"  # Default for streaming messages
             if "message-content-user" in str(self._streaming_widget.classes):
                 role = "user"
             elif "message-content-system" in str(self._streaming_widget.classes):
                 role = "system"
 
-            # Remove streaming widget
             self._streaming_widget.remove()
             self._streaming_widget = None
 
-            # Add final message with current timestamp and markdown support
             from datetime import datetime
-
             timestamp = datetime.now().strftime("Today %I:%M %p")
-
-            # Use the regular add_message method which will handle markdown
             self.add_message(role, content, timestamp=timestamp)
 
     def _clear_thinking_indicator(self):
@@ -284,19 +253,13 @@ class ChatViewPanel(ScrollableContainer):
 
     def clear_messages(self):
         """Clear all messages from the chat panel."""
-        # First remove thinking and streaming widgets safely
         self._clear_thinking_indicator()
         self._clear_streaming_widget()
 
-        # Clear message list
         self.messages.clear()
-
-        # Reset message count tracking for incremental updates
         self._last_message_count = 0
 
-        # Remove ALL children widgets (including welcome messages)
         try:
-            # Get all child widgets and remove them
             children_to_remove = list(self.children)
             for child in children_to_remove:
                 try:
