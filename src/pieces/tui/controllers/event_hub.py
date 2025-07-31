@@ -88,6 +88,11 @@ class EventHub:
             lambda chat: self.app.post_message(ChatMessages.Switched(chat)),
         )
 
+        self.copilot.on(
+            EventType.CHAT_SWITCHED,
+            lambda chat: self.app.post_message(ChatMessages.Switched(chat)),
+        )
+
         # Model events
         self.model.on(
             EventType.MODEL_CHANGED,

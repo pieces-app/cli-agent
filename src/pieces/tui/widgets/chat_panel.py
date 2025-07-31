@@ -197,10 +197,10 @@ class ChatViewPanel(ScrollableContainer):
         """Scroll to the thinking indicator after it's properly mounted."""
         if self._thinking_widget and self._thinking_widget.is_mounted:
             # Scroll to the end to show the thinking indicator
-            self.scroll_end(animate=True)
+            self.scroll_end(animate=False)  # Use animate=False for immediate response
             # Also try scrolling to the specific widget
             try:
-                self.scroll_to_widget(self._thinking_widget, animate=True)
+                self.scroll_to_widget(self._thinking_widget, animate=False)
             except Exception:
                 pass  # Fallback if scroll_to_widget fails
 
@@ -223,18 +223,33 @@ class ChatViewPanel(ScrollableContainer):
         """Scroll to the streaming message after it's properly mounted."""
         if self._streaming_widget and self._streaming_widget.is_mounted:
             # Scroll to the end to show the streaming message
-            self.scroll_end(animate=True)
+            self.scroll_end(animate=False)  # Use animate=False for immediate response
             # Also try scrolling to the specific widget
             try:
-                self.scroll_to_widget(self._streaming_widget, animate=True)
+                self.scroll_to_widget(self._streaming_widget, animate=False)
+            except Exception:
+                pass  # Fallback if scroll_to_widget fails
+    
+    def _scroll_during_streaming(self):
+        """Efficiently scroll during streaming updates."""
+        if self._streaming_widget and self._streaming_widget.is_mounted:
+            # Keep the streaming message visible at the bottom
+            # Use animate=False for smoother streaming experience
+            self.scroll_end(animate=False)
+            # Ensure the widget is visible
+            try:
+                self.scroll_to_widget(self._streaming_widget, animate=False)
             except Exception:
                 pass  # Fallback if scroll_to_widget fails
 
     def update_streaming_message(self, content: str):
-        """Update the current streaming message."""
+        """Update the current streaming message and keep it visible."""
         if self._streaming_widget:
             self._streaming_widget.update(content + " ▌")
+            # Immediate scroll to ensure visibility
             self.scroll_end(animate=False)
+            # Also schedule a scroll after refresh for robustness
+            self.call_after_refresh(self._scroll_during_streaming)
 
     def finalize_streaming_message(self):
         """Convert streaming message to final message with markdown support."""

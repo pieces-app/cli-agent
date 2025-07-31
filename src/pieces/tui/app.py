@@ -213,35 +213,30 @@ class PiecesTUI(App):
     async def on_user_messages_input_submitted(
         self, message: UserMessages.InputSubmitted
     ) -> None:
-        """Handle user input submission."""
+        """Handle user input submission - delegates to backend, no UI updates."""
         Settings.logger.info(f"App: User submitted question: {message.text[:50]}...")
-        if not self.chat_view_panel or not self.event_hub:
-            Settings.logger.info("Missing chat_view_panel or event_hub for user input")
+        if not self.event_hub:
+            Settings.logger.info("Missing event_hub for user input")
             return
 
-        # Check if no chat is selected, create one automatically
-        if self.chat_list_panel and self.chat_list_panel.active_chat is None:
-            Settings.logger.info("No active chat selected, creating new chat...")
+        # Remove welcome message and show user input immediately for feedback
+        if self.chat_view_panel:
             try:
-                new_chat = Settings.pieces_client.copilot.create_chat()
-                Settings.logger.info(f"Created new chat: {new_chat.id}")
+                welcome_widget = self.chat_view_panel.query_one(
+                    "#welcome-static", Static
+                )
+                if welcome_widget:
+                    await welcome_widget.remove()
+            except NoMatches:
+                pass  # Welcome message not found, that's fine
+            
+            # Show user message immediately for instant feedback
+            from datetime import datetime
+            timestamp = datetime.now().strftime("Today %I:%M %p")
+            self.chat_view_panel.add_message("user", message.text, timestamp=timestamp)
+            Settings.logger.info(f"Added user message immediately for feedback: {message.text[:50]}...")
 
-                # Emit chat switched event to notify the system
-                if self.event_hub:
-                    self.event_hub.chat.emit(EventType.CHAT_SWITCHED, new_chat)
-
-            except Exception as e:
-                Settings.logger.error(f"Error creating new chat: {e}")
-                return
-
-        # Remove welcome message if it exists
-        try:
-            welcome_widget = self.chat_view_panel.query_one("#welcome-static", Static)
-            if welcome_widget:
-                await welcome_widget.remove()
-        except NoMatches:
-            pass  # Welcome message not found, that's fine
-
+        # Simply delegate to backend - let it handle chat creation and all updates
         Settings.logger.info("Sending question to EventHub...")
         self.event_hub.ask_question(message.text)
 
@@ -252,14 +247,30 @@ class PiecesTUI(App):
                 f"Updating conversation: {message.chat.id} - {message.chat.name}"
             )
             if message.chat:
-                # Load existing conversation
+                # Update the backend chat reference
                 Settings.pieces_client.copilot.chat = message.chat
-                self.chat_view_panel.load_conversation(message.chat)
+                
+                # Check if we're in the middle of streaming - if so, don't reload yet
+                has_streaming_widget = hasattr(self.chat_view_panel, '_streaming_widget') and self.chat_view_panel._streaming_widget
+                has_thinking_widget = hasattr(self.chat_view_panel, '_thinking_widget') and self.chat_view_panel._thinking_widget
+                
+                if has_streaming_widget or has_thinking_widget:
+                    Settings.logger.info("In middle of streaming/thinking, deferring conversation load")
+                    # Just update the border title and chat reference, don't reload conversation yet
+                    self.chat_view_panel.border_title = f"Chat: {message.chat.name}"
+                else:
+                    # Normal case - load the full conversation
+                    Settings.logger.info("Loading full conversation")
+                    self.chat_view_panel.load_conversation(message.chat)
             else:
                 # None chat means new chat - show welcome message
                 self.chat_view_panel.clear_messages()
                 self.chat_view_panel.border_title = "Chat: New Conversation"
                 await self._show_welcome_message()
+
+        # Update the active chat in the sidebar
+        if self.chat_list_panel and message.chat:
+            self.chat_list_panel.set_active_chat(message.chat)
 
         if self.chat_input:
             self.chat_input.focus()
@@ -366,10 +377,15 @@ class PiecesTUI(App):
         self, _: CopilotMessages.StreamCompleted
     ) -> None:
         """Handle copilot stream completed."""
-        # Don't finalize streaming message here - let the server update handle it
-        # to prevent duplicate messages. Just clear the streaming widget.
+        # Finalize the streaming message to convert it to a permanent message
         if self.chat_view_panel:
-            self.chat_view_panel._clear_streaming_widget()
+            self.chat_view_panel.finalize_streaming_message()
+            
+            # After streaming completes, reload the conversation to get complete state from backend
+            current_chat = Settings.pieces_client.copilot.chat
+            if current_chat:
+                Settings.logger.info("Reloading conversation after stream completion to get complete state")
+                self.chat_view_panel.load_conversation(current_chat)
 
     async def on_copilot_messages_stream_error(
         self, message: CopilotMessages.StreamError

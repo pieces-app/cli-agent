@@ -63,10 +63,17 @@ class CopilotController(BaseController):
         self._current_response = ""
         self._current_status = None
 
+        # Check if we need to create a new chat
+        current_chat = Settings.pieces_client.copilot.chat
+        if not current_chat:
+            Settings.logger.info(
+                "No active chat, copilot will create new one automatically"
+            )
+
         # Emit thinking started event
         self.emit(EventType.COPILOT_THINKING_STARTED, None)
 
-        # Start streaming
+        # Start streaming - copilot will create chat automatically if needed
         Settings.pieces_client.copilot.stream_question(query)
 
     def _on_stream_message(self, response: "QGPTStreamOutput"):
@@ -114,9 +121,17 @@ class CopilotController(BaseController):
 
             elif current_status == "COMPLETED":
                 if response.conversation:
-                    Settings.pieces_client.copilot.chat = BasicChat(
-                        response.conversation
-                    )
+                    new_chat = BasicChat(response.conversation)
+                    old_chat = Settings.pieces_client.copilot.chat
+                    Settings.pieces_client.copilot.chat = new_chat
+
+                    # If this is a new chat (different from previous), emit chat switched event
+                    if not old_chat or old_chat.id != new_chat.id:
+                        Settings.logger.info(
+                            f"Copilot created/switched to chat: {new_chat.id}"
+                        )
+                        # Emit event that event hub will bridge to CHAT_SWITCHED
+                        self.emit(EventType.CHAT_SWITCHED, new_chat)
 
                 # Emit completion event
                 self.emit(

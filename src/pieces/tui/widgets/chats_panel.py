@@ -70,7 +70,6 @@ class ChatListPanel(ScrollableContainer):
 
     chats: reactive[List[tuple]] = reactive([])  # (chat, title, summary)
     active_chat: reactive[Optional[BasicChat]] = reactive(None)
-    selected_index: int = -1
 
     BINDINGS = [
         Binding("j", "select_next", "Next chat", show=False),
@@ -89,6 +88,7 @@ class ChatListPanel(ScrollableContainer):
         self._chat_widgets: Dict[str, ChatItem] = {}
         # Track current chat order for positioning
         self._chat_order: List[str] = []
+        self._selected_chat_id: Optional[str] = None
 
     def compose(self) -> ComposeResult:
         """Compose the chats panel."""
@@ -121,9 +121,9 @@ class ChatListPanel(ScrollableContainer):
         self._update_chats_incrementally()
 
         # Select first chat if available and none selected
-        if self.chats and self.selected_index == -1:
-            self.selected_index = 0
-            self._update_selection()
+        if self.chats and self._selected_chat_id is None and self._chat_order:
+            self._selected_chat_id = self._chat_order[0]
+            self._update_visual_selection()
 
     def _update_chats_incrementally(self):
         """Efficiently update chats - only add/remove/update what changed."""
@@ -374,7 +374,7 @@ class ChatListPanel(ScrollableContainer):
         # Clear data
         self.chats.clear()
         self.active_chat = None
-        self.selected_index = -1
+        self._selected_chat_id = None
 
         # Show empty state
         chats_container = self.query_one("#chats-container")
@@ -389,34 +389,78 @@ class ChatListPanel(ScrollableContainer):
             event.stop()  # Prevent further propagation
 
     async def on_chat_messages_switched(self, message: ChatMessages.Switched) -> None:
-        """Handle chat selection."""
-        # Find and update selected index efficiently
-        for idx, (chat, _, _) in enumerate(self.chats):
-            if chat.id == message.chat.id:
-                self.selected_index = idx
-                break
+        """Handle chat selection with O(1) widget-based approach."""
+        self._selected_chat_id = message.chat.id
+        self._update_visual_selection()
 
+        # Set active chat for backend sync
         self.set_active_chat(message.chat)
+
+    def _update_visual_selection(self):
+        """Update visual selection efficiently using widget dictionary."""
+        # Clear all selections first (efficient iteration over widgets)
+        for widget in self._chat_widgets.values():
+            widget.is_selected = False
+            widget.remove_class("chat-selected")
+
+        if self._selected_chat_id and self._selected_chat_id in self._chat_widgets:
+            selected_widget = self._chat_widgets[self._selected_chat_id]
+            selected_widget.is_selected = True
+            selected_widget.add_class("chat-selected")
+
+            # Scroll to selected widget
+            try:
+                self.scroll_to_widget(selected_widget, animate=True)
+            except Exception:
+                pass  # Fallback if scroll fails
 
     # Keyboard navigation
     def action_select_next(self):
-        """Select the next chat."""
-        if self.chats:
-            self.selected_index = min(self.selected_index + 1, len(self.chats) - 1)
-            self._update_selection()
+        """Select the next chat using efficient chat order navigation."""
+        if not self._chat_order:
+            return
+
+        if self._selected_chat_id is None:
+            # No selection, select first chat
+            self._selected_chat_id = self._chat_order[0]
+        else:
+            # Find current position and move to next
+            try:
+                current_index = self._chat_order.index(self._selected_chat_id)
+                next_index = min(current_index + 1, len(self._chat_order) - 1)
+                self._selected_chat_id = self._chat_order[next_index]
+            except ValueError:
+                # Current selection not in order, select first
+                self._selected_chat_id = self._chat_order[0]
+
+        self._update_visual_selection()
 
     def action_select_previous(self):
-        """Select the previous chat."""
-        if self.chats:
-            self.selected_index = max(self.selected_index - 1, 0)
-            self._update_selection()
+        """Select the previous chat using efficient chat order navigation."""
+        if not self._chat_order:
+            return
+
+        if self._selected_chat_id is None:
+            # No selection, select last chat
+            self._selected_chat_id = self._chat_order[-1]
+        else:
+            # Find current position and move to previous
+            try:
+                current_index = self._chat_order.index(self._selected_chat_id)
+                prev_index = max(current_index - 1, 0)
+                self._selected_chat_id = self._chat_order[prev_index]
+            except ValueError:
+                # Current selection not in order, select last
+                self._selected_chat_id = self._chat_order[-1]
+
+        self._update_visual_selection()
 
     def action_open_selected(self):
-        """Open the selected chat."""
-        if 0 <= self.selected_index < len(self.chats):
-            chat, _, _ = self.chats[self.selected_index]
-            # Post Textual message that will bubble up to parent handlers
-            self.post_message(ChatMessages.Switched(chat))
+        """Open the selected chat using efficient ID-based lookup."""
+        if self._selected_chat_id and self._selected_chat_id in self._chat_widgets:
+            # Get the chat widget and extract the chat object
+            chat_widget = self._chat_widgets[self._selected_chat_id]
+            self.post_message(ChatMessages.Switched(chat_widget.chat))
 
     def action_new_chat(self):
         """Request a new chat."""
@@ -424,10 +468,13 @@ class ChatListPanel(ScrollableContainer):
         self.post_message(ChatMessages.NewRequested())
 
     def action_rename_chat(self):
-        """Rename the selected chat."""
-        if 0 <= self.selected_index < len(self.chats):
-            chat, title, _ = self.chats[self.selected_index]
-            self.app.run_worker(self._rename_chat_worker(chat, title))
+        """Rename the selected chat using efficient ID-based lookup."""
+        if self._selected_chat_id and self._selected_chat_id in self._chat_widgets:
+            # Get the chat widget and extract the chat object
+            chat_widget = self._chat_widgets[self._selected_chat_id]
+            self.app.run_worker(
+                self._rename_chat_worker(chat_widget.chat, chat_widget.title)
+            )
 
     async def _rename_chat_worker(self, chat: BasicChat, current_title: str):
         """Worker method to handle rename chat dialog."""
@@ -443,10 +490,13 @@ class ChatListPanel(ScrollableContainer):
                 Settings.logger.error(f"Error renaming chat: {e}")
 
     def action_delete_chat(self):
-        """Delete the selected chat."""
-        if 0 <= self.selected_index < len(self.chats):
-            chat, title, _ = self.chats[self.selected_index]
-            self.app.run_worker(self._delete_chat_worker(chat, title))
+        """Delete the selected chat using efficient ID-based lookup."""
+        if self._selected_chat_id and self._selected_chat_id in self._chat_widgets:
+            # Get the chat widget and extract the chat object
+            chat_widget = self._chat_widgets[self._selected_chat_id]
+            self.app.run_worker(
+                self._delete_chat_worker(chat_widget.chat, chat_widget.title)
+            )
 
     async def _delete_chat_worker(self, chat: BasicChat, title: str):
         """Worker method to handle delete chat dialog."""
@@ -459,33 +509,35 @@ class ChatListPanel(ScrollableContainer):
                 chat.delete()
                 Settings.logger.info(f"Deleted chat: {title}")
 
-                # Adjust selected index if needed
-                if self.selected_index >= len(self.chats):
-                    self.selected_index = max(0, len(self.chats) - 1)
+                # Handle selection after deletion
+                if self._selected_chat_id == chat.id:
+                    # The selected chat was deleted, select another one
+                    if self._chat_order:
+                        # Try to select the next chat in order
+                        try:
+                            current_index = self._chat_order.index(chat.id)
+                            if current_index < len(self._chat_order) - 1:
+                                # Select next chat
+                                self._selected_chat_id = self._chat_order[
+                                    current_index + 1
+                                ]
+                            elif current_index > 0:
+                                # Select previous chat
+                                self._selected_chat_id = self._chat_order[
+                                    current_index - 1
+                                ]
+                            else:
+                                # Only chat, clear selection
+                                self._selected_chat_id = None
+                        except ValueError:
+                            # Chat not in order, clear selection
+                            self._selected_chat_id = None
+                    else:
+                        # No chats left, clear selection
+                        self._selected_chat_id = None
 
-                # Update selection
-                if self.chats:
-                    self._update_selection()
-                else:
-                    self.selected_index = -1
+                # Update visual selection
+                self._update_visual_selection()
 
             except Exception as e:
                 Settings.logger.error(f"Error deleting chat: {e}")
-
-    def _update_selection(self):
-        """Update visual selection efficiently."""
-        # Clear all selections first
-        for widget in self._chat_widgets.values():
-            widget.is_selected = False
-            widget.remove_class("chat-selected")
-
-        # Set new selection
-        if 0 <= self.selected_index < len(self.chats):
-            chat, _, _ = self.chats[self.selected_index]
-            if chat.id in self._chat_widgets:
-                widget = self._chat_widgets[chat.id]
-                widget.is_selected = True
-                widget.add_class("chat-selected")
-
-                # Scroll to selected widget
-                self.scroll_to_widget(widget)
