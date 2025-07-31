@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Callable, Dict, List, Tuple, Optional
+import sysconfig
 import shutil
 from rich.markdown import Markdown
 import yaml
@@ -16,6 +17,8 @@ from pieces.config.schemas.mcp import IntegrationDict, mcp_types, mcp_integratio
 
 
 class MCPProperties:
+    pieces_cli_bin_path: Optional[str] = None
+
     def __init__(
         self,
         stdio_property: Dict,
@@ -33,8 +36,20 @@ class MCPProperties:
         self.url_property_name = url_property_name
         self.command_property_name = command_property_name
         self.args_property_name = args_property_name
-        # Better than shutil.which if pieces is not added to the path
-        self.pieces_cli_bin_path = os.path.abspath(sys.argv[0])
+        if not MCPProperties.pieces_cli_bin_path:
+            MCPProperties.pieces_cli_bin_path = self.get_cli_wrapper()
+
+    def get_cli_wrapper(self):
+        wrapper_path = shutil.which("pieces")
+        if wrapper_path:
+            return wrapper_path
+        scripts_dir = sysconfig.get_path("scripts")
+        wrapper = os.path.join(scripts_dir, "pieces")
+        if os.name == "nt":
+            wrapper += ".exe"
+        if os.path.exists(wrapper):
+            return wrapper
+        return os.path.abspath(sys.argv[0])
 
     def mcp_settings(self, mcp_type: mcp_types):
         if mcp_type == "sse":
