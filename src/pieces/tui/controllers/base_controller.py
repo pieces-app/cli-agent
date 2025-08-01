@@ -449,8 +449,7 @@ class BaseController(ABC):
         try:
             if self._initialized:
                 self.cleanup()
-        except Exception:
-            # Ignore errors during cleanup in destructor
+        except (RuntimeError, ValueError, AttributeError):
             pass
 
     def _safe_cleanup(self):

@@ -5,6 +5,7 @@ from textual.reactive import reactive
 from textual.containers import ScrollableContainer
 from textual.widgets import Static
 from textual.binding import Binding
+from textual.css.query import NoMatches
 
 from .chat_message import ChatMessage
 from pieces.settings import Settings
@@ -122,6 +123,9 @@ class ChatViewPanel(ScrollableContainer):
                 self.load_conversation(chat)
                 return
 
+            # Don't defer updates when streaming/thinking - just be smart about duplicates
+            # The manual user message and finalized streaming message already incremented the count
+
             new_messages = messages[last_count:]
             Settings.logger.info(
                 f"Adding {len(new_messages)} new messages incrementally"
@@ -187,16 +191,22 @@ class ChatViewPanel(ScrollableContainer):
             self.scroll_end(animate=False)
             try:
                 self.scroll_to_widget(self._thinking_widget, animate=False)
-            except Exception:
+            except (ValueError, RuntimeError):
                 pass
 
     def add_streaming_message(self, role: str, content: str):
-        """Add a streaming message with cursor indicator."""
+        """Add a streaming message with markdown support and cursor indicator."""
         self._clear_thinking_indicator()
 
-        self._streaming_widget = Static(
-            content + " ▌",
-            classes=f"message-content message-content-{role} message-streaming",
+        # Create a streaming ChatMessage widget for markdown support
+        from datetime import datetime
+        timestamp = datetime.now().strftime("Today %I:%M %p")
+        
+        self._streaming_widget = ChatMessage(
+            role=role,
+            content=content + " ▌",  # Add cursor
+            timestamp=timestamp,
+            classes="message-streaming"
         )
         self.mount(self._streaming_widget)
         self.call_after_refresh(self._scroll_to_streaming_message)
@@ -207,43 +217,33 @@ class ChatViewPanel(ScrollableContainer):
             self.scroll_end(animate=False)
             try:
                 self.scroll_to_widget(self._streaming_widget, animate=False)
-            except Exception:
+            except (ValueError, RuntimeError):
+                # Widget may not be mounted or visible
                 pass
     
-    def _scroll_during_streaming(self):
-        """Keep streaming message visible during updates."""
-        if self._streaming_widget and self._streaming_widget.is_mounted:
-            self.scroll_end(animate=False)
-            try:
-                self.scroll_to_widget(self._streaming_widget, animate=False)
-            except Exception:
-                pass
+
 
     def update_streaming_message(self, content: str):
-        """Update the streaming message content."""
+        """Update the streaming message content with markdown support."""
         if self._streaming_widget:
-            self._streaming_widget.update(content + " ▌")
-            self.scroll_end(animate=False)
-            self.call_after_refresh(self._scroll_during_streaming)
+            content_with_cursor = content + " ▌"
+            self._streaming_widget.content = content_with_cursor
+            self.call_after_refresh(lambda: self._update_streaming_after_refresh(content_with_cursor))
 
     def finalize_streaming_message(self):
         """Convert streaming message to permanent message."""
         if self._streaming_widget:
-            content = str(self._streaming_widget.renderable).replace(" ▌", "")
+            # Get the final content without cursor from the ChatMessage
+            content = self._streaming_widget.content.replace(" ▌", "")
+            role = self._streaming_widget.role
+            timestamp = self._streaming_widget.timestamp
 
-            # Get the role from CSS class
-            role = "assistant"  # Default for streaming messages
-            if "message-content-user" in str(self._streaming_widget.classes):
-                role = "user"
-            elif "message-content-system" in str(self._streaming_widget.classes):
-                role = "system"
-
+            # Remove streaming widget
             self._streaming_widget.remove()
             self._streaming_widget = None
 
-            from datetime import datetime
-            timestamp = datetime.now().strftime("Today %I:%M %p")
             self.add_message(role, content, timestamp=timestamp)
+            self.increment_message_count()
 
     def _clear_thinking_indicator(self):
         """Remove thinking indicator if present."""
@@ -281,6 +281,36 @@ class ChatViewPanel(ScrollableContainer):
                 pass  # Widget may already be removed
             finally:
                 self._streaming_widget = None
+                
+    def _update_streaming_after_refresh(self, content: str):
+        """Update markdown and scroll after widget refresh."""
+        if self._streaming_widget:
+            # Update markdown content
+            try:
+                markdown_widget = self._streaming_widget.query_one("Markdown")
+                if markdown_widget:
+                    markdown_widget.update(content)
+            except (ValueError, AttributeError, RuntimeError, NoMatches):
+                # Markdown widget not found or not ready, ignore
+                pass
+            
+            # Handle scrolling
+            self.scroll_end(animate=False)
+            if self._streaming_widget.is_mounted:
+                try:
+                    self.scroll_to_widget(self._streaming_widget, animate=False)
+                except (ValueError, RuntimeError):
+                    # Widget may not be mounted or visible
+                    pass
+    
+    def clear_streaming_widget(self):
+        """Public method to clear streaming widget."""
+        self._clear_streaming_widget()
+        
+    def increment_message_count(self):
+        """Increment the expected message count to avoid duplicates."""
+        self._last_message_count += 1
+        Settings.logger.debug(f"Incremented message count to {self._last_message_count}")
 
     def cleanup(self):
         """Clean up widget resources to prevent memory leaks."""
@@ -298,7 +328,7 @@ class ChatViewPanel(ScrollableContainer):
         """Ensure cleanup is called when widget is destroyed."""
         try:
             self.cleanup()
-        except Exception:
+        except (RuntimeError, ValueError, AttributeError):
             # Ignore errors during cleanup in destructor
             pass
 

@@ -220,19 +220,22 @@ class PiecesTUI(App):
         # Remove welcome message and show user input immediately for feedback
         if self.chat_view_panel:
             try:
-                welcome_widget = self.chat_view_panel.query_one(
-                    "#welcome-static", Static
-                )
+                welcome_widget = self.chat_view_panel.query_one("#welcome-static")
                 if welcome_widget:
                     await welcome_widget.remove()
             except NoMatches:
                 pass  # Welcome message not found, that's fine
-            
+
             # Show user message immediately for instant feedback
             from datetime import datetime
+
             timestamp = datetime.now().strftime("Today %I:%M %p")
             self.chat_view_panel.add_message("user", message.text, timestamp=timestamp)
-            Settings.logger.info(f"Added user message immediately for feedback: {message.text[:50]}...")
+            # Increment the expected message count to avoid duplicates
+            self.chat_view_panel.increment_message_count()
+            Settings.logger.info(
+                f"Added user message immediately for feedback: {message.text[:50]}..."
+            )
 
         # Simply delegate to backend - let it handle chat creation and all updates
         Settings.logger.info("Sending question to EventHub...")
@@ -245,13 +248,21 @@ class PiecesTUI(App):
                 f"Updating conversation: {message.chat.id} - {message.chat.name}"
             )
             if message.chat:
+                Settings.pieces_client.copilot.chat = message.chat
                 # Check if we're in the middle of streaming - if so, don't reload yet
-                has_streaming_widget = hasattr(self.chat_view_panel, '_streaming_widget') and self.chat_view_panel._streaming_widget
-                has_thinking_widget = hasattr(self.chat_view_panel, '_thinking_widget') and self.chat_view_panel._thinking_widget
-                
+                has_streaming_widget = (
+                    hasattr(self.chat_view_panel, "_streaming_widget")
+                    and self.chat_view_panel._streaming_widget
+                )
+                has_thinking_widget = (
+                    hasattr(self.chat_view_panel, "_thinking_widget")
+                    and self.chat_view_panel._thinking_widget
+                )
+
                 if has_streaming_widget or has_thinking_widget:
-                    Settings.logger.info("In middle of streaming/thinking, deferring conversation load")
-                    # Just update the border title and chat reference, don't reload conversation yet
+                    Settings.logger.info(
+                        "In middle of streaming/thinking, deferring conversation load"
+                    )
                     self.chat_view_panel.border_title = f"Chat: {message.chat.name}"
                 else:
                     # Normal case - load the full conversation
@@ -309,10 +320,17 @@ class PiecesTUI(App):
     async def on_chat_messages_deleted(self, message: ChatMessages.Deleted) -> None:
         """Handle chat deletion event from backend."""
         if self.chat_list_panel:
+            active_chat_id = None
+            try:
+                if self.chat_list_panel.active_chat:
+                    active_chat_id = self.chat_list_panel.active_chat.id
+            except (AttributeError, RuntimeError):
+                pass
+            
             self.chat_list_panel.remove_chat(message.chat_id)
 
             # If this was the active chat, clear the view
-            if self.chat_list_panel.active_chat and self.chat_list_panel.active_chat.id == message.chat_id:
+            if active_chat_id == message.chat_id:
                 if self.chat_view_panel:
                     self.chat_view_panel.clear_messages()
                     self.chat_view_panel.border_title = "Chat"
@@ -374,6 +392,12 @@ class PiecesTUI(App):
         if self.chat_view_panel:
             self.chat_view_panel.add_message("system", f"❌ Error: {message.error}")
 
+    async def on_chat_messages_new_requested(
+        self, _: ChatMessages.NewRequested
+    ) -> None:
+        """Handle new chat request from button."""
+        await self.action_new_chat()
+
     async def on_context_messages_cleared(
         self, message: ContextMessages.Cleared
     ) -> None:
@@ -434,8 +458,7 @@ Ready to assist with code, questions, and more!"""
             try:
                 existing_welcome = self.chat_view_panel.query_one("#welcome-static")
                 if existing_welcome:
-                    await existing_welcome.recompose()
-                    return
+                    await existing_welcome.remove()
             except NoMatches:
                 # No existing welcome message found, that's fine
                 pass
@@ -471,8 +494,7 @@ Ready to assist with code, questions, and more!"""
         """Ensure cleanup is called when app is destroyed."""
         try:
             self.on_unmount()
-        except Exception:
-            # Ignore errors during cleanup in destructor
+        except (RuntimeError, ValueError, AttributeError):
             pass
 
 

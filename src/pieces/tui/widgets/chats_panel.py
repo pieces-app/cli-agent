@@ -96,7 +96,7 @@ class ChatListPanel(ScrollableContainer):
         new_chat_btn = Button(
             "➕ New Chat", classes="new-chat-button", id="new-chat-btn"
         )
-        new_chat_btn.can_focus = False  # Don't interfere with tab navigation
+        new_chat_btn.can_focus = False
         yield new_chat_btn
 
         # Chats list container (use regular Container since parent is already ScrollableContainer)
@@ -267,8 +267,7 @@ class ChatListPanel(ScrollableContainer):
                             if prev_chat_id in self._chat_widgets:
                                 prev_widget = self._chat_widgets[prev_chat_id]
                                 container.move_child(widget, after=prev_widget)
-                    except Exception:
-                        # If move fails, it's probably already in the right place
+                    except (ValueError, RuntimeError):
                         pass
 
     def add_chat(self, chat: BasicChat, title: str, summary: str = ""):
@@ -428,8 +427,9 @@ class ChatListPanel(ScrollableContainer):
             # Scroll to selected widget
             try:
                 self.scroll_to_widget(selected_widget, animate=True)
-            except Exception:
-                pass  # Fallback if scroll fails
+            except (ValueError, RuntimeError):
+                # Widget may not be scrollable or visible
+                pass
 
     # Keyboard navigation
     def action_select_next(self):

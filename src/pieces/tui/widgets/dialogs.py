@@ -204,6 +204,11 @@ class EditNameDialog(ModalScreen):
         else:
             self.action_cancel_edit()
 
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle Enter key pressed in the input field."""
+        if event.input.id == "name-input":
+            self.action_save_name()
+
     def action_save_name(self) -> None:
         name_input = self.query_one("#name-input", Input)
         new_name = name_input.value.strip()

@@ -148,14 +148,12 @@ class ChatItem(Container):
             self.title = ""
             self.summary = ""
 
-        except Exception:
-            # Ignore errors during cleanup
+        except (RuntimeError, ValueError, AttributeError):
             pass
 
     def __del__(self):
         """Ensure cleanup is called when widget is destroyed."""
         try:
             self.cleanup()
-        except Exception:
-            # Ignore errors during cleanup in destructor
+        except (RuntimeError, ValueError, AttributeError):
             pass
