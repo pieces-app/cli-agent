@@ -23,6 +23,7 @@ from .commit_command import CommitCommand
 from .open_command import OpenCommand
 from .mcp_command_group import MCPCommandGroup
 from .completions import CompletionCommand
+from .tui_command import TUICommand
 
 __all__ = [
     "ConfigCommand",
@@ -48,4 +49,5 @@ __all__ = [
     "OpenCommand",
     "MCPCommandGroup",
     "CompletionCommand",
+    "TUICommand",
 ]
