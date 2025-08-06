@@ -1,12 +1,22 @@
 ## Testing a remote branch locally
 
+### Prerequisites
+Make sure you have Python3 >=3.11 & <3.14
+
+### Clone & Checkout
 1. Clone this repo locally `git clone <repo>`
 2. Fetch remote branches `git fetch`
 3. Checkout the feature branch `git checkout <feat-branch-name>`
-4. Install dependencies `poetry install`
-5. Run the CLI with `python src/pieces <CLI command>` (or `python3`)
 
-Ex: `python src/pieces help` or `python src/pieces config --editor vim`
+### Setup Virtual Environment
+1. Run `python3 -m venv venv` - creates a virtual environment named "venv" in the current directory.
+2. Run `source venv/bin/activate` - activates the virtual environment.
+3. Run `python -m pip install poetry` - installs `poetry` within the virtual environment.
+4. Run `python -m poetry install` - installs all project dependencies using the `pyproject.toml` file.
+5. Run `python -m pip install -e .` - installs the current project in editable mode.
+
+### Test Setup
+Run the command `pieces help` to confirm things are working and setup properly.
 
 ## Testing a staging release
 

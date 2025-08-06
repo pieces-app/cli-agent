@@ -3,9 +3,8 @@ from typing import TYPE_CHECKING, Optional, Dict, Union, Callable
 import platform
 import atexit
 import urllib.request
-import urllib.error
-import webbrowser
 import socket
+import subprocess
 
 from .websockets.base_websocket import BaseWebsocket
 from .api_client import PiecesApiClient
@@ -26,8 +25,9 @@ if TYPE_CHECKING:
 
 
 class PiecesClient(PiecesApiClient):
-    def __init__(self, host: str = "", **kwargs):
+    def __init__(self, **kwargs):
         self._port = ""
+        self._models_object: Optional[list["Model"]] = None
         self.is_pos_stream_running = False
         self._reconnect_on_host_change = kwargs.get(
             "reconnect_on_host_change", True)
@@ -35,7 +35,6 @@ class PiecesClient(PiecesApiClient):
         self._application = None
         self._copilot = None
         self.models: Dict[str, str] = {}  # Maps model_name to the model_id
-        self.models_object: list["Model"] = []
         self._is_started_runned = False
         self.local_os = platform.system().upper() if platform.system().upper() in [
             "WINDOWS", "LINUX", "DARWIN"] else "WEB"
@@ -162,11 +161,16 @@ class PiecesClient(PiecesApiClient):
             Returns a dict of the {model_name: model_id}
         """
         if not self.models:
-            self.models_object = self.models_api.models_snapshot().iterable
             # getting the models that are available in the cloud or is downloaded
             self.models = {
                 model.name: model.id for model in self.models_object if model.cloud or model.downloaded}
         return self.models
+
+    @property
+    def models_object(self) -> list["Model"]:
+        if not self._models_object:
+            self._models_object = self.models_api.models_snapshot().iterable
+        return self._models_object
 
     @property
     def model_name(self):
@@ -230,10 +234,17 @@ class PiecesClient(PiecesApiClient):
         if self.is_pieces_running():
             return True
         try:
-            sucess = webbrowser.open(uri)
-            if not sucess:
+            if self.local_os == "WINDOWS":
+                result = subprocess.run(["start", uri], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            elif self.local_os == "MACOS":
+                result = subprocess.run(["open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            elif self.local_os == "LINUX":
+                result =subprocess.run(["xdg-open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                raise ValueError("Invalid platform: " + self.local_os)
+            if result.returncode != 0:
                 return False
-        except:
+        except Exception:
             return False
         return self.is_pieces_running(maximum_retries=12)
 

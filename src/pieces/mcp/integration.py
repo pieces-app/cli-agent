@@ -1,105 +1,18 @@
 import json
 import os
-from typing import Callable, Dict, List, Literal, Tuple, Optional, TypedDict, get_args
-
+from typing import Callable, Dict, List, Tuple, Optional
+import shutil
 from rich.markdown import Markdown
 import yaml
 import sys
 
 from pieces.copilot.ltm import check_ltm
+from pieces.headless.exceptions import HeadlessError
 from pieces.settings import Settings
 
 from .utils import get_mcp_latest_url, get_mcp_urls
 from ..utils import PiecesSelectMenu
-
-MCP_types = Literal["sse", "stdio"]
-
-IntegrationDict = Dict[str, MCP_types]
-
-mcp_integration_types = Literal[
-    "vscode",
-    "goose",
-    "cursor",
-    "claude",
-    "windsurf",
-    "zed",
-    "shortwave",
-    "claude_code",
-    "kiro",
-]
-mcp_integrations: List[mcp_integration_types] = list(get_args(mcp_integration_types))
-
-
-class ConfigDict(TypedDict, total=False):
-    schema: str
-    vscode: IntegrationDict
-    cursor: IntegrationDict
-    goose: IntegrationDict
-    claude: IntegrationDict
-    windsurf: IntegrationDict
-    zed: IntegrationDict
-    shortwave: IntegrationDict
-    claude_code: IntegrationDict
-    kiro: IntegrationDict
-
-
-class MCPLocalConfig:
-    DEFAULT_SCHEMA = "0.0.0"
-    DEFAULT_INTEGRATIONS = mcp_integrations
-
-    def __init__(self) -> None:
-        self.config: ConfigDict = self.load_config()
-        self.migrate_json()
-
-    def load_config(self) -> ConfigDict:
-        try:
-            with open(Settings.mcp_config, "r") as f:
-                raw = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            raw = {}
-
-        # Normalize the config structure
-        config: ConfigDict = {"schema": self.DEFAULT_SCHEMA}
-        for integration in self.DEFAULT_INTEGRATIONS:
-            config[integration] = raw.get(integration, {})
-
-        # Preserve schema if it exists
-        if "schema" in raw:
-            config["schema"] = raw["schema"]
-
-        return config
-
-    def migrate_json(self):
-        if self.config.get("schema", None) == "0.0.1":
-            return
-
-        for k, v in self.config.items():
-            if isinstance(v, list):
-                self.config[k] = dict.fromkeys(v, "stdio")
-        self.config["schema"] = "0.0.1"
-        self.save_config()
-
-    def save_config(self):
-        with open(Settings.mcp_config, "w") as f:
-            json.dump(self.config, f)
-
-    def add_project(self, integration: str, mcp_type: MCP_types, path: str):
-        paths = self.get_projects(integration)
-        paths[path] = mcp_type
-        self.config[integration] = paths
-        self.save_config()
-
-    def remove_project(self, integration: str, path: str):
-        c = self.get_projects(integration)
-        try:
-            c.pop(path)
-        except KeyError:
-            pass
-        self.config[integration] = c
-        self.save_config()
-
-    def get_projects(self, integration: str) -> IntegrationDict:
-        return self.config.get(integration, {})
+from pieces.config.schemas.mcp import IntegrationDict, mcp_types, mcp_integration_types
 
 
 class MCPProperties:
@@ -123,19 +36,19 @@ class MCPProperties:
         # Better than shutil.which if pieces is not added to the path
         self.pieces_cli_bin_path = os.path.abspath(sys.argv[0])
 
-    def mcp_settings(self, mcp_type: MCP_types):
+    def mcp_settings(self, mcp_type: mcp_types):
         if mcp_type == "sse":
             return self.sse_property
         else:
             return self.stdio_property
 
-    def mcp_path(self, mcp_type: MCP_types):
+    def mcp_path(self, mcp_type: mcp_types):
         if mcp_type == "sse":
             return self.sse_path
         else:
             return self.stdio_path
 
-    def mcp_modified_settings(self, mcp_type: MCP_types):
+    def mcp_modified_settings(self, mcp_type: mcp_types):
         mcp_settings = self.mcp_settings(mcp_type)
         if mcp_type == "sse":
             mcp_settings[self.url_property_name] = get_mcp_latest_url()
@@ -158,10 +71,13 @@ class Integration:
         docs: str,
         get_settings_path: Callable,
         mcp_properties: MCPProperties,
+        id: mcp_integration_types,
         error_text: Optional[str] = None,
         loader=json.load,
         saver=lambda x, y: json.dump(x, y, indent=4),
-        id: Optional[str] = None,
+        support_sse: bool = True,
+        check_existence_paths: Optional[List[str]] = None,
+        check_existence_command: Optional[str] = None,
     ) -> None:
         # remove the css selector
         self.docs_no_css_selector = docs.split("#")[0]
@@ -172,21 +88,19 @@ class Integration:
             "Something went wrong. "
             f"Please refer to the documentation: `{self.docs_no_css_selector}`"
         )
+        self.support_sse = support_sse
         self.docs = docs
         self.get_settings_path = get_settings_path
         self.loader = loader
         self.saver = saver
-        self.console = Settings.logger.console
         self.id: str = id or self.readable.lower().replace(" ", "_")
         self._local_config = None
         self.mcp_properties = mcp_properties
-        self.mcp_types: List[MCP_types] = ["sse", "stdio"]
-
-    @property
-    def local_config(self):
-        if not self._local_config:
-            self._local_config = MCPLocalConfig()
-        return self._local_config
+        self.mcp_types: List[mcp_types] = ["sse", "stdio"]
+        self.check_existence_paths = check_existence_paths or [
+            os.path.dirname(self.get_settings_path())
+        ]
+        self.check_existence_command = check_existence_command
 
     def handle_options(self, stdio: bool, **kwargs):
         mcp_type = "stdio" if stdio else "sse"
@@ -198,32 +112,50 @@ class Integration:
         else:
             return self.on_select(mcp_type, **kwargs)
 
-    def run(self, stdio: bool, **kwargs):
+    def run(self, stdio: bool, **kwargs) -> bool:
+        if not stdio and not self.support_sse:
+            Settings.logger.print(
+                "[yellow]Warning: Using stdio instead of sse because sse connection is not supported"
+            )
+            stdio = True
+
+        if not self.exists() and not Settings.logger.confirm(
+            "This integration is not installed are you sure you want to proceed?",
+            _default=True,
+        ):
+            return False
+
         if stdio and not self.mcp_properties.pieces_cli_bin_path:
             raise ValueError(
                 "Pieces Cli is not added to the path you can't setup the stdio servers please add it to the path"
             )
-        self.console.print(f"Attempting to update Global {self.readable} MCP Tooling")
+        Settings.logger.print(
+            f"Attempting to update Global {self.readable} MCP Tooling"
+        )
         if not self.check_ltm():
-            return
+            return False
         try:
             if not self.handle_options(stdio, **kwargs):
-                return
-            self.console.print(
+                return False
+            Settings.logger.print(
                 Markdown(f"✅ Pieces MCP is now enabled for {self.readable}!")
             )
-            self.console.print(
+            Settings.logger.print(
                 Markdown(
                     f"For more information please refer to the docs: `{self.docs}`"
                 )
             )
-            self.console.print(Markdown(self.text_end))
+            Settings.logger.print(Markdown(self.text_end))
+            return True
         except KeyboardInterrupt:
-            pass
+            return False
+        except HeadlessError as e:
+            raise e
         except Exception as e:  # noqa: E722
-            print(e)
+            Settings.logger.print(e)
             Settings.logger.critical(e)
-            self.console.print(Markdown(self.error_text))
+            Settings.logger.print(Markdown(self.error_text))
+            return False
 
     def check_ltm(self) -> bool:
         css_selector = "#installing-piecesos--configuring-permissions"
@@ -234,20 +166,22 @@ class Integration:
         if paths_to_repair:
             [self.on_select(mcp_type, p) for p, mcp_type in paths_to_repair.items()]
         else:
-            self.console.print(f"No issues detected in {self.readable}")
+            Settings.logger.print(f"No issues detected in {self.readable}")
 
-    def on_select(self, mcp_type: MCP_types, path=None, **kwargs) -> bool:
+    def on_select(self, mcp_type: mcp_types, path=None, **kwargs) -> bool:
         mcp_settings = self.mcp_properties.mcp_modified_settings(mcp_type)
         mcp_path = self.mcp_properties.mcp_path(mcp_type)
         if not path:
             path = self.get_settings_path(**kwargs)
-        old_mcp_type = self.local_config.get_projects(self.id).get(path, mcp_type)
+        old_mcp_type = Settings.mcp_config.get_projects(self.id).get(path, mcp_type)
         if (
-            old_mcp_type != mcp_type
-            and self.search(path, old_mcp_type)[0]  # the old set up and NOT removed
+            (
+                old_mcp_type != mcp_type and self.search(path, old_mcp_type)[0]
+            )  # the old set up and NOT removed
             and not Settings.logger.confirm(
                 f"{mcp_type} is already used as your {self.readable} MCP\n"
-                f"Do you want to replace the {old_mcp_type} mcp with the {mcp_type} mcp?"
+                f"Do you want to replace the {old_mcp_type} mcp with the {mcp_type} mcp?",
+                _default=True,
             )
         ):
             return False
@@ -274,11 +208,13 @@ class Integration:
         try:
             with open(path, "w") as f:
                 self.saver(settings, f)
-            print(f"Successfully updated {path} with Pieces configuration")
+            Settings.logger.print(
+                Markdown(f"Successfully updated `{path}` with Pieces configuration")
+            )
         except Exception as e:
-            print(f"Error writing {self.readable} {dirname}")
+            Settings.logger.print(f"Error writing {self.readable} {dirname}")
             raise e
-        self.local_config.add_project(self.id, mcp_type, path)
+        Settings.mcp_config.add_project(self.id, mcp_type, path)
         return True
 
     def load_config(self, path: str = "", **kwargs) -> Dict:
@@ -296,10 +232,28 @@ class Integration:
         except (json.JSONDecodeError, yaml.YAMLError):
             if os.path.getsize(path) == 0:
                 return {}
-            print(f"Failed in prasing {self.readable}, {path} - it may be malformed")
+            Settings.logger.print(
+                f"Failed in prasing {self.readable}, {path} - it may be malformed"
+            )
             raise ValueError
 
         return settings
+
+    def exists(self) -> bool:
+        return self.check_command_existence() or self.check_paths_existence()
+
+    def check_command_existence(self) -> bool:
+        return (
+            shutil.which(self.check_existence_command) is not None
+            if self.check_existence_command
+            else False
+        )
+
+    def check_paths_existence(self) -> bool:
+        for path in self.check_existence_paths:
+            if os.path.exists(path):
+                return True
+        return False
 
     def need_repair(
         self,
@@ -311,11 +265,11 @@ class Integration:
             If any of these not found we remove it from the local cache (the user removed it already and don't want it)
         Returns: list of the paths that needs to be repaired
         """
-        paths = self.local_config.get_projects(self.id)
+        paths = Settings.mcp_config.get_projects(self.id)
+        paths_to_remove = []
         paths_to_repair: IntegrationDict = {}
         for path, mcp_type in paths.items():
             check, config = self.search(path, mcp_type)
-            # Check is True
             if check:
                 if not self.check_properties(mcp_type, config):
                     paths_to_repair[path] = mcp_type
@@ -330,11 +284,13 @@ class Integration:
                         break
                 if not appended:
                     # SADLY let's removed from the local cache
-                    self.local_config.remove_project(self.id, path)
+                    paths_to_remove.append(path)
+
+        [Settings.mcp_config.remove_project(self.id, path) for path in paths_to_remove]
 
         return paths_to_repair
 
-    def check_properties(self, mcp_type: MCP_types, config: Dict) -> bool:
+    def check_properties(self, mcp_type: mcp_types, config: Dict) -> bool:
         mcp_settings = self.mcp_properties.mcp_modified_settings(mcp_type)
         for k, value in config.items():
             if k == self.mcp_properties.url_property_name and mcp_type == "sse":
@@ -359,17 +315,17 @@ class Integration:
         gb = self.get_settings_path()
         for mcp_type in self.mcp_types:
             if self.search(gb, mcp_type)[0]:
-                self.local_config.add_project(self.id, mcp_type, gb)
+                Settings.mcp_config.add_project(self.id, mcp_type, gb)
                 return True
 
-        paths = self.local_config.get_projects(self.id)
+        paths = Settings.mcp_config.get_projects(self.id)
         for path, mcp_type in paths.items():
             if self.search(path, mcp_type=mcp_type)[0]:
                 return True
 
         return False
 
-    def search(self, path: str, mcp_type: MCP_types) -> Tuple[bool, Dict]:
+    def search(self, path: str, mcp_type: mcp_types) -> Tuple[bool, Dict]:
         """
         Search for any potential pieces mcp (matching the properties/url) and the name pieces
 
@@ -385,7 +341,7 @@ class Integration:
         except FileNotFoundError:
             return False, {}
         except ValueError as e:
-            print(e)
+            Settings.logger.print(e)
             return False, {}
 
         # Ignore the Pieces because it might be named anything else

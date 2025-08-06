@@ -1,6 +1,5 @@
 from typing import Dict, List, Optional
 from pieces.base_command import BaseCommand
-from pieces.command_interface.mcp_command_group import MCPCommandGroup
 from pieces.pieces_argparser import PiecesArgparser
 from argparse import _SubParsersAction
 
@@ -59,14 +58,16 @@ class CommandRegistry:
             action="store_true",
             help="Ignores the onboarding for the running command",
         )
+        parser.add_argument(
+            "--headless",
+            action="store_true",
+            help="Run in headless mode with JSON output (non-interactive)",
+        )
 
         # Create subparsers for commands
         self.command_subparser = parser.add_subparsers(dest="command")
         for command in BaseCommand.commands:
             self.register(command)
-
-        # Add the groups manually for now
-        # self.register(MCPCommandGroup())
 
         parser.set_defaults(
             func=lambda **kwargs: print(version)

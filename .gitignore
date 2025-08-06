@@ -180,3 +180,4 @@ src/pieces/completions/
 /choco/tools/pieces
 Mesh_Intelligent_Technologies_Inc_6_24_22.pfx
 certificate.txt
+tests/completion_tests/generated/

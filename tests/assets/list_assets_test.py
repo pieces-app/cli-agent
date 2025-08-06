@@ -33,7 +33,7 @@ def test_list_assets(mock_api_client, mock_assets, mock_settings, mock_sys_argv_
 
     # Call the mock select menus
     mock_select_menus(
-        main_func, MODULE_NAME, [], None, AssetsCommands.open_asset, expected_assets
+        main_func, "pieces.utils", [], None, AssetsCommands.open_asset, expected_assets
     )
 
 
@@ -41,15 +41,28 @@ def test_list_assets(mock_api_client, mock_assets, mock_settings, mock_sys_argv_
 @patch(f"{OPEN_MODULE_NAME}.BasicAsset")
 @patch(f"{OPEN_MODULE_NAME}.Settings.pieces_client.assets")
 @patch(f"{OPEN_MODULE_NAME}.subprocess.run")
-@patch(f"{OPEN_MODULE_NAME}.ConfigCommands.load_config")
-def test_open_asset_success(
-    mock_load_config, mock_run, mock_assets, mock_basic_asset, mock_sh
-):
-    mock_basic_asset.raw_content.return_value = "content"
+def test_open_asset_success(mock_run, mock_assets, mock_basic_asset, mock_sh, tmp_path):
+    """Ensure open_asset opens the asset in the configured editor using the new
+    Settings.cli_config approach.
+
+    The legacy ConfigCommands.load_config helper has been removed, so the test now
+    patches Settings.cli_config.editor directly. A temporary directory is used
+    for `Settings.open_snippet_dir` to avoid filesystem side-effects."""
+
+    # Configure the fake editor and BasicAsset mocks
     mock_sh.return_value = "path_to_editor"
     mock_assets.return_value = [Mock(id="test_id", name="Test Asset")]
-    mock_load_config.return_value = {"editor": "<editor_command>"}
-    result = AssetsCommands.open_asset(mock_assets.id, ITEM_INDEX=1, editor=True)
+
+    mock_asset_instance = Mock()
+    mock_asset_instance.raw_content = "content"
+    mock_asset_instance.classification = "python"
+    mock_basic_asset.return_value = mock_asset_instance
+
+    # Point the snippet directory to a temporary path and set the editor
+    Settings.open_snippet_dir = str(tmp_path)
+    Settings.cli_config.editor = "dummy_editor"
+
+    result = AssetsCommands.open_asset("test_id", ITEM_INDEX=1, editor=True)
 
     assert result is None
     mock_run.assert_called_once()

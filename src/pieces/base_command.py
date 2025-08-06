@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Self
+from typing import Union, List, Dict, Self
 import argparse
+from pieces.headless.models.base import CommandResult
 from pieces.settings import Settings
 import sys
 
@@ -10,6 +11,7 @@ class BaseCommand(ABC):
 
     commands: List[Self] = []
     _is_command_group = False
+    support_headless = False
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -19,7 +21,10 @@ class BaseCommand(ABC):
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls)
         if not getattr(instance, "_is_command_group", False):
-            cls.commands.append(instance)
+            # Only add to commands list if this is the singleton instance
+            # (created during __init_subclass__), not manual instantiations
+            if not hasattr(cls, "instance") or cls.instance is None:
+                cls.commands.append(instance)
         return instance
 
     def __init__(self):
@@ -33,9 +38,15 @@ class BaseCommand(ABC):
         self.docs: str = self.get_docs()
 
     def command_func(self, *args, **kwargs):
+        # Only enable headless mode if the command supports it and it's requested
+        if not self.support_headless and kwargs.get("headless", False):
+            Settings.headless_mode = False
         return_code = self.execute(*args, **kwargs)
         if not Settings.run_in_loop:
-            sys.exit(return_code)
+            if isinstance(return_code, int):
+                sys.exit(return_code)
+            else:
+                return_code.exit(Settings.headless_mode)
         return return_code
 
     @abstractmethod
@@ -70,7 +81,7 @@ class BaseCommand(ABC):
         pass
 
     @abstractmethod
-    def execute(self, **kwargs) -> int:
+    def execute(self, **kwargs) -> Union[int, CommandResult]:
         """Execute the command with the given arguments.
 
         Returns:
@@ -83,7 +94,7 @@ class CommandGroup(BaseCommand):
     """Base class for commands that have subcommands."""
 
     _is_command_group = True
-    instance: Self = None
+    instance: Self
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)

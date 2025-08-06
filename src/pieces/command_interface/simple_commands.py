@@ -1,6 +1,8 @@
 import argparse
 from urllib3.exceptions import MaxRetryError
 from pieces.base_command import BaseCommand
+from pieces.headless.models.base import CommandResult
+from pieces.headless.models.version import create_version_success
 from pieces.urls import URLs
 from pieces.core import (
     loop,
@@ -174,6 +176,8 @@ class OnboardingCommand(BaseCommand):
 class VersionCommand(BaseCommand):
     """Command to display version information for Pieces CLI and PiecesOS."""
 
+    support_headless = True
+
     def get_name(self) -> str:
         return "version"
 
@@ -193,13 +197,15 @@ class VersionCommand(BaseCommand):
         """Version command has no additional arguments."""
         pass
 
-    def execute(self, **kwargs) -> int:
+    def execute(self, **kwargs) -> CommandResult:
         """Execute the version command."""
         if Settings.pieces_os_version:
             print_version_details(Settings.pieces_os_version, __version__)
         else:
             pass
-        return 0
+        return CommandResult(
+            0, create_version_success(__version__, Settings.pieces_os_version)
+        )
 
 
 class RestartPiecesOSCommand(BaseCommand):

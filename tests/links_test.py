@@ -3,7 +3,6 @@ import requests
 from pieces.urls import URLs
 from typing import List, Tuple
 
-
 def get_urls() -> List[Tuple[str, str]]:
     """Get all URLs from the URLs enum."""
     urls = []

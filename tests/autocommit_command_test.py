@@ -1,6 +1,7 @@
 import sys
 import unittest
 from unittest.mock import patch, MagicMock, call, ANY
+import os
 
 from pieces._vendor.pieces_os_client.models.application import Application
 from pieces.autocommit.autocommit import (
@@ -8,7 +9,6 @@ from pieces.autocommit.autocommit import (
     get_current_working_changes,
     get_issue_details,
 )
-from pieces.settings import Settings
 
 from pieces._vendor.pieces_os_client.models.seed import Seed
 from pieces._vendor.pieces_os_client.models.seeds import Seeds
@@ -23,6 +23,8 @@ from pieces._vendor.pieces_os_client.models.transferable_string import (
 )
 from pieces._vendor.pieces_os_client.models.anchor_type_enum import AnchorTypeEnum
 from pieces._vendor.pieces_os_client.models.seeded_anchor import SeededAnchor
+from pieces.config.constants import PIECES_DATA_DIR
+from pieces.logger import Logger
 
 
 class TestGitCommit(unittest.TestCase):
@@ -90,9 +92,12 @@ class TestGitCommit(unittest.TestCase):
         self.mock_subprocess = patch("subprocess.run").start()
 
         self.mock_show_error = patch("pieces.settings.Settings.show_error").start()
-        prompt = Settings.logger.prompt
-        self.debug_logger = Settings.logger.debug
+        real_logger = Logger(True, os.path.join(PIECES_DATA_DIR, "test_logs"))
         self.mock_settings = patch("pieces.autocommit.autocommit.Settings").start()
+        self.mock_settings.logger = real_logger
+        self.mock_settings.model_config.auto_commit_model.uuid = "OUR_GREAT_MODEL_ID"
+
+        # Provide minimal pieces_client stub
         self.mock_settings.pieces_client.application = self.get_app()
 
         mock_answer = MagicMock()
@@ -102,7 +107,6 @@ class TestGitCommit(unittest.TestCase):
         self.mock_settings.pieces_client.qgpt_api.relevance.return_value = (
             mock_api_response
         )
-        self.mock_settings.logger.prompt = prompt
 
         self.mock_settings.get_auto_commit_model.return_value = "OUR_GREAT_MODEL_ID"
         self.mock_settings.pieces_client.model_name = "MY_MODEL_NAME"
@@ -112,8 +116,8 @@ class TestGitCommit(unittest.TestCase):
 
     # Test 1 : git_commit_basic
     def test_git_commit_basic(self):
-        git_commit(issue_flag=False, push=False)
         sys.stdout.write(f"{self.mock_settings.call_args_list}")
+        git_commit(issue_flag=False, push=False)
         self.mock_subprocess.assert_called_with(
             ["git", "commit", "-m", ANY], check=True
         )

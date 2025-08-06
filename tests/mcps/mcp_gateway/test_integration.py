@@ -16,6 +16,32 @@ from .utils import (
 from pieces.mcp.gateway import MCPGateway, PosMcpConnection
 from pieces.settings import Settings
 
+# Constants
+TEST_SERVER_NAME = "pieces-test-mcp"
+
+
+def get_upstream_url():
+    """Get the upstream URL, handling potential errors."""
+    try:
+        Settings.startup()
+        return get_mcp_latest_url()
+    except Exception:
+        # We are mocking the settings so this will raise an exception most of the time we can hardcode the url instead
+        return "http://localhost:39300/model_context_protocol/2024-11-05/sse"
+
+
+@pytest.fixture(scope="module")
+def ensure_pieces_setup():
+    """
+    Fixture to ensure Pieces OS is installed and accessible for testing.
+    Returns True if Pieces OS is running, False otherwise.
+    """
+    try:
+        Settings.pieces_client.is_pieces_running(3)
+        return True
+    except (requests.RequestException, ConnectionError, SystemExit):
+        return False
+
 
 @pytest.mark.asyncio
 async def test_gateway_initialization():

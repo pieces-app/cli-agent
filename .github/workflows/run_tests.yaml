@@ -1,0 +1,130 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2025]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: pip install poetry -U
+
+      - name: Install dependencies
+        run: poetry install
+
+      # Linux shell dependencies
+      - name: Install shell dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fish zsh
+
+      # macOS shell dependencies
+      - name: Install shell dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install fish zsh
+
+      - name: Show environment info
+        run: |
+          poetry --version
+          python --version
+          poetry show
+          env
+
+      # Install PiecesOS based on platform
+      - name: Install PiecesOS (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install snapd
+          sudo snap install pieces-os
+
+      - name: Install PiecesOS (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install --cask pieces-os
+
+      - name: Install PiecesOS (Windows)
+        if: matrix.os == 'windows-2025'
+        run: |
+          winget install "Pieces OS" --silent --accept-package-agreements --accept-source-agreements
+
+      - name: Fix Windows permissions for config directory
+        if: matrix.os == 'windows-2025'
+        run: |
+          # Create and set permissions on config directory before any Python code runs
+          $configDir = "$env:LOCALAPPDATA\pieces\pieces-cli"
+          $parentDir = "$env:LOCALAPPDATA\pieces"
+          
+          Write-Host "Creating parent directory: $parentDir"
+          New-Item -ItemType Directory -Force -Path $parentDir
+          Write-Host "Creating config directory: $configDir"
+          New-Item -ItemType Directory -Force -Path $configDir
+          
+          Write-Host "Setting permissions on parent directory..."
+          icacls $parentDir /grant "${env:USERNAME}:(OI)(CI)(F)" /T
+          if ($LASTEXITCODE -ne 0) { Write-Error "Failed to set parent permissions"; exit 1 }
+          
+          Write-Host "Setting permissions on config directory..."
+          icacls $configDir /grant "${env:USERNAME}:(OI)(CI)(F)" /T
+          if ($LASTEXITCODE -ne 0) { Write-Error "Failed to set config permissions"; exit 1 }
+          
+          # Test permissions by creating and deleting a test file
+          Write-Host "Testing permissions..."
+          $testFile = Join-Path $configDir "permission_test.json"
+          try {
+            '{"test": true}' | Out-File -FilePath $testFile -Encoding utf8
+            Remove-Item $testFile -Force
+            Write-Host "Permission test successful"
+          } catch {
+            Write-Error "Permission test failed: $_"
+            # Show current permissions for debugging
+            icacls $configDir
+            exit 1
+          }
+        shell: powershell
+
+      - name: Ignore Onboarding for the tests to work
+        run: |
+          poetry run python -c "from pieces.settings import Settings; Settings.user_config.skip_onboarding = True"
+
+      - name: Open PiecesOS
+        run: |
+          poetry run pieces open
+
+      - name: Run tests
+        run: |
+          poetry run pytest tests/ --maxfail=1 --exitfirst -v
+
+      - name: Collect log directory
+        if: always()
+        run: |
+          LOG_DIR=$(poetry run python -c "import os;from pieces.logger import Logger; from pieces.config.constants import PIECES_DATA_DIR; print(os.path.join(PIECES_DATA_DIR, 'logs'))")
+          echo "Log directory: $LOG_DIR"
+          mkdir -p artifacts/logs
+          cp -r "$LOG_DIR"/* artifacts/logs || echo "No logs found"
+        shell: bash
+
+      - name: Upload logs as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pieces-cli-logs-${{ matrix.os }}
+          path: artifacts/logs
