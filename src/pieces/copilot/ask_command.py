@@ -112,8 +112,7 @@ class AskStream:
                 context.assets.append(asset)
 
     def on_error(self, ws, error):
-        print(error.__repr__)
-        print(f"WebSocket error: {error}")
+        Settings.logger.error(f"WebSocket error: {error}")
 
     def ask(self, query, **kwargs):
         Settings.pieces_client.copilot.ask_stream_ws.on_message_callback = (  # pyright: ignore[reportAttributeAccessIssue]
