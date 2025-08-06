@@ -614,6 +614,7 @@ files = [
     {file = "linkify-it-py-2.0.3.tar.gz", hash = "sha256:68cda27e162e9215c17d786649d1da0021a451bdc436ef9e0fa0ba5234b9b048"},
     {file = "linkify_it_py-2.0.3-py3-none-any.whl", hash = "sha256:6bcbc417b0ac14323382aef5c5192c0075bf8a9d6b41820a2b66371eac6b6d79"},
 ]
+markers = {main = "extra == \"tui\""}
 
 [package.dependencies]
 uc-micro-py = "*"
@@ -777,6 +778,7 @@ files = [
     {file = "mdit_py_plugins-0.4.2-py3-none-any.whl", hash = "sha256:0c673c3f889399a33b95e88d2f0d111b4447bdfea7f237dab2d488f459835636"},
     {file = "mdit_py_plugins-0.4.2.tar.gz", hash = "sha256:5f2cd1fdb606ddf152d37ec30e46101a60512bc0e5fa1a7002c36647b09e26b5"},
 ]
+markers = {main = "extra == \"tui\""}
 
 [package.dependencies]
 markdown-it-py = ">=1.0.0,<4.0.0"
@@ -1696,6 +1698,7 @@ files = [
     {file = "textual-0.89.1-py3-none-any.whl", hash = "sha256:0a5d214df6e951b4a2c421e13d0b608482882471c1e34ea74a3631adede8054f"},
     {file = "textual-0.89.1.tar.gz", hash = "sha256:66befe80e2bca5a8c876cd8ceeaf01752267b6b1dc1d0f73071f1f1e15d90cc8"},
 ]
+markers = {main = "extra == \"tui\""}
 
 [package.dependencies]
 markdown-it-py = {version = ">=2.1.0", extras = ["linkify", "plugins"]}
@@ -1783,6 +1786,7 @@ files = [
     {file = "uc-micro-py-1.0.3.tar.gz", hash = "sha256:d321b92cff673ec58027c04015fcaa8bb1e005478643ff4a500882eaab88c48a"},
     {file = "uc_micro_py-1.0.3-py3-none-any.whl", hash = "sha256:db1dffff340817673d7b466ec86114a9dc0e9d4d9b5ba229d9d60e5c12600cd5"},
 ]
+markers = {main = "extra == \"tui\""}
 
 [package.extras]
 test = ["coverage", "pytest", "pytest-cov"]
@@ -1973,7 +1977,10 @@ idna = ">=2.0"
 multidict = ">=4.0"
 propcache = ">=0.2.1"
 
+[extras]
+tui = ["textual"]
+
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "b1a74b325e141bc4e8d637a50ac222ca4f3ecfad832af31c2cf90b0e54f3ae68"
+content-hash = "6a246d9fe2d5e0eb585444e43150850df0044d656e714a024e0e558a8828500b"

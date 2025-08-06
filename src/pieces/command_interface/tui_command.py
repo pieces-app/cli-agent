@@ -1,6 +1,8 @@
 """TUI command class for proper command registration."""
 
 import argparse
+import subprocess
+import sys
 from pieces.base_command import BaseCommand
 from pieces.settings import Settings
 
@@ -24,44 +26,84 @@ class TUICommand(BaseCommand):
 
     def get_description(self) -> str:
         """Return a detailed description for the command."""
-        return """
+        import textwrap
+
+        return textwrap.dedent("""
         Launch the Pieces CLI in TUI mode with a graphical interface.
         The TUI includes a main chat area, copilot panel on the right,
         and text input at the bottom for interactive conversations.
-        """
+        """)
 
     def get_examples(self) -> list[str]:
         """Return a list of usage examples."""
-        return [
-            "pieces tui                    # Launch the TUI interface",
-            "pieces ui                     # Same as above (alias)",
-            "pieces tui --help             # Show TUI help",
-        ]
+        return ["pieces tui", "pieces tui install", "pieces ui"]
 
     def add_arguments(self, parser: argparse.ArgumentParser):
         """Add command-specific arguments to the parser."""
-        pass
+        parser.add_argument(
+            "install",
+            nargs="?",
+            const="install",
+            help="Install the TUI dependencies if not already installed",
+        )
+
+    def install_tui(self) -> int:
+        import importlib.util
+
+        if importlib.util.find_spec("textual"):
+            Settings.logger.print("TUI dependencies already installed.")
+            return 0
+
+        if self._is_frozen():
+            Settings.logger.print(
+                "[bold red]✗ Cannot install TUI dependencies in standalone executable[/bold red]\n"
+            )
+            return 1
+
+        Settings.logger.print("Installing TUI dependencies...")
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "pieces-cli[tui]",
+            ],
+            capture_output=True,
+        )
+        Settings.logger.print(
+            "[green]TUI dependencies installed successfully![/green]"
+            if result.returncode == 0
+            else "[red]Failed to install TUI dependencies.[/red]"
+        )
+        if result.stderr:
+            Settings.logger.error(
+                f"stdout: {result.stdout.decode().strip()}\nstderr: {result.stderr.decode().strip()}"
+            )
+        return result.returncode
+
+    def _is_frozen(self) -> bool:
+        """Check if running from PyInstaller bundle."""
+        return getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
 
     def execute(self, **kwargs) -> int:
         """Execute the TUI command."""
+        if kwargs.get("install") == "install":
+            return self.install_tui()
 
         try:
-            # Import here to avoid loading textual unless needed
             from pieces.tui.app import run_tui
 
             run_tui()
 
-        except ImportError as e:
-            print(
-                "Error: Textual library not found. Please install with: pip install textual"
+        except ImportError:
+            Settings.logger.print(
+                "[bold yellow]⚠️ Pieces TUI is in beta[/bold yellow] and requires you to install: "
+                "[bold green]pieces tui install[/bold green]"
             )
-            print(f"Import error: {e}")
             return 1
-
         except KeyboardInterrupt:
-            print("\nTUI application closed by user.")
             return 0
-
         except Exception as e:
             Settings.logger.error(f"TUI error: {e}")
             Settings.show_error(
