@@ -196,4 +196,3 @@ async def test_full_gateway_workflow(ensure_pieces_setup):
     finally:
         # Clean up
         await gateway.upstream.cleanup()
-

@@ -272,9 +272,8 @@ class TestMCPGatewayValidationCore:
         # Mock pieces_client.is_pieces_running() to return True
         mock_settings.pieces_client.is_pieces_running.return_value = True
 
-        # Mock health_ws and its start method
         mock_health_ws_instance = Mock()
-        mock_settings.pieces_client.health_ws = mock_health_ws_instance
+        mock_health_ws.get_instance.return_value = mock_health_ws_instance
 
         # Mock the workstream API call
         mock_settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status.return_value = Mock()
@@ -353,4 +352,3 @@ class TestMCPGatewayValidationCore:
 
         assert result is True
         assert mock_connection.upstream_url == "http://existing-url"
-

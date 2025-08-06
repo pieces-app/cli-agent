@@ -244,4 +244,3 @@ __all__ = [
     "UpdateEnum",
     "types",
 ]
-
