@@ -115,7 +115,7 @@ def capture(application):
     application.exit(result=s if s.dimensions else None)
 
 
-def check_ltm(docs=None) -> bool:
+def check_ltm(docs=None, auto_enable=False) -> bool:
     # Update the local cache
     Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
     if Settings.pieces_client.copilot.context.ltm.is_enabled:
@@ -124,7 +124,7 @@ def check_ltm(docs=None) -> bool:
     if Settings.headless_mode:
         raise HeadlessLTMNotEnabledError()
 
-    if not Settings.logger.confirm(
+    if not auto_enable and not Settings.logger.confirm(
         "Pieces LTM must be running, do you want to enable it?",
     ):
         return False
@@ -277,8 +277,8 @@ def _open_ltm():
         Settings.show_error(f"Error in enabling the LTM: {e}")
 
 
-def enable_ltm():
-    if check_ltm():
+def enable_ltm(auto_enable: bool = False) -> bool:
+    if check_ltm(None, auto_enable):
         # window = add_qrcodes()  # TODO: Clean at exist
         # if not window:
         #     Settings.show_error(

@@ -1,4 +1,4 @@
-from typing import Callable, Optional,TYPE_CHECKING, List
+from typing import Callable, Optional,TYPE_CHECKING, List, Self
 import websocket
 import threading
 from abc import ABC, abstractmethod
@@ -149,7 +149,7 @@ class BaseWebsocket(ABC):
 		return False
 
 	@classmethod
-	def get_instance(cls) -> Optional[type]:
+	def get_instance(cls) -> Optional[Self]:
 		"""
 		Get the singleton instance of the class.
 

@@ -24,7 +24,7 @@ prompt-toolkit = "^3.0.43"
 rich = "^13.7.1"
 platformdirs = "^4.2.0"
 pyyaml = "^6.0.2"
-mcp = "1.8.0"
+mcp = "1.11.0"
 
 ## POS dependencies
 urllib3 = ">= 1.25.3"
