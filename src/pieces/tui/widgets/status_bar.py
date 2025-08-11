@@ -2,40 +2,66 @@
 
 from typing import Optional, TYPE_CHECKING
 from textual.reactive import reactive
+from textual.app import ComposeResult
 from textual.widgets import Footer
+from textual.widget import Widget
 
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.models.model import Model
 
 
+class StatusText(Widget):
+    """Widget to display status text in the footer."""
+
+    def __init__(self, text: str = "", **kwargs):
+        super().__init__(**kwargs)
+        self._text = text
+
+    def render(self) -> str:
+        return self._text
+
+    def update_text(self, text: str) -> None:
+        """Update the status text."""
+        self._text = text
+        self.refresh()
+
+
 class StatusBar(Footer):
     """Status bar showing model info and keybindings."""
+
+    DEFAULT_CSS = """
+    StatusBar {
+        StatusText {
+            width: auto;
+            height: 1;
+            padding: 0 2;
+            color: $footer-description-foreground;
+            background: $footer-description-background;
+            border-right: vkey $foreground 20%;
+        }
+    }
+    """
 
     current_model: reactive[str] = reactive("Unknown")
     temp_message: reactive[str] = reactive("")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._status_widget: Optional[StatusText] = None
 
-    def on_mount(self) -> None:
-        """Called when the widget is mounted."""
-        super().on_mount()
-        self.refresh()
+    def compose(self) -> ComposeResult:
+        """Compose the footer with status text and key bindings."""
+        if not self._bindings_ready:
+            return
 
-    def render(self):
-        """Render the footer with keybindings and model info."""
-        # Get the original Footer rendering (keybindings)
-        footer = super().render()
+        yield from super().compose()
 
-        # Add our status text after the keybindings
-        status_text = self._build_status_text()
+        self._status_widget = StatusText(
+            self._build_status_text(), classes="status-text"
+        )
+        yield self._status_widget
 
-        if footer:
-            # TODO: This thing is poorly implemented
-            # I could not find a way to add text to the footer
-            return f"{footer}||||||||||||||||{status_text}"
-        else:
-            return status_text
+        self.styles.grid_size_columns += 1
 
     def _build_status_text(self) -> str:
         """Build the status text string."""
@@ -52,6 +78,16 @@ class StatusBar(Footer):
             status_parts.append(self.temp_message)
 
         return " • ".join(status_parts)
+
+    def watch_current_model(self, current_model: str) -> None:
+        """Update display when model changes."""
+        if self._status_widget:
+            self._status_widget.update_text(self._build_status_text())
+
+    def watch_temp_message(self, temp_message: str) -> None:
+        """Update display when temp message changes."""
+        if self._status_widget:
+            self._status_widget.update_text(self._build_status_text())
 
     def update_model_info(self, model: Optional["Model"] = None):
         """Update the current model information."""
