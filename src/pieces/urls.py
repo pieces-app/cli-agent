@@ -78,6 +78,7 @@ class URLs(Enum):
     CLI_OPEN_DOCS = "https://docs.pieces.app/products/cli/commands#open"
     CLI_HELP_DOCS = "https://docs.pieces.app/products/cli/troubleshooting"
     CLI_COMPLETION_DOCS = ""
+    CLI_RESTART_DOCS = ""
 
     def open(self):
         self.open_website(self.value)

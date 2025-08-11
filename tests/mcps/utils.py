@@ -235,4 +235,3 @@ class MCPTestBase(TestCase):
     def get_mcp_properties(self) -> MCPProperties:
         """Return a default :class:`MCPProperties` instance."""
         return default_mcp_properties()
-

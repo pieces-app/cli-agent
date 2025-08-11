@@ -69,7 +69,9 @@ class TestMCPHandler(MCPTestBase):
             "mcp": {"servers": {"Pieces": {"url": "pieces_url", "type": "sse"}}}
         }
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
-            with patch.object(self.integration, "search", return_value=(True, {"type": "sse"})):
+            with patch.object(
+                self.integration, "search", return_value=(True, {"type": "sse"})
+            ):
                 status = self.integration.is_set_up()
                 self.assertTrue(status)
 
