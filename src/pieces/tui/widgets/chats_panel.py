@@ -11,7 +11,7 @@ from textual.binding import Binding
 from pieces.settings import Settings
 from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 from .chat_item import ChatItem
-from .dialogs import ConfirmDeleteDialog, EditNameDialog
+from .dialogs import ConfirmDialog, EditNameDialog
 from ..messages import ChatMessages
 
 
@@ -525,7 +525,9 @@ class ChatListPanel(ScrollableContainer):
 
     async def _delete_chat_worker(self, chat: BasicChat, title: str):
         """Delete chat after user confirmation."""
-        dialog = ConfirmDeleteDialog(title)
+        dialog = ConfirmDialog(
+            title="⚠️ Delete Chat", message=f"Are you sure you want to delete '{title}'?"
+        )
         confirmed = await self.app.push_screen_wait(dialog)
 
         if confirmed:  # User confirmed deletion

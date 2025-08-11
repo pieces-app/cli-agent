@@ -11,15 +11,15 @@ if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.models.model import Model
 
 
-class ConfirmDeleteDialog(ModalScreen):
-    """A confirmation dialog for deleting chats."""
+class ConfirmDialog(ModalScreen):
+    """A generic confirmation dialog with yes/no options."""
 
     DEFAULT_CSS = """
-    ConfirmDeleteDialog {
+    ConfirmDialog {
         align: center middle;
     }
     
-    ConfirmDeleteDialog > Container {
+    ConfirmDialog > Container {
         width: 60;
         height: 12;
         border: thick $primary;
@@ -27,31 +27,31 @@ class ConfirmDeleteDialog(ModalScreen):
         padding: 1;
     }
     
-    ConfirmDeleteDialog .dialog-title {
+    ConfirmDialog .dialog-title {
         text-style: bold;
         color: $error;
         text-align: center;
         margin: 0 0 1 0;
     }
     
-    ConfirmDeleteDialog .dialog-message {
+    ConfirmDialog .dialog-message {
         text-align: center;
         margin: 0 0 2 0;
         color: $text;
     }
     
-    ConfirmDeleteDialog .dialog-buttons {
+    ConfirmDialog .dialog-buttons {
         height: 3;
         margin: 1 0 0 0;
     }
     
-    ConfirmDeleteDialog .dialog-button {
+    ConfirmDialog .dialog-button {
         width: 1fr;
         margin: 0 1;
         text-style: bold;
     }
     
-    ConfirmDeleteDialog .delete-button {
+    ConfirmDialog .confirm-button {
         background: $error;
         color: $text;
         
@@ -60,7 +60,7 @@ class ConfirmDeleteDialog(ModalScreen):
         }
     }
     
-    ConfirmDeleteDialog .cancel-button {
+    ConfirmDialog .cancel-button {
         background: $surface-lighten-1;
         color: $text;
         
@@ -71,40 +71,41 @@ class ConfirmDeleteDialog(ModalScreen):
     """
 
     BINDINGS = [
-        Binding("y", "confirm_delete", "Yes", show=False),
-        Binding("n", "cancel_delete", "No", show=False),
-        Binding("escape", "cancel_delete", "Cancel", show=False),
+        Binding("y", "confirm", "Yes", show=False),
+        Binding("n", "cancel", "No", show=False),
+        Binding("escape", "cancel", "Cancel", show=False),
     ]
 
-    def __init__(self, chat_name: str, **kwargs):
+    def __init__(self, title: str, message: str, **kwargs):
         super().__init__(**kwargs)
-        self.chat_name = chat_name
+        self.title_text = title
+        self.message_text = message
 
     def compose(self) -> ComposeResult:
         with Container():
-            yield Static("⚠️ Delete Chat", classes="dialog-title")
+            yield Static(self.title_text, classes="dialog-title")
             yield Static(
-                f"Are you sure you want to delete '{self.chat_name}'?",
+                self.message_text,
                 classes="dialog-message",
             )
             with Horizontal(classes="dialog-buttons"):
                 yield Button(
-                    "Yes (y)", id="delete-yes", classes="dialog-button delete-button"
+                    "Yes (y)", id="confirm-yes", classes="dialog-button confirm-button"
                 )
                 yield Button(
-                    "No (n)", id="delete-no", classes="dialog-button cancel-button"
+                    "No (n)", id="confirm-no", classes="dialog-button cancel-button"
                 )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "delete-yes":
-            self.action_confirm_delete()
+        if event.button.id == "confirm-yes":
+            self.action_confirm()
         else:
-            self.action_cancel_delete()
+            self.action_cancel()
 
-    def action_confirm_delete(self) -> None:
+    def action_confirm(self) -> None:
         self.dismiss(True)
 
-    def action_cancel_delete(self) -> None:
+    def action_cancel(self) -> None:
         self.dismiss(False)
 
 

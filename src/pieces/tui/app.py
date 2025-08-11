@@ -10,7 +10,8 @@ from textual.css.query import NoMatches
 
 from pieces.settings import Settings
 from .widgets import ChatViewPanel, ChatInput, ChatListPanel, StatusBar
-from .widgets.dialogs import ModelSelectionDialog
+from .widgets.dialogs import ModelSelectionDialog, ConfirmDialog
+
 from .controllers import EventHub
 from .messages import (
     ChatMessages,
@@ -109,6 +110,7 @@ class PiecesTUI(App):
         Binding("ctrl+r", "refresh", "Refresh"),
         Binding("ctrl+s", "toggle_sidebar", "Toggle Sidebar"),
         Binding("ctrl+x", "change_model", "Change Model"),
+        Binding("ctrl+l", "toggle_ltm", "Toggle LTM"),
     ]
 
     def __init__(self, **kwargs):
@@ -166,6 +168,11 @@ class PiecesTUI(App):
         # Model info
         current_model = self.event_hub.get_current_model()
         self._update_status_model(current_model)
+
+        # Initialize LTM status - show chat LTM status in status bar
+        if self.status_bar and self.event_hub:
+            chat_ltm_enabled = self.event_hub.chat.is_chat_ltm_enabled()
+            self.status_bar.update_ltm_status(chat_ltm_enabled)
 
         # Load chats
         self._load_chats()
@@ -457,6 +464,105 @@ class PiecesTUI(App):
             Settings.logger.error(f"Error in model selection: {e}")
             self._show_status_message("❌ Error changing model")
 
+    def action_toggle_ltm(self):
+        """Toggle LTM (Long Term Memory) for the current chat."""
+        if not self.event_hub:
+            self._show_status_message("Unexpected error: Event hub not available")
+            return
+
+        try:
+            # Check if chat LTM is currently enabled
+            is_chat_ltm_enabled = self.event_hub.chat.is_chat_ltm_enabled()
+
+            if is_chat_ltm_enabled:
+                # Chat LTM is enabled - disable it
+                self.event_hub.chat.deactivate_ltm()
+                self._show_status_message("🧠 Chat LTM disabled")
+                if self.status_bar:
+                    self.status_bar.update_ltm_status(False)
+            else:
+                # Chat LTM is not enabled - check if system LTM is enabled first
+                is_system_ltm_running = self.event_hub.chat.is_ltm_running()
+
+                if is_system_ltm_running:
+                    # System LTM is running - enable chat LTM directly
+                    self.event_hub.chat.activate_ltm()
+                    self._show_status_message("🧠 Chat LTM enabled")
+                    if self.status_bar:
+                        self.status_bar.update_ltm_status(True)
+                else:
+                    # System LTM is not running - show confirmation dialog first
+                    self._show_ltm_setup_confirmation()
+
+        except Exception as e:
+            Settings.logger.error(f"Error in LTM toggle: {e}")
+            self._show_status_message("❌ Error checking LTM status")
+
+    def _show_ltm_setup_confirmation(self):
+        """Show confirmation dialog for LTM setup."""
+        dialog = ConfirmDialog(
+            title="🧠 Long Term Memory Setup Required",
+            message="To use LTM for this chat, you need to enable Pieces LTM first."
+            "Would you like to open the LTM?",
+        )
+        self.push_screen(dialog, callback=self._handle_ltm_setup_confirmation)
+
+    def _handle_ltm_setup_confirmation(self, confirmed):
+        """Handle LTM setup confirmation result."""
+        if confirmed:
+            self._show_ltm_enable_dialog()
+        else:
+            self._show_status_message("❌ LTM setup cancelled")
+
+    def _show_ltm_enable_dialog(self):
+        """Show LTM enable dialog with TUI progress display."""
+        import threading
+        from pieces.copilot.ltm import check_ltm
+        from pieces.tui.widgets.ltm_progress_dialog import LTMProgressDialog
+
+        # Create progress dialog
+        dialog = LTMProgressDialog()
+        self.push_screen(dialog, callback=self._handle_ltm_enable_result)
+
+        def run_ltm_enable():
+            try:
+                # Small delay to ensure dialog is mounted
+                import time
+
+                time.sleep(0.1)
+
+                # Use direct dialog approach - no adapter needed!
+                check_ltm(auto_enable=True, tui_dialog=dialog)
+
+            except Exception as e:
+                import traceback
+
+                error_msg = f"❌ Error: {str(e)}\n{traceback.format_exc()}"
+                dialog.set_complete(False, error_msg)
+
+        # Start the process in a background thread
+        thread = threading.Thread(target=run_ltm_enable, daemon=True)
+        thread.start()
+
+    def _handle_ltm_enable_result(self, success: bool | None) -> None:
+        """Handle the result of LTM enable dialog."""
+        if not self.event_hub:
+            return
+        if success:
+            # System LTM is now enabled - enable chat LTM
+            try:
+                self.event_hub.chat.activate_ltm()
+                self._show_status_message("🧠 LTM setup complete! Chat LTM enabled")
+                # Update UI to reflect LTM status
+                if self.status_bar:
+                    self.status_bar.update_ltm_status(True)
+            except Exception as e:
+                Settings.logger.error(f"Failed to enable chat LTM after setup: {e}")
+                self._show_status_message("❌ Failed to enable chat LTM")
+        elif success is False:
+            self._show_status_message("❌ LTM setup cancelled")
+        # If success is None, user closed dialog without completing setup
+
     def _handle_model_selection(self, selected_model: str | None) -> None:
         """Handle the result of model selection dialog."""
         if not selected_model:
@@ -486,7 +592,8 @@ class PiecesTUI(App):
 Type your message below to start chatting, or use these shortcuts:
 
 • Ctrl+N - New conversation  • Ctrl+S - Toggle sidebar
-• Ctrl+R - Refresh           • Ctrl+M - Change model
+• Ctrl+R - Refresh           • Ctrl+X - Change model
+• Ctrl+L - Toggle LTM        
 
 Ready to assist with code, questions, and more!"""
 

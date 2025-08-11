@@ -6,7 +6,8 @@ from .chat_input import ChatInput
 from .chat_message import ChatMessage
 from .chat_item import ChatItem
 from .status_bar import StatusBar
-from .dialogs import ConfirmDeleteDialog, EditNameDialog
+from .dialogs import ConfirmDialog, EditNameDialog
+from .ltm_progress_dialog import LTMProgressDialog
 
 __all__ = [
     "ChatViewPanel",
@@ -15,6 +16,7 @@ __all__ = [
     "ChatMessage",
     "ChatItem",
     "StatusBar",
-    "ConfirmDeleteDialog",
+    "ConfirmDialog",
     "EditNameDialog",
+    "LTMProgressDialog",
 ]

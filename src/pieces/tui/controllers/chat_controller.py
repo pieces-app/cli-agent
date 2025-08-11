@@ -2,6 +2,7 @@
 
 from typing import Optional, TYPE_CHECKING
 from pieces.settings import Settings
+from pieces.copilot.ltm import update_ltm_cache
 from .base_controller import BaseController, EventType
 
 from pieces._vendor.pieces_os_client.wrapper.websockets.conversations_ws import (
@@ -72,3 +73,16 @@ class ChatController(BaseController):
     def create_new_chat(self):
         """Create a new chat and notify listeners."""
         self.switch_chat(None)
+
+    def is_ltm_running(self) -> bool:
+        update_ltm_cache()
+        return Settings.pieces_client.copilot.context.ltm.is_enabled
+
+    def activate_ltm(self):
+        Settings.pieces_client.copilot.context.ltm.chat_enable_ltm()
+
+    def deactivate_ltm(self):
+        Settings.pieces_client.copilot.context.ltm.chat_disable_ltm()
+
+    def is_chat_ltm_enabled(self) -> bool:
+        return Settings.pieces_client.copilot.context.ltm.is_chat_ltm_enabled
