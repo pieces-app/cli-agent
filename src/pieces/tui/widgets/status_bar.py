@@ -22,10 +22,6 @@ class StatusBar(Footer):
         super().on_mount()
         self.refresh()
 
-    def watch_current_model(self, old_model: str, new_model: str) -> None:
-        """React to model changes."""
-        self.refresh()
-
     def render(self):
         """Render the footer with keybindings and model info."""
         # Get the original Footer rendering (keybindings)
@@ -35,7 +31,9 @@ class StatusBar(Footer):
         status_text = self._build_status_text()
 
         if footer:
-            return f"{footer} • {status_text}"
+            # TODO: This thing is poorly implemented
+            # I could not find a way to add text to the footer
+            return f"{footer}||||||||||||||||{status_text}"
         else:
             return status_text
 
@@ -51,7 +49,7 @@ class StatusBar(Footer):
         status_parts = [f"🤖 {model_name}"]
 
         if self.temp_message:
-            status_parts.append(f"ℹ️ {self.temp_message}")
+            status_parts.append(self.temp_message)
 
         return " • ".join(status_parts)
 

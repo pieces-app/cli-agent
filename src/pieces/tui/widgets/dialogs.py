@@ -1,10 +1,14 @@
 """Dialog widgets for the TUI application."""
 
+from typing import List, Optional, TYPE_CHECKING
 from textual.app import ComposeResult
-from textual.widgets import Static, Button, Input
+from textual.widgets import Static, Button, Input, ListView, ListItem, Label
 from textual.containers import Container, Horizontal
 from textual.binding import Binding
 from textual.screen import ModalScreen
+
+if TYPE_CHECKING:
+    from pieces._vendor.pieces_os_client.models.model import Model
 
 
 class ConfirmDeleteDialog(ModalScreen):
@@ -219,3 +223,116 @@ class EditNameDialog(ModalScreen):
 
     def action_cancel_edit(self) -> None:
         self.dismiss(None)
+
+
+class ModelSelectionDialog(ModalScreen):
+    """A dialog for selecting AI models."""
+
+    DEFAULT_CSS = """
+    ModelSelectionDialog {
+        align: center middle;
+    }
+
+    ModelSelectionDialog > Container {
+        width: 70;
+        height: 20;
+        border: thick $primary;
+        background: $surface;
+        padding: 1;
+    }
+
+    ModelSelectionDialog .dialog-title {
+        text-style: bold;
+        color: $primary;
+        text-align: center;
+        margin: 0 0 1 0;
+    }
+
+    ModelSelectionDialog .current-model {
+        text-align: center;
+        margin: 0 0 1 0;
+        color: $success;
+        text-style: italic;
+    }
+
+    ModelSelectionDialog .model-list {
+        height: 12;
+        border: solid $primary;
+        background: $surface-lighten-1;
+        margin: 0 0 1 0;
+    }
+
+
+    """
+
+    BINDINGS = [
+        *[
+            Binding(binding, "cancel_selection", "Cancel", show=False)
+            for binding in ["escape", "ctrl+c"]
+        ],
+        *[Binding(binding, "cursor_up", "up", show=False) for binding in ["up", "k"]],
+        *[
+            Binding(binding, "cursor_down", "down", show=False)
+            for binding in ["down", "j"]
+        ],
+    ]
+
+    def __init__(
+        self, models: List["Model"], current_model: Optional[str] = None, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.models = models
+        self.current_model = current_model
+        self.selected_model: Optional[str] = None
+
+    def compose(self) -> ComposeResult:
+        with Container():
+            yield Static("🤖 Select Model", classes="dialog-title")
+            if self.current_model:
+                yield Static(f"Current: {self.current_model}", classes="current-model")
+
+            # Create list view with models
+            model_list = ListView(classes="model-list", id="model-list")
+            yield model_list
+
+    def on_mount(self) -> None:
+        """Initialize the model list when mounted."""
+        model_list = self.query_one("#model-list", ListView)
+
+        # Add models to the list
+        for i, model in enumerate(self.models):
+            if hasattr(model, "name"):
+                model_name = model.name.replace("Chat Model", "")
+                if self.current_model and model_name == self.current_model:
+                    label = Label(f"✓ {model_name} (current)")
+                else:
+                    label = Label(model_name)
+                list_item = ListItem(label, id=f"model-{i}")
+                model_list.append(list_item)
+
+        model_list.focus()
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        """Handle model selection from list"""
+        if event.item and event.item.id and event.item.id.startswith("model-"):
+            try:
+                index = int(event.item.id.split("-")[1])
+                if 0 <= index < len(self.models):
+                    selected_model = self.models[index].name
+                    self.dismiss(selected_model)
+            except (ValueError, IndexError):
+                pass
+
+    def action_cancel_selection(self) -> None:
+        """Cancel model selection."""
+        self.dismiss(None)
+
+    def action_cursor_up(self) -> None:
+        """Move cursor up in the list."""
+        model_list = self.query_one("#model-list", ListView)
+        model_list.action_cursor_up()
+
+    def action_cursor_down(self) -> None:
+        """Move cursor down in the list."""
+        model_list = self.query_one("#model-list", ListView)
+        model_list.action_cursor_down()

@@ -4,10 +4,10 @@ from typing import Optional, List, TYPE_CHECKING
 import threading
 from pieces.settings import Settings
 from .base_controller import BaseController, EventType
+from pieces.config.schemas.model import ModelInfo
 
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.models.model import Model
-    from pieces.config.schemas.model import ModelInfo
 
 
 class ModelController(BaseController):
@@ -85,4 +85,8 @@ class ModelController(BaseController):
 
     def get_available_models(self) -> List["Model"]:
         """Get list of available models."""
-        return Settings.pieces_client.models_object
+        return [
+            model
+            for model in Settings.pieces_client.models_object
+            if model.cloud or model.downloaded
+        ]

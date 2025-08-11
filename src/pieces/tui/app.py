@@ -10,6 +10,7 @@ from textual.css.query import NoMatches
 
 from pieces.settings import Settings
 from .widgets import ChatViewPanel, ChatInput, ChatListPanel, StatusBar
+from .widgets.dialogs import ModelSelectionDialog
 from .controllers import EventHub
 from .messages import (
     ChatMessages,
@@ -107,6 +108,7 @@ class PiecesTUI(App):
         Binding("ctrl+n", "new_chat", "New Chat"),
         Binding("ctrl+r", "refresh", "Refresh"),
         Binding("ctrl+s", "toggle_sidebar", "Toggle Sidebar"),
+        Binding("ctrl+x", "change_model", "Change Model"),
     ]
 
     def __init__(self, **kwargs):
@@ -431,6 +433,52 @@ class PiecesTUI(App):
 
             self._show_status_message(f"📁 Sidebar {status}")
 
+    def action_change_model(self):
+        """Show model selection dialog and change the model."""
+        if not self.event_hub:
+            self._show_status_message("Unexpected error: Event hub not available")
+            return
+
+        try:
+            # Get available models from the model controller
+            models = self.event_hub.model.get_available_models()
+            current_model = self.event_hub.get_current_model()
+            current_model_name = current_model.name if current_model else None
+
+            if not models:
+                self._show_status_message("❌ No models available")
+                return
+
+            # Show model selection dialog
+            dialog = ModelSelectionDialog(models, current_model_name)
+            self.push_screen(dialog, callback=self._handle_model_selection)
+
+        except Exception as e:
+            Settings.logger.error(f"Error in model selection: {e}")
+            self._show_status_message("❌ Error changing model")
+
+    def _handle_model_selection(self, selected_model: str | None) -> None:
+        """Handle the result of model selection dialog."""
+        if not selected_model:
+            return  # User cancelled
+
+        current_model = self.event_hub.get_current_model() if self.event_hub else None
+        current_model_name = current_model.name if current_model else None
+
+        if selected_model == current_model_name:
+            self._show_status_message(f"🤖 Already using {selected_model}")
+            return
+
+        if self.event_hub:
+            # Change the model using the model controller
+            success = self.event_hub.model.change_model(selected_model)
+            if success:
+                Settings.logger.info(f"Successfully changed model to: {selected_model}")
+            else:
+                self._show_status_message("❌ Failed to change model")
+        else:
+            self._show_status_message("Something went wrong, please try again")
+
     async def _show_welcome_message(self):
         """Show a welcoming help message as static centered text."""
         welcome_text = """🎯 Pieces TUI
@@ -438,7 +486,7 @@ class PiecesTUI(App):
 Type your message below to start chatting, or use these shortcuts:
 
 • Ctrl+N - New conversation  • Ctrl+S - Toggle sidebar
-• Ctrl+R - Refresh
+• Ctrl+R - Refresh           • Ctrl+M - Change model
 
 Ready to assist with code, questions, and more!"""
 
