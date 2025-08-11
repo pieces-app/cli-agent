@@ -44,6 +44,7 @@ class StatusBar(Footer):
 
     current_model: reactive[str] = reactive("Unknown")
     temp_message: reactive[str] = reactive("")
+    ltm_enabled: reactive[bool] = reactive(False)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -69,10 +70,15 @@ class StatusBar(Footer):
             self.current_model if self.current_model != "Unknown" else "No model"
         )
         model_name = model_name.replace("Chat Model", "")
-        if model_name and len(model_name) > 20:
-            model_name = model_name[:17] + "..."
+        status_parts = []
+        if model_name:
+            if len(model_name) > 20:
+                model_name = model_name[:17] + "..."
+            status_parts.append(f"🤖 {model_name}")
 
-        status_parts = [f"🤖 {model_name}"]
+        # Add LTM status - only show when enabled
+        if self.ltm_enabled:
+            status_parts.append("🧠 LTM enabled")
 
         if self.temp_message:
             status_parts.append(self.temp_message)
@@ -86,6 +92,11 @@ class StatusBar(Footer):
 
     def watch_temp_message(self, temp_message: str) -> None:
         """Update display when temp message changes."""
+        if self._status_widget:
+            self._status_widget.update_text(self._build_status_text())
+
+    def watch_ltm_enabled(self, ltm_enabled: bool) -> None:
+        """Update display when LTM status changes."""
         if self._status_widget:
             self._status_widget.update_text(self._build_status_text())
 
@@ -104,3 +115,7 @@ class StatusBar(Footer):
             duration,
             lambda: setattr(self, "temp_message", ""),
         )
+
+    def update_ltm_status(self, enabled: bool):
+        """Update the LTM status indicator."""
+        self.ltm_enabled = enabled
