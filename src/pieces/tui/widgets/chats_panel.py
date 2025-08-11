@@ -72,8 +72,14 @@ class ChatListPanel(ScrollableContainer):
     active_chat: reactive[Optional[BasicChat]] = reactive(None)
 
     BINDINGS = [
-        Binding("j", "select_next", "Next chat", show=False),
-        Binding("k", "select_previous", "Previous chat", show=False),
+        *[
+            Binding(key, "select_next", "Next chat", show=False)
+            for key in ["j", "down"]
+        ],
+        *[
+            Binding(key, "select_previous", "Previous chat", show=False)
+            for key in ["k", "up"]
+        ],
         Binding("enter", "open_selected", "Open chat", show=False),
         Binding("n", "new_chat", "New chat", show=False),
         Binding("r", "rename_chat", "Rename chat", show=False),
@@ -323,7 +329,7 @@ class ChatListPanel(ScrollableContainer):
             del self._chat_widgets[chat_id]
             if chat_id in self._chat_order:
                 self._chat_order.remove(chat_id)
-                
+
         # Update selection if the deleted chat was selected
         if self._selected_chat_id == chat_id:
             if self._chat_order:
@@ -355,7 +361,10 @@ class ChatListPanel(ScrollableContainer):
         self._update_chat_widget(chat.id, chat, title, summary)
 
     def set_active_chat(self, chat: Optional[BasicChat]):
-        """Set the active chat efficiently - only update affected widgets."""
+        """Set the active chat - only update affected widgets."""
+        if not chat or not chat.exists():
+            return
+
         if self.active_chat != chat:  # Only update if actually changing
             old_active_id = self.active_chat.id if self.active_chat else None
             new_active_id = chat.id if chat else None
@@ -405,7 +414,6 @@ class ChatListPanel(ScrollableContainer):
             event.stop()  # Prevent further propagation
 
     async def on_chat_messages_switched(self, message: ChatMessages.Switched) -> None:
-        """Handle chat selection with O(1) widget-based approach."""
         self._selected_chat_id = message.chat.id
         self._update_visual_selection()
 
@@ -524,9 +532,11 @@ class ChatListPanel(ScrollableContainer):
             try:
                 # Store chat ID before deletion since chat object becomes invalid after delete()
                 chat_id = chat.id
-                
+
                 # Delete chat via API - backend will notify us when done
                 chat.delete()
-                Settings.logger.info(f"Requested deletion of chat: {title} (ID: {chat_id})")
+                Settings.logger.info(
+                    f"Requested deletion of chat: {title} (ID: {chat_id})"
+                )
             except Exception as e:
                 Settings.logger.error(f"Error deleting chat: {e}")

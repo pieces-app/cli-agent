@@ -317,7 +317,7 @@ class PiecesTUI(App):
                     active_chat_id = self.chat_list_panel.active_chat.id
             except (AttributeError, RuntimeError):
                 pass
-            
+
             self.chat_list_panel.remove_chat(message.chat_id)
 
             # If this was the active chat, clear the view

@@ -58,14 +58,23 @@ class ChatViewPanel(ScrollableContainer):
     current_chat: Optional["BasicChat"] = None
 
     BINDINGS = [
-        Binding("j", "scroll_down", "Scroll down", show=False),
-        Binding("k", "scroll_up", "Scroll up", show=False),
+        *[
+            Binding(key, "scroll_down", "Scroll down", show=False)
+            for key in ["j", "down"]
+        ],
+        *[Binding(key, "scroll_up", "Scroll up", show=False) for key in ["k", "up"]],
         Binding("d", "scroll_down_half", "Scroll down half page", show=False),
         Binding("u", "scroll_up_half", "Scroll up half page", show=False),
-        Binding("g g", "jump_to_start", "Jump to start", show=False),
+        Binding("gg", "jump_to_start", "Jump to start", show=False),
         Binding("G", "jump_to_end", "Jump to end", show=False),
-        Binding("ctrl+f", "page_down", "Page down", show=False),
-        Binding("ctrl+b", "page_up", "Page up", show=False),
+        *[
+            Binding(key, "page_down", "Page down", show=False)
+            for key in ["ctrl+f", "page_down"]
+        ],
+        *[
+            Binding(key, "page_up", "Page up", show=False)
+            for key in ["ctrl+b", "page_up"]
+        ],
     ]
 
     def __init__(self, **kwargs):
@@ -180,11 +189,11 @@ class ChatViewPanel(ScrollableContainer):
 
         self._thinking_widget = Static("🤔 Thinking...", classes="message-thinking")
         self.mount(self._thinking_widget)
-        
+
         # Ensure we scroll to bottom after the widget is mounted
         self.call_after_refresh(self._scroll_to_thinking_indicator)
         Settings.logger.info("Thinking indicator added and mounted")
-    
+
     def _scroll_to_thinking_indicator(self):
         """Scroll to the thinking indicator."""
         if self._thinking_widget and self._thinking_widget.is_mounted:
@@ -200,17 +209,18 @@ class ChatViewPanel(ScrollableContainer):
 
         # Create a streaming ChatMessage widget for markdown support
         from datetime import datetime
+
         timestamp = datetime.now().strftime("Today %I:%M %p")
-        
+
         self._streaming_widget = ChatMessage(
             role=role,
             content=content + " ▌",  # Add cursor
             timestamp=timestamp,
-            classes="message-streaming"
+            classes="message-streaming",
         )
         self.mount(self._streaming_widget)
         self.call_after_refresh(self._scroll_to_streaming_message)
-    
+
     def _scroll_to_streaming_message(self):
         """Scroll to the streaming message."""
         if self._streaming_widget and self._streaming_widget.is_mounted:
@@ -220,15 +230,15 @@ class ChatViewPanel(ScrollableContainer):
             except (ValueError, RuntimeError):
                 # Widget may not be mounted or visible
                 pass
-    
-
 
     def update_streaming_message(self, content: str):
         """Update the streaming message content with markdown support."""
         if self._streaming_widget:
             content_with_cursor = content + " ▌"
             self._streaming_widget.content = content_with_cursor
-            self.call_after_refresh(lambda: self._update_streaming_after_refresh(content_with_cursor))
+            self.call_after_refresh(
+                lambda: self._update_streaming_after_refresh(content_with_cursor)
+            )
 
     def finalize_streaming_message(self):
         """Convert streaming message to permanent message."""
@@ -281,7 +291,7 @@ class ChatViewPanel(ScrollableContainer):
                 pass  # Widget may already be removed
             finally:
                 self._streaming_widget = None
-                
+
     def _update_streaming_after_refresh(self, content: str):
         """Update markdown and scroll after widget refresh."""
         if self._streaming_widget:
@@ -293,7 +303,7 @@ class ChatViewPanel(ScrollableContainer):
             except (ValueError, AttributeError, RuntimeError, NoMatches):
                 # Markdown widget not found or not ready, ignore
                 pass
-            
+
             # Handle scrolling
             self.scroll_end(animate=False)
             if self._streaming_widget.is_mounted:
@@ -302,15 +312,17 @@ class ChatViewPanel(ScrollableContainer):
                 except (ValueError, RuntimeError):
                     # Widget may not be mounted or visible
                     pass
-    
+
     def clear_streaming_widget(self):
         """Public method to clear streaming widget."""
         self._clear_streaming_widget()
-        
+
     def increment_message_count(self):
         """Increment the expected message count to avoid duplicates."""
         self._last_message_count += 1
-        Settings.logger.debug(f"Incremented message count to {self._last_message_count}")
+        Settings.logger.debug(
+            f"Incremented message count to {self._last_message_count}"
+        )
 
     def cleanup(self):
         """Clean up widget resources to prevent memory leaks."""
