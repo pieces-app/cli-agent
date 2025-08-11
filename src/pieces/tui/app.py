@@ -119,11 +119,6 @@ class PiecesTUI(App):
         self.sidebar_visible = True  # Track sidebar state
         self.main_layout: Optional[Horizontal] = None
 
-    def _update_status_connection(self, is_connected: bool):
-        """Update connection status in status bar."""
-        if self.status_bar:
-            self.status_bar.update_connection_status(is_connected=is_connected)
-
     def _update_status_model(self, model_info):
         """Update model info in status bar."""
         if self.status_bar:
@@ -165,10 +160,6 @@ class PiecesTUI(App):
         # Initialize event hub (which manages all controllers)
         self.event_hub = EventHub(self)
         self.event_hub.initialize()
-
-        # Update initial status using EventHub convenience methods
-        # Connection status
-        self._update_status_connection(is_connected=self.event_hub.is_connected())
 
         # Model info
         current_model = self.event_hub.get_current_model()
@@ -345,12 +336,10 @@ class PiecesTUI(App):
         self, _: ConnectionMessages.Established
     ) -> None:
         """Handle connection established."""
-        self._update_status_connection(is_connected=True)
         self._show_status_message("✅ Connected")
 
     async def on_connection_messages_lost(self, _: ConnectionMessages.Lost) -> None:
         """Handle connection lost."""
-        self._update_status_connection(is_connected=False)
         self._show_status_message("❌ Connection lost", 5)
 
     async def on_copilot_messages_thinking_started(
