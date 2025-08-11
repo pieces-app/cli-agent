@@ -1,6 +1,7 @@
 """
 End-to-end tests for the MCP Gateway using subprocess.
-POS is required to run these tests.
+PiecesOS is required to run these tests.
+LTM must be running, and PiecesOS as well.
 """
 
 import pytest

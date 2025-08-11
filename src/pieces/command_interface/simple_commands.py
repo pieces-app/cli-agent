@@ -1,4 +1,5 @@
 import argparse
+from urllib3.exceptions import MaxRetryError
 from pieces.base_command import BaseCommand
 from pieces.headless.models.base import CommandResult
 from pieces.headless.models.version import create_version_success
@@ -205,3 +206,39 @@ class VersionCommand(BaseCommand):
         return CommandResult(
             0, create_version_success(__version__, Settings.pieces_os_version)
         )
+
+
+class RestartPiecesOSCommand(BaseCommand):
+    """Command to restart PiecesOS."""
+
+    def get_name(self) -> str:
+        return "restart"
+
+    def get_help(self) -> str:
+        return "Restart PiecesOS"
+
+    def get_description(self) -> str:
+        return "Restart the PiecesOS"
+
+    def get_examples(self) -> list[str]:
+        return ["pieces restart"]
+
+    def get_docs(self) -> str:
+        return URLs.CLI_RESTART_DOCS.value
+
+    def add_arguments(self, parser: argparse.ArgumentParser):
+        pass
+
+    def execute(self, **kwargs) -> int:
+        try:
+            Settings.pieces_client.os_api.os_restart()
+        except MaxRetryError:
+            pass
+        if Settings.pieces_client.is_pieces_running(15):
+            Settings.logger.print("[green]PiecesOS restarted successfully.")
+            return 0
+        else:
+            Settings.logger.print(
+                "[red]Failed to restart PiecesOS. Please run `pieces open`."
+            )
+        return 1
