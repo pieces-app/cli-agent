@@ -126,7 +126,7 @@ def main():
     cli = PiecesCLI()
     try:
         cli.run()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, EOFError):
         if Settings.headless_mode:
             HeadlessOutput.output_error(
                 command=cli.command if cli else "unknown",
