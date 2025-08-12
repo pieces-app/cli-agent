@@ -364,6 +364,8 @@ class ChatListPanel(ScrollableContainer):
         """Set the active chat - only update affected widgets."""
         if not chat or not chat.exists():
             return
+        if self.active_chat and not self.active_chat.exists():
+            self.active_chat = None
 
         if self.active_chat != chat:  # Only update if actually changing
             old_active_id = self.active_chat.id if self.active_chat else None
