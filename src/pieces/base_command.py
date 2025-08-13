@@ -39,8 +39,7 @@ class BaseCommand(ABC):
 
     def command_func(self, *args, **kwargs):
         # Only enable headless mode if the command supports it and it's requested
-        if not self.support_headless and kwargs.get("headless", False):
-            Settings.headless_mode = False
+        Settings.headless_mode = kwargs.get("headless", False) and self.support_headless
         return_code = self.execute(*args, **kwargs)
         if not Settings.run_in_loop:
             if isinstance(return_code, int):
