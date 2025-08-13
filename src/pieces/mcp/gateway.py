@@ -3,6 +3,9 @@ import hashlib
 import signal
 import threading
 from typing import Tuple, Callable, Awaitable
+import httpx
+
+from websocket import WebSocketConnectionClosedException
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.mcp.tools_cache import PIECES_MCP_TOOLS_CACHE
 from pieces.settings import Settings
@@ -111,11 +114,7 @@ class PosMcpConnection:
         """Check if PiecesOS is running using health WebSocket"""
         with self._health_check_lock:
             # First check if already connected
-            if (
-                HealthWS.is_running()
-                and hasattr(Settings.pieces_client, "is_pos_stream_running")
-                and Settings.pieces_client.is_pos_stream_running
-            ):
+            if HealthWS.is_running() and Settings.pieces_client.is_pos_stream_running:
                 return True
 
             # Check if PiecesOS is available
@@ -522,6 +521,17 @@ async def main():
     # Just initialize settings without starting services
     Settings.logger.info("Starting MCP Gateway")
 
+    def asyncio_exception_handler(loop, context):
+        exc = context.get("exception")
+        if isinstance(exc, httpx.RemoteProtocolError):
+            Settings.pieces_client.is_pos_stream_running = False
+            Settings.logger.debug("POS stream stopped due to RemoteProtocolError")
+        else:
+            Settings.logger.error(f"Async exception: {context}")
+
+    loop = asyncio.get_event_loop()
+    loop.set_exception_handler(asyncio_exception_handler)
+
     # Set up signal handlers for graceful shutdown
     shutdown_event = asyncio.Event()
 
@@ -536,8 +546,18 @@ async def main():
         signal.signal(signal.SIGINT, lambda s, f: signal_handler())
 
     ltm_vision = LTMVisionWS(Settings.pieces_client, lambda x: None)
+
+    def on_ws_event(ws, e):
+        if isinstance(e, WebSocketConnectionClosedException):
+            Settings.pieces_client.is_pos_stream_running = False
+        else:
+            Settings.logger.error(f"Health WS error: {e}")
+
     health_ws = HealthWS(
-        Settings.pieces_client, lambda x: None, lambda ws: ltm_vision.start()
+        Settings.pieces_client,
+        lambda x: None,
+        lambda ws: ltm_vision.start(),
+        on_error=on_ws_event,
     )
 
     # Try to get the MCP URL, but continue even if it fails
