@@ -27,20 +27,19 @@ class TestMCPGatewayValidationAdvanced:
         with patch.object(
             mock_connection, "_check_pieces_os_status", return_value=True
         ):
-            mock_result = Mock()
-            mock_result.compatible = True
-            mock_connection.result = mock_result
+            with patch.object(
+                mock_connection, "_check_version_compatibility", return_value=(True, "")
+            ):
+                with patch.object(mock_connection, "_check_ltm_status", return_value=True):
+                    # Run multiple validations concurrently
+                    results = []
+                    for i in range(10):
+                        result = mock_connection._validate_system_status(f"tool_{i}")
+                        results.append(result)
 
-            with patch.object(mock_connection, "_check_ltm_status", return_value=True):
-                # Run multiple validations concurrently
-                results = []
-                for i in range(10):
-                    result = mock_connection._validate_system_status(f"tool_{i}")
-                    results.append(result)
-
-                # All should succeed
-                assert all(result[0] for result in results)
-                assert all(result[1] == "" for result in results)
+                    # All should succeed
+                    assert all(result[0] for result in results)
+                    assert all(result[1] == "" for result in results)
 
     @pytest.mark.asyncio
     async def test_malformed_tool_names(self, mock_connection):
