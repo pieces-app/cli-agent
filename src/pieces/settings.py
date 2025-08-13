@@ -50,7 +50,7 @@ class Settings:
     _os_id = None
 
     run_in_loop = False  # is CLI looping?
-    headless_mode = False  # is CLI running in headless mode?
+    headless_mode: bool = False  # is CLI running in headless mode?
 
     open_snippet_dir = os.path.join(PIECES_DATA_DIR, "opened_snippets")
 

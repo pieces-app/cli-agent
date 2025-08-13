@@ -3,6 +3,9 @@ import hashlib
 import signal
 import threading
 from typing import Tuple, Callable, Awaitable
+import httpx
+
+from websocket import WebSocketConnectionClosedException
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.mcp.tools_cache import PIECES_MCP_TOOLS_CACHE
 from pieces.settings import Settings
@@ -30,6 +33,8 @@ class PosMcpConnection:
         self.upstream_url = (
             upstream_url  # Can be None if PiecesOS wasn't running at startup
         )
+        self.CONNECTION_ESTABLISH_ATTEMPTS = 100
+        self.CONNECTION_CHECK_INTERVAL = 0.1
         self.session = None
         self.sse_client = None
         self.discovered_tools = []
@@ -40,6 +45,10 @@ class PosMcpConnection:
         self._previous_tools_hash = None
         self._tools_changed_callback = tools_changed_callback
         self._health_check_lock = threading.Lock()
+
+        # Add cleanup coordination
+        self._cleanup_requested = asyncio.Event()
+        self._connection_task = None
 
     def _try_get_upstream_url(self):
         """Try to get the upstream URL if we don't have it yet."""
@@ -53,30 +62,58 @@ class PosMcpConnection:
             return False
         return True
 
+    def request_cleanup(self):
+        """Request cleanup from exception handler (thread-safe)."""
+        Settings.logger.debug("Cleanup requested from exception handler")
+
+        # Use asyncio's thread-safe method to schedule cleanup
+        loop = None
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            Settings.logger.debug("No running loop for cleanup request")
+            return
+
+        if loop and not loop.is_closed():
+            # Schedule cleanup in the event loop
+            loop.call_soon_threadsafe(self._schedule_cleanup)
+
+    def _schedule_cleanup(self):
+        """Internal method to schedule cleanup in the event loop."""
+        # Set cleanup event
+        self._cleanup_requested.set()
+
+        # Cancel connection task if it exists
+        if self._connection_task and not self._connection_task.done():
+            self._connection_task.cancel()
+            Settings.logger.debug("Connection task cancelled due to cleanup request")
+
     async def _cleanup_stale_session(self):
         """Clean up a stale session and its resources."""
-        try:
-            if self.session:
-                try:
-                    await self.session.__aexit__(None, None, None)
-                except Exception as e:
-                    Settings.logger.debug(f"Error cleaning up stale session: {e}")
-        except Exception as e:
-            Settings.logger.debug(f"Error accessing stale session: {e}")
+        # Store references to avoid race conditions
+        session = self.session
+        sse_client = self.sse_client
 
-        try:
-            if self.sse_client:
-                try:
-                    await self.sse_client.__aexit__(None, None, None)
-                except Exception as e:
-                    Settings.logger.debug(f"Error cleaning up stale SSE client: {e}")
-        except Exception as e:
-            Settings.logger.debug(f"Error accessing stale SSE client: {e}")
-
-        # Reset connection state
+        # Clear instance variables immediately
         self.session = None
         self.sse_client = None
         self.discovered_tools = []
+
+        # Clean up session if it exists
+        if session:
+            try:
+                await session.__aexit__(None, None, None)
+                Settings.logger.debug("Session cleaned up successfully")
+            except Exception as e:
+                Settings.logger.debug(f"Error cleaning up session: {e}")
+
+        # Clean up SSE client if it exists
+        if sse_client:
+            try:
+                await sse_client.__aexit__(None, None, None)
+                Settings.logger.debug("SSE client cleaned up successfully")
+            except Exception as e:
+                Settings.logger.debug(f"Error cleaning up SSE client: {e}")
 
     def _check_version_compatibility(self) -> Tuple[bool, str]:
         """
@@ -111,11 +148,7 @@ class PosMcpConnection:
         """Check if PiecesOS is running using health WebSocket"""
         with self._health_check_lock:
             # First check if already connected
-            if (
-                HealthWS.is_running()
-                and hasattr(Settings.pieces_client, "is_pos_stream_running")
-                and Settings.pieces_client.is_pos_stream_running
-            ):
+            if HealthWS.is_running() and Settings.pieces_client.is_pos_stream_running:
                 return True
 
             # Check if PiecesOS is available
@@ -271,25 +304,69 @@ class PosMcpConnection:
             Settings.logger.error(f"Error fetching tools: {e}", exc_info=True)
             raise
 
+    async def _connection_handler(self, send_notification: bool = True):
+        """Handle the connection lifecycle in a single task context."""
+        try:
+            Settings.logger.info(
+                f"Connecting to upstream MCP server at {self.upstream_url}"
+            )
+
+            # Enter SSE client context
+            self.sse_client = sse_client(self.upstream_url)
+            read_stream, write_stream = await self.sse_client.__aenter__()
+
+            # Enter session context
+            session = ClientSession(read_stream, write_stream)
+            Settings.logger.info("Connecting to the client session")
+            await session.__aenter__()
+            self.session = session
+
+            # Update tools and setup notifications
+            await self.update_tools(session, send_notification)
+            await self.setup_notification_handler(session)
+
+            Settings.logger.info("Connection established successfully")
+
+            # Keep connection alive until cleanup is requested or cancelled
+            try:
+                await self._cleanup_requested.wait()
+                Settings.logger.debug("Cleanup requested, shutting down connection")
+            except asyncio.CancelledError:
+                Settings.logger.debug("Connection handler cancelled")
+                raise
+
+        except asyncio.CancelledError:
+            Settings.logger.debug("Connection cancelled, cleaning up")
+            raise
+        except Exception as e:
+            Settings.logger.error(f"Error in connection handler: {e}", exc_info=True)
+            raise
+        finally:
+            # Cleanup happens in the same task context where __aenter__ was called
+            await self._cleanup_stale_session()
+            Settings.logger.debug("Connection handler cleanup completed")
+
     async def connect(self, send_notification: bool = True):
         """Ensures a connection to the POS server exists and returns it."""
         async with self.connection_lock:
-            if self.session is not None:
-                # Validate the existing session is still alive
+            # Check if we have a valid existing connection
+            if (
+                self.session is not None
+                and self._connection_task
+                and not self._connection_task.done()
+            ):
                 try:
-                    await (
-                        self.session.send_ping()
-                    )  # TODO: Uncomment when ping is implemented
+                    await self.session.send_ping()
                     Settings.logger.debug("Using existing upstream connection")
                     return self.session
                 except Exception as e:
                     Settings.logger.debug(
                         f"Existing connection is stale: {e}, creating new connection"
                     )
-                    # Clean up the stale connection
-                    await self._cleanup_stale_session()
-                    self.session = None
-                    self.sse_client = None
+                    # Fall through to create new connection
+
+            # Clean up any existing connection state
+            await self._ensure_clean_state()
 
             # Try to get upstream URL if we don't have it
             if not self._try_get_upstream_url():
@@ -298,25 +375,69 @@ class PosMcpConnection:
                 )
 
             try:
-                Settings.logger.info(
-                    f"Connecting to upstream MCP server at {self.upstream_url}"
-                )
-                self.sse_client = sse_client(self.upstream_url)
-                read_stream, write_stream = await self.sse_client.__aenter__()
+                Settings.logger.info("Creating new connection to upstream server")
 
-                session = ClientSession(read_stream, write_stream)
-                await session.__aenter__()
-                self.session = session
-                await self.update_tools(session, send_notification)
-                await self.setup_notification_handler(session)
-                return session
+                # Reset cleanup event for new connection
+                self._cleanup_requested.clear()
+
+                # Start connection in a dedicated task
+                self._connection_task = asyncio.create_task(
+                    self._connection_handler(send_notification)
+                )
+
+                # Wait for connection to establish with longer timeout
+                Settings.logger.debug("Waiting for connection to establish...")
+                for attempt in range(
+                    self.CONNECTION_ESTABLISH_ATTEMPTS
+                ):  # Wait up to 10 seconds
+                    if self.session is not None:
+                        Settings.logger.info("Connection established successfully")
+                        return self.session
+                    await asyncio.sleep(self.CONNECTION_CHECK_INTERVAL)
+
+                # Timeout occurred - clean up the running task
+                Settings.logger.error("Connection establishment timed out")
+                if self._connection_task and not self._connection_task.done():
+                    self._connection_task.cancel()
+                    try:
+                        await self._connection_task
+                    except asyncio.CancelledError:
+                        pass
+
+                raise TimeoutError(
+                    "Connection establishment timed out after 10 seconds"
+                )
 
             except Exception as e:
-                self.session = None
+                # Ensure clean state on any error
+                await self._ensure_clean_state()
                 Settings.logger.error(
                     f"Error connecting to upstream server: {e}", exc_info=True
                 )
                 raise
+
+    async def _ensure_clean_state(self):
+        """Ensure all connection state is properly cleaned up."""
+        Settings.logger.debug("Ensuring clean connection state")
+
+        # Signal cleanup if needed
+        self._cleanup_requested.set()
+
+        # Cancel and wait for existing connection task
+        if self._connection_task and not self._connection_task.done():
+            self._connection_task.cancel()
+            try:
+                await self._connection_task
+            except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                Settings.logger.debug(f"Error cleaning up connection task: {e}")
+
+        # Reset all state
+        self.session = None
+        self.sse_client = None
+        self._connection_task = None
+        # Note: Don't clear discovered_tools here - keep them for fallback
 
     async def setup_notification_handler(self, session):
         """Setup the notification handler for the session."""
@@ -338,34 +459,15 @@ class PosMcpConnection:
     async def cleanup(self):
         """Cleans up the upstream connection."""
         async with self.connection_lock:
-            if self.session is not None:
-                try:
-                    session = self.session
-                    sse = self.sse_client
-                    self.session = None
-                    self.sse_client = None
+            Settings.logger.info("Starting connection cleanup")
 
-                    # Try to close the session first
-                    if session:
-                        try:
-                            await session.__aexit__(None, None, None)
-                        except Exception as e:
-                            Settings.logger.debug(f"Error closing session: {e}")
+            # Ensure clean state (this handles task cancellation and cleanup)
+            await self._ensure_clean_state()
 
-                    # Then close the SSE client
-                    if sse:
-                        try:
-                            await sse.__aexit__(None, None, None)
-                        except Exception as e:
-                            Settings.logger.debug(f"Error closing SSE client: {e}")
+            # Clear discovered tools on full cleanup
+            self.discovered_tools = []
 
-                    Settings.logger.info("Closed upstream connection")
-                except Exception as e:
-                    Settings.logger.debug(f"Error during connection cleanup: {e}")
-                finally:
-                    self.session = None
-                    self.sse_client = None
-                    self.discovered_tools = []
+            Settings.logger.info("Connection cleanup completed")
 
     async def call_tool(self, name, arguments):
         """Calls a tool on the POS MCP server."""
@@ -521,6 +623,23 @@ class MCPGateway:
 async def main():
     # Just initialize settings without starting services
     Settings.logger.info("Starting MCP Gateway")
+    is_pos_stream_running_lock = threading.Lock()
+    upstream_connection = None
+
+    def asyncio_exception_handler(loop, context):
+        exc = context.get("exception")
+        if isinstance(exc, httpx.RemoteProtocolError):
+            with is_pos_stream_running_lock:
+                Settings.pieces_client.is_pos_stream_running = False
+            Settings.logger.debug("POS stream stopped due to RemoteProtocolError")
+
+            if upstream_connection:
+                upstream_connection.request_cleanup()
+        else:
+            Settings.logger.error(f"Async exception: {context}")
+
+    loop = asyncio.get_event_loop()
+    loop.set_exception_handler(asyncio_exception_handler)
 
     # Set up signal handlers for graceful shutdown
     shutdown_event = asyncio.Event()
@@ -536,8 +655,22 @@ async def main():
         signal.signal(signal.SIGINT, lambda s, f: signal_handler())
 
     ltm_vision = LTMVisionWS(Settings.pieces_client, lambda x: None)
+
+    def on_ws_event(ws, e):
+        if isinstance(e, WebSocketConnectionClosedException):
+            with is_pos_stream_running_lock:
+                Settings.pieces_client.is_pos_stream_running = False
+            # Also request cleanup if we have the connection reference
+            if upstream_connection:
+                upstream_connection.request_cleanup()
+        else:
+            Settings.logger.error(f"Health WS error: {e}")
+
     health_ws = HealthWS(
-        Settings.pieces_client, lambda x: None, lambda ws: ltm_vision.start()
+        Settings.pieces_client,
+        lambda x: None,
+        lambda ws: ltm_vision.start(),
+        on_error=on_ws_event,
     )
 
     # Try to get the MCP URL, but continue even if it fails
@@ -550,6 +683,9 @@ async def main():
         server_name="pieces-stdio-mcp",
         upstream_url=upstream_url,
     )
+
+    # Store reference for exception handler
+    upstream_connection = gateway.upstream
 
     try:
         await gateway.run()

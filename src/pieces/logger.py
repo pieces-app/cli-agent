@@ -23,6 +23,7 @@ class Logger:
             debug_mode (bool): Whether to enable debug output
             log_dir (str, optional): Directory to store log files (only used in debug mode)
         """
+        Logger._instance = self
         self.name = "Pieces_CLI"
         self.console = Console()
         self.console_error = Console(stderr=True)

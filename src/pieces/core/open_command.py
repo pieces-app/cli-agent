@@ -23,7 +23,7 @@ def open_command(**kwargs):
 
     if copilot:
         URLs.open_website(
-            "localhost:"
+            "http://localhost:"
             + str(
                 Settings.pieces_client.os_api.os_applet_launch(
                     InactiveOSServerApplet(type=OSAppletEnum.COPILOT)
@@ -32,7 +32,7 @@ def open_command(**kwargs):
         )
     if drive:
         URLs.open_website(
-            "localhost:"
+            "http://localhost:"
             + str(
                 Settings.pieces_client.os_api.os_applet_launch(
                     InactiveOSServerApplet(type=OSAppletEnum.SAVED_MATERIALS)
@@ -41,7 +41,7 @@ def open_command(**kwargs):
         )
     if settings:
         URLs.open_website(
-            "localhost:"
+            "http://localhost:"
             + str(
                 Settings.pieces_client.os_api.os_applet_launch(
                     InactiveOSServerApplet(

@@ -113,13 +113,20 @@ jobs:
         run: |
           poetry run pytest tests/ --maxfail=1 --exitfirst -v
 
-      - name: Collect log directory
+      - name: Collect log directories
         if: always()
         run: |
-          LOG_DIR=$(poetry run python -c "import os;from pieces.logger import Logger; from pieces.config.constants import PIECES_DATA_DIR; print(os.path.join(PIECES_DATA_DIR, 'logs'))")
+          LOG_DIR=$(poetry run python -c "import os; from pieces.config.constants import PIECES_DATA_DIR; print(os.path.join(PIECES_DATA_DIR, 'logs'))")
+          TEST_LOG_DIR=$(poetry run python -c "import os; from pieces.config.constants import PIECES_DATA_DIR; print(os.path.join(PIECES_DATA_DIR, 'test_logs'))")
+
           echo "Log directory: $LOG_DIR"
+          echo "Test log directory: $TEST_LOG_DIR"
+
           mkdir -p artifacts/logs
+          mkdir -p artifacts/test_logs
+
           cp -r "$LOG_DIR"/* artifacts/logs || echo "No logs found"
+          cp -r "$TEST_LOG_DIR"/* artifacts/test_logs || echo "No test logs found"
         shell: bash
 
       - name: Upload logs as artifact
@@ -127,4 +134,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pieces-cli-logs-${{ matrix.os }}
-          path: artifacts/logs
+          path: artifacts/
