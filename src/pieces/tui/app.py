@@ -109,7 +109,7 @@ class PiecesTUI(App):
         Binding("ctrl+n", "new_chat", "New Chat"),
         Binding("ctrl+r", "refresh", "Refresh"),
         Binding("ctrl+s", "toggle_sidebar", "Toggle Sidebar"),
-        Binding("ctrl+x", "change_model", "Change Model"),
+        Binding("ctrl+shift+m", "change_model", "Change Model"),
         Binding("ctrl+l", "toggle_ltm", "Toggle LTM"),
     ]
 
