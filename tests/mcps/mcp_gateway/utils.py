@@ -147,30 +147,16 @@ def mock_connection():
     Create a fresh mock PosMcpConnection for testing.
 
     This function-scoped fixture provides a clean PosMcpConnection
-    instance for each test, with async methods properly mocked.
-
+    instance for each test, with any cached results reset.
     Returns:
-        Mock: Properly mocked connection instance for testing
+        PosMcpConnection: Fresh connection instance for testing
     """
     from unittest.mock import Mock, AsyncMock
-    
+
     # Create a mock connection instead of a real one to prevent async issues
-    connection = Mock(spec=PosMcpConnection)
-    
-    # Mock async methods with AsyncMock
-    connection.connect = AsyncMock(return_value=Mock())
-    connection.cleanup = AsyncMock()
-    connection.call_tool = AsyncMock(return_value=Mock())
-    connection.update_tools = AsyncMock()
-    connection.setup_notification_handler = AsyncMock()
-    
-    # Mock sync attributes and methods
-    connection.discovered_tools = []
+    connection = PosMcpConnection("http://test-url", mock_tools_changed_callback)
     connection.result = None
-    connection.upstream_url = "http://test-url"
-    connection._tools_have_changed = Mock(return_value=False)
-    connection._get_tools_hash = Mock(return_value="mock_hash")
-    
+
     return connection
 
 

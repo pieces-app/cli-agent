@@ -5,7 +5,9 @@ These tests interact with a real Pieces OS instance and verify actual behavior.
 
 import urllib.request
 import pytest
+import asyncio
 import mcp.types as types
+import requests
 
 from .utils import (
     get_upstream_url,
@@ -77,25 +79,21 @@ async def test_gateway_connection_with_pos_running(ensure_pieces_setup):
     # Create the connection
     connection = PosMcpConnection(upstream_url, mock_tools_changed_callback)
 
-    try:
-        # Attempt to connect
-        session = await connection.connect()
+    # Attempt to connect
+    session = await connection.connect()
+    await asyncio.sleep(1)  # Allow time for connection to establish
 
-        # Verify we got a valid session
-        assert session is not None
+    # Verify we got a valid session
+    assert session is not None
 
-        # Verify we discovered some tools
-        assert len(connection.discovered_tools) > 0
+    # Verify we discovered some tools
+    assert len(connection.discovered_tools) > 0
 
-        # Tools should be properly structured Tool objects
-        for tool in connection.discovered_tools:
-            assert hasattr(tool, "name")
-            assert hasattr(tool, "description")
-            assert isinstance(tool, types.Tool)
-
-    finally:
-        # Clean up
-        await connection.cleanup()
+    # Tools should be properly structured Tool objects
+    for tool in connection.discovered_tools:
+        assert hasattr(tool, "name")
+        assert hasattr(tool, "description")
+        assert isinstance(tool, types.Tool)
 
 
 @pytest.mark.asyncio
@@ -183,6 +181,7 @@ async def test_full_gateway_workflow(ensure_pieces_setup):
     try:
         # Connect to the upstream first
         await gateway.upstream.connect()
+        await asyncio.sleep(1)  # Allow time for connection to establish
 
         # Verify we can list tools
         tools = gateway.upstream.discovered_tools

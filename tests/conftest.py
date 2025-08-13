@@ -106,37 +106,6 @@ def mock_file_locking():
 
 
 @pytest.fixture
-def mock_mcp_connections():
-    """
-    Mock MCP gateway connections to prevent real network calls and async issues in tests.
-
-    This prevents PosMcpConnection from making real connections and properly mocks
-    async methods to avoid 'Mock can't be used in await' errors.
-
-    Use this fixture explicitly in tests that need MCP connection mocking.
-    """
-    # Mock the PosMcpConnection class
-    with patch("pieces.mcp.gateway.PosMcpConnection") as mock_connection_class:
-        # Create a mock instance
-        mock_instance = Mock()
-        mock_connection_class.return_value = mock_instance
-
-        # Mock async methods with AsyncMock
-        mock_instance.connect = AsyncMock(return_value=Mock())
-        mock_instance.cleanup = AsyncMock()
-        mock_instance.call_tool = AsyncMock(return_value=Mock())
-        mock_instance.update_tools = AsyncMock()
-        mock_instance.setup_notification_handler = AsyncMock()
-
-        # Mock sync methods
-        mock_instance.discovered_tools = []
-        mock_instance._tools_have_changed = Mock(return_value=False)
-        mock_instance._get_tools_hash = Mock(return_value="mock_hash")
-
-        yield mock_instance
-
-
-@pytest.fixture
 def mock_input():
     with patch("builtins.input") as mock:
         yield mock
