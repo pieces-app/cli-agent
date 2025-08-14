@@ -66,29 +66,35 @@ jobs:
         run: |
           winget install "Pieces OS" --silent --accept-package-agreements --accept-source-agreements
 
-      - name: Download test database
+      - name: Download test database (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           FILE_ID="1izwYjYrzitZgEznwRbAV_Ft6_hxNYXis"
           DOWNLOAD_URL="https://drive.google.com/uc?export=download&id=${FILE_ID}"
+          DEST_PATH="$HOME/Documents/com.pieces.os/production"
+          mkdir -p "$(dirname "$DEST_PATH")"
+          curl -L "$DOWNLOAD_URL" -o "$DEST_PATH"
+          echo "Saved to $DEST_PATH"
 
-          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            DEST_PATH="$HOME/Documents/com.pieces.os/production"
-            mkdir -p "$(dirname "$DEST_PATH")"
-            curl -L "$DOWNLOAD_URL" -o "$DEST_PATH"
-            echo "Saved to $DEST_PATH"
+      - name: Download test database (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          FILE_ID="1zm_yzWBeDb2KjggdxTkA7IALR0A8EIfC"
+          DOWNLOAD_URL="https://drive.google.com/uc?export=download&id=${FILE_ID}"
+          DEST_PATH="$HOME/Library/com.pieces.os/production"
+          mkdir -p "$(dirname "$DEST_PATH")"
+          curl -L "$DOWNLOAD_URL" -o "$DEST_PATH"
+          echo "Saved to $DEST_PATH"
 
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            DEST_PATH="$HOME/Library/com.pieces.os/production"
-            mkdir -p "$(dirname "$DEST_PATH")"
-            curl -L "$DOWNLOAD_URL" -o "$DEST_PATH"
-            echo "Saved to $DEST_PATH"
-
-          elif [[ "${{ matrix.os }}" == "windows-2025" ]]; then
-            DEST_PATH="$LOCALAPPDATA\\Mesh Intelligent Technologies, Inc.\\Pieces OS\\com.pieces.os\\production"
-            powershell -Command "New-Item -ItemType Directory -Force -Path (Split-Path '${DEST_PATH}')"
-            powershell -Command "Invoke-WebRequest -Uri '${DOWNLOAD_URL}' -OutFile '${DEST_PATH}'"
-            echo "Saved to $DEST_PATH"
-          fi
+      - name: Download test database (Windows)
+        if: matrix.os == 'windows-2025'
+        run: |
+          $FILE_ID = "1zm_yzWBeDb2KjggdxTkA7IALR0A8EIfC"
+          $DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=$FILE_ID"
+          $DEST_PATH = "$env:LOCALAPPDATA\Mesh Intelligent Technologies, Inc.\Pieces OS\com.pieces.os\production"
+          New-Item -ItemType Directory -Force -Path (Split-Path $DEST_PATH)
+          Invoke-WebRequest -Uri $DOWNLOAD_URL -OutFile $DEST_PATH
+          Write-Host "Saved to $DEST_PATH"
 
       - name: Fix Windows permissions for config directory
         if: matrix.os == 'windows-2025'
