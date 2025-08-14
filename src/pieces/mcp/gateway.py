@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import sentry_sdk
 import signal
 import threading
 from typing import Tuple, Callable, Awaitable
@@ -160,6 +161,8 @@ class PosMcpConnection:
                 if health_ws:
                     health_ws.start()
 
+                os_id = Settings.get_os_id()
+                sentry_sdk.set_extra("os_id", os_id or "unknown")
                 # Update LTM status cache
                 Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
                 return True
@@ -628,13 +631,23 @@ async def main():
 
     def asyncio_exception_handler(loop, context):
         exc = context.get("exception")
-        if isinstance(exc, httpx.RemoteProtocolError):
+
+        # Handle HTTP timeout and connection-related errors without sending to Sentry
+        if isinstance(exc, (httpx.RemoteProtocolError)):
             with is_pos_stream_running_lock:
                 Settings.pieces_client.is_pos_stream_running = False
-            Settings.logger.debug("POS stream stopped due to RemoteProtocolError")
+
+            # Log at info level instead of debug for better visibility
+            Settings.logger.info(
+                f"POS stream stopped due to HTTP timeout/connection error: {type(exc).__name__}"
+            )
 
             if upstream_connection:
                 upstream_connection.request_cleanup()
+        elif isinstance(
+            exc, (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.TimeoutException)
+        ):
+            Settings.logger.info(f"Timeout error: {exc}")
         else:
             Settings.logger.error(f"Async exception: {context}")
 

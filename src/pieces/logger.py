@@ -1,6 +1,8 @@
 import logging
 import os
+import sys
 from datetime import datetime
+import sentry_sdk
 from pathlib import Path
 from typing import Optional, Self, Any, Callable
 from functools import wraps
@@ -65,18 +67,24 @@ class Logger:
         """Log an info message."""
         self.logger.info(message, *args, **kwargs)
 
-    def error(self, message, *args, **kwargs):
+    def error(self, message, *args, ignore_sentry=False, **kwargs):
         """Log an error message."""
         exc_info = kwargs.pop("exc_info", True)
+        _, exc_value, _ = sys.exc_info()
+        if exc_value is not None and not ignore_sentry:
+            sentry_sdk.capture_exception(exc_value)
         self.logger.error(message, exc_info=exc_info, *args, **kwargs)
 
     def debug(self, message, *args, **kwargs):
         """Log a debug message (only visible in debug mode)."""
         self.logger.debug(message, *args, **kwargs)
 
-    def critical(self, message, *args, **kwargs):
+    def critical(self, message, *args, ignore_sentry=False, **kwargs):
         """Log a critical message."""
         exc_info = kwargs.pop("exc_info", True)
+        _, exc_value, _ = sys.exc_info()
+        if exc_value is not None and not ignore_sentry:
+            sentry_sdk.capture_exception(exc_value)
         self.logger.error(message, exc_info=exc_info, *args, **kwargs)
 
     @staticmethod

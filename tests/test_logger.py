@@ -535,7 +535,7 @@ class TestLogger:
 
             # Log some messages
             logger.info("Test info message")
-            logger.error("Test error message")
+            logger.error("Test error message", ignore_sentry=True)
             logger.debug("Test debug message")
 
             # Flush the handler to ensure messages are written
