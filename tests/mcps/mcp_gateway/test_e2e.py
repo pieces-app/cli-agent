@@ -10,10 +10,10 @@ import os
 import json
 import time
 
-pytest.skip(
-    "This module need you to sign in and POS must be running ignoring it in CI/CD",
-    allow_module_level=True,
-)
+# pytest.skip(
+#     "This module need you to sign in and POS must be running ignoring it in CI/CD",
+#     allow_module_level=True,
+# )
 # TODO: Login to POS to proceed with that test
 
 
