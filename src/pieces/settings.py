@@ -64,7 +64,8 @@ class Settings:
             model_info = Settings.model_config.model
             if model_info:
                 cls.pieces_client.model_name = model_info.name
-            sentry_sdk.set_tag("os_id", cls.get_os_id())
+            os_id = cls.get_os_id()
+            sentry_sdk.set_extra("os_id", os_id or "unknown")
         else:
             if cls.pieces_client.is_pieces_running() or cls.open_pieces_widget():
                 return cls.startup(bypass_login)
