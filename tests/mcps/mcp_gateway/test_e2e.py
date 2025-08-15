@@ -10,12 +10,6 @@ import os
 import json
 import time
 
-# pytest.skip(
-#     "This module need you to sign in and POS must be running ignoring it in CI/CD",
-#     allow_module_level=True,
-# )
-# TODO: Login to POS to proceed with that test
-
 
 def run_mcp_command(args, timeout=10):
     """Helper function to run MCP commands and capture output."""
