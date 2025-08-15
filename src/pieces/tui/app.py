@@ -3,6 +3,7 @@
 from typing import Optional
 
 from textual.app import App, ComposeResult
+from textual.theme import Theme
 from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import Header, Static
@@ -160,6 +161,66 @@ class PiecesTUI(App):
     def on_mount(self) -> None:
         """Initialize the application when mounted."""
         self.title = "Pieces CLI - TUI Mode"
+
+        pieces_dark_theme = Theme(
+            name="pieces-dark",
+            primary="#64B5F6",              # Vibrant blue for primary actions
+            secondary="#212121",            # Dark grey for secondary elements
+            accent="#81C784",               # Green accent for highlights
+            warning="#FFB74D",              # Orange for warnings
+            error="#E57373",                # Soft red for errors
+            success="#81C784",              # Green for success
+            foreground="#FFFFFF",           # White text
+            background="#212121",           # Dark background
+            surface="#2C2C2C",              # Slightly lighter surface
+            panel="#424242",                # Medium grey panels
+            dark=True,
+            variables={
+                "border": "#64B5F6",         # Blue borders for focus
+                "border-blurred": "#424242", # Grey for unfocused
+                "footer-description-foreground": "#FFFFFF",
+                "footer-key-foreground": "#81C784",  # Green key bindings
+                "input-selection-background": "#64B5F6 40%",
+                "scrollbar": "#424242",
+                "scrollbar-hover": "#64B5F6",
+                "scrollbar-active": "#81C784",
+                "scrollbar-background": "#1a1a1a",
+                "block-cursor-background": "#64B5F6",
+                "block-cursor-foreground": "#212121",
+            },
+        )
+
+        pieces_light_theme = Theme(
+            name="pieces-light",
+            primary="#1976D2",              # Strong blue for primary actions
+            secondary="#FFFFFF",            # White for secondary elements
+            accent="#388E3C",               # Green accent for highlights
+            warning="#F57C00",              # Orange for warnings
+            error="#D32F2F",                # Red for errors
+            success="#388E3C",              # Green for success
+            foreground="#212121",           # Dark text
+            background="#FAFAFA",           # Very light grey background
+            surface="#FFFFFF",              # White surface
+            panel="#F5F5F5",                # Light grey panels
+            dark=False,
+            variables={
+                "border": "#1976D2",         # Blue borders for focus
+                "border-blurred": "#E0E0E0", # Light grey for unfocused
+                "footer-description-foreground": "#212121",
+                "footer-key-foreground": "#388E3C",  # Green key bindings
+                "input-selection-background": "#1976D2 30%",
+                "scrollbar": "#E0E0E0",
+                "scrollbar-hover": "#1976D2",
+                "scrollbar-active": "#388E3C",
+                "scrollbar-background": "#F5F5F5",
+                "block-cursor-background": "#1976D2",
+                "block-cursor-foreground": "#FFFFFF",
+            },
+        )
+
+        self.register_theme(pieces_dark_theme)
+        self.register_theme(pieces_light_theme)
+        self.theme = "pieces-dark" 
 
         # Initialize event hub (which manages all controllers)
         self.event_hub = EventHub(self)
