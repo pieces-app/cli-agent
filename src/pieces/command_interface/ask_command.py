@@ -22,10 +22,17 @@ class AskCommand(BaseCommand):
 
     def get_examples(self) -> list[str]:
         return [
-            "pieces ask 'how to implement a REST API'",
-            "pieces ask 'debug the main function' -f main.py utils.py",
-            "pieces ask 'What are these snippets about' -m 1 2 3",
-            "pieces ask 'What I was working on yesterday' --ltm",
+            # Copilot Queries without Long-Term Memory
+            "pieces ask 'how to implement authentication with JWT'",
+            "pieces ask 'debug this React component error' -f components/Header.jsx utils/api.js",
+            "pieces ask 'explain what this Python class does' -f models/user.py",
+            "pieces ask 'summarize these saved code snippets' -m 5 8 12",
+            
+            # Copilot Queries with Long-Term Memory enabled  
+            "pieces ask 'what Python projects was I working on in the last 3 months' --ltm",
+            "pieces ask 'show me the database migration work from November 2024' --ltm", 
+            "pieces ask 'what did Alex and I pair on December 5th' --ltm",
+            "pieces ask 'what changes did I make today in Cursor editor' --ltm",
         ]
 
     def get_docs(self) -> str:
