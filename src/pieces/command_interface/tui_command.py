@@ -67,7 +67,7 @@ class TUICommand(BaseCommand):
                 "-m",
                 "pip",
                 "install",
-                "pieces-cli[tui]",
+                "textual",
             ],
             capture_output=True,
         )
