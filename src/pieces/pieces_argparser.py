@@ -1,7 +1,11 @@
 import argparse
 import sys
+from typing import TYPE_CHECKING
 from rich.console import Console
 from pieces.urls import URLs
+
+if TYPE_CHECKING:
+    from pieces.base_command import BaseCommand
 
 
 class PiecesArgparser(argparse.ArgumentParser):
@@ -10,7 +14,8 @@ class PiecesArgparser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         self.console = Console()
         self.err_console = Console(stderr=True)
-        self.command = kwargs.pop("command_object", None)
+        self.command: "BaseCommand" = kwargs.pop("command_object", None)
+        kwargs.setdefault("prog", "pieces")
         super().__init__(*args, **kwargs)
 
     def error(self, message):
@@ -175,10 +180,32 @@ class PiecesArgparser(argparse.ArgumentParser):
                             f"[green bold]{cmd_name}[/]{padding}- {help_text}"
                         )
 
-        if self.command and hasattr(self.command, "examples") and self.command.examples:
+        # Check for new structured help format first
+        if self.command and self.command.help_structure:
+            help_structure = self.command.help_structure
             console.print("\n[bold cyan]Examples:[/]")
-            for example in self.command.examples:
-                console.print(f"  [yellow]{example}[/]")
+
+            for section in help_structure.sections:
+                console.print(f"\n[bold blue]{section.header}[/]")
+
+                if section.description:
+                    console.print(f"  [dim]{section.description}[/]")
+
+                if section.command_template:
+                    note = f"({section.note})" if section.note else ""
+                    console.print(
+                        f"\n  Command: [green]{section.command_template}[/] {note}"
+                    )
+
+                if section.examples:
+                    console.print()
+                    for example in section.examples:
+                        if example.description:
+                            console.print(
+                                f"  [yellow]{example.command}[/]  [dim]# {example.description}[/]"
+                            )
+                        else:
+                            console.print(f"  [yellow]{example.command}[/]")
 
         if self.prog == "pieces":
             docs = URLs.DOCS_CLI.value
@@ -190,10 +217,10 @@ class PiecesArgparser(argparse.ArgumentParser):
 
         if self.prog == "pieces":
             console.print(
-                "\n[dim]For detailed help on specific commands, use: [bold]pieces command --help[/][/]"
+                "\n[dim black]For detailed help on specific commands, use: [bold]pieces command --help[/][/]",
             )
         else:
-            console.print("\n[dim]For more help, use: [bold]pieces --help[/][/]")
+            console.print("\n[dim black]For more help, use: [bold]pieces --help[/][/]")
 
     @classmethod
     def levenshtein_distance(cls, s1, s2):

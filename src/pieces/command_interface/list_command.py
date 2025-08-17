@@ -2,6 +2,7 @@ import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
 from pieces.core.list_command import ListCommand as ListCore
+from pieces.help_structure import HelpBuilder
 
 
 class ListCommand(BaseCommand):
@@ -19,15 +20,27 @@ class ListCommand(BaseCommand):
     def get_description(self) -> str:
         return "List and browse various Pieces resources including code materials, connected applications, and available AI models. Use the editor flag to open snippets directly in your default editor."
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces list",
-            "pieces list materials",
-            "pieces list apps",
-            "pieces list models",
-            "pieces drive",
-            "pieces list --editor",
-        ]
+    def get_examples(self):
+        """Return structured examples for the list command."""
+        builder = HelpBuilder()
+
+        # Basic listing examples
+        builder.section(
+            header="Basic Usage:", command_template="pieces list [TYPE]"
+        ).example("pieces list", "List all materials (default)").example(
+            "pieces list materials", "Explicitly list materials"
+        ).example("pieces list apps", "List connected applications").example(
+            "pieces list models", "List available AI models"
+        )
+
+        # Advanced usage
+        builder.section(
+            header="Advanced Options:", command_template="pieces list [OPTIONS]"
+        ).example(
+            "pieces list --editor", "List materials and open selected in editor"
+        ).example("pieces drive", "Alias for list command")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_LIST_DOCS.value
