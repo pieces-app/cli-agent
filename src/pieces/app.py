@@ -153,20 +153,20 @@ def main():
             )
     except SystemExit:
         sentry_sdk.flush(2)
+        raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        if isinstance(e, HeadlessError):
+        if isinstance(e, HeadlessError) or Settings.headless_mode:
             HeadlessOutput.handle_exception(e, PiecesCLI.command or "unknown")
         elif __version__ == "dev":
             Settings.logger.console.print_exception(show_locals=True)
-        elif Settings.headless_mode:
-            HeadlessOutput.handle_exception(e, PiecesCLI.command or "unknown")
         else:
             Settings.logger.critical(e, ignore_sentry=True)
             try:
                 Settings.show_error("UNKNOWN EXCEPTION", e)
             except SystemExit:
                 sentry_sdk.flush(2)
+                raise
     finally:
         from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import (
             BaseWebsocket,
