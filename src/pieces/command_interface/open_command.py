@@ -2,6 +2,7 @@ import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
 from pieces.core import open_command
+from pieces.help_structure import HelpBuilder
 
 
 class OpenCommand(BaseCommand):
@@ -16,14 +17,26 @@ class OpenCommand(BaseCommand):
     def get_description(self) -> str:
         return "Open various Pieces applications and components including PiecesOS, Copilot, Drive, and Settings from the command line"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces open",
-            "pieces open --pieces_os",
-            "pieces open --copilot",
-            "pieces open --drive",
-            "pieces open --settings",
-        ]
+    def get_examples(self):
+        """Return structured examples for the open command."""
+        builder = HelpBuilder()
+
+        # Basic usage
+        builder.section(
+            header="Basic Usage:", command_template="pieces open [COMPONENT]"
+        ).example("pieces open", "Open the default Pieces component")
+
+        # Specific components
+        builder.section(
+            header="Open Specific Components:",
+            command_template="pieces open --[OPTION]",
+        ).example("pieces open --pieces_os", "Open PiecesOS").example(
+            "pieces open --copilot", "Open Pieces Copilot"
+        ).example("pieces open --drive", "Open Pieces Drive").example(
+            "pieces open --settings", "Open Pieces Settings"
+        ).example("pieces open --ltm", "Open Long-Term Memory")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_OPEN_DOCS.value
