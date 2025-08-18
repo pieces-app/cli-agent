@@ -7,6 +7,7 @@ from textual.containers import ScrollableContainer
 from textual.widgets import Static
 from textual.binding import Binding
 from textual.css.query import NoMatches
+from textual.types import NoActiveAppError
 
 from .chat_message import ChatMessage
 from pieces.settings import Settings
@@ -285,8 +286,11 @@ class ChatViewPanel(ScrollableContainer):
         except (RuntimeError, AttributeError):
             pass
 
-        # Ensure we're completely clean
-        self.remove_children()
+        # Ensure we're completely clean - but only if app context is available
+        try:
+            self.remove_children()
+        except NoActiveAppError:
+            pass
 
     def _clear_streaming_widget(self):
         """Remove streaming widget if present."""
