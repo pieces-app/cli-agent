@@ -173,7 +173,7 @@ class EditNameDialog(ModalScreen):
     """
 
     BINDINGS = [
-        Binding("enter", "save_name", "Save", show=False),
+        Binding("enter", "confirm_name", "Save", show=False),
         Binding("escape", "cancel_edit", "Cancel", show=False),
     ]
 
@@ -205,16 +205,16 @@ class EditNameDialog(ModalScreen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save-name":
-            self.action_save_name()
+            self.action_confirm_name()
         else:
             self.action_cancel_edit()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle Enter key pressed in the input field."""
         if event.input.id == "name-input":
-            self.action_save_name()
+            self.action_confirm_name()
 
-    def action_save_name(self) -> None:
+    def action_confirm_name(self) -> None:
         name_input = self.query_one("#name-input", Input)
         new_name = name_input.value.strip()
         if new_name:

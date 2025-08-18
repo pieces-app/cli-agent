@@ -17,7 +17,14 @@ if TYPE_CHECKING:
 
 
 class ChatMessage(Container):
-    """An enhanced chat message widget with role-based styling, metadata, and markdown support."""
+    """An enhanced chat message widget with role-based styling, metadata, and markdown support.
+    
+    Attributes:
+        role: The role of the message sender (e.g., 'user', 'assistant', 'system')
+        content: The text content of the message
+        timestamp: Optional timestamp when the message was created
+        message_id: Optional unique identifier for the message
+    """
 
     DEFAULT_CSS = """
     ChatMessage {

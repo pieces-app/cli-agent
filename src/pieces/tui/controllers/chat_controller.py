@@ -41,9 +41,12 @@ class ChatController(BaseController):
         """Stop listening to chat events."""
         try:
             if self._conversation_ws:
+                Settings.logger.debug("Closing conversation WebSocket...")
                 self._conversation_ws.close()
+                Settings.logger.debug("Conversation WebSocket closed successfully")
         except Exception as e:
-            Settings.logger.error(f"Error closing conversation WebSocket: {e}")
+            Settings.logger.error(f"Failed to properly close conversation WebSocket: {e}")
+            Settings.logger.info("WebSocket cleanup incomplete - connection may remain active")
         finally:
             self._conversation_ws = None
 

@@ -113,11 +113,11 @@ def run_command(user_input: str, command_name: str, command_args: List[str]) -> 
     if command_name in ["run", "onboarding", "ui", "tui"] and Settings.run_in_loop:
         if command_name == "onboarding":
             Settings.logger.print(
-                "Cannot run onboarding while in loop mode. Please exit first."
+                "Cannot run onboarding while in loop mode.  Please exit first."
             )
         elif command_name == "tui" or command_name == "ui":
             Settings.logger.print(
-                "Cannot run TUI while in loop mode. Please exit first."
+                "Cannot run TUI while in loop mode.  Please exit first."
             )
         return
 

@@ -207,6 +207,13 @@ class ChatViewPanel(ScrollableContainer):
         """Add a streaming message with markdown support and cursor indicator."""
         self._clear_thinking_indicator()
 
+        # Check if streaming widget already exists and warn about potential race condition
+        if self._streaming_widget:
+            Settings.logger.info(
+                "Streaming widget already exists when trying to add new streaming message - potential race condition"
+            )
+            self._clear_streaming_widget()
+
         # Create a streaming ChatMessage widget for markdown support
         from datetime import datetime
 
