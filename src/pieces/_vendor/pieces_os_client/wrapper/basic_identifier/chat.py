@@ -4,7 +4,9 @@ from ..streamed_identifiers import ConversationsSnapshot
 from .basic import Basic
 
 
-from pieces._vendor.pieces_os_client.models.annotation_type_enum import AnnotationTypeEnum
+from pieces._vendor.pieces_os_client.models.annotation_type_enum import (
+    AnnotationTypeEnum,
+)
 
 
 if TYPE_CHECKING:
@@ -63,6 +65,15 @@ class BasicChat(Basic):
             conversation = ConversationsSnapshot.update_identifier(self._id)
         return conversation
 
+    def exists(self) -> bool:
+        """
+        Checks if the conversation exists in the snapshot.
+
+        Returns:
+            True if the conversation exists, False otherwise.
+        """
+        return self._id in ConversationsSnapshot.identifiers_snapshot
+
     @property
     def id(self) -> str:
         """
@@ -103,12 +114,21 @@ class BasicChat(Basic):
         """
         from .message import BasicMessage
 
-        out = []
-        for message_id, index in (self.conversation.messages.indices or {}).items():
-            if index == -1:  # Deleted message
-                continue
-            out.append(BasicMessage(ConversationsSnapshot.pieces_client, message_id))
-        return out
+        indices = self.conversation.messages.indices or {}
+
+        if not indices:
+            return []
+
+        max_index = max(i for i in indices.values() if i >= 0)
+        out: List[Optional[BasicMessage]] = [None] * (max_index + 1)
+
+        pieces_client = ConversationsSnapshot.pieces_client
+        for message_id, index in indices.items():
+            if index != -1:
+                out[index] = BasicMessage(pieces_client, message_id)
+
+        # Only filter if you're okay skipping holes
+        return [msg for msg in out if msg is not None]
 
     @property
     def annotations(self) -> List["BasicAnnotation"]:
@@ -259,11 +279,7 @@ class BasicChat(Basic):
             if self.conversation.grounding
             else None
         )
-        if (
-            not temporal
-            or not temporal.workstreams
-            or not temporal.workstreams.indices
-        ):
+        if not temporal or not temporal.workstreams or not temporal.workstreams.indices:
             return []
         return self._from_indices(
             temporal.workstreams.indices, lambda id: BasicRange(id)

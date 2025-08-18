@@ -155,7 +155,8 @@ def main():
         sentry_sdk.flush(2)
         raise
     except Exception as e:
-        sentry_sdk.capture_exception(e)
+        if __version__ != "dev":
+            sentry_sdk.capture_exception(e)
         if isinstance(e, HeadlessError) or Settings.headless_mode:
             HeadlessOutput.handle_exception(e, PiecesCLI.command or "unknown")
         elif __version__ == "dev":
