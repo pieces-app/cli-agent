@@ -34,6 +34,8 @@ class PiecesApiClient:
         self._anchors_api = None
         self._range_api = None
         self._ranges_api = None
+        self._workstream_summary_api = None
+        self._workstream_summaries_api = None
 
     def init_host(self, host, reconnect_on_host_change=True):
         self.api_client = ApiClient(Configuration(host))
@@ -49,6 +51,9 @@ class PiecesApiClient:
             ws_base_url + "/workstream_pattern_engine/processors/vision/status/stream"
         )
         self.RANGES_IDENTIFIERS_WS_URL = ws_base_url + "/ranges/stream/identifiers"
+        self.WORKSTREAM_SUMMARY_WS_URL = (
+            ws_base_url + "/workstream_summaries/stream/identifiers"
+        )
 
         if reconnect_on_host_change:
             BaseWebsocket.reconnect_all()
@@ -76,7 +81,9 @@ class PiecesApiClient:
     @property
     def conversations_api(self):
         if self._conversations_api is None:
-            from pieces._vendor.pieces_os_client.api.conversations_api import ConversationsApi
+            from pieces._vendor.pieces_os_client.api.conversations_api import (
+                ConversationsApi,
+            )
 
             self._conversations_api = ConversationsApi(self.api_client)
         return self._conversations_api
@@ -84,7 +91,9 @@ class PiecesApiClient:
     @property
     def conversation_api(self):
         if self._conversation_api is None:
-            from pieces._vendor.pieces_os_client.api.conversation_api import ConversationApi
+            from pieces._vendor.pieces_os_client.api.conversation_api import (
+                ConversationApi,
+            )
 
             self._conversation_api = ConversationApi(self.api_client)
         return self._conversation_api
@@ -156,7 +165,9 @@ class PiecesApiClient:
     @property
     def annotations_api(self):
         if self._annotations_api is None:
-            from pieces._vendor.pieces_os_client.api.annotations_api import AnnotationsApi
+            from pieces._vendor.pieces_os_client.api.annotations_api import (
+                AnnotationsApi,
+            )
 
             self._annotations_api = AnnotationsApi(self.api_client)
         return self._annotations_api
@@ -180,7 +191,9 @@ class PiecesApiClient:
     @property
     def allocations_api(self):
         if self._allocations_api is None:
-            from pieces._vendor.pieces_os_client.api.allocations_api import AllocationsApi
+            from pieces._vendor.pieces_os_client.api.allocations_api import (
+                AllocationsApi,
+            )
 
             self._allocations_api = AllocationsApi(self.api_client)
         return self._allocations_api
@@ -236,7 +249,9 @@ class PiecesApiClient:
     @property
     def applications_api(self):
         if self._applications_api is None:
-            from pieces._vendor.pieces_os_client.api.applications_api import ApplicationsApi
+            from pieces._vendor.pieces_os_client.api.applications_api import (
+                ApplicationsApi,
+            )
 
             self._applications_api = ApplicationsApi(self.api_client)
         return self._applications_api
@@ -294,3 +309,23 @@ class PiecesApiClient:
 
             self._ranges_api = RangesApi(self.api_client)
         return self._ranges_api
+
+    @property
+    def workstream_summary_api(self):
+        if self._workstream_summary_api is None:
+            from pieces._vendor.pieces_os_client.api.workstream_summary_api import (
+                WorkstreamSummaryApi,
+            )
+
+            self._workstream_summary_api = WorkstreamSummaryApi(self.api_client)
+        return self._workstream_summary_api
+
+    @property
+    def workstream_summaries_api(self):
+        if self._workstream_summaries_api is None:
+            from pieces._vendor.pieces_os_client.api.workstream_summaries_api import (
+                WorkstreamSummariesApi,
+            )
+
+            self._workstream_summaries_api = WorkstreamSummariesApi(self.api_client)
+        return self._workstream_summaries_api
