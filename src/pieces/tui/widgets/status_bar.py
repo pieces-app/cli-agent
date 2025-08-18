@@ -9,6 +9,9 @@ from textual.widget import Widget
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.models.model import Model
 
+# Constants
+MAX_MODEL_NAME_LENGTH = 20
+
 
 class StatusText(Widget):
     """Widget to display status text in the footer."""
@@ -72,8 +75,8 @@ class StatusBar(Footer):
         model_name = model_name.replace("Chat Model", "")
         status_parts = []
         if model_name:
-            if len(model_name) > 20:
-                model_name = model_name[:17] + "..."
+            if len(model_name) > MAX_MODEL_NAME_LENGTH:
+                model_name = model_name[:MAX_MODEL_NAME_LENGTH - 3] + "..."
             status_parts.append(f"🤖 {model_name}")
 
         # Add LTM status - only show when enabled

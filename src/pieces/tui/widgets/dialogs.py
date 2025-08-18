@@ -76,13 +76,18 @@ class ConfirmDialog(ModalScreen):
         Binding("escape", "cancel", "Cancel", show=False),
     ]
 
-    def __init__(self, title: str, message: str, **kwargs):
+    def __init__(self, title: str, message: str, width: int = 60, height: int = 12, **kwargs):
         super().__init__(**kwargs)
         self.title_text = title
         self.message_text = message
+        self.dialog_width = width
+        self.dialog_height = height
 
     def compose(self) -> ComposeResult:
-        with Container():
+        container = Container()
+        container.styles.width = self.dialog_width
+        container.styles.height = self.dialog_height
+        with container:
             yield Static(self.title_text, classes="dialog-title")
             yield Static(
                 self.message_text,
@@ -177,12 +182,17 @@ class EditNameDialog(ModalScreen):
         Binding("escape", "cancel_edit", "Cancel", show=False),
     ]
 
-    def __init__(self, current_name: str, **kwargs):
+    def __init__(self, current_name: str, width: int = 60, height: int = 12, **kwargs):
         super().__init__(**kwargs)
         self.current_name = current_name
+        self.dialog_width = width
+        self.dialog_height = height
 
     def compose(self) -> ComposeResult:
-        with Container():
+        container = Container()
+        container.styles.width = self.dialog_width
+        container.styles.height = self.dialog_height
+        with container:
             yield Static("✏️ Edit Chat Name", classes="dialog-title")
             yield Input(
                 value=self.current_name,
@@ -279,15 +289,25 @@ class ModelSelectionDialog(ModalScreen):
     ]
 
     def __init__(
-        self, models: List["Model"], current_model: Optional[str] = None, **kwargs
+        self,
+        models: List["Model"],
+        current_model: Optional[str] = None,
+        width: int = 70,
+        height: int = 20,
+        **kwargs
     ):
         super().__init__(**kwargs)
         self.models = models
         self.current_model = current_model
         self.selected_model: Optional[str] = None
+        self.dialog_width = width
+        self.dialog_height = height
 
     def compose(self) -> ComposeResult:
-        with Container():
+        container = Container()
+        container.styles.width = self.dialog_width
+        container.styles.height = self.dialog_height
+        with container:
             yield Static("🤖 Select Model", classes="dialog-title")
             if self.current_model:
                 yield Static(f"Current: {self.current_model}", classes="current-model")

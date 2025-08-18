@@ -1,5 +1,6 @@
 """Chat view panel widget for displaying conversation history."""
 
+from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
 from textual.reactive import reactive
 from textual.containers import ScrollableContainer
@@ -215,8 +216,6 @@ class ChatViewPanel(ScrollableContainer):
             self._clear_streaming_widget()
 
         # Create a streaming ChatMessage widget for markdown support
-        from datetime import datetime
-
         timestamp = datetime.now().strftime("Today %I:%M %p")
 
         self._streaming_widget = ChatMessage(

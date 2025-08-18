@@ -35,7 +35,7 @@ class ChatController(BaseController):
         self._conversation_ws.start()
 
         self._initialized = True
-        Settings.logger.info("ChatController initialized")
+        Settings.logger.info("ChatController initialized.")
 
     def cleanup(self):
         """Stop listening to chat events."""
