@@ -5,6 +5,9 @@ from textual.message import Message
 
 if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
+    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.summary import (
+        BasicSummary,
+    )
     from pieces.config.schemas.model import ModelInfo
 
 
@@ -38,6 +41,45 @@ class ChatMessages:
             self.chat_id = chat_id
 
 
+class WorkstreamMessages:
+    """Workstream-related messages."""
+
+    class Switched(Message):
+        """Workstream summary was switched to."""
+
+        def __init__(self, summary: "BasicSummary") -> None:
+            super().__init__()
+            self.summary = summary
+
+    class Updated(Message):
+        """Workstream summary was updated."""
+
+        def __init__(self, summary: "BasicSummary") -> None:
+            super().__init__()
+            self.summary = summary
+
+    class Deleted(Message):
+        """Workstream summary was deleted."""
+
+        def __init__(self, summary_id: str) -> None:
+            super().__init__()
+            self.summary_id = summary_id
+
+    class EditModeToggled(Message):
+        """Edit mode was toggled for workstream content."""
+
+        def __init__(self, edit_mode: bool) -> None:
+            super().__init__()
+            self.edit_mode = edit_mode
+
+    class ContentSaved(Message):
+        """Workstream content was saved."""
+
+        def __init__(self, content: str) -> None:
+            super().__init__()
+            self.content = content
+
+
 class UserMessages:
     """User input messages."""
 
@@ -59,39 +101,6 @@ class ModelMessages:
         def __init__(self, new_model: "ModelInfo") -> None:
             super().__init__()
             self.new_model = new_model
-
-
-# class MaterialMessages:
-#     """Material/asset-related messages."""
-#
-#     class Created(Message):
-#         """Material was created."""
-#
-#         def __init__(self, asset: "BasicAsset") -> None:
-#             super().__init__()
-#             self.asset = asset
-#
-#     class Updated(Message):
-#         """Material was updated."""
-#
-#         def __init__(self, asset: "BasicAsset") -> None:
-#             super().__init__()
-#             self.asset = asset
-#
-#     class Deleted(Message):
-#         """Material was deleted."""
-#
-#         def __init__(self, asset: "BasicAsset") -> None:
-#             super().__init__()
-#             self.asset = asset
-#
-#     class SearchCompleted(Message):
-#         """Material search completed."""
-#
-#         def __init__(self, results: List["BasicAsset"]) -> None:
-#             super().__init__()
-#             self.results = results
-#
 
 
 class ConnectionMessages:
@@ -184,3 +193,18 @@ class ContextMessages:
         def __init__(self, count: int) -> None:
             super().__init__()
             self.count = count
+
+
+class ViewMessages:
+    """View navigation messages."""
+
+    class SwitchToChat(Message):
+        """Switch to chat view."""
+
+        pass
+
+    class SwitchToWorkstream(Message):
+        """Switch to workstream view."""
+
+        pass
+
