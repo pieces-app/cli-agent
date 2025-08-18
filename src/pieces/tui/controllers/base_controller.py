@@ -28,6 +28,9 @@ if TYPE_CHECKING:
         BasicAsset,
     )
     from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
+    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.summary import (
+        BasicSummary,
+    )
 
 
 class EventType(Enum):
@@ -64,6 +67,11 @@ class EventType(Enum):
     COPILOT_STREAM_CHUNK = "copilot.stream_chunk"
     COPILOT_STREAM_COMPLETED = "copilot.stream_completed"
     COPILOT_STREAM_ERROR = "copilot.stream_error"
+
+    # Workstream events
+    WORKSTREAM_SUMMARY_UPDATED = "workstream.summary.updated"
+    WORKSTREAM_SUMMARY_DELETED = "workstream.summary.deleted"
+    WORKSTREAM_SUMMARY_SWITCHED = "workstream.summary.switched"
 
 
 class BaseController(ABC):
@@ -174,6 +182,20 @@ class BaseController(ABC):
         self,
         event_type: Literal[EventType.COPILOT_STREAM_ERROR],
         callback: Callable[[CopilotStreamErrorData], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[
+            EventType.WORKSTREAM_SUMMARY_UPDATED, EventType.WORKSTREAM_SUMMARY_SWITCHED
+        ],
+        callback: Callable[["BasicSummary"], bool],
+    ) -> None: ...
+    @overload
+    def on(
+        self,
+        event_type: Literal[EventType.WORKSTREAM_SUMMARY_DELETED],
+        callback: Callable[[str], bool],
     ) -> None: ...
 
     # TODO: Add overloads for missing event types when models are ready:
@@ -290,6 +312,20 @@ class BaseController(ABC):
         event_type: Literal[EventType.COPILOT_STREAM_ERROR],
         callback: Callable[[CopilotStreamErrorData], bool],
     ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[
+            EventType.WORKSTREAM_SUMMARY_UPDATED, EventType.WORKSTREAM_SUMMARY_SWITCHED
+        ],
+        callback: Callable[["BasicSummary"], bool],
+    ) -> None: ...
+    @overload
+    def off(
+        self,
+        event_type: Literal[EventType.WORKSTREAM_SUMMARY_DELETED],
+        callback: Callable[[str], bool],
+    ) -> None: ...
 
     def off(self, event_type: EventType, callback: Callable[[Any], bool]):
         """
@@ -399,6 +435,20 @@ class BaseController(ABC):
         self,
         event_type: Literal[EventType.COPILOT_STREAM_ERROR],
         data: CopilotStreamErrorData,
+    ) -> None: ...
+    @overload
+    def emit(
+        self,
+        event_type: Literal[
+            EventType.WORKSTREAM_SUMMARY_UPDATED, EventType.WORKSTREAM_SUMMARY_SWITCHED
+        ],
+        data: "BasicSummary",
+    ) -> None: ...
+    @overload
+    def emit(
+        self,
+        event_type: Literal[EventType.WORKSTREAM_SUMMARY_DELETED],
+        data: str,
     ) -> None: ...
 
     def emit(self, event_type: EventType, data: Optional[Any] = None):
