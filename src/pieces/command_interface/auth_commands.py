@@ -2,6 +2,7 @@ import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
 from pieces.settings import Settings
+from pieces.help_structure import HelpBuilder
 
 
 class LoginCommand(BaseCommand):
@@ -16,8 +17,15 @@ class LoginCommand(BaseCommand):
     def get_description(self) -> str:
         return "Authenticate with PiecesOS to enable cloud features, and access your personal domain, long term memory"
 
-    def get_examples(self) -> list[str]:
-        return ["pieces login"]
+    def get_examples(self):
+        """Return structured examples for the login command."""
+        builder = HelpBuilder()
+
+        builder.section(
+            header="Authentication:", command_template="pieces login"
+        ).example("pieces login", "Authenticate with PiecesOS to enable cloud features")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_LOGIN_DOCS.value
@@ -28,9 +36,13 @@ class LoginCommand(BaseCommand):
 
     def execute(self, **kwargs) -> int:
         """Execute the login command."""
-        Settings.pieces_client.user.user_profile =  Settings.pieces_client.user_api.user_snapshot().user
+        Settings.pieces_client.user.user_profile = (
+            Settings.pieces_client.user_api.user_snapshot().user
+        )
         if Settings.pieces_client.user.user_profile:
-            Settings.logger.print(f"Signed in as {Settings.pieces_client.user.name}\nemail: {Settings.pieces_client.user.email}")
+            Settings.logger.print(
+                f"Signed in as {Settings.pieces_client.user.name}\nemail: {Settings.pieces_client.user.email}"
+            )
             return 0
         try:
             Settings.pieces_client.user.login(True)
@@ -51,8 +63,15 @@ class LogoutCommand(BaseCommand):
     def get_description(self) -> str:
         return "Sign out from your PiecesOS account, disabling the use of any of the Pieces features"
 
-    def get_examples(self) -> list[str]:
-        return ["pieces logout"]
+    def get_examples(self):
+        """Return structured examples for the logout command."""
+        builder = HelpBuilder()
+
+        builder.section(header="Sign Out:", command_template="pieces logout").example(
+            "pieces logout", "Sign out from PiecesOS account"
+        )
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_LOGOUT_DOCS.value

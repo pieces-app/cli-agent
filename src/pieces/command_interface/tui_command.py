@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import sys
 from pieces.base_command import BaseCommand
+from pieces.help_structure import CommandHelp, HelpBuilder
 from pieces.settings import Settings
 
 
@@ -34,9 +35,16 @@ class TUICommand(BaseCommand):
         and text input at the bottom for interactive conversations.
         """)
 
-    def get_examples(self) -> list[str]:
+    def get_examples(self) -> CommandHelp:
         """Return a list of usage examples."""
-        return ["pieces tui", "pieces tui install", "pieces ui"]
+        build = HelpBuilder()
+        build.section(header="Open the TUI").example(
+            "pieces tui", "Launch the TUI interface"
+        ).example("pieces ui", "Same as pieces tui")
+        build.section(header="Install TUI dependencies").example(
+            "pieces tui install", "Install TUI dependencies if not already installed"
+        )
+        return build.build()
 
     def add_arguments(self, parser: argparse.ArgumentParser):
         """Add command-specific arguments to the parser."""

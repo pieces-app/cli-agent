@@ -2,6 +2,7 @@ import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
 from pieces.copilot import AskStream
+from pieces.help_structure import HelpBuilder
 
 
 class AskCommand(BaseCommand):
@@ -20,13 +21,34 @@ class AskCommand(BaseCommand):
     def get_description(self) -> str:
         return "Ask questions to the Pieces Copilot AI assistant with context from files, saved materials, or your long-term memory (LTM). Get intelligent code assistance and explanations"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces ask 'how to implement a REST API'",
-            "pieces ask 'debug the main function' -f main.py utils.py",
-            "pieces ask 'What are these snippets about' -m 1 2 3",
-            "pieces ask 'What I was working on yesterday' --ltm",
-        ]
+    def get_examples(self):
+        """Return structured examples for the ask command."""
+        builder = HelpBuilder()
+
+        # First section
+        builder.section(
+            header="Example Queries without LTM:",
+            command_template="pieces ask '[YOUR_QUERY_HERE]'",
+        ).example("pieces ask 'how to implement authentication with JWT'").example(
+            "pieces ask 'debug this React component error' -f components/Header.jsx utils/api.js"
+        ).example(
+            "pieces ask 'explain what this Python class does' -f models/user.py"
+        ).example("pieces ask 'summarize these saved code snippets' -m 5 8 12")
+
+        # Second section
+        builder.section(
+            header="Example Queries with Long-Term Memory:",
+            command_template="pieces ask '[YOUR_QUERY_HERE]' --ltm",
+            note="note the presence of the --ltm , which can go before or after your query",
+        ).example(
+            "pieces ask 'what Python projects was I working on in the last 3 months' --ltm"
+        ).example(
+            "pieces ask 'show me the database migration work from November 2024' --ltm"
+        ).example(
+            "pieces ask 'what did Alex and I pair on December 5th' --ltm"
+        ).example("pieces ask 'what changes did I make today in Cursor editor' --ltm")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_ASK_DOCS.value

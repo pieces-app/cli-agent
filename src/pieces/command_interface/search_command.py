@@ -3,6 +3,7 @@ from typing import Optional
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
 from pieces.core.search_command import search
+from pieces.help_structure import HelpBuilder
 
 
 class SearchCommand(BaseCommand):
@@ -17,13 +18,28 @@ class SearchCommand(BaseCommand):
     def get_description(self) -> str:
         return "Search through your materials using various search modes including fuzzy search, neural code search, and full text search"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces search",
-            "pieces search 'python function'",
-            "pieces search --mode ncs 'async await'",
-            "pieces search --mode fts 'TODO comments'",
-        ]
+    def get_examples(self):
+        """Return structured examples for the search command."""
+        builder = HelpBuilder()
+
+        # Basic search
+        builder.section(
+            header="Basic Search:", command_template="pieces search [QUERY]"
+        ).example("pieces search", "Interactive search mode").example(
+            "pieces search 'python function'", "Search for Python functions"
+        )
+
+        # Search modes
+        builder.section(
+            header="Search Modes:",
+            command_template="pieces search --mode [MODE] [QUERY]",
+        ).example(
+            "pieces search --mode ncs 'async await'", "Neural code search"
+        ).example(
+            "pieces search --mode fts 'TODO comments'", "Full text search"
+        ).example("pieces search --mode fuzzy 'auth'", "Fuzzy search (default)")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_SEARCH_DOCS.value

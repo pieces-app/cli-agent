@@ -1,8 +1,14 @@
 import pytest
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, AsyncMock
 import sys
 import os
 from pathlib import Path
+import sentry_sdk
+import contextlib
+
+# Disable Sentry immediately at module import time
+os.environ["SENTRY_DSN"] = ""
+sentry_sdk.init(dsn=None)
 
 SCRIPT_NAME = "src/pieces"
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -15,6 +21,39 @@ from pieces._vendor.pieces_os_client.models.classification_specific_enum import 
 )
 from pieces.config.constants import PIECES_DATA_DIR
 from pieces.logger import Logger
+
+
+@pytest.fixture(autouse=True, scope="session")
+def disable_sentry():
+    """
+    Completely disable Sentry for all tests.
+
+    This fixture ensures that Sentry is disabled at the start of the test session
+    and patches the init function to prevent re-enabling during tests.
+    """
+    # Disable Sentry immediately
+    sentry_sdk.init(dsn=None)
+
+    # Patch sentry_sdk.init to prevent any re-initialization during tests
+    original_init = sentry_sdk.init
+
+    def mock_init(*args, **kwargs):
+        # Always call with dsn=None to disable Sentry
+        return original_init(dsn=None)
+
+    # Apply the patch for the entire test session
+    with patch.object(sentry_sdk, "init", side_effect=mock_init):
+        # Also patch all Sentry functions to be no-ops for extra safety
+        with patch.object(sentry_sdk, "capture_exception", return_value=None):
+            with patch.object(sentry_sdk, "capture_message", return_value=None):
+                with patch.object(sentry_sdk, "add_breadcrumb", return_value=None):
+                    with patch.object(sentry_sdk, "set_context", return_value=None):
+                        with patch.object(sentry_sdk, "set_extra", return_value=None):
+                            with patch.object(sentry_sdk, "set_tag", return_value=None):
+                                with patch.object(
+                                    sentry_sdk, "flush", return_value=True
+                                ):
+                                    yield
 
 
 @pytest.fixture(autouse=True)
@@ -50,6 +89,19 @@ def mock_headless_mode():
     from pieces.settings import Settings
 
     with patch.object(Settings, "headless_mode", False):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_file_locking():
+    """
+    Mock file locking operations to prevent fcntl issues in tests.
+
+    This prevents the BaseConfigManager from attempting real file locking
+    operations when other parts of the file system are mocked.
+    """
+    # Mock the _file_lock context manager to be a no-op context manager
+    with patch("pieces.config.managers.base._file_lock", contextlib.nullcontext):
         yield
 
 

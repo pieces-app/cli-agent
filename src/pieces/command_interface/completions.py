@@ -3,6 +3,7 @@ from importlib.resources import files
 from pieces.base_command import BaseCommand
 from pieces.settings import Settings
 from pieces.urls import URLs
+from pieces.help_structure import HelpBuilder
 from pieces import __version__
 from rich.markdown import Markdown
 from typing import Literal, List, get_args
@@ -24,13 +25,20 @@ class CompletionCommand(BaseCommand):
     def get_description(self) -> str:
         return "Display the raw completion script for a specific shell"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces completion bash",
-            "pieces completion zsh",
-            "pieces completion fish",
-            "pieces completion powershell",
-        ]
+    def get_examples(self):
+        """Return structured examples for the completion command."""
+        builder = HelpBuilder()
+
+        builder.section(
+            header="Shell Completion Scripts:",
+            command_template="pieces completion [SHELL]",
+        ).example("pieces completion bash", "Generate Bash completion script").example(
+            "pieces completion zsh", "Generate Zsh completion script"
+        ).example("pieces completion fish", "Generate Fish completion script").example(
+            "pieces completion powershell", "Generate PowerShell completion script"
+        )
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_COMPLETION_DOCS.value

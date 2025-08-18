@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Union, List, Dict, Self
+from typing import Union, List, Dict, Self, Optional
 import argparse
 from pieces.headless.models.base import CommandResult
+from pieces.help_structure import CommandHelp
 from pieces.settings import Settings
 import sys
 
@@ -34,7 +35,7 @@ class BaseCommand(ABC):
         self.aliases: List[str] = self.get_aliases()
         self.help: str = self.get_help()
         self.description: str = self.get_description()
-        self.examples: List[str] = self.get_examples()
+        self.help_structure = self.get_examples()
         self.docs: str = self.get_docs()
 
     def command_func(self, *args, **kwargs):
@@ -66,9 +67,9 @@ class BaseCommand(ABC):
         """Return a detailed description for the command."""
         return self.get_help()  # Default to help text if no description provided
 
-    def get_examples(self) -> List[str]:
-        """Return a list of usage examples."""
-        return []
+    def get_examples(self) -> Optional[CommandHelp]:
+        """Return the structured examples content for this command."""
+        return None
 
     def get_docs(self) -> str:
         """Return extended documentation for the command."""

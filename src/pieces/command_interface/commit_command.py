@@ -3,6 +3,7 @@ from pieces.base_command import BaseCommand
 from pieces.urls import URLs
 from pieces.autocommit import git_commit
 from pieces.settings import Settings
+from pieces.help_structure import HelpBuilder
 
 
 class CommitCommand(BaseCommand):
@@ -17,14 +18,25 @@ class CommitCommand(BaseCommand):
     def get_description(self) -> str:
         return "Automatically generate meaningful commit messages based on your code changes using AI, with options to stage files, add issue references, and push to remote"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces commit",
-            "pieces commit --push",
-            "pieces commit --all",
-            "pieces commit --issues",
-            "pieces commit -a -p",
-        ]
+    def get_examples(self):
+        """Return structured examples for the commit command."""
+        builder = HelpBuilder()
+
+        # Basic commit
+        builder.section(
+            header="Basic Commit:", command_template="pieces commit [OPTIONS]"
+        ).example("pieces commit", "Generate commit message for staged changes")
+
+        # Advanced options
+        builder.section(
+            header="Advanced Options:", command_template="pieces commit [FLAGS]"
+        ).example("pieces commit --all", "Stage all changes and commit").example(
+            "pieces commit --push", "Commit and push to remote"
+        ).example("pieces commit --issues", "Include issue references").example(
+            "pieces commit -a -p", "Stage all changes and push"
+        )
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_COMMIT_DOCS.value

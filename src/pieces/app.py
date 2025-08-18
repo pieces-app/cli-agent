@@ -1,4 +1,6 @@
 import sys
+import atexit
+import sentry_sdk
 import os
 
 from pieces.config.constants import PIECES_DATA_DIR
@@ -123,6 +125,22 @@ class PiecesCLI:
 
 
 def main():
+    if __version__ == "dev":
+        environment = "development"
+    elif "dev" in __version__:
+        environment = "staging"
+    else:
+        environment = "production"
+
+    sentry_sdk.init(
+        # https://sentry.zendesk.com/hc/en-us/articles/26741783759899-My-DSN-key-is-publicly-visible-is-this-a-security-vulnerability
+        dsn="https://c1b7b0748590decc1aac426add5f4e12@o552351.ingest.us.sentry.io/4509837316980737",
+        release=__version__,
+        send_default_pii=True,
+        environment=environment,
+    )
+    atexit.register(lambda: sentry_sdk.flush(timeout=2))
+
     cli = PiecesCLI()
     try:
         cli.run()
@@ -133,21 +151,28 @@ def main():
                 error_code=ErrorCode.USER_INTERRUPTED,
                 error_message="Operation cancelled by user",
             )
+    except SystemExit:
+        sentry_sdk.flush(2)
+        raise
     except Exception as e:
-        if isinstance(e, HeadlessError):
+        sentry_sdk.capture_exception(e)
+        if isinstance(e, HeadlessError) or Settings.headless_mode:
             HeadlessOutput.handle_exception(e, PiecesCLI.command or "unknown")
         elif __version__ == "dev":
             Settings.logger.console.print_exception(show_locals=True)
-        elif Settings.headless_mode:
-            HeadlessOutput.handle_exception(e, PiecesCLI.command or "unknown")
         else:
-            Settings.logger.critical(e)
-            Settings.show_error("UNKNOWN EXCEPTION", e)
+            Settings.logger.critical(e, ignore_sentry=True)
+            try:
+                Settings.show_error("UNKNOWN EXCEPTION", e)
+            except SystemExit:
+                sentry_sdk.flush(2)
+                raise
     finally:
         from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import (
             BaseWebsocket,
         )
 
+        sentry_sdk.flush(2)
         BaseWebsocket.close_all()
 
 
