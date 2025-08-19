@@ -223,25 +223,33 @@ class ChatListPanel(BaseListPanel):
         if not message.chat:
             Settings.logger.info("Received chat update with None chat - ignoring")
             return
-        Settings.logger.info(f"Chat updated: {message.chat.id}")
 
         try:
-            message.chat.id
-        except AttributeError:
-            return  # Chat is deleted or not valid
+            # Check if chat is valid by accessing its ID
+            chat_id = message.chat.id
+            Settings.logger.info(f"Chat updated: {chat_id}")
+        except (AttributeError, TypeError):
+            # Chat is deleted or not valid - ignore the update
+            Settings.logger.info("Received update for deleted/invalid chat - ignoring")
+            return
 
-        chat_exists = message.chat.id in self._item_widgets
-        title = message.chat.name
-        summary = message.chat.summary or ""
+        try:
+            chat_exists = chat_id in self._item_widgets
+            title = message.chat.name
+            summary = message.chat.summary or ""
 
-        if chat_exists:
-            self.update_chat(message.chat, title, summary)
-        else:
-            if ConversationsSnapshot.first_shot:
-                self.add_chat(message.chat, title, summary)
+            if chat_exists:
+                self.update_chat(message.chat, title, summary)
             else:
-                # New chat created - add at top
-                self.add_chat_at_top(message.chat, title, summary)
+                if ConversationsSnapshot.first_shot:
+                    self.add_chat(message.chat, title, summary)
+                else:
+                    # New chat created - add at top
+                    self.add_chat_at_top(message.chat, title, summary)
+        except (AttributeError, TypeError):
+            # Chat properties are not accessible (deleted chat) - ignore
+            Settings.logger.info("Cannot access chat properties - chat may be deleted")
+            return
 
     async def on_chat_messages_deleted(self, message: ChatMessages.Deleted) -> None:
         """Handle chat deletion event from backend."""
