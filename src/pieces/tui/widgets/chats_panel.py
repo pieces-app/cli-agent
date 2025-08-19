@@ -22,12 +22,7 @@ class ChatListPanel(BaseListPanel):
     """Enhanced chat list panel with keyboard navigation and efficient incremental updates."""
 
     def __init__(self, **kwargs):
-        super().__init__(
-            panel_title="Chats",
-            empty_message="No chats yet...",
-            **kwargs
-        )
-        # Legacy compatibility
+        super().__init__(panel_title="Chats", empty_message="No chats yet...", **kwargs)
         self.active_chat: Optional[BasicChat] = None
 
     def get_new_button_text(self) -> str:
@@ -38,7 +33,9 @@ class ChatListPanel(BaseListPanel):
         """Get a unique ID for a chat."""
         return chat.id
 
-    def create_item_widget(self, chat: BasicChat, title: str, subtitle: str) -> ChatItem:
+    def create_item_widget(
+        self, chat: BasicChat, title: str, subtitle: str
+    ) -> ChatItem:
         """Create a widget for a chat."""
         is_active = chat == self.active_item
         return ChatItem(
@@ -160,7 +157,6 @@ class ChatListPanel(BaseListPanel):
         self._update_item_widget(chat.id, chat, title, summary)
 
     def set_active_chat(self, chat: Optional[BasicChat]):
-        """Set the active chat - legacy compatibility."""
         if not chat or not chat.exists():
             return
         if self.active_chat and not self.active_chat.exists():
@@ -215,7 +211,9 @@ class ChatListPanel(BaseListPanel):
             try:
                 chat_id = chat.id
                 chat.delete()
-                Settings.logger.info(f"Requested deletion of chat: {title} (ID: {chat_id})")
+                Settings.logger.info(
+                    f"Requested deletion of chat: {title} (ID: {chat_id})"
+                )
             except Exception as e:
                 Settings.logger.error(f"Error deleting chat: {e}")
 
@@ -225,6 +223,7 @@ class ChatListPanel(BaseListPanel):
         if not message.chat:
             Settings.logger.info("Received chat update with None chat - ignoring")
             return
+        Settings.logger.info(f"Chat updated: {message.chat.id}")
 
         try:
             message.chat.id

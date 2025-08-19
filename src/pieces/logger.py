@@ -67,6 +67,10 @@ class Logger:
         """Log an info message."""
         self.logger.info(message, *args, **kwargs)
 
+    def warning(self, message, *args, **kwargs):
+        """Log a warning message."""
+        self.logger.warning(message, *args, **kwargs)
+
     def error(self, message, *args, ignore_sentry=False, **kwargs):
         """Log an error message."""
         exc_info = kwargs.pop("exc_info", True)

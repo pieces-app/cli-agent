@@ -72,7 +72,7 @@ class BaseDualPaneView(Screen):
             self.list_panel.add_class("list-panel")
             yield self.list_panel
 
-            # Content panel (75% width) - RIGHT SIDE  
+            # Content panel (75% width) - RIGHT SIDE
             self.content_panel = self.create_content_panel()
             self.content_panel.add_class("content-panel")
             yield self.content_panel
@@ -134,7 +134,7 @@ class BaseDualPaneView(Screen):
     def action_refresh(self):
         """Refresh the current view."""
         self._load_items()
-        
+
         # Trigger connection check through EventHub
         if self.event_hub:
             self.event_hub.connection.reconnect()
@@ -159,10 +159,10 @@ class BaseDualPaneView(Screen):
         """Clean up view resources."""
         try:
             # Clean up panels
-            if hasattr(self.content_panel, 'cleanup'):
+            if hasattr(self.content_panel, "cleanup"):
                 self.content_panel.cleanup()
-            
-            if hasattr(self.list_panel, 'clear_items'):
+
+            if hasattr(self.list_panel, "clear_items"):
                 self.list_panel.clear_items()
 
             # Clear references
@@ -179,3 +179,4 @@ class BaseDualPaneView(Screen):
             self.cleanup()
         except (RuntimeError, ValueError, AttributeError):
             pass
+

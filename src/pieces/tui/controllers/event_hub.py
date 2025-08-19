@@ -52,21 +52,6 @@ class EventHub:
         self._setup_event_bridging()
         self._initialized = True
 
-    def _post_to_current_screen(self, message):
-        """Post message to current screen to ensure proper routing."""
-        try:
-            # Get the current screen from the app
-            current_screen = self.app.screen
-            if current_screen:
-                current_screen.post_message(message)
-            else:
-                # Fallback to app if no current screen
-                self.app.post_message(message)
-        except Exception as e:
-            Settings.logger.error(f"Error posting message to current screen: {e}")
-            # Fallback to app
-            self.app.post_message(message)
-
     def _post_to_all_targets(self, message):
         """Post message to both app and current screen for maximum compatibility."""
         try:
@@ -74,12 +59,53 @@ class EventHub:
             current_screen = self.app.screen
             if current_screen:
                 current_screen.post_message(message)
+
+                # Also post directly to specific widgets that need the message
+                self._post_to_widgets(current_screen, message)
+
             Settings.logger.info(f"Posted message to all targets: {current_screen}")
-                
+
         except Exception as e:
             Settings.logger.error(f"Error posting message to all targets: {e}")
             # Fallback to just app
             self.app.post_message(message)
+
+    def _post_to_widgets(self, screen, message):
+        """Post messages directly to widgets that need them."""
+        try:
+            # Import here to avoid circular imports
+            from ..messages import ChatMessages, WorkstreamMessages
+
+            # Post ChatMessages to chat widgets
+            if isinstance(
+                message,
+                (
+                    ChatMessages.Updated,
+                    ChatMessages.Deleted,
+                    ChatMessages.Switched,
+                    ChatMessages.NewRequested,
+                ),
+            ):
+                if hasattr(screen, "chat_list_panel") and screen.chat_list_panel:
+                    screen.chat_list_panel.post_message(message)
+
+            # Post WorkstreamMessages to workstream widgets
+            elif isinstance(
+                message,
+                (
+                    WorkstreamMessages.Updated,
+                    WorkstreamMessages.Deleted,
+                    WorkstreamMessages.Switched,
+                ),
+            ):
+                if (
+                    hasattr(screen, "workstream_activities_panel")
+                    and screen.workstream_activities_panel
+                ):
+                    screen.workstream_activities_panel.post_message(message)
+
+        except Exception as e:
+            Settings.logger.error(f"Error posting to widgets: {e}")
 
     def _setup_event_bridging(self):
         """Set up event listeners to bridge controller events to Textual messages."""
@@ -152,29 +178,31 @@ class EventHub:
         # Copilot events - post to current screen to ensure proper message routing
         self.copilot.on(
             EventType.COPILOT_THINKING_STARTED,
-            lambda _: self._post_to_current_screen(CopilotMessages.ThinkingStarted()),
+            lambda _: self._post_to_all_targets(CopilotMessages.ThinkingStarted()),
         )
         self.copilot.on(
             EventType.COPILOT_THINKING_ENDED,
-            lambda _: self._post_to_current_screen(CopilotMessages.ThinkingEnded()),
+            lambda _: self._post_to_all_targets(CopilotMessages.ThinkingEnded()),
         )
         self.copilot.on(
             EventType.COPILOT_STREAM_STARTED,
-            lambda data: self._post_to_current_screen(CopilotMessages.StreamStarted(data)),
+            lambda data: self._post_to_all_targets(CopilotMessages.StreamStarted(data)),
         )
         self.copilot.on(
             EventType.COPILOT_STREAM_CHUNK,
-            lambda data: self._post_to_current_screen(
+            lambda data: self._post_to_all_targets(
                 CopilotMessages.StreamChunk(data["text"], data["full_text"])
             ),
         )
         self.copilot.on(
             EventType.COPILOT_STREAM_COMPLETED,
-            lambda data: self._post_to_current_screen(CopilotMessages.StreamCompleted(data)),
+            lambda data: self._post_to_all_targets(
+                CopilotMessages.StreamCompleted(data)
+            ),
         )
         self.copilot.on(
             EventType.COPILOT_STREAM_ERROR,
-            lambda data: self._post_to_current_screen(
+            lambda data: self._post_to_all_targets(
                 CopilotMessages.StreamError(data["error"])
             ),
         )
@@ -182,15 +210,21 @@ class EventHub:
         # Workstream events - post to current screen to ensure proper message routing
         self.workstream.on(
             EventType.WORKSTREAM_SUMMARY_UPDATED,
-            lambda summary: self._post_to_current_screen(WorkstreamMessages.Updated(summary)),
+            lambda summary: self._post_to_all_targets(
+                WorkstreamMessages.Updated(summary)
+            ),
         )
         self.workstream.on(
             EventType.WORKSTREAM_SUMMARY_DELETED,
-            lambda summary_id: self._post_to_current_screen(WorkstreamMessages.Deleted(summary_id)),
+            lambda summary_id: self._post_to_all_targets(
+                WorkstreamMessages.Deleted(summary_id)
+            ),
         )
         self.workstream.on(
             EventType.WORKSTREAM_SUMMARY_SWITCHED,
-            lambda summary: self._post_to_current_screen(WorkstreamMessages.Switched(summary)),
+            lambda summary: self._post_to_all_targets(
+                WorkstreamMessages.Switched(summary)
+            ),
         )
 
     def cleanup(self):
