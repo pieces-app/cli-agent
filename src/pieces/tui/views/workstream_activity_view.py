@@ -2,6 +2,7 @@
 
 from typing import Optional
 from textual.binding import Binding
+from textual.widgets import Footer
 
 from pieces.settings import Settings
 from ..widgets import WorkstreamActivitiesPanel, WorkstreamContentPanel
@@ -38,6 +39,11 @@ class WorkstreamActivityView(BaseDualPaneView):
         """Create the workstream content panel (RIGHT side)."""
         self.workstream_content_panel = WorkstreamContentPanel()
         return self.workstream_content_panel
+
+    def create_additional_components(self):
+        """Create chat input and status bar."""
+        self.footer = Footer()
+        yield self.footer
 
     def _initialize_view(self):
         """Initialize workstream-specific components."""
@@ -113,4 +119,3 @@ class WorkstreamActivityView(BaseDualPaneView):
             Settings.logger.error(f"Error during WorkstreamActivityView cleanup: {e}")
 
         super().cleanup()
-

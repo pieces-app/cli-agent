@@ -3,12 +3,11 @@
 from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
 from textual.reactive import reactive
-from textual.containers import ScrollableContainer
 from textual.widgets import Static, Markdown
-from textual.binding import Binding
 from textual.css.query import NoMatches
 from textual.types import NoActiveAppError
 
+from .base_content_panel import BaseContentPanel
 from .chat_message import ChatMessage
 from pieces.settings import Settings
 
@@ -19,27 +18,10 @@ if TYPE_CHECKING:
     )
 
 
-class ChatViewPanel(ScrollableContainer):
+class ChatViewPanel(BaseContentPanel):
     """Chat view panel to display conversation messages."""
 
     DEFAULT_CSS = """
-    ChatViewPanel {
-        border: solid $primary;
-        border-title-color: $primary;
-        border-title-style: bold;
-        scrollbar-background: $surface;
-        scrollbar-color: $primary;
-        scrollbar-color-hover: $accent;
-        overflow-y: auto;
-        overflow-x: hidden;
-        
-        &:focus {
-            border: solid $accent;
-            border-title-color: $accent;
-            border-title-style: bold;
-        }
-    }
-    
     ChatViewPanel .message-streaming { 
         border-left: thick $accent;
         text-style: bold;
@@ -59,29 +41,8 @@ class ChatViewPanel(ScrollableContainer):
     messages: reactive[List[ChatMessage]] = reactive([])
     current_chat: Optional["BasicChat"] = None
 
-    BINDINGS = [
-        *[
-            Binding(key, "scroll_down", "Scroll down", show=False)
-            for key in ["j", "down"]
-        ],
-        *[Binding(key, "scroll_up", "Scroll up", show=False) for key in ["k", "up"]],
-        Binding("d", "scroll_down_half", "Scroll down half page", show=False),
-        Binding("u", "scroll_up_half", "Scroll up half page", show=False),
-        Binding("gg", "jump_to_start", "Jump to start", show=False),
-        Binding("G", "jump_to_end", "Jump to end", show=False),
-        *[
-            Binding(key, "page_down", "Page down", show=False)
-            for key in ["ctrl+f", "page_down"]
-        ],
-        *[
-            Binding(key, "page_up", "Page up", show=False)
-            for key in ["ctrl+b", "page_up"]
-        ],
-    ]
-
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.border_title = "Chat"
+        super().__init__(panel_title="Chat", **kwargs)
         self._streaming_widget: Optional[ChatMessage] = None
         self._thinking_widget: Optional[Static] = None
         self._last_message_count = 0
@@ -268,6 +229,23 @@ class ChatViewPanel(ScrollableContainer):
             self._thinking_widget.remove()
             self._thinking_widget = None
 
+    def _show_welcome_message(self):
+        """Show a welcome message when no chat is loaded."""
+        welcome_text = """💬 Pieces Copilot
+
+Welcome to your AI-powered coding assistant!
+
+• Select a chat from the left panel to continue a conversation
+• Press Ctrl+N to start a new chat
+• Type your questions in the input field below
+• Use Ctrl+Shift+M to change AI models
+
+Ready to help with your coding tasks!"""
+
+        self._show_static_content(
+            welcome_text, classes="welcome-message", widget_id="chat-welcome-message"
+        )
+
     def clear_messages(self):
         """Clear all messages from the chat panel."""
         self._clear_thinking_indicator()
@@ -361,36 +339,3 @@ class ChatViewPanel(ScrollableContainer):
     def get_last_message(self) -> Optional[ChatMessage]:
         """Get the last message widget."""
         return self.messages[-1] if self.messages else None
-
-    # Navigation methods
-    def action_scroll_down(self):
-        """Scroll down one line."""
-        self.scroll_relative(y=1)
-
-    def action_scroll_up(self):
-        """Scroll up one line."""
-        self.scroll_relative(y=-1)
-
-    def action_scroll_down_half(self):
-        """Scroll down half a page."""
-        self.scroll_relative(y=self.size.height // 2)
-
-    def action_scroll_up_half(self):
-        """Scroll up half a page."""
-        self.scroll_relative(y=-(self.size.height // 2))
-
-    def action_page_down(self):
-        """Page down."""
-        self.scroll_relative(y=self.size.height)
-
-    def action_page_up(self):
-        """Page up."""
-        self.scroll_relative(y=-self.size.height)
-
-    def action_jump_to_start(self):
-        """Jump to the start of the conversation."""
-        self.scroll_home(animate=False)
-
-    def action_jump_to_end(self):
-        """Jump to the end of the conversation."""
-        self.scroll_end(animate=False)

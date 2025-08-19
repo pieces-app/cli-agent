@@ -87,7 +87,9 @@ class EventHub:
                 ),
             ):
                 if hasattr(screen, "chat_list_panel") and screen.chat_list_panel:
-                    screen.chat_list_panel.post_message(message)
+                    # Use call_later to ensure we're on the main thread
+                    chat_panel = screen.chat_list_panel
+                    self.app.call_later(lambda msg=message, panel=chat_panel: panel.post_message(msg))
 
             # Post WorkstreamMessages to workstream widgets
             elif isinstance(
@@ -102,7 +104,9 @@ class EventHub:
                     hasattr(screen, "workstream_activities_panel")
                     and screen.workstream_activities_panel
                 ):
-                    screen.workstream_activities_panel.post_message(message)
+                    # Use call_later to ensure we're on the main thread
+                    workstream_panel = screen.workstream_activities_panel
+                    self.app.call_later(lambda msg=message, panel=workstream_panel: panel.post_message(msg))
 
         except Exception as e:
             Settings.logger.error(f"Error posting to widgets: {e}")

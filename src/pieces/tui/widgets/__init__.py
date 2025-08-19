@@ -3,6 +3,7 @@
 # Base abstractions
 from .base_item import BaseItem
 from .base_list_panel import BaseListPanel
+from .base_content_panel import BaseContentPanel
 
 # Chat widgets
 from .chat_panel import ChatViewPanel
@@ -27,6 +28,7 @@ __all__ = [
     # Base abstractions
     "BaseItem",
     "BaseListPanel",
+    "BaseContentPanel",
     # Chat widgets
     "ChatViewPanel",
     "ChatListPanel",

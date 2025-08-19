@@ -2,11 +2,11 @@
 
 from typing import Optional, TYPE_CHECKING
 from textual.reactive import reactive
-from textual.containers import ScrollableContainer
-from textual.widgets import Static, Markdown, TextArea
+from textual.widgets import Markdown, TextArea
 from textual.binding import Binding
 from textual.app import ComposeResult
 
+from .base_content_panel import BaseContentPanel
 from pieces.settings import Settings
 from ..messages import WorkstreamMessages
 
@@ -16,44 +16,10 @@ if TYPE_CHECKING:
     )
 
 
-class WorkstreamContentPanel(ScrollableContainer):
+class WorkstreamContentPanel(BaseContentPanel):
     """Panel for displaying and editing workstream summary content."""
 
     DEFAULT_CSS = """
-    WorkstreamContentPanel {
-        border: solid $primary;
-        border-title-color: $primary;
-        border-title-style: bold;
-        scrollbar-background: $surface;
-        scrollbar-color: $primary;
-        scrollbar-color-hover: $accent;
-        overflow-y: auto;
-        overflow-x: hidden;
-        
-        &:focus {
-            border: solid $accent;
-            border-title-color: $accent;
-            border-title-style: bold;
-        }
-    }
-    
-    WorkstreamContentPanel .content-header {
-        height: 3;
-        width: 100%;
-        margin: 0 0 1 0;
-        padding: 0 1;
-        background: $surface;
-        border-bottom: solid $primary;
-    }
-    
-
-    
-    WorkstreamContentPanel .content-area {
-        width: 100%;
-        height: 1fr;
-        padding: 1;
-    }
-    
     WorkstreamContentPanel .markdown-content {
         width: 100%;
         height: auto;
@@ -73,41 +39,19 @@ class WorkstreamContentPanel(ScrollableContainer):
         }
     }
     
-    WorkstreamContentPanel .welcome-message {
-        text-align: center;
-        margin: 4 2;
-        padding: 3;
-        border: dashed $primary;
-        background: $primary 10%;
-        color: $text;
-        width: 100%;
-        height: auto;
-    }
-    
-
     """
 
-    BINDINGS = [
+    # Add workstream-specific bindings to the base scroll bindings
+    BINDINGS = BaseContentPanel.BINDINGS + [
         Binding("ctrl+e", "toggle_edit_mode", "Toggle Edit Mode"),
         Binding("ctrl+s", "save_content", "Save Content", show=False),
-        *[
-            Binding(key, "scroll_down", "Scroll down", show=False)
-            for key in ["j", "down"]
-        ],
-        *[Binding(key, "scroll_up", "Scroll up", show=False) for key in ["k", "up"]],
-        Binding("d", "scroll_down_half", "Scroll down half page", show=False),
-        Binding("u", "scroll_up_half", "Scroll up half page", show=False),
-        Binding("gg", "jump_to_start", "Jump to start", show=False),
-        Binding("G", "jump_to_end", "Jump to end", show=False),
     ]
 
     edit_mode: reactive[bool] = reactive(False)
     current_summary: Optional["BasicSummary"] = None
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.border_title = "Workstream Content"
-        self._content_area: Optional[ScrollableContainer] = None
+        super().__init__(panel_title="Workstream Content", **kwargs)
         self._markdown_widget: Optional[Markdown] = None
         self._editor_widget: Optional[TextArea] = None
         self._original_content = ""
@@ -115,11 +59,7 @@ class WorkstreamContentPanel(ScrollableContainer):
 
     def compose(self) -> ComposeResult:
         """Compose the workstream content panel."""
-        # Content area
-        self._content_area = ScrollableContainer(
-            classes="content-area", id="content-area"
-        )
-        yield self._content_area
+        return []
 
     def on_mount(self) -> None:
         """Initialize the content panel when mounted."""
@@ -143,12 +83,8 @@ class WorkstreamContentPanel(ScrollableContainer):
 
     def _extract_summary_content(self, summary: "BasicSummary") -> str:
         """Extract markdown content from workstream summary."""
-        content = f"# {summary.name}\n\n"
+        content = ""
 
-        # Add summary ID for reference
-        content += f"**Summary ID:** {summary.id}\n\n"
-
-        # Add the raw content if available
         if hasattr(summary, "raw_content") and summary.raw_content:
             content += "## Content\n\n"
             content += summary.raw_content
@@ -161,10 +97,8 @@ class WorkstreamContentPanel(ScrollableContainer):
 
     def _show_welcome_message(self):
         """Show a welcome message when no summary is selected."""
-        if self._content_area:
-            self._clear_content_area()
-
-            welcome_text = """🔄 Workstream Activities
+        Settings.logger.info("WorkstreamContentPanel: Showing welcome message")
+        welcome_text = """🔄 Workstream Activities
 
 Select a workstream activity from the left panel to view or edit its content.
 
@@ -175,45 +109,27 @@ Select a workstream activity from the left panel to view or edit its content.
 
 Ready to manage your workstream activities!"""
 
-            welcome_widget = Static(
-                welcome_text, classes="welcome-message", id="welcome-message"
-            )
-            self._content_area.mount(welcome_widget)
+        self._show_static_content(welcome_text, classes="welcome-message")
 
     def _show_markdown_content(self, content: str):
         """Show content in read mode (markdown)."""
-        if self._content_area:
-            self._clear_content_area()
+        self._clear_content()
 
-            self._markdown_widget = Markdown(content, classes="markdown-content")
-            self._content_area.mount(self._markdown_widget)
+        self._markdown_widget = Markdown(content, classes="markdown-content")
+        self.mount(self._markdown_widget)
 
     def _show_editor_content(self, content: str):
         """Show content in edit mode (text editor)."""
-        if self._content_area:
-            self._clear_content_area()
+        self._clear_content()
 
-            self._editor_widget = TextArea(
-                text=content,
-                language="markdown",
-                theme="monokai",
-                classes="editor-content",
-                id="content-editor",
-            )
-            self._content_area.mount(self._editor_widget)
-
-    def _clear_content_area(self):
-        """Clear the content area."""
-        if self._content_area:
-            try:
-                children_to_remove = list(self._content_area.children)
-                for child in children_to_remove:
-                    try:
-                        child.remove()
-                    except (RuntimeError, ValueError):
-                        pass
-            except (RuntimeError, AttributeError):
-                pass
+        self._editor_widget = TextArea(
+            text=content,
+            language="markdown",
+            theme="monokai",
+            classes="editor-content",
+            id="content-editor",
+        )
+        self.mount(self._editor_widget)
 
     def watch_edit_mode(self, edit_mode: bool) -> None:
         """Handle edit mode changes."""
@@ -272,31 +188,6 @@ Ready to manage your workstream activities!"""
         self._has_changes = False
 
         self._show_welcome_message()
-
-    # Navigation methods (similar to ChatViewPanel)
-    def action_scroll_down(self):
-        """Scroll down one line."""
-        self.scroll_relative(y=1)
-
-    def action_scroll_up(self):
-        """Scroll up one line."""
-        self.scroll_relative(y=-1)
-
-    def action_scroll_down_half(self):
-        """Scroll down half a page."""
-        self.scroll_relative(y=self.size.height // 2)
-
-    def action_scroll_up_half(self):
-        """Scroll up half a page."""
-        self.scroll_relative(y=-(self.size.height // 2))
-
-    def action_jump_to_start(self):
-        """Jump to the start of the content."""
-        self.scroll_home(animate=False)
-
-    def action_jump_to_end(self):
-        """Jump to the end of the content."""
-        self.scroll_end(animate=False)
 
     def cleanup(self):
         """Clean up widget resources."""

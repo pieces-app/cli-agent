@@ -124,16 +124,14 @@ Ready to assist with code, questions, and more!"""
 
         if self.chat_view_panel:
             try:
-                existing_welcome = self.chat_view_panel.query_one("#welcome-static")
-                if existing_welcome:
-                    await existing_welcome.remove()
-            except NoMatches:
+                self.chat_view_panel._clear_content()
+            except Exception:
                 pass
 
             from textual.widgets import Static
 
             welcome_widget = Static(
-                welcome_text, classes="welcome-message", id="welcome-static"
+                welcome_text, classes="welcome-message"
             )
             self.chat_view_panel.mount(welcome_widget)
 
@@ -227,10 +225,9 @@ Ready to assist with code, questions, and more!"""
         # Remove welcome message and show user input immediately
         if self.chat_view_panel:
             try:
-                welcome_widget = self.chat_view_panel.query_one("#welcome-static")
-                if welcome_widget:
-                    await welcome_widget.remove()
-            except NoMatches:
+                # Clear any existing content (including welcome message)
+                self.chat_view_panel._clear_content()
+            except Exception:
                 pass
 
             timestamp = datetime.now().strftime("Today %I:%M %p")
