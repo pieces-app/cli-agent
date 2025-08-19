@@ -11,7 +11,6 @@ from textual.binding import Binding
 from textual.message import Message
 from textual.css.query import NoMatches
 
-from pieces.settings import Settings
 from .base_item import BaseItem
 
 
@@ -85,7 +84,13 @@ class BaseListPanel(ScrollableContainer):
         Binding("d", "delete_item", "Delete item", show=False),
     ]
 
-    def __init__(self, panel_title: str, empty_message: str, show_new_button: bool = True, **kwargs):
+    def __init__(
+        self,
+        panel_title: str,
+        empty_message: str,
+        show_new_button: bool = True,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.border_title = panel_title
         self._empty_message = empty_message
@@ -253,7 +258,7 @@ class BaseListPanel(ScrollableContainer):
             if subtitle_widgets and subtitle:
                 subtitle_widget = subtitle_widgets[0]
                 if hasattr(subtitle_widget, "update"):
-                    subtitle_widget.update(subtitle)
+                    subtitle_widget.update(subtitle)  # type: ignore
 
         # Update active state
         is_active = self._is_item_active(item)

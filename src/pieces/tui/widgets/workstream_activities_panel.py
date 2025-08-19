@@ -30,17 +30,17 @@ class WorkstreamActivitiesPanel(BaseListPanel):
         """Not used since show_new_button=False."""
         return ""
 
-    def get_item_id(self, summary: "BasicSummary") -> str:
+    def get_item_id(self, item: "BasicSummary") -> str:
         """Get a unique ID for a workstream summary."""
-        return summary.id
+        return item.id
 
     def create_item_widget(
-        self, summary: "BasicSummary", title: str, subtitle: str
+        self, item: "BasicSummary", title: str, subtitle: str
     ) -> WorkstreamItem:
         """Create a widget for a workstream summary."""
-        is_active = summary == self.active_item
+        is_active = item == self.active_item
         return WorkstreamItem(
-            summary=summary,
+            summary=item,
             title=title,
             subtitle=subtitle,
             is_active=is_active,
@@ -50,14 +50,15 @@ class WorkstreamActivitiesPanel(BaseListPanel):
     def create_new_item_message(self) -> Message:
         """Not used since show_new_button=False."""
         from ..messages import ViewMessages
+
         return ViewMessages.SwitchToWorkstream()
 
-    def extract_item_display_info(self, summary: "BasicSummary") -> Tuple[str, str]:
+    def extract_item_display_info(self, item: "BasicSummary") -> Tuple[str, str]:
         """Extract title and subtitle from a workstream summary."""
-        title = summary.name or "Untitled Summary"
+        title = item.name or "Untitled Summary"
 
         # Create a subtitle from basic summary info
-        subtitle = f"Summary ID: {summary.id[:8]}..."
+        subtitle = f"Summary ID: {item.id[:8]}..."
 
         # Limit subtitle length
         if len(subtitle) > 50:
@@ -185,7 +186,6 @@ class WorkstreamActivitiesPanel(BaseListPanel):
     def action_rename_item(self):
         """Rename the selected workstream summary."""
         if self._selected_item_id and self._selected_item_id in self._item_widgets:
-            # Get the summary widget and extract the summary object
             summary_widget = self._item_widgets[self._selected_item_id]
             # TODO: Implement rename dialog for workstream summaries
             Settings.logger.info(f"Rename workstream summary: {summary_widget.title}")
@@ -201,14 +201,20 @@ class WorkstreamActivitiesPanel(BaseListPanel):
     def get_selected_summary(self) -> Optional["BasicSummary"]:
         """Get the currently selected workstream summary."""
         if self._selected_item_id and self._selected_item_id in self._item_widgets:
-            return self._item_widgets[self._selected_item_id].summary
+            summary_widget = self._item_widgets[self._selected_item_id]
+            if hasattr(summary_widget, "summary"):
+                return summary_widget.summary  # type: ignore
         return None
 
     # Message handlers for workstream updates
-    async def on_workstream_messages_updated(self, message: WorkstreamMessages.Updated) -> None:
+    async def on_workstream_messages_updated(
+        self, message: WorkstreamMessages.Updated
+    ) -> None:
         """Handle workstream summary update event from backend."""
         if not message.summary:
-            Settings.logger.info("Received workstream update with None summary - ignoring")
+            Settings.logger.info(
+                "Received workstream update with None summary - ignoring"
+            )
             return
 
         try:
@@ -218,12 +224,8 @@ class WorkstreamActivitiesPanel(BaseListPanel):
         except Exception as e:
             Settings.logger.error(f"Error updating workstream summary in UI: {e}")
 
-    async def on_workstream_messages_deleted(self, message: WorkstreamMessages.Deleted) -> None:
+    async def on_workstream_messages_deleted(
+        self, message: WorkstreamMessages.Deleted
+    ) -> None:
         """Handle workstream summary deletion event from backend."""
         self.remove_summary(message.summary_id)
-
-    async def on_workstream_messages_switched(self, message: WorkstreamMessages.Switched) -> None:
-        """Handle workstream summary switch event."""
-        self._selected_item_id = message.summary.id
-        self._update_visual_selection()
-        self.set_active_summary(message.summary)

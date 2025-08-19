@@ -53,4 +53,3 @@ class ChatItem(BaseItem):
         except (RuntimeError, ValueError, AttributeError):
             pass
         super().cleanup()
-

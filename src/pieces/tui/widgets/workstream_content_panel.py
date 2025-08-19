@@ -2,8 +2,8 @@
 
 from typing import Optional, TYPE_CHECKING
 from textual.reactive import reactive
-from textual.containers import ScrollableContainer, Vertical
-from textual.widgets import Static, Markdown, TextArea, Button
+from textual.containers import ScrollableContainer
+from textual.widgets import Static, Markdown, TextArea
 from textual.binding import Binding
 from textual.app import ComposeResult
 
@@ -135,8 +135,6 @@ class WorkstreamContentPanel(ScrollableContainer):
         self._original_content = content
         self._has_changes = False
 
-
-
         # Display content based on current mode
         if self.edit_mode:
             self._show_editor_content(content)
@@ -250,16 +248,11 @@ Ready to manage your workstream activities!"""
             self._original_content = new_content
             self._has_changes = False
 
-            if self._save_button:
-                self._save_button.disabled = True
-
             # Post save message
             self.post_message(WorkstreamMessages.ContentSaved(new_content))
             Settings.logger.info(
                 f"Saved workstream summary content for: {self.current_summary.name}"
             )
-
-
 
     async def on_text_area_changed(self, event: TextArea.Changed) -> None:
         """Handle text area content changes."""

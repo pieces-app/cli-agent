@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
 from textual.reactive import reactive
 from textual.containers import ScrollableContainer
-from textual.widgets import Static
+from textual.widgets import Static, Markdown
 from textual.binding import Binding
 from textual.css.query import NoMatches
 from textual.types import NoActiveAppError
@@ -82,7 +82,7 @@ class ChatViewPanel(ScrollableContainer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.border_title = "Chat"
-        self._streaming_widget: Optional[Static] = None
+        self._streaming_widget: Optional[ChatMessage] = None
         self._thinking_widget: Optional[Static] = None
         self._last_message_count = 0
 
@@ -308,7 +308,7 @@ class ChatViewPanel(ScrollableContainer):
             # Update markdown content
             try:
                 markdown_widget = self._streaming_widget.query_one("Markdown")
-                if markdown_widget:
+                if markdown_widget and isinstance(markdown_widget, Markdown):
                     markdown_widget.update(content)
             except (ValueError, AttributeError, RuntimeError, NoMatches):
                 # Markdown widget not found or not ready, ignore

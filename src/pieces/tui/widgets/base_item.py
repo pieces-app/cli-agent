@@ -1,7 +1,7 @@
 """Base item widget for displaying items in lists with common functionality."""
 
 from abc import abstractmethod
-from typing import Any, Optional
+from typing import Any
 from textual.app import ComposeResult
 from textual.widgets import Static
 from textual.containers import Container

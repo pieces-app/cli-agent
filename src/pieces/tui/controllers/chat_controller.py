@@ -45,8 +45,12 @@ class ChatController(BaseController):
                 self._conversation_ws.close()
                 Settings.logger.debug("Conversation WebSocket closed successfully")
         except Exception as e:
-            Settings.logger.error(f"Failed to properly close conversation WebSocket: {e}")
-            Settings.logger.info("WebSocket cleanup incomplete - connection may remain active")
+            Settings.logger.error(
+                f"Failed to properly close conversation WebSocket: {e}"
+            )
+            Settings.logger.info(
+                "WebSocket cleanup incomplete - connection may remain active"
+            )
         finally:
             self._conversation_ws = None
 

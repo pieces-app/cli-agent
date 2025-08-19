@@ -1,6 +1,6 @@
 """Workstream Activity View - using base dual-pane architecture for consistency."""
 
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 from textual.binding import Binding
 
 from pieces.settings import Settings
@@ -12,9 +12,6 @@ from ..messages import (
 )
 from .base_dual_pane_view import BaseDualPaneView
 
-if TYPE_CHECKING:
-    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.summary import BasicSummary
-
 
 class WorkstreamActivityView(BaseDualPaneView):
     """Workstream activities view with consistent dual-pane layout."""
@@ -25,7 +22,9 @@ class WorkstreamActivityView(BaseDualPaneView):
     ]
 
     def __init__(self, event_hub: "EventHub", **kwargs):
-        super().__init__(event_hub=event_hub, view_name="Workstream Activities", **kwargs)
+        super().__init__(
+            event_hub=event_hub, view_name="Workstream Activities", **kwargs
+        )
         self.workstream_activities_panel: Optional[WorkstreamActivitiesPanel] = None
         self.workstream_content_panel: Optional[WorkstreamContentPanel] = None
 
@@ -65,17 +64,23 @@ class WorkstreamActivityView(BaseDualPaneView):
         Settings.logger.info(f"Workstream Status: {message}")
 
     # Message handlers that need view-level handling
-    async def on_workstream_messages_switched(self, message: WorkstreamMessages.Switched) -> None:
+    async def on_workstream_messages_switched(
+        self, message: WorkstreamMessages.Switched
+    ) -> None:
         """Handle workstream summary switch event - update content panel."""
         if self.workstream_content_panel:
             self.workstream_content_panel.load_workstream_summary(message.summary)
 
-    async def on_workstream_messages_edit_mode_toggled(self, message: WorkstreamMessages.EditModeToggled) -> None:
+    async def on_workstream_messages_edit_mode_toggled(
+        self, message: WorkstreamMessages.EditModeToggled
+    ) -> None:
         """Handle edit mode toggle."""
         mode = "edit" if message.edit_mode else "read"
         Settings.logger.info(f"Workstream content switched to {mode} mode")
 
-    async def on_workstream_messages_content_saved(self, message: WorkstreamMessages.ContentSaved) -> None:
+    async def on_workstream_messages_content_saved(
+        self, message: WorkstreamMessages.ContentSaved
+    ) -> None:
         """Handle workstream content save."""
         if (
             self.workstream_content_panel
@@ -83,8 +88,7 @@ class WorkstreamActivityView(BaseDualPaneView):
         ):
             # Save content via controller
             self.event_hub.workstream.update_summary_content(
-                self.workstream_content_panel.current_summary,
-                message.content
+                self.workstream_content_panel.current_summary, message.content
             )
             Settings.logger.info("Workstream content saved")
 
@@ -98,7 +102,6 @@ class WorkstreamActivityView(BaseDualPaneView):
         """Switch to chat view."""
         self.post_message(ViewMessages.SwitchToChat())
 
-
     def cleanup(self):
         """Clean up workstream view resources."""
         try:
@@ -108,5 +111,6 @@ class WorkstreamActivityView(BaseDualPaneView):
 
         except Exception as e:
             Settings.logger.error(f"Error during WorkstreamActivityView cleanup: {e}")
-        
+
         super().cleanup()
+

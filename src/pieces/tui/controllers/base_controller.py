@@ -87,13 +87,13 @@ class BaseController(ABC):
     def on(
         self,
         event_type: Literal[EventType.CONNECTION_RECONNECTING],
-        callback: Callable[[None], bool],
+        callback: Callable[[None], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.MODEL_CHANGED],
-        callback: Callable[["ModelInfo"], bool],
+        callback: Callable[["ModelInfo"], None],
     ) -> None: ...
     @overload
     def on(
@@ -103,85 +103,85 @@ class BaseController(ABC):
             EventType.MATERIAL_UPDATED,
             EventType.MATERIAL_DELETED,
         ],
-        callback: Callable[["Asset"], bool],
+        callback: Callable[["Asset"], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.MATERIALS_SEARCH_COMPLETED],
-        callback: Callable[[List["BasicAsset"]], bool],
+        callback: Callable[[List["BasicAsset"]], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.CONNECTION_ESTABLISHED],
-        callback: Callable[[None], bool],
+        callback: Callable[[None], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.CHAT_UPDATED, EventType.CHAT_SWITCHED],
-        callback: Callable[["BasicChat"], bool],
+        callback: Callable[["BasicChat"], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.CHAT_DELETED],
-        callback: Callable[[str], bool],
+        callback: Callable[[str], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.CONNECTION_LOST],
-        callback: Callable[[None], bool],
+        callback: Callable[[None], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.CONTEXT_ADDED, EventType.CONTEXT_REMOVED],
-        callback: Callable[[ContextEventData], bool],
+        callback: Callable[[ContextEventData], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.CONTEXT_CLEARED],
-        callback: Callable[[ContextClearedData], bool],
+        callback: Callable[[ContextClearedData], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.COPILOT_THINKING_STARTED],
-        callback: Callable[[None], bool],
+        callback: Callable[[None], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.COPILOT_THINKING_ENDED],
-        callback: Callable[[None], bool],
+        callback: Callable[[None], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.COPILOT_STREAM_STARTED],
-        callback: Callable[[str], bool],
+        callback: Callable[[str], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.COPILOT_STREAM_CHUNK],
-        callback: Callable[[CopilotStreamChunkData], bool],
+        callback: Callable[[CopilotStreamChunkData], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.COPILOT_STREAM_COMPLETED],
-        callback: Callable[[str], bool],
+        callback: Callable[[str], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.COPILOT_STREAM_ERROR],
-        callback: Callable[[CopilotStreamErrorData], bool],
+        callback: Callable[[CopilotStreamErrorData], None],
     ) -> None: ...
     @overload
     def on(
@@ -189,20 +189,16 @@ class BaseController(ABC):
         event_type: Literal[
             EventType.WORKSTREAM_SUMMARY_UPDATED, EventType.WORKSTREAM_SUMMARY_SWITCHED
         ],
-        callback: Callable[["BasicSummary"], bool],
+        callback: Callable[["BasicSummary"], None],
     ) -> None: ...
     @overload
     def on(
         self,
         event_type: Literal[EventType.WORKSTREAM_SUMMARY_DELETED],
-        callback: Callable[[str], bool],
+        callback: Callable[[str], None],
     ) -> None: ...
 
-    # TODO: Add overloads for missing event types when models are ready:
-    # - CHAT_SELECTED: needs BasicChat callback type
-    # - CHAT_NEW_REQUESTED: needs None callback type
-
-    def on(self, event_type: EventType, callback: Callable[[Any], bool]) -> None:
+    def on(self, event_type: EventType, callback: Callable[[Any], None]) -> None:
         """
         Register an event listener.
 
@@ -222,7 +218,7 @@ class BaseController(ABC):
     def off(
         self,
         event_type: Literal[EventType.MODEL_CHANGED],
-        callback: Callable[[Optional["ModelInfo"]], bool],
+        callback: Callable[[Optional["ModelInfo"]], None],
     ) -> None: ...
     @overload
     def off(
@@ -232,85 +228,85 @@ class BaseController(ABC):
             EventType.MATERIAL_UPDATED,
             EventType.MATERIAL_DELETED,
         ],
-        callback: Callable[["Asset"], bool],
+        callback: Callable[["Asset"], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.MATERIALS_SEARCH_COMPLETED],
-        callback: Callable[[List["BasicAsset"]], bool],
+        callback: Callable[[List["BasicAsset"]], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.CONNECTION_ESTABLISHED],
-        callback: Callable[[None], bool],
+        callback: Callable[[None], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.CHAT_UPDATED, EventType.CHAT_SWITCHED],
-        callback: Callable[["BasicChat"], bool],
+        callback: Callable[["BasicChat"], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.CHAT_DELETED],
-        callback: Callable[[str], bool],
+        callback: Callable[[str], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.CONNECTION_LOST],
-        callback: Callable[[None], bool],
+        callback: Callable[[None], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.CONTEXT_ADDED, EventType.CONTEXT_REMOVED],
-        callback: Callable[[ContextEventData], bool],
+        callback: Callable[[ContextEventData], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.CONTEXT_CLEARED],
-        callback: Callable[[ContextClearedData], bool],
+        callback: Callable[[ContextClearedData], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.COPILOT_THINKING_STARTED],
-        callback: Callable[[None], bool],
+        callback: Callable[[None], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.COPILOT_THINKING_ENDED],
-        callback: Callable[[None], bool],
+        callback: Callable[[None], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.COPILOT_STREAM_STARTED],
-        callback: Callable[[str], bool],
+        callback: Callable[[str], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.COPILOT_STREAM_CHUNK],
-        callback: Callable[[CopilotStreamChunkData], bool],
+        callback: Callable[[CopilotStreamChunkData], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.COPILOT_STREAM_COMPLETED],
-        callback: Callable[[str], bool],
+        callback: Callable[[str], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.COPILOT_STREAM_ERROR],
-        callback: Callable[[CopilotStreamErrorData], bool],
+        callback: Callable[[CopilotStreamErrorData], None],
     ) -> None: ...
     @overload
     def off(
@@ -318,16 +314,16 @@ class BaseController(ABC):
         event_type: Literal[
             EventType.WORKSTREAM_SUMMARY_UPDATED, EventType.WORKSTREAM_SUMMARY_SWITCHED
         ],
-        callback: Callable[["BasicSummary"], bool],
+        callback: Callable[["BasicSummary"], None],
     ) -> None: ...
     @overload
     def off(
         self,
         event_type: Literal[EventType.WORKSTREAM_SUMMARY_DELETED],
-        callback: Callable[[str], bool],
+        callback: Callable[[str], None],
     ) -> None: ...
 
-    def off(self, event_type: EventType, callback: Callable[[Any], bool]):
+    def off(self, event_type: EventType, callback: Callable[[Any], None]):
         """
         Remove an event listener.
 

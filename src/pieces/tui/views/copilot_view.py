@@ -1,6 +1,6 @@
 """Copilot view - chat interface using base dual-pane architecture."""
 
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 from datetime import datetime
 
 from textual.css.query import NoMatches
@@ -15,17 +15,10 @@ from ..messages import (
     UserMessages,
     ModelMessages,
     CopilotMessages,
-    ConnectionMessages,
     ContextMessages,
     ViewMessages,
 )
-from pieces._vendor.pieces_os_client.wrapper.streamed_identifiers import (
-    ConversationsSnapshot,
-)
 from .base_dual_pane_view import BaseDualPaneView
-
-if TYPE_CHECKING:
-    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 
 
 class PiecesCopilot(BaseDualPaneView):
@@ -138,6 +131,7 @@ Ready to assist with code, questions, and more!"""
                 pass
 
             from textual.widgets import Static
+
             welcome_widget = Static(
                 welcome_text, classes="welcome-message", id="welcome-static"
             )
@@ -180,7 +174,9 @@ Ready to assist with code, questions, and more!"""
         if self.chat_input:
             self.chat_input.focus()
 
-    async def on_chat_messages_new_requested(self, _: ChatMessages.NewRequested) -> None:
+    async def on_chat_messages_new_requested(
+        self, _: ChatMessages.NewRequested
+    ) -> None:
         """Handle new chat request."""
         await self.action_new_chat()
 
@@ -218,9 +214,13 @@ Ready to assist with code, questions, and more!"""
                 await self._show_welcome_message()
 
     # Chat-specific message handlers
-    async def on_user_messages_input_submitted(self, message: UserMessages.InputSubmitted) -> None:
+    async def on_user_messages_input_submitted(
+        self, message: UserMessages.InputSubmitted
+    ) -> None:
         """Handle user input submission."""
-        Settings.logger.info(f"Copilot: User submitted question: {message.text[:50]}...")
+        Settings.logger.info(
+            f"Copilot: User submitted question: {message.text[:50]}..."
+        )
         if not self.event_hub:
             return
 
@@ -245,32 +245,44 @@ Ready to assist with code, questions, and more!"""
         self._update_status_model(message.new_model)
         self._show_status_message(f"🤖 Model changed to {message.new_model.name}")
 
-    async def on_copilot_messages_thinking_started(self, _: CopilotMessages.ThinkingStarted) -> None:
+    async def on_copilot_messages_thinking_started(
+        self, _: CopilotMessages.ThinkingStarted
+    ) -> None:
         """Handle copilot thinking started."""
         if self.chat_view_panel:
             self.chat_view_panel.add_thinking_indicator()
 
-    async def on_copilot_messages_stream_started(self, message: CopilotMessages.StreamStarted) -> None:
+    async def on_copilot_messages_stream_started(
+        self, message: CopilotMessages.StreamStarted
+    ) -> None:
         """Handle copilot stream started."""
         if self.chat_view_panel:
             self.chat_view_panel.add_streaming_message("assistant", message.text)
 
-    async def on_copilot_messages_stream_chunk(self, message: CopilotMessages.StreamChunk) -> None:
+    async def on_copilot_messages_stream_chunk(
+        self, message: CopilotMessages.StreamChunk
+    ) -> None:
         """Handle copilot stream chunk."""
         if self.chat_view_panel:
             self.chat_view_panel.update_streaming_message(message.full_text)
 
-    async def on_copilot_messages_stream_completed(self, _: CopilotMessages.StreamCompleted) -> None:
+    async def on_copilot_messages_stream_completed(
+        self, _: CopilotMessages.StreamCompleted
+    ) -> None:
         """Handle copilot stream completion."""
         if self.chat_view_panel:
             self.chat_view_panel.finalize_streaming_message()
 
-    async def on_copilot_messages_stream_error(self, message: CopilotMessages.StreamError) -> None:
+    async def on_copilot_messages_stream_error(
+        self, message: CopilotMessages.StreamError
+    ) -> None:
         """Handle copilot stream error."""
         if self.chat_view_panel:
             self.chat_view_panel.add_message("system", f"❌ Error: {message.error}")
 
-    async def on_context_messages_cleared(self, message: ContextMessages.Cleared) -> None:
+    async def on_context_messages_cleared(
+        self, message: ContextMessages.Cleared
+    ) -> None:
         """Handle context cleared."""
         self._show_status_message(f"🗑️ Cleared {message.count} context items")
 
@@ -362,10 +374,12 @@ Ready to assist with code, questions, and more!"""
         def run_ltm_enable():
             try:
                 import time
+
                 time.sleep(0.1)
                 check_ltm(auto_enable=True, tui_dialog=dialog)
             except Exception as e:
                 import traceback
+
                 error_msg = f"❌ Error: {str(e)}\n{traceback.format_exc()}"
                 dialog.set_complete(False, error_msg)
 
@@ -424,5 +438,6 @@ Ready to assist with code, questions, and more!"""
 
         except Exception as e:
             Settings.logger.error(f"Error during PiecesCopilot cleanup: {e}")
-        
+
         super().cleanup()
+

@@ -1,10 +1,11 @@
 """Base dual-pane view with clean, minimal abstraction."""
 
 from abc import abstractmethod
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Iterator
 from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Header
+from textual.widget import Widget
 from textual.screen import Screen
 from textual.binding import Binding
 
@@ -58,7 +59,7 @@ class BaseDualPaneView(Screen):
         self.sidebar_visible = True
         self.main_layout: Optional[Horizontal] = None
         self.list_panel: Optional["BaseListPanel"] = None
-        self.content_panel = None
+        self.content_panel: Optional[Widget] = None
 
     def compose(self) -> ComposeResult:
         """Compose the dual-pane layout."""
@@ -83,20 +84,19 @@ class BaseDualPaneView(Screen):
         yield from self.create_additional_components()
 
     @abstractmethod
-    def create_list_panel(self):
+    def create_list_panel(self) -> "BaseListPanel":
         """Create the left-side list panel."""
         pass
 
     @abstractmethod
-    def create_content_panel(self):
+    def create_content_panel(self) -> Widget:
         """Create the right-side content panel."""
         pass
 
-    def create_additional_components(self):
+    def create_additional_components(self) -> Iterator[Widget]:
         """Create additional components (input, status bar, etc.)."""
-        # Override in subclasses if needed - this is a generator
-        if False:  # Make this a generator that yields nothing by default
-            yield
+        # Override in subclasses if needed - this is an empty generator by default
+        return iter(())
 
     def on_mount(self) -> None:
         """Initialize the view when mounted."""
@@ -159,10 +159,10 @@ class BaseDualPaneView(Screen):
         """Clean up view resources."""
         try:
             # Clean up panels
-            if hasattr(self.content_panel, "cleanup"):
-                self.content_panel.cleanup()
+            if self.content_panel and hasattr(self.content_panel, "cleanup"):
+                self.content_panel.cleanup()  # type: ignore
 
-            if hasattr(self.list_panel, "clear_items"):
+            if self.list_panel and hasattr(self.list_panel, "clear_items"):
                 self.list_panel.clear_items()
 
             # Clear references
@@ -179,4 +179,3 @@ class BaseDualPaneView(Screen):
             self.cleanup()
         except (RuntimeError, ValueError, AttributeError):
             pass
-

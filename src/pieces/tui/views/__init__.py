@@ -6,6 +6,6 @@ from .copilot_view import PiecesCopilot
 
 __all__ = [
     "BaseDualPaneView",
-    "WorkstreamActivityView", 
+    "WorkstreamActivityView",
     "PiecesCopilot",
 ]

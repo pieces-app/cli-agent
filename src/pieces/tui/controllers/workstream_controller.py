@@ -14,9 +14,6 @@ if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.models.workstream_summary import (
         WorkstreamSummary,
     )
-    from pieces._vendor.pieces_os_client.models.workstream_summaries import (
-        WorkstreamSummaries,
-    )
 
 
 class WorkstreamController(BaseController):

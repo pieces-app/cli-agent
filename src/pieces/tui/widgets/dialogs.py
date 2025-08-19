@@ -76,7 +76,9 @@ class ConfirmDialog(ModalScreen):
         Binding("escape", "cancel", "Cancel", show=False),
     ]
 
-    def __init__(self, title: str, message: str, width: int = 60, height: int = 12, **kwargs):
+    def __init__(
+        self, title: str, message: str, width: int = 60, height: int = 12, **kwargs
+    ):
         super().__init__(**kwargs)
         self.title_text = title
         self.message_text = message
@@ -294,7 +296,7 @@ class ModelSelectionDialog(ModalScreen):
         current_model: Optional[str] = None,
         width: int = 70,
         height: int = 20,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.models = models

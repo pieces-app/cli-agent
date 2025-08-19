@@ -29,17 +29,17 @@ class ChatListPanel(BaseListPanel):
         """Get the text for the new chat button."""
         return "➕ New Chat"
 
-    def get_item_id(self, chat: BasicChat) -> str:
+    def get_item_id(self, item: BasicChat) -> str:
         """Get a unique ID for a chat."""
-        return chat.id
+        return item.id
 
     def create_item_widget(
-        self, chat: BasicChat, title: str, subtitle: str
+        self, item: BasicChat, title: str, subtitle: str
     ) -> ChatItem:
         """Create a widget for a chat."""
-        is_active = chat == self.active_item
+        is_active = item == self.active_item
         return ChatItem(
-            chat=chat,
+            chat=item,
             title=title,
             summary=subtitle,  # ChatItem uses 'summary' instead of 'subtitle'
             is_active=is_active,
@@ -50,10 +50,10 @@ class ChatListPanel(BaseListPanel):
         """Create message for new chat request."""
         return ChatMessages.NewRequested()
 
-    def extract_item_display_info(self, chat: BasicChat) -> Tuple[str, str]:
+    def extract_item_display_info(self, item: BasicChat) -> Tuple[str, str]:
         """Extract title and subtitle from a chat."""
-        title = chat.name or "Untitled"
-        summary = chat.summary or ""
+        title = item.name or "Untitled"
+        summary = item.summary or ""
         if len(summary) > 50:
             summary = summary[:47] + "..."
         return title, summary
@@ -176,17 +176,21 @@ class ChatListPanel(BaseListPanel):
         """Rename the selected chat."""
         if self._selected_item_id and self._selected_item_id in self._item_widgets:
             chat_widget = self._item_widgets[self._selected_item_id]
-            self.app.run_worker(
-                self._rename_chat_worker(chat_widget.chat, chat_widget.title)
-            )
+            # Type cast to ChatItem since we know it's a ChatItem
+            if hasattr(chat_widget, "chat"):
+                self.app.run_worker(
+                    self._rename_chat_worker(chat_widget.chat, chat_widget.title)  # type: ignore
+                )
 
     def action_delete_item(self):
         """Delete the selected chat."""
         if self._selected_item_id and self._selected_item_id in self._item_widgets:
             chat_widget = self._item_widgets[self._selected_item_id]
-            self.app.run_worker(
-                self._delete_chat_worker(chat_widget.chat, chat_widget.title)
-            )
+            # Type cast to ChatItem since we know it's a ChatItem
+            if hasattr(chat_widget, "chat"):
+                self.app.run_worker(
+                    self._delete_chat_worker(chat_widget.chat, chat_widget.title)  # type: ignore
+                )
 
     async def _rename_chat_worker(self, chat: BasicChat, current_title: str):
         """Worker method to handle rename chat dialog."""
@@ -254,9 +258,3 @@ class ChatListPanel(BaseListPanel):
     async def on_chat_messages_deleted(self, message: ChatMessages.Deleted) -> None:
         """Handle chat deletion event from backend."""
         self.remove_chat(message.chat_id)
-
-    async def on_chat_messages_switched(self, message: ChatMessages.Switched) -> None:
-        """Handle chat switch event."""
-        self._selected_item_id = message.chat.id
-        self._update_visual_selection()
-        self.set_active_chat(message.chat)
