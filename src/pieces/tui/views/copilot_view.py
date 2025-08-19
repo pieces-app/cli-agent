@@ -3,7 +3,6 @@
 from typing import Optional
 from datetime import datetime
 
-from textual.css.query import NoMatches
 from textual.binding import Binding
 
 from pieces.settings import Settings
@@ -130,9 +129,7 @@ Ready to assist with code, questions, and more!"""
 
             from textual.widgets import Static
 
-            welcome_widget = Static(
-                welcome_text, classes="welcome-message"
-            )
+            welcome_widget = Static(welcome_text, classes="welcome-message")
             self.chat_view_panel.mount(welcome_widget)
 
     # Message handlers that need view-level handling
@@ -437,4 +434,3 @@ Ready to assist with code, questions, and more!"""
             Settings.logger.error(f"Error during PiecesCopilot cleanup: {e}")
 
         super().cleanup()
-

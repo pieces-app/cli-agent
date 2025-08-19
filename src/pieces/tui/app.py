@@ -1,9 +1,9 @@
 """Main TUI application router for Pieces CLI."""
 
-from typing import Optional
+from typing import Optional, Iterable
 from enum import Enum
 
-from textual.app import App
+from textual.app import App, SystemCommand
 from textual.theme import Theme
 
 from textual.screen import Screen
@@ -21,7 +21,6 @@ class ViewType(Enum):
 
     COPILOT = "copilot"
     WORKSTREAM = "workstream"
-
 
 
 class PiecesTUI(App):
@@ -85,7 +84,6 @@ class PiecesTUI(App):
 
     BINDINGS = []
 
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -97,6 +95,23 @@ class PiecesTUI(App):
         self.copilot_view: Optional[PiecesCopilot] = None
         self.workstream_view: Optional[WorkstreamActivityView] = None
         self.current_view: Optional[Screen] = None
+
+    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
+        yield from super().get_system_commands(screen)
+
+        # Show context-aware view switching command
+        if isinstance(screen, PiecesCopilot):
+            yield SystemCommand(
+                "Switch to Workstream Activity",
+                "Context-aware AI that helps with code, docs, and workflow tasks.",
+                self.switch_to_workstream,
+            )
+        elif isinstance(screen, WorkstreamActivityView):
+            yield SystemCommand(
+                "Switch to Copilot",
+                "Context-aware AI that helps with code, docs, and workflow tasks.",
+                self.switch_to_copilot,
+            )
 
     def on_mount(self) -> None:
         """Initialize the application router when mounted."""
@@ -201,6 +216,14 @@ class PiecesTUI(App):
 
         self.current_view_type = view_type
 
+    def switch_to_copilot(self):
+        """Switch to copilot view."""
+        self._switch_to_view(ViewType.COPILOT)
+
+    def switch_to_workstream(self):
+        """Switch to workstream view."""
+        self._switch_to_view(ViewType.WORKSTREAM)
+
     # View switching message handlers
     async def on_view_messages_switch_to_chat(
         self, _: ViewMessages.SwitchToChat
@@ -259,4 +282,3 @@ def run_tui():
 
 if __name__ == "__main__":
     run_tui()
-

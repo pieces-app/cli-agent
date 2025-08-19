@@ -63,7 +63,7 @@ class WorkstreamContentPanel(BaseContentPanel):
 
     def on_mount(self) -> None:
         """Initialize the content panel when mounted."""
-        self._show_welcome_message()
+        pass
 
     def load_workstream_summary(self, summary: "BasicSummary"):
         """Load a workstream summary for display/editing."""
@@ -85,8 +85,7 @@ class WorkstreamContentPanel(BaseContentPanel):
         """Extract markdown content from workstream summary."""
         content = ""
 
-        if hasattr(summary, "raw_content") and summary.raw_content:
-            content += "## Content\n\n"
+        if summary.raw_content:
             content += summary.raw_content
         else:
             content += "## Summary\n\n"
@@ -122,10 +121,9 @@ Ready to manage your workstream activities!"""
         """Show content in edit mode (text editor)."""
         self._clear_content()
 
-        self._editor_widget = TextArea(
+        self._editor_widget = TextArea.code_editor(
             text=content,
             language="markdown",
-            theme="monokai",
             classes="editor-content",
             id="content-editor",
         )
@@ -166,6 +164,7 @@ Ready to manage your workstream activities!"""
 
             # Post save message
             self.post_message(WorkstreamMessages.ContentSaved(new_content))
+            self.action_toggle_edit_mode()
             Settings.logger.info(
                 f"Saved workstream summary content for: {self.current_summary.name}"
             )

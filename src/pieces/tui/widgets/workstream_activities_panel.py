@@ -58,12 +58,14 @@ class WorkstreamActivitiesPanel(BaseListPanel):
         """Extract title and subtitle from a workstream summary."""
         title = item.name or "Untitled Summary"
 
+        subtitle = ""
         # Create a subtitle from basic summary info
-        subtitle = f"Summary ID: {item.id[:8]}..."
-
-        # Limit subtitle length
-        if len(subtitle) > 50:
-            subtitle = subtitle[:47] + "..."
+        # summary_annotation = item.summary_annotation()
+        # subtitle = summary_annotation.raw_content if summary_annotation else ""
+        #
+        # # Limit subtitle length
+        # if len(subtitle) > 50:
+        #     subtitle = subtitle[:47] + "..."
 
         return title, subtitle
 

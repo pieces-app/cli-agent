@@ -20,6 +20,11 @@ class BasicSummary(Basic):
     This class is used to store and manage basic identifier summaries.
     """
 
+    def __init__(self, _id: str):
+        self._annotation_content = None
+        self._annotation_summary = None
+        super().__init__(_id)
+
     @property
     def id(self) -> str:
         return self.summary.id
@@ -33,6 +38,19 @@ class BasicSummary(Basic):
 
     @property
     def content_annotation(self) -> Optional[BasicAnnotation]:
+        if not self._annotation_summary:
+            self.update_cache()
+        return self._annotation_summary
+
+    def summary_annotation(self) -> Optional[BasicAnnotation]:
+        if not self._annotation_content:
+            self.update_cache()
+        return self._annotation_content
+
+    def update_cache(self):
+        """Update the cache of the summary annotation."""
+        if self._annotation_summary:
+            return self._annotation_summary
         if self.summary.annotations and self.summary.annotations.indices:
             annotations: List[BasicAnnotation] = self._from_indices(
                 self.summary.annotations.indices,
@@ -42,7 +60,11 @@ class BasicSummary(Basic):
             )
             for annotation in annotations:
                 if annotation.type == "SUMMARY":
+                    self._annotation_summary = annotation
                     return annotation
+                elif annotation.type == "DESCRIPTION":
+                    self._annotation_content = annotation
+        return self._annotation_summary
 
     @property
     def raw_content(self) -> str:
@@ -60,10 +82,6 @@ class BasicSummary(Basic):
             self.content_annotation.raw_content = value
         else:
             raise ValueError("No content annotation found to set raw content.")
-
-    @raw_content.setter
-    def raw_content(self, value: str):
-        self.raw_content = value
 
     @property
     def name(self) -> str:
