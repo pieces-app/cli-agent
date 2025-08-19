@@ -7,6 +7,7 @@ from textual.css.query import NoMatches
 from pieces.settings import Settings
 from .base_list_panel import BaseListPanel
 from .workstream_item import WorkstreamItem
+from .dialogs import ConfirmDialog, EditNameDialog
 from ..messages import WorkstreamMessages
 
 if TYPE_CHECKING:
@@ -187,16 +188,26 @@ class WorkstreamActivitiesPanel(BaseListPanel):
         """Rename the selected workstream summary."""
         if self._selected_item_id and self._selected_item_id in self._item_widgets:
             summary_widget = self._item_widgets[self._selected_item_id]
-            # TODO: Implement rename dialog for workstream summaries
-            Settings.logger.info(f"Rename workstream summary: {summary_widget.title}")
+            if hasattr(summary_widget, "summary"):
+                self.app.run_worker(
+                    self._rename_summary_worker(
+                        summary_widget.summary,  # type: ignore
+                        summary_widget.title,
+                    )
+                )
 
     def action_delete_item(self):
         """Delete the selected workstream summary."""
         if self._selected_item_id and self._selected_item_id in self._item_widgets:
             # Get the summary widget and extract the summary object
             summary_widget = self._item_widgets[self._selected_item_id]
-            # TODO: Implement delete confirmation dialog for workstream summaries
-            Settings.logger.info(f"Delete workstream summary: {summary_widget.title}")
+            if hasattr(summary_widget, "summary"):
+                self.app.run_worker(
+                    self._delete_summary_worker(
+                        summary_widget.summary,  # type: ignore
+                        summary_widget.title,
+                    )
+                )
 
     def get_selected_summary(self) -> Optional["BasicSummary"]:
         """Get the currently selected workstream summary."""
@@ -229,3 +240,34 @@ class WorkstreamActivitiesPanel(BaseListPanel):
     ) -> None:
         """Handle workstream summary deletion event from backend."""
         self.remove_summary(message.summary_id)
+
+    async def _rename_summary_worker(self, summary: "BasicSummary", current_title: str):
+        """Worker method to handle rename summary dialog."""
+        # Update the dialog title for workstream summaries
+        dialog = EditNameDialog(current_title, title="✏️ Edit Summary Name")
+        new_name = await self.app.push_screen_wait(dialog)
+
+        if new_name:
+            try:
+                summary.name = new_name
+                Settings.logger.info(f"Renamed workstream summary to: {new_name}")
+            except Exception as e:
+                Settings.logger.error(f"Error renaming workstream summary: {e}")
+
+    async def _delete_summary_worker(self, summary: "BasicSummary", title: str):
+        """Delete workstream summary after user confirmation."""
+        dialog = ConfirmDialog(
+            title="⚠️ Delete Workstream Summary",
+            message=f"Are you sure you want to delete '{title}'?\n\nThis action cannot be undone.",
+        )
+        confirmed = await self.app.push_screen_wait(dialog)
+
+        if confirmed:
+            try:
+                summary_id = summary.id
+                summary.delete()
+                Settings.logger.info(
+                    f"Requested deletion of workstream summary: {title} (ID: {summary_id})"
+                )
+            except Exception as e:
+                Settings.logger.error(f"Error deleting workstream summary: {e}")

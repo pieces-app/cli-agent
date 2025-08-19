@@ -26,7 +26,7 @@ class BasicSummary(Basic):
 
     @property
     def summary(self) -> "WorkstreamSummary":
-        summary = WorkstreamSummarySnapshot.identifiers_snapshot.get(self.id)
+        summary = WorkstreamSummarySnapshot.identifiers_snapshot.get(self._id)
         if not summary:
             raise ValueError(f"Summary with id {self.id} not found.")
         return summary
@@ -75,10 +75,22 @@ class BasicSummary(Basic):
         """
         return self.summary.name
 
+    @name.setter
+    def name(self, value: str):
+        summary = self.summary
+        summary.name = value
+        self._edit_summary(summary)
+
     def delete(self) -> None:
         """
         Delete the summary.
         """
         WorkstreamSummarySnapshot.pieces_client.workstream_summaries_api.workstream_summaries_delete_specific_workstream_summary(
             self.id
+        )
+
+    @staticmethod
+    def _edit_summary(summary: "WorkstreamSummary"):
+        WorkstreamSummarySnapshot.pieces_client.workstream_summary_api.workstream_summary_update(
+            False, summary
         )

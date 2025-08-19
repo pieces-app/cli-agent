@@ -184,18 +184,26 @@ class EditNameDialog(ModalScreen):
         Binding("escape", "cancel_edit", "Cancel", show=False),
     ]
 
-    def __init__(self, current_name: str, width: int = 60, height: int = 12, **kwargs):
+    def __init__(
+        self,
+        current_name: str,
+        width: int = 60,
+        height: int = 12,
+        title="✏️ Edit Chat Name",
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.current_name = current_name
         self.dialog_width = width
         self.dialog_height = height
+        self.title_text = title
 
     def compose(self) -> ComposeResult:
         container = Container()
         container.styles.width = self.dialog_width
         container.styles.height = self.dialog_height
         with container:
-            yield Static("✏️ Edit Chat Name", classes="dialog-title")
+            yield Static(self.title_text, classes="dialog-title")
             yield Input(
                 value=self.current_name,
                 placeholder="Enter chat name...",
