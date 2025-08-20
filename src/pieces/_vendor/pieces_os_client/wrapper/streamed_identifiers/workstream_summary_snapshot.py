@@ -29,7 +29,10 @@ class WorkstreamSummarySnapshot(StreamedIdentifiersCache):
 
     @classmethod
     def _api_call(cls, id):
-        range = cls.pieces_client.workstream_summary_api.workstream_summaries_specific_workstream_summary_snapshot(
+        return cls.pieces_client.workstream_summary_api.workstream_summaries_specific_workstream_summary_snapshot(
             id
         )
-        return range
+
+    @staticmethod
+    def _sort_first_shot():
+        pass

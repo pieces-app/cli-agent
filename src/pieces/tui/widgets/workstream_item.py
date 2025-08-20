@@ -36,7 +36,7 @@ class WorkstreamItem(BaseItem):
 
     def create_selected_message(self, item) -> Message:
         """Create the appropriate message for when this workstream item is selected."""
-        return WorkstreamMessages.Switched(item)
+        return WorkstreamMessages.SwitchRequested(item)
 
     def cleanup(self):
         """Clean up workstream-specific resources."""

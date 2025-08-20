@@ -176,10 +176,10 @@ class WorkstreamActivitiesPanel(BaseListPanel):
         """Set the active workstream summary."""
         self.set_active_item(summary)
 
-    async def on_workstream_messages_switched(
-        self, message: WorkstreamMessages.Switched
+    async def on_workstream_messages_switch_confirmed(
+        self, message: WorkstreamMessages.SwitchConfirmed
     ) -> None:
-        """Handle workstream summary switch event."""
+        """Handle confirmed workstream summary switch event."""
         self._selected_item_id = message.summary.id
         self._update_visual_selection()
 

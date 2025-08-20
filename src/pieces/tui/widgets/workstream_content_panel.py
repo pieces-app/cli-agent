@@ -188,6 +188,16 @@ Ready to manage your workstream activities!"""
 
         self._show_welcome_message()
 
+    def has_unsaved_changes(self) -> bool:
+        """Check if there are unsaved changes in the editor buffer."""
+        return self._has_changes and self.edit_mode and self._editor_widget is not None
+
+    def get_editor_content(self) -> str:
+        """Get the current content from the editor."""
+        if self.edit_mode and self._editor_widget:
+            return self._editor_widget.text
+        return self._original_content
+
     def cleanup(self):
         """Clean up widget resources."""
         try:

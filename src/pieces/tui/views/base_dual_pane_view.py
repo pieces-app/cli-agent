@@ -49,7 +49,7 @@ class BaseDualPaneView(Screen):
 
     BINDINGS = [
         Binding("ctrl+s", "toggle_sidebar", "Toggle Sidebar"),
-        Binding("ctrl+r", "refresh", "Refresh"),
+        Binding("ctrl+r", "refresh", "Refresh", show=False),
     ]
 
     def __init__(self, event_hub: EventHub, view_name: str, **kwargs):

@@ -5,7 +5,7 @@ from textual.binding import Binding
 from textual.widgets import Footer
 
 from pieces.settings import Settings
-from ..widgets import WorkstreamActivitiesPanel, WorkstreamContentPanel
+from ..widgets import WorkstreamActivitiesPanel, WorkstreamContentPanel, ConfirmDialog
 from ..controllers import EventHub
 from ..messages import (
     WorkstreamMessages,
@@ -69,11 +69,52 @@ class WorkstreamActivityView(BaseDualPaneView):
         # For now, just log since workstream view doesn't have status bar
         Settings.logger.info(f"Workstream Status: {message}")
 
+    def _show_unsaved_changes_dialog(self, target_summary):
+        """Show confirmation dialog for unsaved changes."""
+        self.app.run_worker(self._handle_unsaved_changes_dialog(target_summary))
+
+    async def _handle_unsaved_changes_dialog(self, target_summary):
+        """Handle the unsaved changes dialog in a worker context."""
+        dialog = ConfirmDialog(
+            title="⚠️ Unsaved Changes",
+            message="You have unsaved changes in the current workstream summary.\n\nDo you want to discard these changes and switch to the selected summary?",
+            width=70,
+            height=14,
+        )
+
+        result = await self.app.push_screen_wait(dialog)
+        
+        if result:
+            Settings.logger.info("User confirmed discarding unsaved changes")
+            if self.workstream_content_panel and self.workstream_content_panel.edit_mode:
+                self.workstream_content_panel.edit_mode = False
+            self.post_message(WorkstreamMessages.SwitchConfirmed(target_summary))
+        else:
+            # User cancelled - stay on current summary
+            Settings.logger.info("User cancelled summary switch - keeping unsaved changes")
+
     # Message handlers that need view-level handling
-    async def on_workstream_messages_switched(
-        self, message: WorkstreamMessages.Switched
+    async def on_workstream_messages_switch_requested(
+        self, message: WorkstreamMessages.SwitchRequested
     ) -> None:
-        """Handle workstream summary switch event - update content panel."""
+        """Handle workstream summary switch request - check for unsaved changes first."""
+        # Check if there are unsaved changes in the current content
+        if (
+            self.workstream_content_panel
+            and self.workstream_content_panel.has_unsaved_changes()
+        ):
+            # Show confirmation dialog
+            self._show_unsaved_changes_dialog(message.summary)
+        else:
+            # No unsaved changes, exit edit mode and proceed with switch
+            if self.workstream_content_panel and self.workstream_content_panel.edit_mode:
+                self.workstream_content_panel.edit_mode = False
+            self.post_message(WorkstreamMessages.SwitchConfirmed(message.summary))
+
+    async def on_workstream_messages_switch_confirmed(
+        self, message: WorkstreamMessages.SwitchConfirmed
+    ) -> None:
+        """Handle confirmed workstream summary switch event - update content panel."""
         if self.workstream_content_panel:
             self.workstream_content_panel.load_workstream_summary(message.summary)
 

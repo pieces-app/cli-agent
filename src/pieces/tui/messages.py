@@ -79,6 +79,20 @@ class WorkstreamMessages:
             super().__init__()
             self.content = content
 
+    class SwitchRequested(Message):
+        """Workstream summary switch was requested (may need confirmation)."""
+
+        def __init__(self, summary: "BasicSummary") -> None:
+            super().__init__()
+            self.summary = summary
+
+    class SwitchConfirmed(Message):
+        """Workstream summary switch was confirmed after unsaved changes check."""
+
+        def __init__(self, summary: "BasicSummary") -> None:
+            super().__init__()
+            self.summary = summary
+
 
 class UserMessages:
     """User input messages."""
