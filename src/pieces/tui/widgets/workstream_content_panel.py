@@ -114,7 +114,10 @@ Ready to manage your workstream activities!"""
         """Show content in read mode (markdown)."""
         self._clear_content()
 
-        self._markdown_widget = Markdown(content, classes="markdown-content")
+        # Convert file:// links to proper relative paths for Textual
+        processed_content = self._process_file_links(content)
+
+        self._markdown_widget = Markdown(processed_content, classes="markdown-content")
         self.mount(self._markdown_widget)
 
     def _show_editor_content(self, content: str):

@@ -2,11 +2,12 @@
 
 from abc import abstractmethod
 from textual.containers import ScrollableContainer
-from textual.widgets import Static
+from textual.widgets import Static, Markdown
 from textual.binding import Binding
 from textual.app import ComposeResult
 
 from pieces.settings import Settings
+from ..utils import LinkHandler
 
 
 class BaseContentPanel(ScrollableContainer):
@@ -151,3 +152,11 @@ class BaseContentPanel(ScrollableContainer):
     def action_jump_to_end(self):
         """Jump to the end of the conversation."""
         self.scroll_end(animate=False)
+
+    def _process_file_links(self, content: str) -> str:
+        """Convert file:// protocol links to proper relative paths for Textual."""
+        return LinkHandler.process_file_links(content)
+
+    async def on_markdown_link_clicked(self, event: Markdown.LinkClicked) -> None:
+        """Handle clicks on markdown links."""
+        await LinkHandler.handle_link_click(event)
