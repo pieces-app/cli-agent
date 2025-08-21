@@ -12,6 +12,7 @@ from textual.message import Message
 from textual.css.query import NoMatches
 
 from .base_item import BaseItem
+from pieces.settings import Settings
 
 
 class BaseListPanel(ScrollableContainer):
@@ -382,29 +383,32 @@ class BaseListPanel(ScrollableContainer):
 
     def on_click(self, event) -> None:
         """Handle click events on child items."""
-        from pieces.settings import Settings
-        
+
         # Check if the click was on one of our item widgets or their children
         clicked_widget = event.widget
-        Settings.logger.info(f"BaseListPanel: Click detected on widget {clicked_widget}")
-        
+        Settings.logger.info(
+            f"BaseListPanel: Click detected on widget {clicked_widget}"
+        )
+
         # Find the BaseItem by traversing up the widget tree
         target_item = None
         current_widget = clicked_widget
-        
+
         # Traverse up the widget tree to find a BaseItem
         while current_widget is not None:
             if isinstance(current_widget, BaseItem):
                 target_item = current_widget
                 break
             current_widget = current_widget.parent
-        
+
         if target_item:
             Settings.logger.info(f"BaseListPanel: Found BaseItem: {target_item}")
             # Find the item ID for this widget and update selection
             for item_id, widget in self._item_widgets.items():
                 if widget == target_item:
-                    Settings.logger.info(f"BaseListPanel: Updating selection to item {item_id}")
+                    Settings.logger.info(
+                        f"BaseListPanel: Updating selection to item {item_id}"
+                    )
                     self._selected_item_id = item_id
                     self._update_visual_selection()
                     break

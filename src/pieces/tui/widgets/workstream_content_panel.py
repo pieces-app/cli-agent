@@ -90,7 +90,7 @@ class WorkstreamContentPanel(BaseContentPanel):
         else:
             content += "## Summary\n\n"
             content += "*Edit this content to add your workstream summary details.*\n\n"
-            content += "Use the Edit mode (Ctrl+E) to modify this content and save changes (Ctrl+S)."
+            content += "\nUse the Edit mode (Ctrl+E) to modify this content and save changes (Ctrl+S)."
 
         return content
 
@@ -205,7 +205,6 @@ Ready to manage your workstream activities!"""
         """Clean up widget resources."""
         try:
             self.clear_content()
-            self._content_area = None
             self._markdown_widget = None
             self._editor_widget = None
         except Exception as e:
