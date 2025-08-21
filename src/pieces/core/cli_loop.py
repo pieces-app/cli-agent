@@ -142,7 +142,9 @@ def run_command(user_input: str, command_name: str, command_args: List[str]) -> 
     except SystemExit as e:
         # argparse calls sys.exit on error - catch and handle gracefully
         # Settings.logger.print(f"Invalid arguments for command: {command_name}")
-        Settings.logger.error(f"Invalid arguments for command: {command_name}, {e}")
+        Settings.logger.error(
+            f"Invalid arguments for command: {command_name}, {e}", ignore_sentry=True
+        )
     except Exception as e:
         Settings.logger.error(f"Error executing {command_name}: {str(e)}")
         Settings.show_error(f"Command failed: {command_name}", str(e))
