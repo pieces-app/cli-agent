@@ -71,13 +71,18 @@ class WorkstreamController(BaseController):
         self._safe_cleanup()
 
     def _on_workstream_summary_update(self, summary: "WorkstreamSummary"):
-        """Handle workstream summary update from WebSocket."""
-        try:
-            self.emit(EventType.WORKSTREAM_SUMMARY_UPDATED, BasicSummary(summary.id))
-        except Exception as e:
-            Settings.logger.error(f"Error handling workstream summary update: {e}")
+        Settings.logger.debug(f"Workstream summary update received: {summary.id}")
 
-        Settings.logger.info(f"Workstream summary update received: {summary.id}")
+        try:
+            basic_summary = BasicSummary(summary.id)
+            self.emit(EventType.WORKSTREAM_SUMMARY_UPDATED, basic_summary)
+            Settings.logger.info(
+                f"Successfully processed workstream update: {summary.id}"
+            )
+        except Exception as e:
+            Settings.logger.error(
+                f"Failed to process workstream summary update {summary.id}: {e}",
+            )
 
     def _on_workstream_summary_remove(self, summary: "WorkstreamSummary"):
         """Handle workstream summary removal from WebSocket."""

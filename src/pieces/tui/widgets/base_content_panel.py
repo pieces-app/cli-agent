@@ -85,11 +85,15 @@ class BaseContentPanel(ScrollableContainer):
         """Clear all content from the panel."""
         try:
             children_to_remove = list(self.children)
-            Settings.logger.info(f"BaseContentPanel: Clearing {len(children_to_remove)} child widgets")
+            Settings.logger.info(
+                f"BaseContentPanel: Clearing {len(children_to_remove)} child widgets"
+            )
             for child in children_to_remove:
                 try:
                     if child.is_mounted:
-                        Settings.logger.info(f"BaseContentPanel: Removing widget {child}")
+                        Settings.logger.info(
+                            f"BaseContentPanel: Removing widget {child}"
+                        )
                         child.remove()
                 except (RuntimeError, ValueError, AttributeError):
                     pass
@@ -103,7 +107,9 @@ class BaseContentPanel(ScrollableContainer):
         # Clear content first
         self._clear_content()
 
-        Settings.logger.info(f"BaseContentPanel: Creating new static widget with classes='{classes}'")
+        Settings.logger.info(
+            f"BaseContentPanel: Creating new static widget with classes='{classes}'"
+        )
         widget = Static(content, classes=classes)
         self.mount(widget)
         Settings.logger.info(f"BaseContentPanel: Mounted widget {widget}")
@@ -159,4 +165,4 @@ class BaseContentPanel(ScrollableContainer):
 
     async def on_markdown_link_clicked(self, event: Markdown.LinkClicked) -> None:
         """Handle clicks on markdown links."""
-        await LinkHandler.handle_link_click(event)
+        await LinkHandler.handle_link_click(event, self.app)
