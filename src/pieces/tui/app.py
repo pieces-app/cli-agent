@@ -119,6 +119,7 @@ class PiecesTUI(App):
 
         # Setup themes and event hub
         self._setup_themes()
+        self.theme_changed_signal.subscribe(self, self.on_theme_change)
         self.event_hub = EventHub(self)
         self.event_hub.initialize()
 
@@ -194,7 +195,13 @@ class PiecesTUI(App):
 
         self.register_theme(pieces_dark_theme)
         self.register_theme(pieces_light_theme)
-        self.theme = "pieces-dark"
+
+        # Load theme from configuration
+        try:
+            self.theme = Settings.cli_config.theme
+        except Exception as e:
+            Settings.logger.error(f"Failed to load saved theme: {e}")
+            self.theme = "pieces-dark"
 
     def _switch_to_view(self, view_type: ViewType):
         """Switch to a specific view type."""
@@ -236,6 +243,15 @@ class PiecesTUI(App):
     ) -> None:
         """Handle switch to workstream view message."""
         self._switch_to_view(ViewType.WORKSTREAM)
+
+    def on_theme_change(self, new_theme):
+        try:
+            Settings.cli_config.theme = new_theme.name
+            Settings.logger.info(
+                f"Theme changed to {new_theme} and saved to configuration"
+            )
+        except Exception as e:
+            Settings.logger.error(f"Failed to save theme preference: {e}")
 
     def on_unmount(self):
         """Clean up when app is unmounted."""
