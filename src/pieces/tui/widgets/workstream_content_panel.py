@@ -5,6 +5,7 @@ from textual.reactive import reactive
 from textual.widgets import Markdown, TextArea
 from textual.binding import Binding
 from textual.app import ComposeResult
+from textual.events import Key
 
 from .base_content_panel import BaseContentPanel
 from pieces.settings import Settings
@@ -41,13 +42,12 @@ class WorkstreamContentPanel(BaseContentPanel):
     
     """
 
-    # Add workstream-specific bindings to the base scroll bindings
     BINDINGS = BaseContentPanel.BINDINGS + [
-        Binding("ctrl+e", "toggle_edit_mode", "Toggle Edit Mode"),
-        Binding("ctrl+s", "save_content", "Save Content", show=False),
+        Binding("ctrl+e", "toggle_edit_mode", "Edit Mode"),
+        Binding("ctrl+s", "save_content", "Save Content"),
     ]
 
-    edit_mode: reactive[bool] = reactive(False)
+    edit_mode: reactive[bool] = reactive(False, bindings=True)
     current_summary: Optional["BasicSummary"] = None
 
     def __init__(self, **kwargs):
@@ -131,6 +131,15 @@ Ready to manage your workstream activities!"""
             id="content-editor",
         )
         self.mount(self._editor_widget)
+        self._editor_widget.focus()
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        """Check if an action may run."""
+        if action == "toggle_edit_mode" and self.edit_mode:
+            return None
+        if action == "save_content" and not self.edit_mode:
+            return None
+        return True
 
     def watch_edit_mode(self, edit_mode: bool) -> None:
         """Handle edit mode changes."""
@@ -146,9 +155,7 @@ Ready to manage your workstream activities!"""
         self.post_message(WorkstreamMessages.EditModeToggled(edit_mode))
 
     def _get_current_content(self) -> str:
-        """Get the current content (from editor if in edit mode, otherwise original)."""
-        if self.edit_mode and self._editor_widget:
-            return self._editor_widget.text
+        """Get the current content"""
         return self._original_content
 
     def action_toggle_edit_mode(self):
