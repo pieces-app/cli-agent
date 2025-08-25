@@ -75,7 +75,7 @@ class TUICommand(BaseCommand):
                 "-m",
                 "pip",
                 "install",
-                "textual",
+                "textual[syntax]",
             ],
             capture_output=True,
         )

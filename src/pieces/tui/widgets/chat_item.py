@@ -1,159 +1,55 @@
 """Chat item widget for displaying chat details in the chat list."""
 
-from textual.app import ComposeResult
-from textual.widgets import Static
-from textual.containers import Container
-
-from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
+from typing import TYPE_CHECKING
+from textual.message import Message
+from .base_item import BaseItem
 from ..messages import ChatMessages
 
+if TYPE_CHECKING:
+    from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicChat
 
-class ChatItem(Container):
+
+class ChatItem(BaseItem):
     """A single chat item in the list showing chat details."""
-
-    DEFAULT_CSS = """
-    ChatItem {
-        width: 100%;
-        height: auto;
-        min-height: 3;
-        margin: 0 0 1 0;
-        padding: 0;
-        border: none;
-        background: $surface;
-        
-        &:hover {
-            background: $surface-lighten-1;
-        }
-        
-        &.chat-active {
-            border-left: thick $primary;
-            background: $primary 10%;
-            
-            &:hover {
-                background: $primary 20%;
-            }
-        }
-        
-        &.chat-selected {
-            background: $accent !important;
-            color: $text !important;
-        }
-    }
-    
-    ChatItem .chat-content {
-        padding: 1;
-        width: 100%;
-        height: auto;
-    }
-    
-    ChatItem .chat-title {
-        text-style: bold;
-        color: $text;
-        height: 1;
-        width: 100%;
-    }
-    
-    ChatItem.chat-active .chat-title {
-        color: $primary;
-    }
-    
-    ChatItem.chat-selected .chat-title {
-        color: $text !important;
-    }
-    
-    ChatItem .chat-summary {
-        color: $text-muted;
-        text-style: italic;
-        margin: 1 0 0 0;
-        height: auto;
-        width: 100%;
-    }
-    
-    ChatItem.chat-active .chat-summary {
-        color: $primary 80%;
-    }
-    
-    ChatItem.chat-selected .chat-summary {
-        color: $text-muted !important;
-    }
-    """
 
     def __init__(
         self,
-        chat: BasicChat,
+        chat: "BasicChat",
         title: str,
         summary: str = "",
         is_active: bool = False,
         is_selected: bool = False,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        # Store the chat for easy access
         self.chat = chat
-        self.title = title
-        self.summary = summary
-        self.is_active = is_active
-        self.is_selected = is_selected
+        super().__init__(
+            item=chat,
+            title=title,
+            subtitle=summary,  # Use subtitle instead of summary for consistency
+            is_active=is_active,
+            is_selected=is_selected,
+            **kwargs,
+        )
 
-        if is_active:
-            self.add_class("chat-active")
-        if is_selected:
-            self.add_class("chat-selected")
+    def create_selected_message(self, item) -> Message:
+        """Create the appropriate message for when this chat item is selected."""
+        return ChatMessages.Switched(item)
 
-    def compose(self) -> ComposeResult:
-        """Compose the chat item."""
-        with Container(classes="chat-content"):
-            # Always show title
-            title_widget = Static(self.title, classes="chat-title")
-            yield title_widget
+    @property
+    def summary(self) -> str:
+        """Backward compatibility property for summary."""
+        return self.subtitle
 
-            # Show summary if it exists
-            if self.summary:
-                summary_widget = Static(self.summary, classes="chat-summary")
-                yield summary_widget
-
-    def on_mount(self):
-        """Called when the widget is mounted."""
-        # Ensure proper styling is applied
-        if self.is_active:
-            self.add_class("chat-active")
-        if self.is_selected:
-            self.add_class("chat-selected")
-
-    def on_click(self) -> None:
-        """Handle chat item click."""
-        # Post Textual message that will bubble up to parent handlers
-        if not self.chat:
-            return
-        self.post_message(ChatMessages.Switched(self.chat))
-
-    def select(self):
-        """Select this chat item."""
-        self.is_selected = True
-        self.add_class("chat-selected")
-
-    def deselect(self):
-        """Deselect this chat item."""
-        self.is_selected = False
-        self.remove_class("chat-selected")
+    @summary.setter
+    def summary(self, value: str):
+        """Backward compatibility property for summary."""
+        self.subtitle = value
 
     def cleanup(self):
-        """Clean up widget resources to prevent memory leaks."""
+        """Clean up chat-specific resources."""
         try:
-            # Clear chat reference
             self.chat = None
-
-            # Clear state
-            self.is_active = False
-            self.is_selected = False
-            self.title = ""
-            self.summary = ""
-
         except (RuntimeError, ValueError, AttributeError):
             pass
-
-    def __del__(self):
-        """Ensure cleanup is called when widget is destroyed."""
-        try:
-            self.cleanup()
-        except (RuntimeError, ValueError, AttributeError):
-            pass
+        super().cleanup()

@@ -14,6 +14,7 @@ class CLIConfigSchema(BaseModel):
         default="1.0.0", description="Configuration schema version"
     )
     editor: Optional[str] = Field(default=None, description="Default editor command")
+    theme: str = Field(default="pieces-dark", description="TUI theme preference")
 
     @field_validator("editor")
     @classmethod

@@ -32,3 +32,14 @@ class CLIManager(BaseConfigManager[CLIConfigSchema]):
         self.config.editor = value
         self.save()
 
+    @property
+    def theme(self) -> str:
+        """Get configured theme."""
+        return self.config.theme
+
+    @theme.setter
+    def theme(self, value: str) -> None:
+        """Set theme and save."""
+        self.config.theme = value
+        self.save()
+

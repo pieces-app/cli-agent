@@ -8,6 +8,8 @@ from textual.containers import Vertical
 from rich.progress import Progress, TextColumn
 from pieces.copilot.ltm import ConditionalSpinnerColumn
 
+import threading
+
 
 class AutoRefreshProgress(Static):
     """Static widget that auto-refreshes when content changes."""
@@ -240,12 +242,7 @@ class LTMProgressDialog(ModalScreen):
         self.call_from_thread(update)
 
         def delayed_dismiss():
-            import time
-
-            time.sleep(2)
             self.call_from_thread(lambda: self.dismiss(success))
-
-        import threading
 
         threading.Thread(target=delayed_dismiss, daemon=True).start()
 

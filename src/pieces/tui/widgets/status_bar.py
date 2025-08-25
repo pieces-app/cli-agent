@@ -76,7 +76,7 @@ class StatusBar(Footer):
         status_parts = []
         if model_name:
             if len(model_name) > MAX_MODEL_NAME_LENGTH:
-                model_name = model_name[:MAX_MODEL_NAME_LENGTH - 3] + "..."
+                model_name = model_name[: MAX_MODEL_NAME_LENGTH - 3] + "..."
             status_parts.append(f"🤖 {model_name}")
 
         # Add LTM status - only show when enabled

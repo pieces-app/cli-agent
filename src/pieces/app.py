@@ -132,13 +132,16 @@ def main():
     else:
         environment = "production"
 
-    sentry_sdk.init(
-        # https://sentry.zendesk.com/hc/en-us/articles/26741783759899-My-DSN-key-is-publicly-visible-is-this-a-security-vulnerability
-        dsn="https://c1b7b0748590decc1aac426add5f4e12@o552351.ingest.us.sentry.io/4509837316980737",
-        release=__version__,
-        send_default_pii=True,
-        environment=environment,
-    )
+    if __version__ != "dev":
+        sentry_sdk.init(
+            # https://sentry.zendesk.com/hc/en-us/articles/26741783759899-My-DSN-key-is-publicly-visible-is-this-a-security-vulnerability
+            dsn="https://c1b7b0748590decc1aac426add5f4e12@o552351.ingest.us.sentry.io/4509837316980737",
+            release=__version__,
+            send_default_pii=True,
+            environment=environment,
+        )
+    else:
+        sentry_sdk.init(None)
     atexit.register(lambda: sentry_sdk.flush(timeout=2))
 
     cli = PiecesCLI()
