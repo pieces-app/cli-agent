@@ -29,12 +29,12 @@ if TYPE_CHECKING:
 
 class ConditionalSpinnerColumn(SpinnerColumn):
     """A spinner column that hides the spinner when the task is completed.
-    
+
     This custom spinner column extends Rich's SpinnerColumn to provide
     conditional rendering - the spinner is only shown for active tasks
     and disappears once the task is marked as completed.
     """
-    
+
     def render(self, task):
         if task.completed:
             return ""
