@@ -2,10 +2,12 @@
 
 from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
+import threading
 from textual.reactive import reactive
 from textual.widgets import Static, Markdown
 from textual.css.query import NoMatches
 from textual.types import NoActiveAppError
+from textual.message import Message
 
 from .base_content_panel import BaseContentPanel
 from .chat_message import ChatMessage
@@ -16,6 +18,30 @@ if TYPE_CHECKING:
     from pieces._vendor.pieces_os_client.wrapper.basic_identifier.message import (
         BasicMessage,
     )
+
+
+class AddMessageFromBasic(Message):
+    """Message to add a BasicMessage to the UI from background thread."""
+
+    def __init__(self, basic_message: "BasicMessage") -> None:
+        super().__init__()
+        self.basic_message = basic_message
+
+
+class FinalizeLoading(Message):
+    """Message to finalize loading process from background thread."""
+
+    def __init__(self, message_count: int) -> None:
+        super().__init__()
+        self.message_count = message_count
+
+
+class ShowError(Message):
+    """Message to show error from background thread."""
+
+    def __init__(self, error_message: str) -> None:
+        super().__init__()
+        self.error_message = error_message
 
 
 class ChatViewPanel(BaseContentPanel):
@@ -51,10 +77,12 @@ class ChatViewPanel(BaseContentPanel):
         """Load a conversation from a BasicChat object."""
         self.current_chat = chat
         self.clear_messages()
+        self.border_title = f"Chat: {chat.name}"
+        threading.Thread(target=self.load_messages, args=(chat,), daemon=True).start()
 
+    def load_messages(self, chat: "BasicChat"):
+        """Load messages in background thread with proper UI updates via message system."""
         try:
-            self.border_title = f"Chat: {chat.name}"
-
             messages = chat.messages()
             Settings.logger.info(
                 f"Loading {len(messages)} messages for chat: {chat.name}"
@@ -64,14 +92,16 @@ class ChatViewPanel(BaseContentPanel):
                 Settings.logger.debug(
                     f"Message {i}: {message.role} - created: {message.message.created.value if message.message.created else 'None'}"
                 )
-                self._add_message_from_basic(message)
+                # Send message to main thread to add this message
+                self.post_message(AddMessageFromBasic(message))
 
-            self._last_message_count = len(messages)
-            self.scroll_end(animate=False)
+            # Send message to finalize loading
+            self.post_message(FinalizeLoading(len(messages)))
 
         except Exception as e:
             Settings.logger.error(f"Error loading conversation: {e}")
-            self.add_message("system", f"❌ Error loading conversation: {str(e)}")
+            # Send error message to main thread
+            self.post_message(ShowError(f"❌ Error loading conversation: {str(e)}"))
 
     def update_conversation_incrementally(self, chat: "BasicChat"):
         """Add new messages to the conversation without full reload."""
@@ -125,6 +155,19 @@ class ChatViewPanel(BaseContentPanel):
             self.mount(message_widget)
         except Exception as e:
             Settings.logger.error(f"Error adding message: {e}")
+
+    def on_add_message_from_basic(self, event: AddMessageFromBasic) -> None:
+        """Handle message to add a BasicMessage from background thread."""
+        self._add_message_from_basic(event.basic_message)
+
+    def on_finalize_loading(self, event: FinalizeLoading) -> None:
+        """Handle message to finalize loading from background thread."""
+        self._last_message_count = event.message_count
+        self.scroll_end(animate=False)
+
+    def on_show_error(self, event: ShowError) -> None:
+        """Handle message to show error from background thread."""
+        self.add_message("system", event.error_message)
 
     def add_message(
         self,
