@@ -28,6 +28,7 @@ class PiecesCopilot(BaseDualPaneView):
         Binding("ctrl+shift+m", "change_model", "Change Model"),
         Binding("ctrl+l", "toggle_ltm", "Toggle LTM"),
         Binding("ctrl+shift+w", "switch_to_workstream", "Switch to Workstream"),
+        Binding("ctrl+c", "stop_streaming", "Stop Streaming", show=False),
     ]
 
     def __init__(self, event_hub: EventHub, **kwargs):
@@ -425,6 +426,34 @@ Ready to assist with code, questions, and more!"""
     def action_switch_to_workstream(self):
         """Switch to workstream view."""
         self.post_message(ViewMessages.SwitchToWorkstream())
+
+    def action_stop_streaming(self):
+        """Stop current streaming operation and clear streaming widgets."""
+        if not self.event_hub:
+            self._show_status_message("Unexpected error: Event hub not available")
+            return
+
+        try:
+            # Check if streaming is active
+            is_streaming_active = (
+                self.chat_view_panel and self.chat_view_panel.is_streaming_active()
+            )
+
+            if is_streaming_active:
+                # Stop the streaming operation
+                self.event_hub.stop_streaming()
+
+                # Clear streaming/thinking widgets
+                if self.chat_view_panel:
+                    self.chat_view_panel.clear_streaming_widget()
+                    self.chat_view_panel._clear_thinking_indicator()
+
+                self._show_status_message("🛑 Streaming stopped")
+                Settings.logger.info("User stopped streaming with Ctrl+C")
+
+        except Exception as e:
+            Settings.logger.error(f"Error stopping streaming: {e}")
+            self._show_status_message("❌ Error stopping streaming")
 
     def cleanup(self):
         """Clean up copilot view resources."""

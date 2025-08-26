@@ -89,7 +89,9 @@ class EventHub:
                 if hasattr(screen, "chat_list_panel") and screen.chat_list_panel:
                     # Use call_later to ensure we're on the main thread
                     chat_panel = screen.chat_list_panel
-                    self.app.call_later(lambda msg=message, panel=chat_panel: panel.post_message(msg))
+                    self.app.call_later(
+                        lambda msg=message, panel=chat_panel: panel.post_message(msg)
+                    )
 
             # Post WorkstreamMessages to workstream widgets
             elif isinstance(
@@ -106,7 +108,11 @@ class EventHub:
                 ):
                     # Use call_later to ensure we're on the main thread
                     workstream_panel = screen.workstream_activities_panel
-                    self.app.call_later(lambda msg=message, panel=workstream_panel: panel.post_message(msg))
+                    self.app.call_later(
+                        lambda msg=message, panel=workstream_panel: panel.post_message(
+                            msg
+                        )
+                    )
 
         except Exception as e:
             Settings.logger.error(f"Error posting to widgets: {e}")
@@ -306,3 +312,8 @@ class EventHub:
         """Ask question via copilot controller."""
         Settings.logger.info(f"EventHub: Asking question: {question[:50]}...")
         self.copilot.ask_question(question)
+
+    def stop_streaming(self):
+        """Stop current streaming operation via copilot controller."""
+        Settings.logger.info("EventHub: Stopping streaming...")
+        self.copilot.stop_streaming()

@@ -174,10 +174,10 @@ Ready to manage your workstream activities!"""
 
             # Post save message
             self.post_message(WorkstreamMessages.ContentSaved(new_content))
-            self.action_toggle_edit_mode()
             Settings.logger.info(
                 f"Saved workstream summary content for: {self.current_summary.name}"
             )
+        self.action_toggle_edit_mode()
 
     async def on_text_area_changed(self, event: TextArea.Changed) -> None:
         """Handle text area content changes."""
