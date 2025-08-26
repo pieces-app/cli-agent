@@ -339,3 +339,9 @@ Ready to help with your coding tasks!"""
     def get_last_message(self) -> Optional[ChatMessage]:
         """Get the last message widget."""
         return self.messages[-1] if self.messages else None
+
+    def is_streaming_active(self) -> bool:
+        """Check if streaming or thinking is currently active."""
+        return (self._streaming_widget is not None) or (
+            self._thinking_widget is not None
+        )

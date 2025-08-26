@@ -110,7 +110,7 @@ class BaseContentPanel(ScrollableContainer):
         Settings.logger.info(
             f"BaseContentPanel: Creating new static widget with classes='{classes}'"
         )
-        widget = Static(content, classes=classes)
+        widget = Static(content, classes=classes, id=widget_id)
         self.mount(widget)
         Settings.logger.info(f"BaseContentPanel: Mounted widget {widget}")
 

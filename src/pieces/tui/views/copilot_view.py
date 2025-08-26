@@ -219,6 +219,11 @@ Ready to assist with code, questions, and more!"""
         if not self.event_hub:
             return
 
+        # Check if streaming is active - don't process if it is
+        if self.chat_view_panel and self.chat_view_panel.is_streaming_active():
+            Settings.logger.info("Ignoring input submission - streaming is active")
+            return
+
         # Remove welcome message and show user input immediately
         if self.chat_view_panel:
             try:
