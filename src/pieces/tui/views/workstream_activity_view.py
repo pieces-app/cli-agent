@@ -123,7 +123,7 @@ class WorkstreamActivityView(BaseDualPaneView):
     ) -> None:
         """Handle confirmed workstream summary switch event - update content panel."""
         if self.workstream_content_panel:
-            self.workstream_content_panel.cleanup()
+            self.workstream_content_panel.clear_content(False)
             self.workstream_content_panel.load_workstream_summary(message.summary)
 
     async def on_workstream_messages_edit_mode_toggled(

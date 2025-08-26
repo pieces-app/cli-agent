@@ -242,9 +242,7 @@ Welcome to your AI-powered coding assistant!
 
 Ready to help with your coding tasks!"""
 
-        self._show_static_content(
-            welcome_text, classes="welcome-message", widget_id="chat-welcome-message"
-        )
+        self._show_static_content(welcome_text, classes="welcome-message")
 
     def clear_messages(self):
         """Clear all messages from the chat panel."""

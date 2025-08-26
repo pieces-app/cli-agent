@@ -138,7 +138,7 @@ Ready to manage your workstream activities!"""
         if action == "toggle_edit_mode" and self.edit_mode:
             return None
         if action == "save_content" and not self.edit_mode:
-            return None
+            return False
         return True
 
     def watch_edit_mode(self, edit_mode: bool) -> None:
@@ -189,14 +189,15 @@ Ready to manage your workstream activities!"""
             if has_changes != self._has_changes:
                 self._has_changes = has_changes
 
-    def clear_content(self):
+    def clear_content(self, show_welcome: bool = True):
         """Clear the current content."""
         self.current_summary = None
         self.border_title = "Workstream Content"
         self._original_content = ""
         self._has_changes = False
 
-        self._show_welcome_message()
+        if show_welcome:
+            self._show_welcome_message()
 
     def has_unsaved_changes(self) -> bool:
         """Check if there are unsaved changes in the editor buffer."""
