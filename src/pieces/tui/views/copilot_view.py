@@ -28,7 +28,7 @@ class PiecesCopilot(BaseDualPaneView):
         Binding("ctrl+shift+m", "change_model", "Change Model"),
         Binding("ctrl+l", "toggle_ltm", "Toggle LTM"),
         Binding("ctrl+shift+w", "switch_to_workstream", "Switch to Workstream"),
-        Binding("ctrl+c", "stop_streaming", "Stop Streaming", show=False),
+        Binding("ctrl+c", "stop_streaming", "Stop Streaming"),
     ]
 
     def __init__(self, event_hub: EventHub, **kwargs):
@@ -37,6 +37,15 @@ class PiecesCopilot(BaseDualPaneView):
         self.chat_list_panel: Optional[ChatListPanel] = None
         self.chat_input: Optional[ChatInput] = None
         self.status_bar: Optional[StatusBar] = None
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        """Check if an action may run."""
+        is_streaming_active = (
+            self.chat_view_panel and self.chat_view_panel.is_streaming_active()
+        )
+        if action == "stop_streaming" and not is_streaming_active:
+            return False
+        return True
 
     # Base view implementation
     def create_list_panel(self) -> ChatListPanel:
