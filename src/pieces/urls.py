@@ -77,7 +77,12 @@ class URLs(Enum):
     CLI_INSTALL_DOCS = "https://docs.pieces.app/products/cli/commands#install"
     CLI_OPEN_DOCS = "https://docs.pieces.app/products/cli/commands#open"
     CLI_HELP_DOCS = "https://docs.pieces.app/products/cli/troubleshooting"
+    CLI_UPDATE_DOCS = ""
     CLI_COMPLETION_DOCS = ""
+    CLI_MANAGE_DOCS = ""
+    CLI_MANAGE_UPDATE_DOCS = ""
+    CLI_MANAGE_STATUS_DOCS = ""
+    CLI_MANAGE_UNINSTALL_DOCS = ""
     CLI_RESTART_DOCS = ""
 
     def open(self):

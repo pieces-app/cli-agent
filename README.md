@@ -5,6 +5,7 @@
 </p>
   
 ##### <p align="center"> [Website](https://pieces.app/) • [PiecesOS Documentation](https://docs.pieces.app/) • [Pieces CLI Documentation](https://docs.pieces.app/extensions-plugins/cli)
+
 </p>
 
 [![Introducing CLI](https://img.youtube.com/vi/kAgwHMxWY8c/0.jpg)](https://www.youtube.com/watch?v=kAgwHMxWY8c)
@@ -30,6 +31,27 @@ To get started with the Pieces Python CLI Tool, you need to:
 1. Ensure PiecesOS is installed and running on your system.
 2. Install the Python package:
 
+  <!--  **Installer Script (Recommended):** -->
+  <!---->
+  <!--  > **Requirements:** Python 3.11 or higher is required for the installation scripts. -->
+  <!---->
+  <!--  ```bash -->
+  <!--   # macOS/Linux (Bash) -->
+  <!--   sh <(curl -fsSL https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.sh) -->
+  <!-- ``` -->
+  <!---->
+  <!--    ```fish -->
+  <!--  # macOS/Linux (Fish) -->
+  <!--  sh (curl -fsSL https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.sh | psub) -->
+  <!--  ``` -->
+  <!---->
+  <!--  ```powershell -->
+  <!--  # Windows (PowerShell) -->
+  <!--  irm https://raw.githubusercontent.com/pieces-app/cli-agent/main/install_pieces_cli.ps1 | iex -->
+  <!--  ``` -->
+
+   **Package Managers:**
+
    ```bash
    pip install pieces-cli
    ```
@@ -46,12 +68,6 @@ To get started with the Pieces Python CLI Tool, you need to:
 
 After installing the CLI tool, you can access its functionalities through the terminal. The tool is initialized with the command `pieces` followed by various subcommands and options.
 
-### Some important terminologies
-
-- `x` -> The index
-- `current asset` -> The asset that you are currently using can be changed by the open command
-- `current conversation` -> The conversation that you currently using in the ask command
-
 ## Shell Completion
 
 The Pieces CLI supports auto-completion for bash, zsh, fish, and PowerShell. To enable completion for your shell, run:
@@ -63,26 +79,30 @@ pieces completion [shell]
 **Quick setup commands for each shell:**
 
 - **Bash:**
+
 ```bash
 echo 'eval "$(pieces completion bash)"' >> ~/.bashrc && source ~/.bashrc
 ```
 
 - **Zsh:**
+
 ```zsh
 echo 'eval "$(pieces completion zsh)"' >> ~/.zshrc && source ~/.zshrc
 ```
 
 - **Fish:**
+
 ```fish
 echo 'pieces completion fish | source' >> ~/.config/fish/config.fish && source ~/.config/fish/config.fish
 ```
 
 - **PowerShell:**
+
 ```powershell
 Add-Content $PROFILE '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript'; . $PROFILE
 ```
 
-After setup, restart your terminal or source your configuration file. Then try typing `pieces ` and press **Tab** to test auto-completion!
+After setup, restart your terminal or source your configuration file. Then try typing `pieces` and press **Tab** to test auto-completion!
 
 ## Usage
 
@@ -153,7 +173,7 @@ cd dist
 pip install pieces-cli-{VERSION}-py3-none-any.whl
 ```
 
-replace the VERSION with the version you downloaded
+Replace the VERSION with the version you downloaded
 Note: Ensure you get latest from the [releases](https://github.com/pieces-app/cli-agent/releases) of the cli-agent
 
 11. To view all the CLI Commands
@@ -198,7 +218,7 @@ coverage report
 To uninstall the project, run the following command:
 
 ```shell
-pip uninstall pieces-cli
+pieces manage uninstall
 ```
 
 Don't forget to remove the virtual environment and dist folder

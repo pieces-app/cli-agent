@@ -1,6 +1,7 @@
 import argparse
 from urllib3.exceptions import MaxRetryError
 from pieces.base_command import BaseCommand
+from pieces.core.update_pieces_os import update_pieces_os
 from pieces.headless.models.base import CommandResult
 from pieces.headless.models.version import create_version_success
 from pieces.urls import URLs
@@ -15,7 +16,7 @@ from pieces.core.execute_command import ExecuteCommand as CoreExecute
 from pieces.gui import print_version_details
 from pieces import __version__
 from pieces.settings import Settings
-from pieces.help_structure import HelpBuilder
+from pieces.help_structure import CommandHelp, HelpBuilder
 
 
 class RunCommand(BaseCommand):
@@ -258,6 +259,35 @@ class VersionCommand(BaseCommand):
         return CommandResult(
             0, create_version_success(__version__, Settings.pieces_os_version)
         )
+
+
+class UpdatePiecesCommand(BaseCommand):
+    """Command to update Pieces CLI."""
+
+    def get_name(self) -> str:
+        return "update"
+
+    def get_help(self) -> str:
+        return "Update PiecesOS"
+
+    def get_description(self) -> str:
+        return "Update PiecesOS"
+
+    def get_examples(self) -> CommandHelp:
+        builder = HelpBuilder()
+
+        builder.section(
+            header="Update PiecesOS:", command_template="pieces update"
+        ).example("pieces update", "Update PiecesOS to the latest version")
+
+        return builder.build()
+
+    def get_docs(self) -> str:
+        return URLs.CLI_UPDATE_DOCS.value
+
+    def execute(self, **kwargs) -> int | CommandResult:
+        """Execute the update command."""
+        return 0 if update_pieces_os() else 1
 
 
 class RestartPiecesOSCommand(BaseCommand):

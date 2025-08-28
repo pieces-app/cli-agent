@@ -79,6 +79,7 @@ class PiecesCLI:
             not Settings.user_config.skip_onboarding
             and not onboarded
             and not ignore_onboarding
+            and not command == "completion"
         ):
             Settings.logger.print(
                 (
@@ -117,6 +118,7 @@ class PiecesCLI:
             "open",
             "config",
             "completion",
+            "manage",
         ] and not (command == "mcp" and mcp_subcommand == "start"):
             bypass_login = True if (command in ["version"]) else False
             Settings.startup(bypass_login)

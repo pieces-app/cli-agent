@@ -1,0 +1,197 @@
+name: Secure Release Process
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  generate-checksums:
+    name: Generate Checksums
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Generate Installation Script Checksums
+        run: |
+          echo "Generating SHA256 checksums for installation scripts..."
+          sha256sum install_pieces_cli.sh > install_pieces_cli.sh.sha256
+          sha256sum install_pieces_cli.ps1 > install_pieces_cli.ps1.sha256
+          
+          # Create a combined checksum file
+          cat > checksums.txt << EOF
+          # Pieces CLI Installation Scripts Checksums
+          # Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          # Release: ${{ github.ref_name }}
+          
+          $(cat install_pieces_cli.sh.sha256)
+          $(cat install_pieces_cli.ps1.sha256)
+          EOF
+          
+      - name: Upload Checksums to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            install_pieces_cli.sh.sha256
+            install_pieces_cli.ps1.sha256
+            checksums.txt
+
+  sign-artifacts:
+    name: Sign Release Artifacts
+    runs-on: ubuntu-latest
+    needs: generate-checksums
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        
+      - name: Sign Installation Scripts
+        run: |
+          echo "Signing installation scripts with Cosign..."
+          
+          # Sign the shell script
+          cosign sign-blob --yes \
+            --output-signature install_pieces_cli.sh.sig \
+            --output-certificate install_pieces_cli.sh.crt \
+            install_pieces_cli.sh
+            
+          # Sign the PowerShell script  
+          cosign sign-blob --yes \
+            --output-signature install_pieces_cli.ps1.sig \
+            --output-certificate install_pieces_cli.ps1.crt \
+            install_pieces_cli.ps1
+            
+      - name: Create Verification Instructions
+        run: |
+          cat > VERIFY.md << 'EOF'
+          # Verification Instructions for Pieces CLI
+          
+          ## Checksum Verification
+          
+          ### Linux/macOS:
+          ```bash
+          sha256sum -c install_pieces_cli.sh.sha256
+          ```
+          
+          ### Windows (PowerShell):
+          ```powershell
+          (Get-FileHash install_pieces_cli.ps1).Hash -eq (Get-Content install_pieces_cli.ps1.sha256).Split()[0]
+          ```
+          
+          ## Signature Verification (Advanced)
+          
+          Install Cosign: https://docs.sigstore.dev/cosign/installation/
+          
+          ### Verify Shell Script:
+          ```bash
+          cosign verify-blob \
+            --certificate install_pieces_cli.sh.crt \
+            --signature install_pieces_cli.sh.sig \
+            --certificate-identity-regexp "https://github.com/pieces-app/*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            install_pieces_cli.sh
+          ```
+          
+          ### Verify PowerShell Script:
+          ```bash
+          cosign verify-blob \
+            --certificate install_pieces_cli.ps1.crt \
+            --signature install_pieces_cli.ps1.sig \
+            --certificate-identity-regexp "https://github.com/pieces-app/*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            install_pieces_cli.ps1
+          ```
+          EOF
+          
+      - name: Upload Signatures to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            *.sig
+            *.crt
+            VERIFY.md
+
+  create-requirements-with-hashes:
+    name: Create Requirements with Hashes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install pip-tools
+        run: pip install pip-tools
+        
+      - name: Generate Requirements with Hashes
+        run: |
+          # Create requirements.in if it doesn't exist
+          if [ ! -f requirements.in ]; then
+            echo "pieces-cli" > requirements.in
+          fi
+          
+          # Compile with hashes
+          pip-compile --generate-hashes \
+            --output-file requirements-hashes.txt \
+            requirements.in
+            
+          # Add header to the file
+          cat > temp.txt << 'EOF'
+          # Pieces CLI Requirements with Hash Verification
+          # Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          # 
+          # Install with:
+          #   pip install --require-hashes --no-deps -r requirements-hashes.txt
+          #
+          EOF
+          cat requirements-hashes.txt >> temp.txt
+          mv temp.txt requirements-hashes.txt
+          
+      - name: Upload Requirements to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: requirements-hashes.txt
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          
+      - name: Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          
+      - name: Run Bandit Security Scan
+        run: |
+          pip install bandit
+          bandit -r src/ -f json -o bandit-report.json || true
+          
+          # Create summary
+          if [ -f bandit-report.json ]; then
+            echo "## Bandit Security Scan Results" >> $GITHUB_STEP_SUMMARY
+            echo "Issues found: $(jq '.metrics."_totals"."SEVERITY.HIGH"' bandit-report.json)" >> $GITHUB_STEP_SUMMARY
+          fi
