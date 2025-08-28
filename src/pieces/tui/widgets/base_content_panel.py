@@ -100,9 +100,7 @@ class BaseContentPanel(ScrollableContainer):
         except (RuntimeError, AttributeError):
             pass
 
-    def _show_static_content(
-        self, content: str, classes: str = "", widget_id: str = ""
-    ):
+    def _show_static_content(self, content: str, classes: str = ""):
         """Show static text content."""
         # Clear content first
         self._clear_content()

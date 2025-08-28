@@ -83,15 +83,20 @@ class WorkstreamActivityView(BaseDualPaneView):
         )
 
         result = await self.app.push_screen_wait(dialog)
-        
+
         if result:
             Settings.logger.info("User confirmed discarding unsaved changes")
-            if self.workstream_content_panel and self.workstream_content_panel.edit_mode:
+            if (
+                self.workstream_content_panel
+                and self.workstream_content_panel.edit_mode
+            ):
                 self.workstream_content_panel.edit_mode = False
             self.post_message(WorkstreamMessages.SwitchConfirmed(target_summary))
         else:
             # User cancelled - stay on current summary
-            Settings.logger.info("User cancelled summary switch - keeping unsaved changes")
+            Settings.logger.info(
+                "User cancelled summary switch - keeping unsaved changes"
+            )
 
     # Message handlers that need view-level handling
     async def on_workstream_messages_switch_requested(
@@ -106,8 +111,10 @@ class WorkstreamActivityView(BaseDualPaneView):
             # Show confirmation dialog
             self._show_unsaved_changes_dialog(message.summary)
         else:
-            # No unsaved changes, exit edit mode and proceed with switch
-            if self.workstream_content_panel and self.workstream_content_panel.edit_mode:
+            if (
+                self.workstream_content_panel
+                and self.workstream_content_panel.edit_mode
+            ):
                 self.workstream_content_panel.edit_mode = False
             self.post_message(WorkstreamMessages.SwitchConfirmed(message.summary))
 
@@ -116,6 +123,7 @@ class WorkstreamActivityView(BaseDualPaneView):
     ) -> None:
         """Handle confirmed workstream summary switch event - update content panel."""
         if self.workstream_content_panel:
+            self.workstream_content_panel.clear_content(False)
             self.workstream_content_panel.load_workstream_summary(message.summary)
 
     async def on_workstream_messages_edit_mode_toggled(

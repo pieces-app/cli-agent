@@ -37,6 +37,28 @@ class ChatInput(Input):
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle input submission."""
         if event.value.strip():
+            # Check if streaming is active by looking for ChatViewPanel in parent hierarchy
+            chat_view_panel = None
+            try:
+                # Walk up the widget tree to find ChatViewPanel
+                parent = self.parent
+                while parent:
+                    if hasattr(parent, "chat_view_panel") and parent.chat_view_panel:
+                        chat_view_panel = parent.chat_view_panel
+                        break
+                    elif parent.__class__.__name__ == "ChatViewPanel":
+                        chat_view_panel = parent
+                        break
+                    parent = getattr(parent, "parent", None)
+
+                # If we found a chat view panel, check if streaming is active
+                if chat_view_panel and hasattr(chat_view_panel, "is_streaming_active"):
+                    if chat_view_panel.is_streaming_active():
+                        event.stop()
+                        return
+            except Exception:
+                pass
+
             # Post Textual message that will bubble up to parent handlers
             self.post_message(UserMessages.InputSubmitted(event.value.strip()))
 
