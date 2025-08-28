@@ -115,33 +115,25 @@ class TestExecutableLocation:
         installer_dir = Path.home() / ".pieces-cli"
         wrapper_script = installer_dir / "pieces"
 
+        # Create a mock file path that would be inside the installer structure
+        mock_file_path = str(
+            installer_dir
+            / "venv/lib/python3.11/site-packages/pieces/command_interface/manage_commands/utils.py"
+        )
+
         with patch("sys.argv", []):
             with patch("shutil.which", return_value=None):
                 with patch(
-                    "pathlib.Path.__file__",
-                    str(
-                        installer_dir
-                        / "venv/lib/python3.11/site-packages/pieces/app.py"
-                    ),
+                    "pieces.command_interface.manage_commands.utils.__file__",
+                    mock_file_path,
                 ):
-                    with patch.object(wrapper_script, "exists", return_value=True):
-                        # Need to mock the Path constructor and parents
-                        mock_current_file = Mock()
-                        mock_current_file.parents = [
-                            installer_dir / "venv/lib/python3.11/site-packages/pieces",
-                            installer_dir / "venv/lib/python3.11/site-packages",
-                            installer_dir / "venv/lib/python3.11",
-                            installer_dir / "venv/lib",
-                            installer_dir / "venv",
-                            installer_dir,
-                            Path.home(),
-                        ]
+                    # Mock Path.exists to return True only for our wrapper script
+                    def mock_exists(self):
+                        return self == wrapper_script
 
-                        with patch(
-                            "pathlib.Path.resolve", return_value=mock_current_file
-                        ):
-                            result = _get_executable_location()
-                            assert result == wrapper_script
+                    with patch("pathlib.Path.exists", mock_exists):
+                        result = _get_executable_location()
+                        assert result == wrapper_script
 
     def test_finds_pieces_relative_to_python(self):
         """Test finding pieces executable relative to current Python."""
@@ -150,7 +142,11 @@ class TestExecutableLocation:
 
         with patch("sys.argv", []):
             with patch("shutil.which", return_value=None):
-                with patch.object(pieces_executable, "exists", return_value=True):
+                # Mock Path.exists to return True only for our pieces executable
+                def mock_exists(self):
+                    return self == pieces_executable
+
+                with patch("pathlib.Path.exists", mock_exists):
                     result = _get_executable_location()
                     assert result == pieces_executable
 
