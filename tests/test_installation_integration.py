@@ -16,6 +16,8 @@ import tempfile
 import platform
 from pathlib import Path
 
+from pieces.settings import Settings
+
 
 class TestInstallationIntegration:
     """Integration tests for installation scripts."""
@@ -101,6 +103,60 @@ class TestInstallationIntegration:
         except Exception as e:
             return False, str(e)
 
+    def _log_installed_dependencies(self, venv_dir):
+        """Log all installed dependencies with detailed information using pip show."""
+        # Get pip executable path
+        if platform.system() == "Windows":
+            pip_executable = venv_dir / "Scripts" / "pip.exe"
+        else:
+            pip_executable = venv_dir / "bin" / "pip"
+
+        if not pip_executable.exists():
+            Settings.logger.debug(f"Pip executable not found at {pip_executable}")
+            return
+
+        try:
+            # First get list of all installed packages
+            Settings.logger.info("=== INSTALLED PACKAGES OVERVIEW ===")
+            list_result = self._run_with_timeout(f'"{pip_executable}" list', timeout=30)
+            if list_result.returncode == 0:
+                Settings.logger.info("Installed packages:")
+                for line in list_result.stdout.strip().split("\n"):
+                    if line.strip():
+                        Settings.logger.info(f"  {line}")
+            else:
+                Settings.logger.error(f"Failed to list packages: {list_result.stderr}")
+                return
+
+            # Extract package names (skip header lines)
+            lines = list_result.stdout.strip().split("\n")
+            packages = []
+            for line in lines[2:]:  # Skip header lines
+                if line.strip() and not line.startswith("-"):
+                    package_name = line.split()[0]
+                    packages.append(package_name)
+
+            # Now get detailed info for each package using pip show
+            Settings.logger.info("=== DETAILED PACKAGE INFORMATION ===")
+            for package in packages:
+                Settings.logger.info(f"\n--- Package: {package} ---")
+                show_result = self._run_with_timeout(
+                    f'"{pip_executable}" show "{package}"', timeout=30
+                )
+                if show_result.returncode == 0:
+                    for line in show_result.stdout.strip().split("\n"):
+                        if line.strip():
+                            Settings.logger.info(f"  {line}")
+                else:
+                    Settings.logger.debug(
+                        f"Failed to get details for package {package}: {show_result.stderr}"
+                    )
+
+            Settings.logger.info("=== END PACKAGE INFORMATION ===")
+
+        except Exception as e:
+            Settings.logger.error(f"Error logging dependencies: {e}")
+
     @pytest.mark.skipif(
         platform.system() == "Windows",
         reason="Shell script test only runs on Unix-like systems",
@@ -179,6 +235,9 @@ class TestInstallationIntegration:
             assert "prompt-toolkit" in installed_packages, (
                 "prompt-toolkit dependency not found"
             )
+
+            # Log all installed dependencies with detailed information
+            self._log_installed_dependencies(venv_dir)
 
     @pytest.mark.skipif(
         not shutil.which("pwsh") and not shutil.which("powershell"),
@@ -259,6 +318,9 @@ class TestInstallationIntegration:
         assert success, f"pieces help command failed: {output}"
         print(f"pieces help output: {output}")
 
+        # Log all installed dependencies with detailed information
+        self._log_installed_dependencies(venv_dir)
+
     def test_installation_cleanup(self):
         """Test that installation cleans up properly."""
         # Create a mock failed installation scenario to test cleanup
@@ -325,6 +387,10 @@ class TestInstallationIntegration:
         assert "usage:" in output.lower() or "help" in output.lower(), (
             f"Help output doesn't look correct: {output}"
         )
+
+        # Log all installed dependencies with detailed information
+        venv_dir = self.installation_dir / "venv"
+        self._log_installed_dependencies(venv_dir)
 
         print("Full installation workflow test completed successfully!")
 
