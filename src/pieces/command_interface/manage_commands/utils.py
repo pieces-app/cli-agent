@@ -35,7 +35,43 @@ def _check_command_availability(command: str) -> bool:
 def _get_executable_location() -> Optional[Path]:
     """Get the location of the current pieces executable."""
     try:
-        return Path(os.path.abspath(sys.argv[0]))
+        # Method 1: Try sys.argv[0] if it looks like an executable path
+        if sys.argv and sys.argv[0]:
+            argv_path = Path(os.path.abspath(sys.argv[0]))
+            # If it's a Python file, we're likely running via python -m pieces
+            if argv_path.suffix in {".py", ".pyc"}:
+                # Try to find 'pieces' in PATH instead
+                pieces_exec = shutil.which("pieces")
+                if pieces_exec:
+                    return Path(pieces_exec)
+            else:
+                # Direct executable invocation
+                return argv_path
+
+        # Method 2: Try finding 'pieces' in PATH
+        pieces_exec = shutil.which("pieces")
+        if pieces_exec:
+            return Path(pieces_exec)
+
+        # Method 3: Check if we're in a known installation structure
+        # This handles cases where we're running from a venv or specific install location
+        current_file = Path(__file__).resolve()
+
+        # Check for installer method structure: ~/.pieces-cli/venv/lib/python*/site-packages/pieces/...
+        pieces_cli_dir = Path.home() / ".pieces-cli"
+        if pieces_cli_dir in current_file.parents:
+            wrapper_script = pieces_cli_dir / "pieces"
+            if wrapper_script.exists():
+                return wrapper_script
+
+        # Method 4: Look for pieces executable relative to current Python
+        python_dir = Path(sys.executable).parent
+        for name in ["pieces", "pieces.exe", "pieces.cmd"]:
+            candidate = python_dir / name
+            if candidate.exists():
+                return candidate
+
+        return None
     except Exception:
         return None
 

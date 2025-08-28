@@ -16,7 +16,7 @@ from pieces.core.execute_command import ExecuteCommand as CoreExecute
 from pieces.gui import print_version_details
 from pieces import __version__
 from pieces.settings import Settings
-from pieces.help_structure import HelpBuilder
+from pieces.help_structure import CommandHelp, HelpBuilder
 
 
 class RunCommand(BaseCommand):
@@ -273,8 +273,14 @@ class UpdatePiecesCommand(BaseCommand):
     def get_description(self) -> str:
         return "Update PiecesOS"
 
-    def get_examples(self) -> list[str]:
-        return ["pieces update"]
+    def get_examples(self) -> CommandHelp:
+        builder = HelpBuilder()
+
+        builder.section(
+            header="Update PiecesOS:", command_template="pieces update"
+        ).example("pieces update", "Update PiecesOS to the latest version")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_UPDATE_DOCS.value
@@ -282,7 +288,6 @@ class UpdatePiecesCommand(BaseCommand):
     def execute(self, **kwargs) -> int | CommandResult:
         """Execute the update command."""
         return 0 if update_pieces_os() else 1
-
 
 
 class RestartPiecesOSCommand(BaseCommand):

@@ -80,15 +80,79 @@ class TestExecutableLocation:
 
     def test_finds_pieces_executable(self):
         """Test finding pieces executable using sys.argv[0]."""
-        with patch("sys.argv", ["/usr/local/bin/pieces", "manage", "status"]):
-            result = _get_executable_location()
-            assert result == Path("/usr/local/bin/pieces")
+        test_path = "/usr/local/bin/pieces"
+        with patch("sys.argv", [test_path, "manage", "status"]):
+            with patch("shutil.which", return_value=None):  # Disable PATH fallback
+                result = _get_executable_location()
+                # Convert expected path to absolute path for platform compatibility
+                expected = Path(os.path.abspath(test_path))
+                assert result == expected
 
     def test_executable_not_found(self):
-        """Test when sys.argv is empty."""
+        """Test when sys.argv is empty and no fallbacks work."""
         with patch("sys.argv", []):
-            result = _get_executable_location()
-            assert result is None
+            with patch("shutil.which", return_value=None):
+                with patch("pathlib.Path.exists", return_value=False):
+                    result = _get_executable_location()
+                    assert result is None
+
+    def test_finds_pieces_via_path(self):
+        """Test finding pieces executable via PATH when sys.argv[0] is a Python file."""
+        with patch("sys.argv", ["/path/to/python/script.py", "manage", "status"]):
+            with patch("shutil.which", return_value="/usr/local/bin/pieces"):
+                result = _get_executable_location()
+                assert result == Path("/usr/local/bin/pieces")
+
+    def test_finds_pieces_via_path_fallback(self):
+        """Test finding pieces executable via PATH as fallback."""
+        with patch("sys.argv", []):  # Empty sys.argv
+            with patch("shutil.which", return_value="/usr/local/bin/pieces"):
+                result = _get_executable_location()
+                assert result == Path("/usr/local/bin/pieces")
+
+    def test_finds_pieces_in_installer_structure(self):
+        """Test finding pieces in installer directory structure."""
+        installer_dir = Path.home() / ".pieces-cli"
+        wrapper_script = installer_dir / "pieces"
+
+        with patch("sys.argv", []):
+            with patch("shutil.which", return_value=None):
+                with patch(
+                    "pathlib.Path.__file__",
+                    str(
+                        installer_dir
+                        / "venv/lib/python3.11/site-packages/pieces/app.py"
+                    ),
+                ):
+                    with patch.object(wrapper_script, "exists", return_value=True):
+                        # Need to mock the Path constructor and parents
+                        mock_current_file = Mock()
+                        mock_current_file.parents = [
+                            installer_dir / "venv/lib/python3.11/site-packages/pieces",
+                            installer_dir / "venv/lib/python3.11/site-packages",
+                            installer_dir / "venv/lib/python3.11",
+                            installer_dir / "venv/lib",
+                            installer_dir / "venv",
+                            installer_dir,
+                            Path.home(),
+                        ]
+
+                        with patch(
+                            "pathlib.Path.resolve", return_value=mock_current_file
+                        ):
+                            result = _get_executable_location()
+                            assert result == wrapper_script
+
+    def test_finds_pieces_relative_to_python(self):
+        """Test finding pieces executable relative to current Python."""
+        python_dir = Path(sys.executable).parent
+        pieces_executable = python_dir / "pieces"
+
+        with patch("sys.argv", []):
+            with patch("shutil.which", return_value=None):
+                with patch.object(pieces_executable, "exists", return_value=True):
+                    result = _get_executable_location()
+                    assert result == pieces_executable
 
     def test_exception_handling(self):
         """Test exception handling during detection."""
