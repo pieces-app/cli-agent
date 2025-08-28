@@ -1,7 +1,8 @@
 import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
-from pieces.core.config_command import ConfigCommands
+from pieces.settings import Settings
+from pieces.help_structure import HelpBuilder
 
 
 class ConfigCommand(BaseCommand):
@@ -16,14 +17,28 @@ class ConfigCommand(BaseCommand):
     def get_description(self) -> str:
         return "Configure various Pieces CLI settings including default editor and other preferences"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces config",
-            "pieces config --editor subl",
-            "pieces config --editor nvim",
-            "pieces config --editor vim",
-            "pieces config --editor code",
-        ]
+    def get_examples(self):
+        """Return structured examples for the config command."""
+        builder = HelpBuilder()
+
+        # Basic configuration
+        builder.section(
+            header="View Configuration:", command_template="pieces config"
+        ).example("pieces config", "Display current configuration settings")
+
+        # Editor configuration
+        builder.section(
+            header="Set Default Editor:",
+            command_template="pieces config --editor [EDITOR]",
+        ).example(
+            "pieces config --editor code", "Set VS Code as default editor"
+        ).example(
+            "pieces config --editor subl", "Set Sublime Text as default editor"
+        ).example(
+            "pieces config --editor nvim", "Set Neovim as default editor"
+        ).example("pieces config --editor vim", "Set Vim as default editor")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_CONFIG_DOCS.value
@@ -40,5 +55,12 @@ class ConfigCommand(BaseCommand):
 
     def execute(self, **kwargs) -> int:
         """Execute the config command."""
-        ConfigCommands.config(**kwargs)
+
+        editor = kwargs.get("editor")
+        if editor:
+            Settings.cli_config.editor = editor
+            Settings.logger.print(f"Editor set to: {editor}")
+        else:
+            Settings.logger.print("Current configuration:")
+            Settings.logger.print(f"Editor: {Settings.cli_config.editor or 'Not set'}")
         return 0

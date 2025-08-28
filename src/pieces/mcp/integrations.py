@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 import yaml
 import platform
 import os
@@ -7,6 +7,8 @@ import json
 from .integration import Integration, MCPProperties
 from ..settings import Settings
 from ..urls import URLs
+
+# TODO: Might need some cleanups here
 
 goose_config_path = os.path.expanduser("~/.config/goose/config.yaml")
 windsurf_config_path = os.path.expanduser("~/.codeium/windsurf/mcp_config.json")
@@ -23,15 +25,13 @@ def get_global_vs_settings():
     system = platform.system()
 
     if system == "Windows":
-        settings_path = os.path.join(
-            os.environ["APPDATA"], "Code", "User", "settings.json"
-        )
+        settings_path = os.path.join(os.environ["APPDATA"], "Code", "User", "mcp.json")
     elif system == "Darwin":  # macOS
         settings_path = os.path.expanduser(
-            "~/Library/Application Support/Code/User/settings.json"
+            "~/Library/Application Support/Code/User/mcp.json"
         )
     elif system == "Linux":
-        settings_path = os.path.expanduser("~/.config/Code/User/settings.json")
+        settings_path = os.path.expanduser("~/.config/Code/User/mcp.json")
     else:
         Settings.show_error(f"Unsupported platform {system}")
         raise ValueError
@@ -90,49 +90,66 @@ def validate_project_path(path, dot_file=".vscode", readable: str = "VS Code"):
 
 
 def input_local_path(dot_file: str, name: str) -> str:
-    path = input(f"Enter the path to the {name} project: ")
+    path = Settings.logger.input(f"Enter the path to the {name} workspace: ")
     is_valid, m = validate_project_path(path, dot_file, name)
 
     while not is_valid:
         print(m)
-        path = input(f"Enter a valid path for the {name} project: ")
+        path = Settings.logger.input(f"Enter a valid path for the {name} workspace: ")
         is_valid, m = validate_project_path(path, dot_file, name)
     settings_path = m
 
     return settings_path
 
 
-def get_vscode_path(option: Literal["global", "local"] = "global"):
+def _get_config_path(
+    base_folder: str,
+    filename: str,
+    mcp_path: Optional[str],
+    option: Literal["global", "local"],
+    global_config: str,
+):
     if option == "global":
-        settings_path = get_global_vs_settings()
-    elif option == "local":
-        settings_path = input_local_path(".vscode", "VS Code")
-        settings_path = os.path.join(
-            settings_path, "settings.json"
-        )  # Add the settings.json to the settings path to edit
-    create_config(settings_path)
-    return settings_path
+        config_path = global_config
+    else:
+        config_path = mcp_path or input_local_path(
+            base_folder, base_folder.lstrip(".").title()
+        )
+        config_path = os.path.join(config_path, filename)
+
+    create_config(config_path)
+    return config_path
+
+
+def get_vscode_path(
+    mcp_path: Optional[str] = None, option: Literal["global", "local"] = "global"
+):
+    return _get_config_path(
+        base_folder=".vscode",
+        filename="settings.json",
+        mcp_path=mcp_path,
+        option=option,
+        global_config=get_global_vs_settings(),
+    )
+
+
+def get_cursor_path(
+    mcp_path: Optional[str] = None, option: Literal["global", "local"] = "global"
+):
+    return _get_config_path(
+        base_folder=".cursor",
+        filename="mcp.json",
+        mcp_path=mcp_path,
+        option=option,
+        global_config=os.path.expanduser(os.path.join("~", ".cursor", "mcp.json")),
+    )
 
 
 def create_config(path: str):
-    # Create the MCP file if not exists
     dir = os.path.dirname(path)
     if os.path.exists(dir) and not os.path.exists(path):
         with open(path, "w") as file:
             json.dump({}, file)
-
-
-def get_cursor_path(option: Literal["global", "local"] = "global"):
-    if option == "global":
-        config_path = os.path.expanduser(os.path.join("~", ".cursor", "mcp.json"))
-    elif option == "local":
-        config_path = input_local_path(".cursor", "Cursor")
-        config_path = os.path.join(
-            config_path, "mcp.json"
-        )  # Add the settings.json to the settings path to edit
-    create_config(config_path)
-
-    return config_path
 
 
 def get_claude_path():
@@ -293,6 +310,19 @@ warp_sse_json = """
 }}
 """
 
+
+text_success_kiro = """
+### Use Pieces LTM in Kiro
+
+1. Restart Kiro
+2. **Ask a prompt:**
+
+        What I was working on yesterday?
+        Summarize it with 5 bullet points and timestamps.
+
+> Ensure PiecesOS is running & LTM is enabled
+"""
+
 text_success_short_wave = """
 ### Use Pieces LTM in Shortwave
 
@@ -318,6 +348,7 @@ cursor_integration = Integration(
     text_success=text_success_cursor,
     docs=URLs.CURSOR_MCP_DOCS.value,
     readable="Cursor",
+    id="cursor",
     get_settings_path=get_cursor_path,
     mcp_properties=MCPProperties(
         stdio_property={},
@@ -325,24 +356,28 @@ cursor_integration = Integration(
         sse_path=["mcpServers", "Pieces"],
         sse_property={},
     ),
+    check_existence_command="cursor",
 )
 vscode_integration = Integration(
     options=options,
     text_success=text_success_vscode,
+    id="vscode",
     readable="VS Code",
     docs=URLs.VS_CODE_MCP_DOCS.value,
     get_settings_path=get_vscode_path,
     mcp_properties=MCPProperties(
         stdio_property={"type": "stdio"},
-        stdio_path=["mcp", "servers", "Pieces"],
+        stdio_path=["servers", "Pieces"],
         sse_property={"type": "sse"},
-        sse_path=["mcp", "servers", "Pieces"],
+        sse_path=["servers", "Pieces"],
     ),
+    check_existence_command="code",
 )
 goose_integration = Integration(
     options=[],
     text_success=text_success_goose,
     readable="Goose",
+    id="goose",
     docs=URLs.GOOSE_MCP_DOCS.value,
     get_settings_path=lambda: goose_config_path,
     mcp_properties=MCPProperties(
@@ -373,13 +408,16 @@ goose_integration = Integration(
     ),
     saver=yaml.dump,
     loader=yaml.safe_load,
+    check_existence_command="goose",
 )
 
 claude_integration = Integration(
     options=[],
     text_success=text_success_claude,
     readable="Claude Desktop",
+    support_sse=False,
     get_settings_path=get_claude_path,
+    id="claude",
     docs=URLs.CLAUDE_MCP_DOCS.value,
     mcp_properties=MCPProperties(
         stdio_property={},
@@ -390,10 +428,10 @@ claude_integration = Integration(
         ],  ## SSE Connection is not supported in claude!
         sse_property={},
     ),
-    id="claude",
 )
 
 windsurf_integration = Integration(
+    id="windsurf",
     options=[],
     text_success=text_success_windsurf,
     readable="Windsurf",
@@ -412,9 +450,11 @@ windsurf_integration = Integration(
 )
 
 zed_integration = Integration(
+    id="zed",
     options=[],
     text_success=text_success_zed,
     readable="Zed",
+    support_sse=False,
     get_settings_path=lambda: zed_config_path,
     docs=URLs.ZED_MCP_DOCS.value,
     mcp_properties=MCPProperties(
@@ -426,13 +466,16 @@ zed_integration = Integration(
     ),
     # We might need to add better abstraction for all the MCPs that do not support SSE.
     # As far as I know, SSE is not supported on Zed. We are going to use stdio only like Claude
+    check_existence_command="zed",
 )
 
 shortwave_integration = Integration(
+    id="shortwave",
     options=[],
     text_success=text_success_short_wave,
     readable="Shortwave",
     get_settings_path=get_shortwave_path,
+    support_sse=False,
     docs=URLs.SHORT_WAVE_MCP_DOCS.value,
     mcp_properties=MCPProperties(
         stdio_path=["mcpServers", "Pieces"],
@@ -444,11 +487,29 @@ shortwave_integration = Integration(
 
 
 claude_cli_integration = Integration(
+    id="claude_code",
     options=[],  # TODO: Add local and global options
     text_success=text_success_claude_cli,
     readable="Claude Code",
     docs=URLs.CLAUDE_CLI_MCP_DOCS.value,
     get_settings_path=lambda: claude_cli_path,
+    support_sse=False,
+    mcp_properties=MCPProperties(
+        stdio_path=["mcpServers", "Pieces"],
+        sse_path=["mcpServers", "Pieces"],
+        sse_property={},
+        stdio_property={},
+    ),
+    check_existence_command="claude",
+)
+
+kiro_integration = Integration(
+    id="kiro",
+    options=[],
+    text_success=text_success_kiro,
+    readable="Kiro",
+    docs=URLs.KIRO_MCP_DOCS.value,
+    get_settings_path=lambda: os.path.expanduser("~/.kiro/settings/mcp.json"),
     mcp_properties=MCPProperties(
         stdio_path=["mcpServers", "Pieces"],
         sse_path=["mcpServers", "Pieces"],

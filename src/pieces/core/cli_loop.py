@@ -13,7 +13,9 @@ from pieces.settings import Settings
 
 def loop(**kwargs):
     """Run the CLI loop."""
-    from pieces._vendor.pieces_os_client.wrapper.websockets.conversations_ws import ConversationWS
+    from pieces._vendor.pieces_os_client.wrapper.websockets.conversations_ws import (
+        ConversationWS,
+    )
     from pieces._vendor.pieces_os_client.wrapper.websockets.assets_identifiers_ws import (
         AssetsIdentifiersWS,
     )
@@ -90,7 +92,9 @@ def run_cli(user_input: str, command_name: str, command_args: List[str]):
         return
 
     if user_input == "exit":
-        from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import BaseWebsocket
+        from pieces._vendor.pieces_os_client.wrapper.websockets.base_websocket import (
+            BaseWebsocket,
+        )
 
         double_space("Exiting...")
         BaseWebsocket.close_all()
@@ -106,10 +110,14 @@ def run_cli(user_input: str, command_name: str, command_args: List[str]):
 
 def run_command(user_input: str, command_name: str, command_args: List[str]) -> None:
     """Execute a command with proper error handling."""
-    if command_name in ["run", "onboarding"] and Settings.run_in_loop:
+    if command_name in ["run", "onboarding", "ui", "tui"] and Settings.run_in_loop:
         if command_name == "onboarding":
             Settings.logger.print(
-                "Cannot run onboarding while in loop mode. Please exit first."
+                "Cannot run onboarding while in loop mode.  Please exit first."
+            )
+        elif command_name == "tui" or command_name == "ui":
+            Settings.logger.print(
+                "Cannot run TUI while in loop mode.  Please exit first."
             )
         return
 
@@ -134,7 +142,9 @@ def run_command(user_input: str, command_name: str, command_args: List[str]) -> 
     except SystemExit as e:
         # argparse calls sys.exit on error - catch and handle gracefully
         # Settings.logger.print(f"Invalid arguments for command: {command_name}")
-        Settings.logger.error(f"Invalid arguments for command: {command_name}, {e}")
+        Settings.logger.warning(
+            f"Invalid arguments for command: {command_name}, {e}"
+        )
     except Exception as e:
         Settings.logger.error(f"Error executing {command_name}: {str(e)}")
         Settings.show_error(f"Command failed: {command_name}", str(e))
@@ -153,7 +163,7 @@ def suggest_similar_command(command_name: str) -> None:
         ):
             commands.extend(
                 list(
-                    PiecesArgparser.parser._subparsers._group_actions[0].choices.keys()
+                    PiecesArgparser.parser._subparsers._group_actions[0].choices.keys()  # type: ignore
                 )
             )
     except Exception as e:

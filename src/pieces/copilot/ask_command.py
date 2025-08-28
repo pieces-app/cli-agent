@@ -11,7 +11,9 @@ from pieces._vendor.pieces_os_client.wrapper.basic_identifier.chat import BasicC
 from pieces._vendor.pieces_os_client.wrapper.websockets.ask_ws import AskStreamWS
 
 if TYPE_CHECKING:
-    from pieces._vendor.pieces_os_client.models.qgpt_stream_output import QGPTStreamOutput
+    from pieces._vendor.pieces_os_client.models.qgpt_stream_output import (
+        QGPTStreamOutput,
+    )
 
 
 class AskStream:
@@ -36,6 +38,17 @@ class AskStream:
 
                 self.message_compeleted.set()
                 Settings.pieces_client.copilot.chat = BasicChat(response.conversation)
+            elif response.status == "FAILED":
+                error_message = (
+                    response.error_message
+                    or "An error occurred Please try again or check your input."
+                )
+                if error_message == "UserSubscriptionRequired":
+                    Settings.logger.print(
+                        "Please upgrade to Pieces Pro or change that model using `pieces list models`"
+                    )
+                else:
+                    Settings.logger.print("[red]" + error_message)
 
         except Exception as e:
             Settings.logger.critical(e)
@@ -98,11 +111,14 @@ class AskStream:
                     )
                 context.assets.append(asset)
 
+    def on_error(self, ws, error):
+        Settings.logger.error(f"WebSocket error: {error}")
+
     def ask(self, query, **kwargs):
-        Settings.pieces_client.copilot.ask_stream_ws.on_message_callback = (
+        Settings.pieces_client.copilot.ask_stream_ws.on_message_callback = (  # pyright: ignore[reportAttributeAccessIssue]
             self.on_message
         )
-        Settings.get_model()  # Ensure the model is loaded
+        Settings.pieces_client.copilot.ask_stream_ws.on_error = self.on_error
         if kwargs.get("ltm", False) and not enable_ltm():
             return
         files = kwargs.get("files", None)

@@ -1,24 +1,28 @@
 import argparse
 import asyncio
+from typing import Union
 from pieces.base_command import BaseCommand, CommandGroup
-from pieces.urls import URLs
+from pieces.help_structure import HelpBuilder
+from pieces.headless.models.base import CommandResult
 from pieces.mcp import (
-    handle_mcp,
+    handle_gateway,
     handle_list,
+    handle_mcp,
     handle_mcp_docs,
     handle_repair,
     handle_status,
-    handle_gateway,
+    handle_list_headless,
 )
-from pieces.mcp.integration import mcp_integrations
-from pieces.mcp.handler import supported_mcps
+from pieces.config.schemas.mcp import mcp_integrations
 from pieces.settings import Settings
+from pieces.urls import URLs
 
 
 class MCPSetupCommand(BaseCommand):
     """Subcommand to set up MCP integrations."""
 
     _is_command_group = True
+    support_headless = True
 
     def get_name(self) -> str:
         return "setup"
@@ -29,41 +33,31 @@ class MCPSetupCommand(BaseCommand):
     def get_description(self) -> str:
         return "Set up MCP server for various IDE integrations"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces mcp setup --vscode",
-            "pieces mcp setup --cursor --globally",
-            "pieces mcp setup --claude --stdio",
-        ]
+    def get_examples(self):
+        """Return structured examples for the MCP setup command."""
+        builder = HelpBuilder()
+
+        builder.section(
+            header="Setup MCP Integrations:",
+            command_template="pieces mcp setup [INTEGRATION] [OPTIONS]",
+        ).example("pieces mcp setup vscode", "Setup VS Code integration").example(
+            "pieces mcp setup cursor --globally", "Setup Cursor integration globally"
+        ).example("pieces mcp setup claude --stdio", "Setup Claude Desktop with stdio")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_MCP_SETUP_DOCS.value
 
     def add_arguments(self, parser: argparse.ArgumentParser):
-        for mcp_integration in mcp_integrations:
-            parser.add_argument(
-                f"--{mcp_integration}",
-                dest=mcp_integration,
-                action="store_true",
-                help=f"Set up the MCP for {supported_mcps[mcp_integration].readable}",
-            )
-
-        # Raycast does not allow checking for the mcp stuff only adding mcp and only via deeplinks
-        # So we won't include it in the rest commands as a normal mcp because we can't access the json config
         parser.add_argument(
-            "--raycast",
-            dest="raycast",
-            action="store_true",
-            help="Set up the MCP for Raycast",
+            "integration",
+            type=str,
+            choices=mcp_integrations + ["raycast", "wrap"],
+            help="The integration to set up",
+            default=None,
+            nargs="?",
         )
-
-        parser.add_argument(
-            "--wrap",
-            dest="wrap",
-            action="store_true",
-            help="Set up the MCP for Wrap",
-        )
-
         parser.add_argument(
             "--globally",
             dest="global",
@@ -73,7 +67,8 @@ class MCPSetupCommand(BaseCommand):
         parser.add_argument(
             "--specific-workspace",
             dest="local",
-            action="store_true",
+            nargs="?",
+            const=True,
             help="For VS Code or Cursor to set the Local MCP",
         )
         parser.add_argument(
@@ -83,15 +78,20 @@ class MCPSetupCommand(BaseCommand):
             help="Use the stdio MCP instead of sse",
         )
 
-    def execute(self, **kwargs) -> int:
-        handle_mcp(**kwargs)
-        return 0
+    def execute(self, **kwargs) -> CommandResult:
+        """Execute the MCP setup command."""
+        result = handle_mcp(**kwargs)
+        return CommandResult(
+            0,
+            result,
+        )
 
 
 class MCPListCommand(BaseCommand):
     """Subcommand to list MCP integrations."""
 
     _is_command_group = True
+    support_headless = True
 
     def get_name(self) -> str:
         return "list"
@@ -102,12 +102,18 @@ class MCPListCommand(BaseCommand):
     def get_description(self) -> str:
         return "Display registered and available MCP integrations"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces mcp list",
-            "pieces mcp list --already-registered",
-            "pieces mcp list --available-for-setup",
-        ]
+    def get_examples(self):
+        """Return structured examples for the MCP list command."""
+        builder = HelpBuilder()
+
+        builder.section(
+            header="List MCP Integrations:",
+            command_template="pieces mcp list [OPTIONS]",
+        ).example("pieces mcp list", "List all integrations").example(
+            "pieces mcp list --already-registered", "Show registered MCPs"
+        ).example("pieces mcp list --available-for-setup", "Show available MCPs")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_MCP_LIST_DOCS.value
@@ -126,9 +132,12 @@ class MCPListCommand(BaseCommand):
             help="Display the list of the ready to be registered MCPs",
         )
 
-    def execute(self, **kwargs) -> int:
-        handle_list(**kwargs)
-        return 0
+    def execute(self, **kwargs) -> Union[int, CommandResult]:
+        if not Settings.headless_mode:
+            handle_list(**kwargs)
+            return 0
+        else:
+            return CommandResult(0, handle_list_headless(**kwargs))
 
 
 class MCPDocsCommand(BaseCommand):
@@ -145,12 +154,20 @@ class MCPDocsCommand(BaseCommand):
     def get_description(self) -> str:
         return "Display or open documentation for MCP integrations"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces mcp docs",
-            "pieces mcp docs --integration vscode",
-            "pieces mcp docs --integration cursor --open",
-        ]
+    def get_examples(self):
+        """Return structured examples for the MCP docs command."""
+        builder = HelpBuilder()
+
+        builder.section(
+            header="Access MCP Documentation:",
+            command_template="pieces mcp docs [OPTIONS]",
+        ).example("pieces mcp docs", "Open general MCP documentation").example(
+            "pieces mcp docs --integration vscode", "Open VS Code integration docs"
+        ).example(
+            "pieces mcp docs --integration cursor --open", "Open Cursor docs in browser"
+        )
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_MCP_DOCS_COMMAND.value
@@ -192,8 +209,15 @@ class MCPStartCommand(BaseCommand):
     def get_description(self) -> str:
         return "Start the MCP server in stdio mode"
 
-    def get_examples(self) -> list[str]:
-        return ["pieces mcp start"]
+    def get_examples(self):
+        """Return structured examples for the MCP start command."""
+        builder = HelpBuilder()
+
+        builder.section(
+            header="Start MCP Server:", command_template="pieces mcp start"
+        ).example("pieces mcp start", "Start MCP server in stdio mode")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_MCP_START_DOCS.value
@@ -229,6 +253,7 @@ class MCPRepairCommand(BaseCommand):
     """Subcommand to repair MCP configurations."""
 
     _is_command_group = True
+    support_headless = True
 
     def get_name(self) -> str:
         return "repair"
@@ -239,12 +264,19 @@ class MCPRepairCommand(BaseCommand):
     def get_description(self) -> str:
         return "Repair MCP configuration settings for specific IDEs"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces mcp repair",
+    def get_examples(self):
+        """Return structured examples for the MCP repair command."""
+        builder = HelpBuilder()
+
+        builder.section(
+            header="Repair MCP Configurations:",
+            command_template="pieces mcp repair [OPTIONS]",
+        ).example("pieces mcp repair", "Repair all MCP configurations").example(
             "pieces mcp repair --integration vscode",
-            "pieces mcp repair --integration all",
-        ]
+            "Repair specific VS Code integration",
+        ).example("pieces mcp repair --integration all", "Repair all integrations")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_MCP_REPAIR_DOCS.value
@@ -260,9 +292,13 @@ class MCPRepairCommand(BaseCommand):
             help="The integration to repair",
         )
 
-    def execute(self, **kwargs) -> int:
-        handle_repair(**kwargs)
-        return 0
+    def execute(self, **kwargs) -> Union[int, CommandResult]:
+        if not Settings.headless_mode:
+            handle_repair(**kwargs)
+            return 0
+        else:
+            result = handle_repair(**kwargs)
+            return CommandResult(0, result)
 
 
 class MCPStatusCommand(BaseCommand):
@@ -279,8 +315,17 @@ class MCPStatusCommand(BaseCommand):
     def get_description(self) -> str:
         return "Display the current status of LTM and MCP integrations"
 
-    def get_examples(self) -> list[str]:
-        return ["pieces mcp status"]
+    def get_examples(self):
+        """Return structured examples for the MCP status command."""
+        builder = HelpBuilder()
+
+        builder.section(
+            header="Check MCP Status:", command_template="pieces mcp status"
+        ).example(
+            "pieces mcp status", "Display current status of LTM and MCP integrations"
+        )
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_MCP_STATUS_DOCS.value
@@ -305,13 +350,23 @@ class MCPCommandGroup(CommandGroup):
     def get_description(self) -> str:
         return "Manage Model Context Protocol (MCP) integrations for various IDEs and tools including VS Code, Cursor, Claude Desktop, and Goose"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces mcp",
-            "pieces mcp setup --vscode",
-            "pieces mcp list",
-            "pieces mcp status",
-        ]
+    def get_examples(self):
+        """Return structured examples for the MCP command group."""
+        builder = HelpBuilder()
+
+        # Basic usage
+        builder.section(
+            header="MCP Management:", command_template="pieces mcp [SUBCOMMAND]"
+        ).example("pieces mcp", "Show MCP help and available commands")
+
+        # Common operations
+        builder.section(
+            header="Common Operations:", command_template="pieces mcp [ACTION]"
+        ).example("pieces mcp setup vscode", "Setup VS Code integration").example(
+            "pieces mcp list", "List all integrations"
+        ).example("pieces mcp status", "Check MCP status")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_MCP_DOCS.value

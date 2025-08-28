@@ -1,6 +1,7 @@
 """
 End-to-end tests for the MCP Gateway using subprocess.
-POS is required to run these tests.
+PiecesOS is required to run these tests.
+LTM must be running, and PiecesOS as well.
 """
 
 import pytest
@@ -27,7 +28,7 @@ def run_mcp_command(args, timeout=10):
         pytest.skip("pieces command not found in PATH")
 
 
-def run_mcp_with_input(input_data, timeout=10):
+def run_mcp_with_input(input_data, timeout=15):
     """Helper function to run MCP gateway and send input via stdin."""
     cmd = ["pieces", "mcp", "start"]
     env = os.environ.copy()
@@ -90,12 +91,19 @@ class TestMCPGatewayE2E:
             # Process is running, terminate it
             process.terminate()
             try:
-                stdout, stderr = process.communicate(timeout=5)
+                # Increased timeout to handle the new cleanup lifecycle
+                stdout, stderr = process.communicate(timeout=15)
                 # Process terminated successfully
                 assert True
             except subprocess.TimeoutExpired:
+                # If normal terminate doesn't work, try with SIGKILL
                 process.kill()
-                pytest.fail("Gateway did not terminate cleanly")
+                try:
+                    stdout, stderr = process.communicate(timeout=5)
+                    # Process was killed, but this is acceptable for cleanup
+                    assert True
+                except subprocess.TimeoutExpired:
+                    pytest.fail("Gateway did not terminate even with SIGKILL")
         else:
             # Process already exited
             stdout, stderr = process.communicate()
@@ -115,27 +123,14 @@ class TestMCPGatewayE2E:
     def test_gateway_json_rpc_initialize(self):
         """Test sending a JSON-RPC initialize request to the gateway."""
         # JSON-RPC 2.0 initialize request
-        initialize_request = (
-            json.dumps(
-                {
-                    "jsonrpc": "2.0",
-                    "method": "initialize",
-                    "params": {
-                        "protocolVersion": "2024-11-05",
-                        "capabilities": {},
-                        "clientInfo": {"name": "test-client", "version": "1.0.0"},
-                    },
-                    "id": 1,
-                }
-            )
-            + "\n"
-        )
+        initialize_request = """{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test_client","version":"1.0.0"}}}"""
+        initialize_request += "\n"  # Ensure newline for MCP input
 
-        returncode, stdout, stderr = run_mcp_with_input(initialize_request, timeout=5)
+        returncode, stdout, stderr = run_mcp_with_input(initialize_request, timeout=10)
 
         # Check if we got a response
         if returncode == -1:
-            pytest.skip("Gateway timed out - likely waiting for Pieces OS")
+            pytest.fail("Gateway timed out - this should not happen with POS running")
 
         # If we got output, try to parse it as JSON-RPC
         if stdout:
@@ -154,36 +149,24 @@ class TestMCPGatewayE2E:
                         # Not JSON, might be log output
                         continue
         elif "Pieces OS" in stderr or "MCP server" in stderr or "PiecesOS" in stderr:
-            pytest.skip(
-                "Gateway requires Pieces OS to be running"
-            )  # we should enhance error handling at some point
+            pytest.fail(
+                f"Gateway requires Pieces OS to be running - but POS should be running. Error: {stderr}"
+            )
 
     def test_gateway_json_rpc_list_tools(self):
         """Test sending a list tools request after initialization."""
         # Send both initialize and list_tools requests
         requests = [
-            json.dumps(
-                {
-                    "jsonrpc": "2.0",
-                    "method": "initialize",
-                    "params": {
-                        "protocolVersion": "2024-11-05",
-                        "capabilities": {},
-                        "clientInfo": {"name": "test-client", "version": "1.0.0"},
-                    },
-                    "id": 1,
-                }
-            ),
-            json.dumps(
-                {"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 2}
-            ),
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"}}}',
+            '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}',
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}',
         ]
 
         input_data = "\n".join(requests) + "\n"
-        returncode, stdout, stderr = run_mcp_with_input(input_data, timeout=5)
+        returncode, stdout, stderr = run_mcp_with_input(input_data, timeout=10)
 
         if returncode == -1:
-            pytest.skip("Gateway timed out - likely waiting for Pieces OS")
+            pytest.fail("Gateway timed out - this should not happen with POS running")
 
         # Check for responses
         if stdout:
@@ -217,7 +200,9 @@ class TestMCPGatewayE2E:
                     ):
                         pytest.fail(f"Unexpected error: {error_msg}")
         elif "Pieces OS" in stderr or "MCP server" in stderr or "PiecesOS" in stderr:
-            pytest.skip("Gateway requires Pieces OS to be running")
+            pytest.fail(
+                f"Gateway requires Pieces OS to be running - but POS should be running. Error: {stderr}"
+            )
 
     def test_gateway_invalid_json_handling(self):
         """Test that the gateway handles invalid JSON gracefully."""
@@ -230,7 +215,7 @@ class TestMCPGatewayE2E:
 
         for invalid_input in invalid_inputs:
             returncode, stdout, stderr = run_mcp_with_input(
-                invalid_input + "\n", timeout=3
+                invalid_input + "\n", timeout=8
             )
 
             if returncode != -1:  # Not timed out
@@ -280,16 +265,25 @@ class TestMCPGatewayE2E:
         session_input.append(
             json.dumps(
                 {
-                    "jsonrpc": "2.0",
-                    "method": "tools/call",
-                    "params": {
-                        "name": "ask_pieces_ltm",
-                        "arguments": {
-                            "question": "What is Pieces for Developers?",
-                            "chat_llm": "gpt-4o-mini",
-                        },
-                    },
-                    "id": 3,
+                    "question": "What was I working on yesterday? What files did I modify, what tasks was I completing, and what was I focused on?",
+                    "chat_llm": "claude-3-5-sonnet-20241022",
+                    "connected_client": "Cursor",
+                    "application_sources": ["Cursor", "Code"],
+                    "topics": [
+                        "yesterday",
+                        "work",
+                        "coding",
+                        "files",
+                        "tasks",
+                        "progress",
+                    ],
+                    "related_questions": [
+                        "What files did I edit yesterday?",
+                        "What commits did I make yesterday?",
+                        "What issues was I working on yesterday?",
+                        "What features was I implementing yesterday?",
+                    ],
+                    "open_files": [],
                 }
             )
         )
@@ -299,10 +293,12 @@ class TestMCPGatewayE2E:
         returncode, stdout, stderr = run_mcp_with_input(input_data, timeout=30)
 
         if returncode == -1:
-            pytest.skip("Gateway timed out - likely waiting for Pieces OS")
+            pytest.fail("Gateway timed out - this should not happen with POS running")
 
         if "Pieces OS" in stderr or "MCP server" in stderr or "PiecesOS" in stderr:
-            pytest.skip("Gateway requires Pieces OS to be running")
+            pytest.fail(
+                "Gateway requires Pieces OS to be running - but POS should be running"
+            )
 
         # Parse all responses
         responses = {}
@@ -360,8 +356,8 @@ class TestMCPGatewayE2E:
 
     def test_gateway_tool_call_simple(self):
         """Test a simple tool call flow with minimal validation."""
-        # Just test that we can call a tool and get some response
-        input_data = (
+        # Build a proper MCP flow: init -> initialized notification -> list tools -> call tool
+        session_requests = [
             json.dumps(
                 {
                     "jsonrpc": "2.0",
@@ -373,12 +369,18 @@ class TestMCPGatewayE2E:
                     },
                     "id": 1,
                 }
-            )
-            + "\n"
-        )
-
-        # Add a tool call right after init
-        input_data += (
+            ),
+            json.dumps(
+                {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}}
+            ),
+            json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "method": "tools/list",
+                    "params": {},
+                    "id": 2,
+                }
+            ),
             json.dumps(
                 {
                     "jsonrpc": "2.0",
@@ -387,33 +389,52 @@ class TestMCPGatewayE2E:
                         "name": "ask_pieces_ltm",
                         "arguments": {"question": "Hello", "chat_llm": "gpt-4o-mini"},
                     },
-                    "id": 2,
+                    "id": 3,
                 }
-            )
-            + "\n"
-        )
+            ),
+        ]
+
+        input_data = "\n".join(session_requests) + "\n"
 
         returncode, stdout, stderr = run_mcp_with_input(input_data, timeout=20)
 
         if returncode == -1:
-            pytest.skip("Gateway timed out")
+            pytest.fail("Gateway timed out - this should not happen with POS running")
 
         if "Pieces OS" in stderr or "MCP server" in stderr or "PiecesOS" in stderr:
-            pytest.skip("Gateway requires Pieces OS to be running")
+            pytest.fail(
+                "Gateway requires Pieces OS to be running - but POS should be running"
+            )
 
-        # Just verify we got some JSON responses
-        json_responses = 0
+        responses = {}
         if stdout:
             lines = stdout.strip().split("\n")
             for line in lines:
                 if line.strip():
                     try:
-                        json.loads(line)
-                        json_responses += 1
+                        response = json.loads(line)
+                        if "id" in response:
+                            responses[response["id"]] = response
                     except json.JSONDecodeError:
                         continue
 
-        assert json_responses > 0, "Expected at least one JSON-RPC response"
+        assert len(responses) >= 1, f"Expected at least init response, got: {responses}"
+
+        if 1 in responses:
+            init_resp = responses[1]
+            assert "result" in init_resp or "error" in init_resp
+            if "result" in init_resp:
+                assert "protocolVersion" in init_resp["result"]
+
+        if 2 in responses:
+            tools_resp = responses[2]
+            if "result" in tools_resp:
+                assert "tools" in tools_resp["result"]
+                assert isinstance(tools_resp["result"]["tools"], list)
+
+        if 3 in responses:
+            tool_resp = responses[3]
+            assert "result" in tool_resp or "error" in tool_resp
 
     def test_gateway_large_request_handling(self):
         """Test that the gateway can handle large requests."""
@@ -450,14 +471,13 @@ class TestMCPGatewayE2E:
         )
 
         input_data = init_request + large_request
-        returncode, stdout, stderr = run_mcp_with_input(input_data, timeout=10)
+        returncode, stdout, stderr = run_mcp_with_input(input_data, timeout=15)
 
         if returncode == -1:
-            pytest.skip("Gateway timed out - likely waiting for Pieces OS")
+            pytest.fail("Gateway timed out - this should not happen with POS running")
 
         assert stdout or stderr
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

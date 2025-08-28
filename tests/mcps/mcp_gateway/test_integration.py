@@ -1,14 +1,21 @@
 """
-End-to-end tests for the MCP Gateway functionality.
+Integration/E2E tests for the MCP Gateway functionality.
 These tests interact with a real Pieces OS instance and verify actual behavior.
 """
 
 import urllib.request
 import pytest
-import requests
+import asyncio
 import mcp.types as types
+import requests
+
+from .utils import (
+    get_upstream_url,
+    ensure_pieces_setup,
+    mock_tools_changed_callback,
+    TEST_SERVER_NAME,
+)
 from pieces.mcp.gateway import MCPGateway, PosMcpConnection
-from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
 
 # Constants
@@ -32,7 +39,7 @@ def ensure_pieces_setup():
     Returns True if Pieces OS is running, False otherwise.
     """
     try:
-        Settings.startup()
+        Settings.pieces_client.is_pieces_running(3)
         return True
     except (requests.RequestException, ConnectionError, SystemExit):
         return False
@@ -70,27 +77,23 @@ async def test_gateway_connection_with_pos_running(ensure_pieces_setup):
         pytest.skip("MCP server is not accessible. Skipping test.")
 
     # Create the connection
-    connection = PosMcpConnection(upstream_url)
+    connection = PosMcpConnection(upstream_url, mock_tools_changed_callback)
 
-    try:
-        # Attempt to connect
-        session = await connection.connect()
+    # Attempt to connect
+    session = await connection.connect()
+    await asyncio.sleep(1)  # Allow time for connection to establish
 
-        # Verify we got a valid session
-        assert session is not None
+    # Verify we got a valid session
+    assert session is not None
 
-        # Verify we discovered some tools
-        assert len(connection.discovered_tools) > 0
+    # Verify we discovered some tools
+    assert len(connection.discovered_tools) > 0
 
-        # Tools should be properly structured Tool objects
-        for tool in connection.discovered_tools:
-            assert hasattr(tool, "name")
-            assert hasattr(tool, "description")
-            assert isinstance(tool, types.Tool)
-
-    finally:
-        # Clean up
-        await connection.cleanup()
+    # Tools should be properly structured Tool objects
+    for tool in connection.discovered_tools:
+        assert hasattr(tool, "name")
+        assert hasattr(tool, "description")
+        assert isinstance(tool, types.Tool)
 
 
 @pytest.mark.asyncio
@@ -113,9 +116,14 @@ async def test_call_tool_with_pos_running(ensure_pieces_setup):
         pytest.skip("MCP server is not accessible. Skipping test.")
 
     # Create the connection
-    connection = PosMcpConnection(upstream_url)
+    connection = PosMcpConnection(upstream_url, mock_tools_changed_callback)
 
     try:
+        if hasattr(Settings.pieces_client, "version") and hasattr(
+            Settings.pieces_client.version, "_mock_name"
+        ):
+            Settings.pieces_client.version = "3.0.0"
+
         # Connect to the server
         await connection.connect()
 
@@ -173,6 +181,7 @@ async def test_full_gateway_workflow(ensure_pieces_setup):
     try:
         # Connect to the upstream first
         await gateway.upstream.connect()
+        await asyncio.sleep(1)  # Allow time for connection to establish
 
         # Verify we can list tools
         tools = gateway.upstream.discovered_tools

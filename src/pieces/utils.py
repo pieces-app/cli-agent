@@ -7,10 +7,12 @@ from prompt_toolkit.widgets import Box
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
 from typing import Any, List, Tuple, Callable, Optional
-from .core.extensions import extensions_dict
+from .headless.exceptions import HeadlessInteractiveOperationError
 
 
 def get_file_extension(language):
+    from .core.extensions import extensions_dict
+
     # Lowercase the language for case-insensitive matching
     language = language.lower()
 
@@ -26,6 +28,12 @@ class PiecesSelectMenu:
         footer_text: Optional[str] = None,
         title: Optional[str] = "Select an option",
     ):
+        # Check if we're in headless mode
+        from pieces.settings import Settings
+
+        if Settings.headless_mode:
+            raise HeadlessInteractiveOperationError("select menu")
+
         self.menu_options = list(menu_options)  # Ensure it's a list
         self.on_enter_callback = on_enter_callback
         self.current_selection = 0

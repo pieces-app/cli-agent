@@ -12,7 +12,6 @@ import platform
 import sys
 
 from pieces.core.cli_loop import run_command, extract_text
-from pieces.core.config_command import ConfigCommands
 from pieces.settings import Settings
 from pieces.urls import URLs
 
@@ -116,16 +115,18 @@ def get_shell_info():
     """Detect user's shell and return completion instructions."""
     shell_path = os.environ.get("SHELL", "")
     shell_name = os.path.basename(shell_path).lower()
-    
+
     # Check if running in PowerShell (Windows or cross-platform)
-    ps_session = os.environ.get("PSModulePath") or os.environ.get("POWERSHELL_DISTRIBUTION_CHANNEL")
-    
+    ps_session = os.environ.get("PSModulePath") or os.environ.get(
+        "POWERSHELL_DISTRIBUTION_CHANNEL"
+    )
+
     # Handle PowerShell detection
     if ps_session or "pwsh" in shell_name or "powershell" in shell_name:
         return {
             "name": "PowerShell",
             "config_file": "$PROFILE",
-            "command": '$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript',
+            "command": "$completionPiecesScript = pieces completion powershell | Out-String; Invoke-Expression $completionPiecesScript",
             "reload": ". $PROFILE",
         }
     # Handle common shell variations
@@ -187,7 +188,7 @@ Try typing `pieces ` and press **Tab** to test it out!"""
 
 
 def onboarding_command(**kwargs):
-    step_number = 1
+    step_number = Settings.user_config.onboarding_step
     steps = {
         "Step 1: Sign into Pieces": [
             OnboardingCommandStep(
@@ -300,6 +301,7 @@ def onboarding_command(**kwargs):
                 mini_step.run()
 
             step_number += 1
+            Settings.user_config.onboarding_step = step_number
 
     Settings.logger.print("Thank you for using the Pieces CLI!")
     Settings.logger.print(
@@ -307,9 +309,7 @@ def onboarding_command(**kwargs):
     )
     Settings.logger.print("For more information visit " + URLs.DOCS_CLI.value)
 
-    config = ConfigCommands.load_config()
-    config["onboarded"] = True
-    ConfigCommands.save_config(config)
+    Settings.user_config.onboarded = True
 
     from pieces._vendor.pieces_os_client.exceptions import BadRequestException
 

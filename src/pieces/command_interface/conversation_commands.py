@@ -2,6 +2,7 @@ import argparse
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
 from pieces.copilot import get_conversations, conversation_handler
+from pieces.help_structure import HelpBuilder
 
 
 class ChatsCommand(BaseCommand):
@@ -19,8 +20,18 @@ class ChatsCommand(BaseCommand):
     def get_description(self) -> str:
         return "Display a list of all your saved conversations with the Pieces Copilot, showing titles and timestamps for easy navigation"
 
-    def get_examples(self) -> list[str]:
-        return ["pieces chats", "pieces chats 20", "pieces conversations"]
+    def get_examples(self):
+        """Return structured examples for the chats command."""
+        builder = HelpBuilder()
+
+        # Basic usage
+        builder.section(
+            header="List Conversations:", command_template="pieces chats [MAX_COUNT]"
+        ).example("pieces chats", "List last 10 conversations").example(
+            "pieces chats 20", "List last 20 conversations"
+        ).example("pieces conversations", "Alias for chats command")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_CHATS_DOCS.value
@@ -56,14 +67,25 @@ class ChatCommand(BaseCommand):
     def get_description(self) -> str:
         return "Manage individual conversations with the Pieces Copilot. You can select, create, rename, or delete conversations"
 
-    def get_examples(self) -> list[str]:
-        return [
-            "pieces chat",
-            "pieces chat 1",
-            "pieces chat --new",
-            "pieces chat --rename 'New Title'",
-            "pieces chat --delete",
-        ]
+    def get_examples(self):
+        """Return structured examples for the chat command."""
+        builder = HelpBuilder()
+
+        # Basic usage
+        builder.section(
+            header="Select Conversations:", command_template="pieces chat [INDEX]"
+        ).example("pieces chat", "Select current conversation").example(
+            "pieces chat 1", "Select conversation by index"
+        )
+
+        # Management actions
+        builder.section(
+            header="Manage Conversations:", command_template="pieces chat [OPTIONS]"
+        ).example("pieces chat --new", "Create a new conversation").example(
+            "pieces chat --rename 'New Title'", "Rename current conversation"
+        ).example("pieces chat --delete", "Delete current conversation")
+
+        return builder.build()
 
     def get_docs(self) -> str:
         return URLs.CLI_CHAT_DOCS.value

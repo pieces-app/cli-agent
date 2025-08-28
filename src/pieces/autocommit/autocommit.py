@@ -23,10 +23,14 @@ def get_current_working_changes() -> Optional[Tuple[str, "Seeds"]]:
     from pieces._vendor.pieces_os_client.models.seed import Seed
     from pieces._vendor.pieces_os_client.models.seeds import Seeds
     from pieces._vendor.pieces_os_client.models.seeded_asset import SeededAsset
-    from pieces._vendor.pieces_os_client.models.seeded_asset_metadata import SeededAssetMetadata
+    from pieces._vendor.pieces_os_client.models.seeded_asset_metadata import (
+        SeededAssetMetadata,
+    )
     from pieces._vendor.pieces_os_client.models.seeded_format import SeededFormat
     from pieces._vendor.pieces_os_client.models.seeded_fragment import SeededFragment
-    from pieces._vendor.pieces_os_client.models.transferable_string import TransferableString
+    from pieces._vendor.pieces_os_client.models.transferable_string import (
+        TransferableString,
+    )
     from pieces._vendor.pieces_os_client.models.anchor_type_enum import AnchorTypeEnum
     from pieces._vendor.pieces_os_client.models.seeded_anchor import SeededAnchor
 
@@ -184,7 +188,7 @@ def prompt_commit_message(
     )
 
     if r_message == "c":
-        edit = Settings.logger.prompt(
+        edit = Settings.logger.input(
             f"Enter the new commit message [generated message is: '{commit_message}']"
         )
         if edit:
@@ -227,7 +231,9 @@ def handle_issue_markdown(commit_message: str, issue_markdown: str) -> str:
 
 
 def get_issue_details(seeds):
-    from pieces._vendor.pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
+    from pieces._vendor.pieces_os_client.models.qgpt_relevance_input import (
+        QGPTRelevanceInput,
+    )
     from pieces._vendor.pieces_os_client.models.qgpt_relevance_input_options import (
         QGPTRelevanceInputOptions,
     )
@@ -249,7 +255,7 @@ def get_issue_details(seeds):
                     QGPTRelevanceInput(
                         query=issue_prompt.format(issues=issue_markdown),
                         application=Settings.pieces_client.application.id,
-                        model=Settings.get_auto_commit_model(),
+                        model=Settings.model_config.auto_commit_model.uuid,
                         options=QGPTRelevanceInputOptions(question=True),
                         seeds=seeds,
                     )
@@ -286,7 +292,9 @@ def format_issues_markdown(issues: list) -> str:
 
 
 def get_commit_message(changes_summary, seeds):
-    from pieces._vendor.pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
+    from pieces._vendor.pieces_os_client.models.qgpt_relevance_input import (
+        QGPTRelevanceInput,
+    )
     from pieces._vendor.pieces_os_client.models.qgpt_relevance_input_options import (
         QGPTRelevanceInputOptions,
     )
@@ -308,7 +316,7 @@ def get_commit_message(changes_summary, seeds):
                     query=message_prompt,
                     seeds=seeds,
                     application=Settings.pieces_client.application.id,
-                    model=Settings.get_auto_commit_model(),
+                    model=Settings.model_config.auto_commit_model.uuid,
                     options=QGPTRelevanceInputOptions(question=True),
                 )
             )
@@ -318,12 +326,12 @@ def get_commit_message(changes_summary, seeds):
 
         commit_message = clean_commit_message(commit_message)
     except AttributeError as e:
-        Settings.show_error("Failed to get the response from the LLM model")
         Settings.logger.critical(f"Faild to get the .answer.answers from the model {e}")
+        Settings.show_error("Failed to get the response from the LLM model")
         return
     except Exception as e:
-        Settings.show_error("Error in getting the commit message", e)
         Settings.logger.critical(e)
+        Settings.show_error("Error in getting the commit message", e)
         return
     return commit_message
 

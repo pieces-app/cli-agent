@@ -1,4 +1,4 @@
-from typing import Callable, Optional,TYPE_CHECKING, List
+from typing import Callable, Optional,TYPE_CHECKING, List, Self
 import websocket
 import threading
 from abc import ABC, abstractmethod
@@ -38,7 +38,7 @@ class BaseWebsocket(ABC):
 		self.running = False
 		self.on_message_callback = on_message_callback
 		self.on_open_callback = on_open_callback if on_open_callback else lambda x: None
-		self.on_error = on_error if on_error else lambda ws, error: print(error)
+		self.on_error = on_error if on_error else lambda ws, error: None
 		self.on_close = on_close if on_close else lambda ws, close_status_code, close_msg: None
 		self.pieces_client = pieces_client
 		self._initialized = threading.Event()
@@ -149,7 +149,7 @@ class BaseWebsocket(ABC):
 		return False
 
 	@classmethod
-	def get_instance(cls) -> Optional[type]:
+	def get_instance(cls) -> Optional[Self]:
 		"""
 		Get the singleton instance of the class.
 

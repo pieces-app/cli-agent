@@ -9,7 +9,6 @@ from pieces.urls import URLs
 from pieces.utils import get_file_extension
 from pieces.gui import print_asset_details, space_below, double_line
 from pieces.settings import Settings
-from pieces.core.config_command import ConfigCommands
 from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
 
 from pygments import highlight
@@ -86,7 +85,7 @@ class AssetsCommands:
                 os.makedirs(Settings.open_snippet_dir)
 
             file_path = os.path.join(
-                Settings.open_snippet_dir, f"{cls.current_asset.id}{file_extension}"
+                Settings.open_snippet_dir, f"{asset_id}{file_extension}"
             )
 
             # Save the code to a file in the default directory
@@ -95,7 +94,7 @@ class AssetsCommands:
                     file.write(code_content)
             else:  # Image bytes data
                 with open(file_path, "wb") as file:
-                    file.write(bytes(code_content))
+                    file.write(bytes(code_content))  # type: ignore[assignment]
 
             # Open the file with the configured editor
             editor_exe = shutil.which(editor)
@@ -120,8 +119,7 @@ class AssetsCommands:
     def check_editor(cls) -> Tuple[bool, str]:
         if not cls.current_asset:
             return False, ""
-        config = ConfigCommands.load_config()
-        editor = config.get("editor")
+        editor = Settings.cli_config.editor
 
         if editor:
             return True, editor

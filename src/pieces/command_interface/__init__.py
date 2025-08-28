@@ -16,6 +16,9 @@ from .simple_commands import (
     ContributeCommand,
     InstallCommand,
     OnboardingCommand,
+    VersionCommand,
+    UpdatePiecesCommand,
+    RestartPiecesOSCommand,
 )
 from .ask_command import AskCommand
 from .conversation_commands import ChatsCommand, ChatCommand
@@ -24,9 +27,13 @@ from .open_command import OpenCommand
 from .mcp_command_group import MCPCommandGroup
 from .completions import CompletionCommand
 from .manage_commands import ManageCommandGroup
+from .tui_command import TUICommand
 
 __all__ = [
     "ConfigCommand",
+    "VersionCommand",
+    "UpdatePiecesCommand",
+    "RestartPiecesOSCommand",
     "ListCommand",
     "LoginCommand",
     "LogoutCommand",
@@ -50,4 +57,5 @@ __all__ = [
     "MCPCommandGroup",
     "CompletionCommand",
     "ManageCommandGroup",
+    "TUICommand",
 ]
