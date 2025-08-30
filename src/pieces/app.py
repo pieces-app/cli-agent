@@ -75,14 +75,18 @@ class PiecesCLI:
 
         onboarded = Settings.user_config.onboarded
 
+        command = args.command
+        PiecesCLI.command = command
+
         if (
             not Settings.user_config.skip_onboarding
             and not onboarded
             and not ignore_onboarding
+            and not self.command == "completion"
         ):
             Settings.logger.print(
                 (
-                    "👋 It looks like this is your first time using the Pieces CLI.\n\n"
+                    "It looks like this is your first time using the Pieces CLI.\n\n"
                     "Would you like to start the onboarding process?\n"
                     "\n"
                     "  [y] Yes  – Start onboarding now.\n"
@@ -98,8 +102,6 @@ class PiecesCLI:
             elif res.lower() == "skip":
                 Settings.user_config.skip_onboarding = True
 
-        command = args.command
-        PiecesCLI.command = command
         if not command and getattr(args, "version", False):
             command = "--version"
 
