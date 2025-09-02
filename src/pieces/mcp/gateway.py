@@ -391,7 +391,7 @@ class PosMcpConnection:
             )
             # Don't re-raise - this is expected when connections are interrupted
             return
-        except BrokenPipeError:
+        except BrokenPipeError as e:
             Settings.logger.info(
                 "SSE stream resource broken (connection closed during send)"
             )
@@ -405,7 +405,7 @@ class PosMcpConnection:
                 },
             )
             return
-        except ValidationError:
+        except ValidationError as e:
             Settings.logger.info(
                 "MCP server sent malformed JSON-RPC message (validation failed)"
             )

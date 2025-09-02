@@ -201,7 +201,10 @@ class Integration:
         ):
             return False
         dirname = os.path.dirname(path)
-        settings = self.load_config(path, **kwargs)
+        try:
+            settings = self.load_config(path, **kwargs)
+        except (json.JSONDecodeError, yaml.YAMLError):
+            return False
         begin = settings
         for p in mcp_path:
             begin = begin.get(p, {})
@@ -250,7 +253,7 @@ class Integration:
             Settings.logger.print(
                 f"Failed in prasing {self.readable}, {path} - it may be malformed"
             )
-            raise ValueError
+            raise
 
         return settings
 
@@ -355,8 +358,7 @@ class Integration:
             config = self.load_config(path or "")
         except FileNotFoundError:
             return False, {}
-        except ValueError as e:
-            Settings.logger.print(e)
+        except (json.JSONDecodeError, yaml.YAMLError):
             return False, {}
 
         # Ignore the Pieces because it might be named anything else
