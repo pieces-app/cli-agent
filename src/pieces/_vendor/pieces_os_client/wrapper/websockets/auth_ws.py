@@ -59,6 +59,8 @@ class AuthWS(BaseWebsocket):
 			json.decoder.JSONDecodeError: If the message cannot be decoded as JSON.
 		"""
 		try:
-			self.on_message_callback(UserProfile.from_json(message))
+			user = UserProfile.from_json(message)
 		except json.decoder.JSONDecodeError:
-			self.on_message_callback(None)  # User logged out!
+			user = None # User logged out!
+		self.on_message_callback(user) 
+		self.pieces_client.user.user_profile = user
