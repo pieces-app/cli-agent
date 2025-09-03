@@ -1,4 +1,5 @@
 import argparse
+import sys
 from importlib.resources import files
 from pieces.base_command import BaseCommand
 from pieces.settings import Settings
@@ -69,10 +70,33 @@ class CompletionCommand(BaseCommand):
         try:
             path = files("pieces.completions").joinpath(shell)
             content = path.read_text(encoding="utf-8")
-            print(content)  # Use print to avoid any formatting issues
+
+            try:
+                print(content)
+            except OSError as e:
+                if (
+                    e.errno == 22
+                ):  # Invalid argument - likely Windows console limitation
+                    self._write_content_chunked(content)
+                else:
+                    raise  # Re-raise if it's a different OSError
+
             return 0
-        except FileNotFoundError:
+        except (FileNotFoundError, ModuleNotFoundError):
             Settings.logger.console_error.print(
                 f"Error: No completion script found for '{shell}'"
             )
             return 1
+
+    def _write_content_chunked(self, content: str, chunk_size: int = 8192) -> None:
+        """Write content in chunks to handle large output on Windows consoles."""
+        try:
+            # Try sys.stdout.write first as it handles large strings better
+            sys.stdout.write(content)
+            sys.stdout.flush()
+        except OSError:
+            # Fallback to chunked writing if that fails too
+            for i in range(0, len(content), chunk_size):
+                chunk = content[i : i + chunk_size]
+                sys.stdout.write(chunk)
+                sys.stdout.flush()

@@ -1,10 +1,12 @@
 import asyncio
 import hashlib
+from pydantic import ValidationError
 import sentry_sdk
 import signal
 import threading
 from typing import Tuple, Callable, Awaitable
 import httpx
+import httpcore
 
 from websocket import WebSocketConnectionClosedException
 from pieces.mcp.utils import get_mcp_latest_url
@@ -162,13 +164,13 @@ class PosMcpConnection:
                 if health_ws:
                     health_ws.start()
 
-                os_id = Settings.get_os_id()
-                sentry_sdk.set_extra("os_id", os_id or "unknown")
+                sentry_sdk.set_user({"id": Settings.get_os_id() or "unknown"})
 
                 # Update the user profile cache
                 Settings.pieces_client.user.user_profile = (
                     Settings.pieces_client.user_api.user_snapshot().user
                 )
+
                 # Update LTM status cache
                 Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
                 return True
@@ -344,6 +346,17 @@ class PosMcpConnection:
 
             Settings.logger.info("Connection established successfully")
 
+            # Add Sentry breadcrumb for successful MCP connection
+            sentry_sdk.add_breadcrumb(
+                message="MCP connection established",
+                category="mcp",
+                level="info",
+                data={
+                    "upstream_url": self.upstream_url,
+                    "tools_count": len(self.discovered_tools),
+                },
+            )
+
             # Keep connection alive until cleanup is requested or cancelled
             try:
                 await self._cleanup_requested.wait()
@@ -355,6 +368,72 @@ class PosMcpConnection:
         except asyncio.CancelledError:
             Settings.logger.debug("Connection cancelled, cleaning up")
             raise
+        except (
+            httpx.ReadTimeout,
+            httpx.ConnectTimeout,
+            httpx.TimeoutException,
+            httpcore.ReadTimeout,
+            httpcore.ConnectTimeout,
+        ) as e:
+            # Handle SSE timeout errors gracefully without sending to Sentry
+            Settings.logger.info(
+                f"SSE connection timeout (expected for long-running connections): {type(e).__name__}"
+            )
+            sentry_sdk.add_breadcrumb(
+                message="SSE connection timeout handled",
+                category="mcp",
+                level="info",
+                data={
+                    "timeout_type": type(e).__name__,
+                    "upstream_url": self.upstream_url,
+                },
+            )
+            # Don't re-raise - this is a normal part of SSE connection lifecycle
+            return
+        except (httpx.RemoteProtocolError, httpcore.RemoteProtocolError) as e:
+            # Handle protocol errors gracefully
+            Settings.logger.info(
+                f"SSE protocol error (connection interrupted): {type(e).__name__}"
+            )
+            sentry_sdk.add_breadcrumb(
+                message="SSE protocol error handled",
+                category="mcp",
+                level="info",
+                data={
+                    "error_type": type(e).__name__,
+                    "upstream_url": self.upstream_url,
+                },
+            )
+            # Don't re-raise - this is expected when connections are interrupted
+            return
+        except BrokenPipeError as e:
+            Settings.logger.info(
+                "SSE stream resource broken (connection closed during send)"
+            )
+            sentry_sdk.add_breadcrumb(
+                message="SSE stream resource broken handled",
+                category="mcp",
+                level="info",
+                data={
+                    "error_type": type(e).__name__,
+                    "upstream_url": self.upstream_url,
+                },
+            )
+            return
+        except ValidationError as e:
+            Settings.logger.info(
+                "MCP server sent malformed JSON-RPC message (validation failed)"
+            )
+            sentry_sdk.add_breadcrumb(
+                message="MCP JSON-RPC validation error handled",
+                category="mcp",
+                level="info",
+                data={
+                    "error_type": type(e).__name__,
+                    "upstream_url": self.upstream_url,
+                },
+            )
+            return
         except Exception as e:
             Settings.logger.error(f"Error in connection handler: {e}", exc_info=True)
             raise
@@ -522,10 +601,23 @@ class MCPGateway:
     """Gateway server between POS MCP server and stdio."""
 
     def __init__(self, server_name, upstream_url):
+        self.server_name = server_name
         self.server = Server(server_name)
         self.upstream = PosMcpConnection(
             upstream_url, self.send_tools_changed_notification
         )
+
+        # Add MCP server info to Sentry context
+        sentry_sdk.set_context(
+            "mcp_gateway",
+            {
+                "server_name": server_name,
+                "upstream_url": upstream_url,
+                "connection_type": "stdio",
+            },
+        )
+        sentry_sdk.set_tag("mcp_server", server_name)
+
         self.setup_handlers()
 
     async def send_tools_changed_notification(self):
@@ -579,9 +671,7 @@ class MCPGateway:
                 return PIECES_MCP_TOOLS_CACHE
 
         @self.server.call_tool()
-        async def call_tool(
-            name: str, arguments: dict
-        ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+        async def call_tool(name: str, arguments: dict) -> list[types.ContentBlock]:
             Settings.logger.debug(
                 f"Received call_tool request for {name}, With args {arguments}"
             )
@@ -593,6 +683,17 @@ class MCPGateway:
         """Runs the gateway server."""
         try:
             Settings.logger.info("Starting MCP Gateway server")
+
+            # Add Sentry breadcrumb for MCP gateway startup
+            sentry_sdk.add_breadcrumb(
+                message="MCP Gateway starting",
+                category="mcp",
+                level="info",
+                data={
+                    "server_name": self.server_name,
+                    "upstream_url": self.upstream.upstream_url,
+                },
+            )
             if self.upstream.upstream_url:
                 try:
                     await self.upstream.connect(send_notification=False)
@@ -619,9 +720,11 @@ class MCPGateway:
             Settings.logger.info("Gateway interrupted by user")
         except Exception as e:
             # Handle specific MCP-related errors more gracefully
-            if "BrokenResourceError" in str(
-                e
-            ) or "unhandled errors in a TaskGroup" in str(e):
+            if (
+                "BrokenResourceError" in str(e)
+                or "unhandled errors in a TaskGroup" in str(e)
+                or ("ValidationError" in str(type(e)) and "JSONRPCMessage" in str(e))
+            ):
                 Settings.logger.debug(f"Gateway server shutdown cleanly: {e}")
             else:
                 Settings.logger.error(
@@ -659,9 +762,56 @@ async def main():
             if upstream_connection:
                 upstream_connection.request_cleanup()
         elif isinstance(
-            exc, (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.TimeoutException)
+            exc,
+            (
+                httpx.ReadTimeout,
+                httpx.ConnectTimeout,
+                httpx.TimeoutException,
+                httpcore.ReadTimeout,
+                httpcore.ConnectTimeout,
+            ),
         ):
-            Settings.logger.info(f"Timeout error: {exc}")
+            Settings.logger.info(
+                f"Timeout error (handled gracefully): {type(exc).__name__}"
+            )
+            # Add breadcrumb but don't send exception to Sentry
+            sentry_sdk.add_breadcrumb(
+                message="MCP timeout handled by async exception handler",
+                category="mcp",
+                level="info",
+                data={"timeout_type": type(exc).__name__},
+            )
+        elif "BrokenResourceError" in str(type(exc)) or "BrokenResourceError" in str(
+            exc
+        ):
+            Settings.logger.info(
+                "SSE stream resource broken in async handler (connection closed during send)"
+            )
+            # Add breadcrumb but don't send exception to Sentry
+            sentry_sdk.add_breadcrumb(
+                message="SSE stream resource broken handled by async exception handler",
+                category="mcp",
+                level="info",
+                data={
+                    "error_type": type(exc).__name__ if exc else "BrokenResourceError"
+                },
+            )
+        elif exc and (
+            "ValidationError" in str(type(exc)) and "JSONRPCMessage" in str(exc)
+        ):
+            Settings.logger.info(
+                "MCP JSON-RPC validation error in async handler (server sent malformed message)"
+            )
+            # Add breadcrumb but don't send exception to Sentry
+            sentry_sdk.add_breadcrumb(
+                message="MCP JSON-RPC validation error handled by async exception handler",
+                category="mcp",
+                level="info",
+                data={
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc)[:200] if exc else "ValidationError",
+                },
+            )
         else:
             Settings.logger.error(f"Async exception: {context}")
 
@@ -708,6 +858,7 @@ async def main():
     upstream_url = None
     if Settings.pieces_client.is_pieces_running():
         upstream_url = get_mcp_latest_url()
+        sentry_sdk.set_user({"id": Settings.get_os_id() or "unknown"})
         health_ws.start()
 
     gateway = MCPGateway(
