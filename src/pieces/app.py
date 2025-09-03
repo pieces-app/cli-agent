@@ -120,7 +120,9 @@ class PiecesCLI:
             "config",
             "completion",
         ] and not (command == "mcp" and mcp_subcommand == "start"):
-            bypass_login = True if (command in ["version"]) else False
+            bypass_login = (
+                True if (command in ["version", "logout", "login"]) else False
+            )
             Settings.startup(bypass_login)
         Settings.logger.debug(f"Running command {command} using: {args}")
         args.func(**vars(args))

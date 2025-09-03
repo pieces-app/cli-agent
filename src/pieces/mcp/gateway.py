@@ -18,6 +18,7 @@ from .._vendor.pieces_os_client.wrapper.version_compatibility import (
 )
 from .._vendor.pieces_os_client.wrapper.websockets.health_ws import HealthWS
 from .._vendor.pieces_os_client.wrapper.websockets.ltm_vision_ws import LTMVisionWS
+from .._vendor.pieces_os_client.wrapper.websockets.auth_ws import AuthWS
 from mcp.client.sse import sse_client
 from mcp import ClientSession
 from mcp.server import Server
@@ -164,6 +165,12 @@ class PosMcpConnection:
                     health_ws.start()
 
                 sentry_sdk.set_user({"id": Settings.get_os_id() or "unknown"})
+
+                # Update the user profile cache
+                Settings.pieces_client.user.user_profile = (
+                    Settings.pieces_client.user_api.user_snapshot().user
+                )
+
                 # Update LTM status cache
                 Settings.pieces_client.copilot.context.ltm.ltm_status = Settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status()
                 return True
@@ -177,10 +184,11 @@ class PosMcpConnection:
 
     def _validate_system_status(self, tool_name: str) -> tuple[bool, str]:
         """
-        Perform 3-step validation before executing any command:
+        Perform 4-step validation before executing any command:
         1. Check health WebSocket
         2. Check compatibility
-        3. Check LTM (for LTM tools)
+        3. Check Auth
+        4. Check LTM (for LTM tools)
 
         Returns:
             tuple[bool, str]: (is_valid, error_message)
@@ -198,7 +206,14 @@ class PosMcpConnection:
         if not is_compatible:
             return False, compatibility_message
 
-        # Step 3: Check LTM status (only for LTM-related tools)
+        # Step 3: Check Auth status
+        if not Settings.pieces_client.user.user_profile:
+            return False, (
+                "User must sign up to use this tool, please run:\n\n`pieces login`\n\n"
+                "This will open the authentication page in your browser. After signing in, you can retry your request."
+            )
+
+        # Step 4: Check LTM status (only for LTM-related tools)
         if tool_name in ["ask_pieces_ltm", "create_pieces_memory"]:
             ltm_enabled = self._check_ltm_status()
             if not ltm_enabled:
@@ -816,7 +831,11 @@ async def main():
     if hasattr(signal, "SIGINT"):
         signal.signal(signal.SIGINT, lambda s, f: signal_handler())
 
+    # HealthWS starts the AuthWS, which starts the LTMVisionWS
     ltm_vision = LTMVisionWS(Settings.pieces_client, lambda x: None)
+    user_ws = AuthWS(
+        Settings.pieces_client, lambda x: None, lambda x: ltm_vision.start()
+    )
 
     def on_ws_event(ws, e):
         if isinstance(e, WebSocketConnectionClosedException):
@@ -831,7 +850,7 @@ async def main():
     health_ws = HealthWS(
         Settings.pieces_client,
         lambda x: None,
-        lambda ws: ltm_vision.start(),
+        lambda ws: user_ws.start(),
         on_error=on_ws_event,
     )
 
