@@ -126,11 +126,14 @@ class PosMcpConnection:
         Returns:
             Tuple[bool, str]: A tuple containing a boolean indicating compatibility, str: message if it is not compatible.
         """
+        version = Settings.pieces_client.version
+        if version == "debug":
+            return True, ""
         if not self.result:
             self.result = VersionChecker(
                 Settings.PIECES_OS_MIN_VERSION,
                 Settings.PIECES_OS_MAX_VERSION,
-                Settings.pieces_client.version,
+                version,
             ).version_check()
 
         if self.result.compatible:
