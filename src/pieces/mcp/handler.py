@@ -68,7 +68,7 @@ def check_mcp_running():
 
 
 def handle_mcp(
-    integration: Union[mcp_integration_types, Literal["raycast", "wrap"], None],
+    integration: Union[mcp_integration_types, Literal["raycast", "warp"], None],
     stdio: bool = False,
     **kwargs,
 ) -> BaseResponse:
@@ -91,7 +91,7 @@ def handle_mcp(
             "Follow the Raycast deeplink to set up Pieces MCP integration.",
             "stdio",
         )
-    elif integration == "wrap":
+    elif integration == "warp":
         jsn = (
             warp_stdio_json if stdio else warp_sse_json.format(url=get_mcp_latest_url())
         )
@@ -111,7 +111,7 @@ def handle_mcp(
         menu.append(
             ("Raycast", {"integration": "raycast", "stdio": stdio})
         )  # append raycast
-        menu.append(("Warp", {"integration": "wrap", "stdio": stdio}))  # append warp
+        menu.append(("Warp", {"integration": "warp", "stdio": stdio}))  # append warp
         return PiecesSelectMenu(
             menu,
             handle_mcp,
@@ -197,8 +197,8 @@ def handle_mcp_docs(
         readable = "Raycast"
         docs = URLs.RAYCAST_MCP_DOCS.value
     elif ide == "warp":
-        readable = "Wrap"
-        docs = URLs.WRAP_MCP_DOCS.value
+        readable = "Warp"
+        docs = URLs.WARP_MCP_DOCS.value
     else:
         integration = supported_mcps[ide]
         readable = integration.readable
