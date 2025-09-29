@@ -53,7 +53,7 @@ class MCPSetupCommand(BaseCommand):
         parser.add_argument(
             "integration",
             type=str,
-            choices=mcp_integrations + ["raycast", "wrap"],
+            choices=mcp_integrations + ["raycast", "warp"],
             help="The integration to set up",
             default=None,
             nargs="?",
@@ -178,7 +178,7 @@ class MCPDocsCommand(BaseCommand):
             "-i",
             dest="ide",
             type=str,
-            choices=mcp_integrations + ["all", "current", "raycast", "wrap"],
+            choices=mcp_integrations + ["all", "current", "raycast", "warp"],
             default="all",
             help="The integration to print its documentation",
         )

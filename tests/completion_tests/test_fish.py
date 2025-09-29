@@ -56,21 +56,21 @@ class TestFishCompletions:
             f"Missing options: {expected - completion_set}"
         )
 
-    def test_no_iwrap_completion(self, fish_tester):
-        """Test that -iwrap is not suggested for 'pieces mcp -i' (the reported bug)."""
+    def test_no_iwarp_completion(self, fish_tester):
+        """Test that -iwarp is not suggested for 'pieces mcp -i' (the reported bug)."""
         success, completions, error = fish_tester.run_completion_test("pieces mcp -i")
         assert success, f"Completion failed: {error}"
 
         completion_set = set(completions)
 
-        # Check for the specific bug - -iwrap should not appear
-        assert "-iwrap" not in completion_set, "Found unwanted -iwrap completion"
+        # Check for the specific bug - -iwarp should not appear
+        assert "-iwarp" not in completion_set, "Found unwanted -iwarp completion"
 
         # In Fish, -i<value> completions are expected
-        # But -iwrap specifically should not be there if 'wrap' is not a valid MCP subcommand
+        # But -iwarp specifically should not be there if 'warp' is not a valid MCP subcommand
         mcp_subcommands = fish_tester.get_expected_subcommands("mcp")
-        if "wrap" not in mcp_subcommands:
-            assert "-iwrap" not in completion_set
+        if "warp" not in mcp_subcommands:
+            assert "-iwarp" not in completion_set
 
     def test_integration_choices_with_space(
         self, fish_tester, expected_integrations_with_meta

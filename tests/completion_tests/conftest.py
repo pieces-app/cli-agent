@@ -207,4 +207,4 @@ def expected_integrations():
 def expected_integrations_with_meta(expected_integrations):
     """Expected integration names including 'all' and 'current'."""
     # These are meta-options available in the docs command
-    return expected_integrations | {"all", "current", "raycast", "wrap"}
+    return expected_integrations | {"all", "current", "raycast", "warp"}

@@ -87,6 +87,8 @@ class Settings:
     def version_check(cls):
         """Check if the version of PiecesOS is compatible"""
         cls.pieces_os_version = cls.pieces_client.version
+        if cls.pieces_os_version == "debug":
+            return  # Skip version check in debug mode
         result = VersionChecker(
             cls.PIECES_OS_MIN_VERSION, cls.PIECES_OS_MAX_VERSION, cls.pieces_os_version
         ).version_check()
