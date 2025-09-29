@@ -38,9 +38,12 @@ class ListCommand:
 
         def update_assets():
             for i, asset in enumerate(assets, start=1):
-                select_menu.add_entry(
-                    (f"{i}: {asset.name}", {"asset_id": asset.id, **kwargs})
-                )
+                try:
+                    select_menu.add_entry(
+                        (f"{i}: {asset.name}", {"asset_id": asset.id, **kwargs})
+                    )
+                except AttributeError:
+                    pass
 
         threading.Thread(target=update_assets).start()
         select_menu.run()

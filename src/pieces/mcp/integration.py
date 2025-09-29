@@ -365,6 +365,8 @@ class Integration:
         for p in self.mcp_properties.mcp_path(mcp_type)[:-1]:
             config = config.get(p, {})
         for k in config.keys():
+            if not isinstance(config[k], dict):
+                continue
             if mcp_type == "sse":
                 if (
                     config[k].get(self.mcp_properties.url_property_name, "")
