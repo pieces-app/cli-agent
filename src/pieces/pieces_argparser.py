@@ -3,6 +3,7 @@ import sys
 from typing import TYPE_CHECKING
 from rich.console import Console
 from pieces.urls import URLs
+import re
 
 if TYPE_CHECKING:
     from pieces.base_command import BaseCommand
@@ -48,6 +49,10 @@ class PiecesArgparser(argparse.ArgumentParser):
         """Override the standard usage formatter to use Rich styling with bracket syntax."""
         # Get the raw usage text from the parent's format_usage method
         raw_usage = super().format_usage()
+
+        # Strip ANSI escape codes from the raw usage (new in Python 3.14)
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+        raw_usage = ansi_escape.sub("", raw_usage)
 
         # Format the usage text with Rich styling using bracket syntax
         usage_parts = raw_usage.split("usage: ", 1)
