@@ -80,3 +80,10 @@ class ApplicationNameEnum(str, Enum):
         return ApplicationNameEnum(json.loads(json_str))
 
 
+
+
+    @classmethod
+    def _missing_(cls, value):
+        # Called when `value` doesn't match any member
+        return cls.UNKNOWN
+
