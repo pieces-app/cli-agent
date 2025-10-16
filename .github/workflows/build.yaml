@@ -51,7 +51,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ macos-14-large, macos-latest, windows-latest ]
+        os: [macos-14-large, macos-latest, windows-latest]
         include:
           - os: macos-14-large
             zipFileName: pieces-cli-mac_x86_64
@@ -105,7 +105,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install poetry -U
-          poetry install 
+          poetry install
 
       ### Setting the version in the pyproject.toml for unix builds
       - name: Set Version Shell Script (Unix)
@@ -188,7 +188,6 @@ jobs:
               exit 1
             fi
           done
-
 
       ### Building the Library and Wheel files
       - name: Build library
@@ -284,13 +283,13 @@ jobs:
         run: |
           # Sign using keypair alias
           smctl sign --keypair-alias "${{ secrets.sm_keypair_alias }}" --input ".\dist\pieces.exe" -v
-          
+
           # Check if signing was successful
           if ($LASTEXITCODE -ne 0) {
               Write-Error "EXE signing failed with exit code $LASTEXITCODE"
               exit $LASTEXITCODE
           }
-          
+
           echo "Pieces EXE signed and copied successfully"
         shell: pwsh
 
@@ -341,7 +340,6 @@ jobs:
     needs:
       - build
     steps:
-
       ### Pulling down the previously built plugins
       - uses: actions/download-artifact@v4
 
@@ -358,12 +356,12 @@ jobs:
           create_credentials_file: true
 
       ### Setting up gcloud cli
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v2"
 
       ### Verifying that we are good to go with gcloud
-      - name: 'Use gcloud CLI'
-        run: 'gcloud info'
+      - name: "Use gcloud CLI"
+        run: "gcloud info"
 
       ### Getting either the git tag or branch name to be set in the json
       - name: Get the version
@@ -445,16 +443,14 @@ jobs:
       - name: Upload Packages to PyPi for release
         if: inputs.deploy == true
         run: |-
-          mkdir dist
-          cp macos-latest/*.tar.gz macos-latest/*.whl ./dist/
-          python3 -m pip install --upgrade twine
-          python -m twine upload --username "__token__" --password "${{ secrets.pypi_token }}" dist/*
+          export POETRY_PYPI_TOKEN_PYPI=${{ secrets.pypi_token }}
+          poetry publish
 
   ### Build and publish Chocolatey package
   chocolatey-package:
     runs-on: windows-latest
-    if: inputs.deploy == true  # Only for production releases
-    needs: [ build ]
+    if: inputs.deploy == true # Only for production releases
+    needs: [build]
     permissions:
       contents: read
       packages: write
@@ -496,7 +492,7 @@ jobs:
         run: |
           echo "Checking for staging version files..."
           ls -la staging_version_files/ || echo "staging_version_files directory not found"
-          
+
           # Find any .txt file in the staging_version_files directory
           txtfile=$(find staging_version_files -name "*.txt" -type f | head -1)
           if [[ -n "$txtfile" && -f "$txtfile" ]]; then
@@ -516,40 +512,40 @@ jobs:
         run: |
           $gitVersion = "${{ steps.get_version.outputs.VERSION }}"
           $stagingVersion = "${{ steps.staging_version.outputs.STAGING_VERSION }}"
-          
+
           Write-Output "Git version: '$gitVersion'"
           Write-Output "Staging version: '$stagingVersion'"
-          
+
           # Function to normalize version for Chocolatey
           function Normalize-ChocolateyVersion {
             param([string]$version)
-          
+
             # Remove 'v' prefix if present
             $version = $version.TrimStart("v")
-          
+
             # Check if it's a standard semantic version (x.y.z)
             if ($version -match "^(\d+)\.(\d+)\.(\d+)$") {
               return $version
             }
-          
+
             # Handle versions with pre-release identifiers like .dev1, .alpha1, .beta1, etc.
             if ($version -match "^(\d+)\.(\d+)\.(\d+)\.(.+)$") {
               $major = $matches[1]
               $minor = $matches[2]
               $patch = $matches[3]
               $prerelease = $matches[4]
-          
+
               # Convert to Chocolatey-compatible pre-release format
               # .dev1 -> -dev1, .alpha1 -> -alpha1, etc.
               $normalizedPrerelease = $prerelease -replace '^dev', 'dev' -replace '^alpha', 'alpha' -replace '^beta', 'beta' -replace '^rc', 'rc'
               return "$major.$minor.$patch-$normalizedPrerelease"
             }
-          
+
             # Handle versions with dash-separated pre-release (x.y.z-something)
             if ($version -match "^(\d+)\.(\d+)\.(\d+)-(.+)$") {
               return $version  # Already in correct format
             }
-          
+
             # If none of the above patterns match, try to extract just the numeric parts
             if ($version -match "^(\d+)\.(\d+)\.(\d+)") {
               $major = $matches[1]
@@ -558,12 +554,12 @@ jobs:
               Write-Output "Warning: Version '$version' doesn't match standard format, using base version $major.$minor.$patch"
               return "$major.$minor.$patch"
             }
-          
+
             # Last resort: return a default version
             Write-Output "Warning: Could not parse version '$version', using fallback"
             return "0.0.1"
           }
-          
+
           if ($gitVersion -match "^\d+\.\d+\.\d+$") {
             # This is a tagged build with clean semantic version
             $finalVersion = $gitVersion.TrimStart("v")
@@ -583,7 +579,7 @@ jobs:
             $finalVersion = "0.0.1-$branchName-$timestamp"
             Write-Output "Using generated fallback version: $finalVersion"
           }
-          
+
           Write-Output "Final normalized version: $finalVersion"
           echo "FINAL_VERSION=$finalVersion" >> $env:GITHUB_OUTPUT
 
@@ -613,14 +609,14 @@ jobs:
           # But we might need to look for the original version in the filename
           $finalVersion = "${{ steps.final_version.outputs.FINAL_VERSION }}"
           $originalVersion = "${{ steps.get_version.outputs.VERSION }}".TrimStart("v")
-          
+
           # Try multiple patterns to find the zip file
           $zipPatterns = @(
             "pieces-cli-win_x86_64-$finalVersion.zip",
             "pieces-cli-win_x86_64-$originalVersion.zip",
             "pieces-cli-win_x86_64-*.zip"
           )
-          
+
           $zipFile = $null
           foreach ($pattern in $zipPatterns) {
             Write-Output "Looking for zip file with pattern: $pattern"
@@ -630,17 +626,17 @@ jobs:
               break
             }
           }
-          
+
           if (-not $zipFile) {
             throw "No pieces-cli-win_x86_64-*.zip file found in dist directory"
           }
-          
+
           # Copy and extract
           Copy-Item -Path $zipFile.FullName -Destination "choco/tools/pieces-cli.zip" -Force
-          
+
           # Extract the zip (this should create choco/tools/pieces.exe)
           Expand-Archive -Path "choco/tools/pieces-cli.zip" -DestinationPath "choco/tools/temp" -Force
-          
+
           # Move the pieces.exe to the correct location
           if (Test-Path "choco/tools/temp/pieces.exe") {
             # If exe is directly in temp, create pieces directory and move it
@@ -656,11 +652,11 @@ jobs:
           } else {
             throw "pieces.exe not found in extracted zip"
           }
-          
+
           # Clean up
           Remove-Item "choco/tools/pieces-cli.zip" -Force
           Remove-Item "choco/tools/temp" -Recurse -Force -ErrorAction SilentlyContinue
-          
+
           # Verify the final structure
           Write-Output "Final structure:"
           Get-ChildItem "choco/tools/pieces" -Recurse | Select-Object Name, FullName
@@ -676,24 +672,24 @@ jobs:
           cd choco
           $nuspec = Get-Content pieces-cli.nuspec
           $newVersion = "${{ steps.final_version.outputs.FINAL_VERSION }}"
-          
+
           Write-Output "Updating nuspec with version: $newVersion"
-          
+
           # Validate that the version follows Chocolatey's format
           if (-not ($newVersion -match "^(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9\-\.]+)?$")) {
             throw "Version '$newVersion' is not in valid Chocolatey format (x.y.z or x.y.z-prerelease)"
           }
-          
+
           # Update version in nuspec
           $nuspec = $nuspec -replace '<version>.*?</version>', "<version>$newVersion</version>"
-          
+
           # Update release notes with the actual GitHub release notes
           # Should we add the release notes to the nuspec?
           # $releaseNotes = "${{ steps.release_notes.outputs.RELEASE_NOTES }}"
           # $nuspec = $nuspec -replace '<releaseNotes>.*?</releaseNotes>', "<releaseNotes>$releaseNotes</releaseNotes>"
-          
+
           $nuspec | Set-Content pieces-cli.nuspec
-          
+
           Write-Output "Updated nuspec version to $newVersion"
           Write-Output "Nuspec version line:"
           $nuspec | Where-Object { $_ -match '<version>' }
@@ -707,24 +703,24 @@ jobs:
         run: |
           Write-Output "Installing pieces-cli package for testing..."
           choco install pieces-cli -s . -y
-          
+
           Write-Output "Testing pieces command availability..."
           if (Get-Command pieces -ErrorAction SilentlyContinue) {
             Write-Output "✓ pieces command is available in PATH"
           } else {
             throw "✗ pieces command not found in PATH"
           }
-          
+
           Write-Output "Testing pieces --version..."
           $versionOutput = pieces --ignore-onboarding --version 2>&1
           Write-Output "Version output: $versionOutput"
-          
+
           if ($LASTEXITCODE -eq 0) {
             Write-Output "✓ pieces --version executed successfully"
           } else {
             throw "✗ pieces --version failed with exit code $LASTEXITCODE"
           }
-          
+
           Write-Output "Testing pieces help..."
           $helpOutput = pieces --ignore-onboarding help 2>&1
           if ($LASTEXITCODE -eq 0) {
@@ -732,7 +728,7 @@ jobs:
           } else {
             Write-Output "⚠ pieces help failed, but continuing..."
           }
-          
+
           Write-Output "Uninstalling test package..."
           choco uninstall pieces-cli -y
 
@@ -746,7 +742,7 @@ jobs:
 
       ### Publish to ChocolateyMore actions
       - name: Publish to Chocolatey
-        if: inputs.deploy == true  # Only publish when deploying
+        if: inputs.deploy == true # Only publish when deploying
         env:
           CHOCOLATEY_API_KEY: ${{ secrets.chocolatey_api_key }}
         run: |
@@ -754,27 +750,26 @@ jobs:
           if ([string]::IsNullOrEmpty($env:CHOCOLATEY_API_KEY)) {
             throw "CHOCOLATEY_API_KEY secret is not set or is empty"
           }
-          
+
           Write-Output "Setting Chocolatey API key..."
           choco apikey --key $env:CHOCOLATEY_API_KEY --source https://push.chocolatey.org/
-          
+
           if ($LASTEXITCODE -ne 0) {
             throw "Failed to set Chocolatey API key"
           }
-          
+
           Write-Output "Finding .nupkg file to publish..."
           $nupkgFile = Get-ChildItem -Filter "pieces-cli.*.nupkg" | Select-Object -First 1
-          
+
           if (-not $nupkgFile) {
             Write-Output "Available files in current directory:"
             Get-ChildItem | Select-Object Name
             throw "No .nupkg file found matching pattern 'pieces-cli.*.nupkg'"
           }
-          
+
           Write-Output "Found package: $($nupkgFile.Name)"
           Write-Output "Publishing package to Chocolatey..."
           choco push "$($nupkgFile.Name)" --source https://push.chocolatey.org/ --force
-
 
   # WinGet portable package submission
   winget-submission:
@@ -783,8 +778,8 @@ jobs:
     # "The windows-2025 GitHub actions runner image now comes preinstalled with winget."
     # The windows-latest is 2022 we will need 2025 runner to have winget CLI
     runs-on: windows-2025
-    needs: [ build, push-build ]
-    if: inputs.deploy == true  # Only for production releases
+    needs: [build, push-build]
+    if: inputs.deploy == true # Only for production releases
     permissions:
       contents: read
       packages: write
@@ -930,7 +925,7 @@ jobs:
         run: |
           $version = "${{ steps.get_version.outputs.VERSION }}"
           $zipUrl = "https://storage.googleapis.com/app-releases-production/pieces_cli/winget/pieces-cli-win_x86_64-$version.zip"
-          
+
           Write-Output "Creating/updating manifest for version $version"
           Write-Output "Using zip URL: $zipUrl"
 
@@ -940,7 +935,7 @@ jobs:
           # Create a temporary directory to run wingetcreate from
           $tempDir = New-TemporaryFile | ForEach-Object { Remove-Item $_; New-Item -ItemType Directory -Path $_ }
           Write-Output "Working from temporary directory: $tempDir"
-          
+
           try {
             Set-Location $tempDir
 
@@ -959,4 +954,3 @@ jobs:
             Set-Location $env:GITHUB_WORKSPACE
             Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
           }
-
