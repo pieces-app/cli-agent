@@ -66,3 +66,10 @@ class ExternalMLProviderEnum(str, Enum):
         return ExternalMLProviderEnum(json.loads(json_str))
 
 
+
+
+    @classmethod
+    def _missing_(cls, value):
+        # Called when `value` doesn't match any member
+        return cls.UNKNOWN
+

@@ -53,3 +53,10 @@ class OSAppletEnum(str, Enum):
         return OSAppletEnum(json.loads(json_str))
 
 
+
+
+    @classmethod
+    def _missing_(cls, value):
+        # Called when `value` doesn't match any member
+        return cls.UNKNOWN_APPLET_MODULE
+
