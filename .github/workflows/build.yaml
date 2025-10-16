@@ -446,6 +446,7 @@ jobs:
           mkdir dist
           cp macos-latest/*.tar.gz macos-latest/*.whl ./dist/
           export POETRY_PYPI_TOKEN_PYPI=${{ secrets.pypi_token }}
+          pip install poetry
           poetry publish
 
   ### Build and publish Chocolatey package
