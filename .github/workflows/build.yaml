@@ -313,7 +313,7 @@ jobs:
 
       ### Upload to test Pypi
       - name: Upload Packages to PyPi for release
-        if: inputs.deploy == true
+        if: ${{ inputs.deploy == 'true' && matrix.os == 'macos-latest' }}
         run: |-
           export POETRY_PYPI_TOKEN_PYPI=${{ secrets.pypi_token }}
           pip install poetry
