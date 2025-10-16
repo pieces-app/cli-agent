@@ -340,6 +340,9 @@ jobs:
     needs:
       - build
     steps:
+      ### Checking out our Repo to get pyproject.toml and other files
+      - uses: actions/checkout@v3
+
       ### Pulling down the previously built plugins
       - uses: actions/download-artifact@v4
 
