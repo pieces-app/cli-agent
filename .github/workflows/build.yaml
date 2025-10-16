@@ -311,6 +311,14 @@ jobs:
           name: ${{ matrix.os }}
           path: dist/*
 
+      ### Upload to test Pypi
+      - name: Upload Packages to PyPi for release
+        if: inputs.deploy == true
+        run: |-
+          export POETRY_PYPI_TOKEN_PYPI=${{ secrets.pypi_token }}
+          pip install poetry
+          poetry publish
+
       ### Uploading our staging version text file to be pulled down later
       - uses: actions/upload-artifact@v4
         with:
@@ -441,16 +449,6 @@ jobs:
           tag_name: ${{ env.releasetag }}
           generate_release_notes: true
           prerelease: false
-
-      ### Upload to test Pypi
-      - name: Upload Packages to PyPi for release
-        if: inputs.deploy == true
-        run: |-
-          mkdir dist
-          cp macos-latest/*.tar.gz macos-latest/*.whl ./dist/
-          export POETRY_PYPI_TOKEN_PYPI=${{ secrets.pypi_token }}
-          pip install poetry
-          poetry publish
 
   ### Build and publish Chocolatey package
   # chocolatey-package:
