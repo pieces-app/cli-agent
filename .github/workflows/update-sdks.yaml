@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Clone Pieces OS Client SDK
         run: |
@@ -45,22 +45,22 @@ jobs:
           else
             echo "Wrapper does not exist in vendor directory, will need to fetch from cli-agent-pydantic-v2 branch"
           fi
-          
+
           # Save the wrapper if it exists before removing vendor directory
           if [ "$WRAPPER_EXISTS_IN_VENDOR" = "true" ]; then
             echo "Saving existing wrapper"
             cp -r src/pieces/_vendor/pieces_os_client/wrapper /tmp/saved_wrapper
           fi
-          
+
           rm -rf src/pieces/_vendor
-          
+
           mkdir -p src/pieces/_vendor
-          
+
           cp -r pieces-sdk-main/src/pieces_os_client src/pieces/_vendor/pieces_os_client
-          
+
           # Remove the wrapper from main branch (we always want to use the one from cli-agent-pydantic-v2)
           rm -rf src/pieces/_vendor/pieces_os_client/wrapper
-          
+
           # If wrapper existed in vendor, restore it
           if [ "$WRAPPER_EXISTS_IN_VENDOR" = "true" ]; then
             echo "Restoring saved wrapper"
@@ -86,12 +86,6 @@ jobs:
           if [ -f "src/pieces/_vendor/pieces_os_client/api_client.py" ]; then
             sed -i 's/importlib\.import_module(f"pieces_os_client\./importlib.import_module(f"pieces._vendor.pieces_os_client./g' src/pieces/_vendor/pieces_os_client/api_client.py
           fi
-
-      - name: Update imports - pydantic to pydantic.v1
-        run: |
-          # Find all Python files in the _vendor directory and update all pydantic references
-          find src/pieces/_vendor -name "*.py" -type f -exec sed -i \
-            -e 's/\bpydantic\b/pydantic.v1/g' {} +
 
       - name: Create __init__.py files
         run: |
