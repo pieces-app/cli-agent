@@ -98,7 +98,7 @@ jobs:
 
       - name: Add missing method for the missing enums
         run: |
-          python sdk_patch.py
+          PYTHONPATH="${PYTHONPATH}:${PWD}/src" python sdk_patch.py
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
