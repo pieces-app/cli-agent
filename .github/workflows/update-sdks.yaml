@@ -98,6 +98,8 @@ jobs:
 
       - name: Add missing method for the missing enums
         run: |
+          pip install poetry
+          poetry install
           PYTHONPATH="${PYTHONPATH}:${PWD}/src" python sdk_patch.py
 
       - name: Create Pull Request
