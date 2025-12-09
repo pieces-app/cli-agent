@@ -12,29 +12,22 @@
     Do not edit the class manually.
 """  # noqa: E501
 
-
-import re  # noqa: F401
-import io
 import warnings
-
-from pydantic.v1 import validate_arguments, ValidationError
-
+from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
+from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
-from pydantic.v1 import Field, StrictStr, conlist, validator
 
-from typing import Optional
-
+from pydantic import Field, StrictStr, field_validator
+from typing import List, Optional
+from typing_extensions import Annotated
 from pieces._vendor.pieces_os_client.models.auth0_user import Auth0User
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.o_auth_token import OAuthToken
 from pieces._vendor.pieces_os_client.models.resulted_pkce import ResultedPKCE
 
-from pieces._vendor.pieces_os_client.api_client import ApiClient
+from pieces._vendor.pieces_os_client.api_client import ApiClient, RequestSerialized
 from pieces._vendor.pieces_os_client.api_response import ApiResponse
-from pieces._vendor.pieces_os_client.exceptions import (  # noqa: F401
-    ApiTypeError,
-    ApiValueError
-)
+from pieces._vendor.pieces_os_client.rest import RESTResponseType
 
 
 class Auth0Api:
@@ -49,698 +42,1328 @@ class Auth0Api:
             api_client = ApiClient.get_default()
         self.api_client = api_client
 
-    @validate_arguments
-    def auth0_logout(self, client_id : Annotated[Optional[StrictStr], Field(description="The client ID of the Auth0 Instance")] = None, return_to : Annotated[Optional[StrictStr], Field(description="The URL that the logout endpoint will return to")] = None, **kwargs) -> str:  # noqa: E501
-        """https://auth.pieces.services/v2/logout [GET]  # noqa: E501
 
-        https://auth0.com/docs/api/authentication#logout  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def auth0_logout(
+        self,
+        client_id: Annotated[Optional[StrictStr], Field(description="The client ID of the Auth0 Instance")] = None,
+        return_to: Annotated[Optional[StrictStr], Field(description="The URL that the logout endpoint will return to")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> str:
+        """https://auth.pieces.services/v2/logout [GET]
 
-        >>> thread = api.auth0_logout(client_id, return_to, async_req=True)
-        >>> result = thread.get()
-
-        :param client_id: The client ID of the Auth0 Instance
-        :type client_id: str
-        :param return_to: The URL that the logout endpoint will return to
-        :type return_to: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: str
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the auth0_logout_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.auth0_logout_with_http_info(client_id, return_to, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def auth0_logout_with_http_info(self, client_id : Annotated[Optional[StrictStr], Field(description="The client ID of the Auth0 Instance")] = None, return_to : Annotated[Optional[StrictStr], Field(description="The URL that the logout endpoint will return to")] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """https://auth.pieces.services/v2/logout [GET]  # noqa: E501
-
-        https://auth0.com/docs/api/authentication#logout  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.auth0_logout_with_http_info(client_id, return_to, async_req=True)
-        >>> result = thread.get()
+        https://auth0.com/docs/api/authentication#logout
 
         :param client_id: The client ID of the Auth0 Instance
         :type client_id: str
         :param return_to: The URL that the logout endpoint will return to
         :type return_to: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(str, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'client_id',
-            'return_to'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._auth0_logout_serialize(
+            client_id=client_id,
+            return_to=return_to,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method auth0_logout" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('client_id') is not None:  # noqa: E501
-            _query_params.append(('client_id', _params['client_id']))
-
-        if _params.get('return_to') is not None:  # noqa: E501
-            _query_params.append(('returnTo', _params['return_to']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['text/html'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = ['application']  # noqa: E501
-
-        _response_types_map = {
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "str",
         }
-
-        return self.api_client.call_api(
-            '/v2/logout', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        ).data
 
-    @validate_arguments
-    def authorize_auth0(self, audience : Annotated[StrictStr, Field(..., description=" The unique identifier of the target API you want to access.")], scope : Annotated[conlist(StrictStr), Field(..., description="The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token.")], response_type : Annotated[StrictStr, Field(..., description="Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow.")], client_id : Annotated[StrictStr, Field(..., description="Your application's Client ID.")], code_challenge_method : Annotated[StrictStr, Field(..., description="Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged.")], code_challenge : Annotated[StrictStr, Field(..., description="Generated challenge from the code_verifier.")], response_mode : StrictStr, state : Annotated[Optional[StrictStr], Field(description="An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.")] = None, redirect_uri : Annotated[Optional[StrictStr], Field(description="The URL to which Auth0 will redirect the browser after authorization has been granted by the user.")] = None, connection : Annotated[Optional[StrictStr], Field(description="The name of the connection configured to your application.")] = None, prompt : Annotated[Optional[StrictStr], Field(description="To initiate a silent authentication request, use prompt=none (see Remarks for more info).")] = None, **kwargs) -> ResultedPKCE:  # noqa: E501
-        """https://auth.pieces.services/authorize [GET]  # noqa: E501
 
-        An endpoint that is used locally authenticate via a PKCE Flow.  Example https://auth.pieces.services /authorize?audience=https%3A%2F%2Fpieces.us.auth0.com%2Fapi%2Fv2%2F&scope=email+profile+offline_access+openid&response_type=code&client_id=9sW4Pa1LEjX67l6VO14u0207NLYeXnu1&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fpkce%2Fresponse%2Fcode&code_challenge_method=S256&code_challenge=yxRssZxdfBpMigRmDxAety1QU72Bd5WnDUbtlsCZOnk&response_mode=form_post&state=4bd0b9a389b4b229602346c33913b4c3c199628a90011ab3a901302ab62b3832  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def auth0_logout_with_http_info(
+        self,
+        client_id: Annotated[Optional[StrictStr], Field(description="The client ID of the Auth0 Instance")] = None,
+        return_to: Annotated[Optional[StrictStr], Field(description="The URL that the logout endpoint will return to")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[str]:
+        """https://auth.pieces.services/v2/logout [GET]
 
-        >>> thread = api.authorize_auth0(audience, scope, response_type, client_id, code_challenge_method, code_challenge, response_mode, state, redirect_uri, connection, prompt, async_req=True)
-        >>> result = thread.get()
+        https://auth0.com/docs/api/authentication#logout
 
-        :param audience:  The unique identifier of the target API you want to access. (required)
-        :type audience: str
-        :param scope: The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token. (required)
-        :type scope: List[str]
-        :param response_type: Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow. (required)
-        :type response_type: str
-        :param client_id: Your application's Client ID. (required)
+        :param client_id: The client ID of the Auth0 Instance
         :type client_id: str
-        :param code_challenge_method: Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged. (required)
-        :type code_challenge_method: str
-        :param code_challenge: Generated challenge from the code_verifier. (required)
-        :type code_challenge: str
-        :param response_mode: (required)
-        :type response_mode: str
-        :param state: An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.
-        :type state: str
-        :param redirect_uri: The URL to which Auth0 will redirect the browser after authorization has been granted by the user.
-        :type redirect_uri: str
-        :param connection: The name of the connection configured to your application.
-        :type connection: str
-        :param prompt: To initiate a silent authentication request, use prompt=none (see Remarks for more info).
-        :type prompt: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: ResultedPKCE
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the authorize_auth0_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.authorize_auth0_with_http_info(audience, scope, response_type, client_id, code_challenge_method, code_challenge, response_mode, state, redirect_uri, connection, prompt, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def authorize_auth0_with_http_info(self, audience : Annotated[StrictStr, Field(..., description=" The unique identifier of the target API you want to access.")], scope : Annotated[conlist(StrictStr), Field(..., description="The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token.")], response_type : Annotated[StrictStr, Field(..., description="Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow.")], client_id : Annotated[StrictStr, Field(..., description="Your application's Client ID.")], code_challenge_method : Annotated[StrictStr, Field(..., description="Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged.")], code_challenge : Annotated[StrictStr, Field(..., description="Generated challenge from the code_verifier.")], response_mode : StrictStr, state : Annotated[Optional[StrictStr], Field(description="An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.")] = None, redirect_uri : Annotated[Optional[StrictStr], Field(description="The URL to which Auth0 will redirect the browser after authorization has been granted by the user.")] = None, connection : Annotated[Optional[StrictStr], Field(description="The name of the connection configured to your application.")] = None, prompt : Annotated[Optional[StrictStr], Field(description="To initiate a silent authentication request, use prompt=none (see Remarks for more info).")] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """https://auth.pieces.services/authorize [GET]  # noqa: E501
-
-        An endpoint that is used locally authenticate via a PKCE Flow.  Example https://auth.pieces.services /authorize?audience=https%3A%2F%2Fpieces.us.auth0.com%2Fapi%2Fv2%2F&scope=email+profile+offline_access+openid&response_type=code&client_id=9sW4Pa1LEjX67l6VO14u0207NLYeXnu1&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fpkce%2Fresponse%2Fcode&code_challenge_method=S256&code_challenge=yxRssZxdfBpMigRmDxAety1QU72Bd5WnDUbtlsCZOnk&response_mode=form_post&state=4bd0b9a389b4b229602346c33913b4c3c199628a90011ab3a901302ab62b3832  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.authorize_auth0_with_http_info(audience, scope, response_type, client_id, code_challenge_method, code_challenge, response_mode, state, redirect_uri, connection, prompt, async_req=True)
-        >>> result = thread.get()
-
-        :param audience:  The unique identifier of the target API you want to access. (required)
-        :type audience: str
-        :param scope: The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token. (required)
-        :type scope: List[str]
-        :param response_type: Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow. (required)
-        :type response_type: str
-        :param client_id: Your application's Client ID. (required)
-        :type client_id: str
-        :param code_challenge_method: Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged. (required)
-        :type code_challenge_method: str
-        :param code_challenge: Generated challenge from the code_verifier. (required)
-        :type code_challenge: str
-        :param response_mode: (required)
-        :type response_mode: str
-        :param state: An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.
-        :type state: str
-        :param redirect_uri: The URL to which Auth0 will redirect the browser after authorization has been granted by the user.
-        :type redirect_uri: str
-        :param connection: The name of the connection configured to your application.
-        :type connection: str
-        :param prompt: To initiate a silent authentication request, use prompt=none (see Remarks for more info).
-        :type prompt: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
+        :param return_to: The URL that the logout endpoint will return to
+        :type return_to: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(ResultedPKCE, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'audience',
-            'scope',
-            'response_type',
-            'client_id',
-            'code_challenge_method',
-            'code_challenge',
-            'response_mode',
-            'state',
-            'redirect_uri',
-            'connection',
-            'prompt'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._auth0_logout_serialize(
+            client_id=client_id,
+            return_to=return_to,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method authorize_auth0" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "str",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
 
-        _collection_formats = {}
+
+    @validate_call
+    def auth0_logout_without_preload_content(
+        self,
+        client_id: Annotated[Optional[StrictStr], Field(description="The client ID of the Auth0 Instance")] = None,
+        return_to: Annotated[Optional[StrictStr], Field(description="The URL that the logout endpoint will return to")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """https://auth.pieces.services/v2/logout [GET]
+
+        https://auth0.com/docs/api/authentication#logout
+
+        :param client_id: The client ID of the Auth0 Instance
+        :type client_id: str
+        :param return_to: The URL that the logout endpoint will return to
+        :type return_to: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._auth0_logout_serialize(
+            client_id=client_id,
+            return_to=return_to,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "str",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _auth0_logout_serialize(
+        self,
+        client_id,
+        return_to,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
 
         # process the path parameters
-        _path_params = {}
-
         # process the query parameters
-        _query_params = []
-        if _params.get('audience') is not None:  # noqa: E501
-            _query_params.append(('audience', _params['audience']))
-
-        if _params.get('scope') is not None:  # noqa: E501
-            _query_params.append(('scope', _params['scope']))
-            _collection_formats['scope'] = 'ssv'
-
-        if _params.get('response_type') is not None:  # noqa: E501
-            _query_params.append(('response_type', _params['response_type']))
-
-        if _params.get('client_id') is not None:  # noqa: E501
-            _query_params.append(('client_id', _params['client_id']))
-
-        if _params.get('state') is not None:  # noqa: E501
-            _query_params.append(('state', _params['state']))
-
-        if _params.get('redirect_uri') is not None:  # noqa: E501
-            _query_params.append(('redirect_uri', _params['redirect_uri']))
-
-        if _params.get('code_challenge_method') is not None:  # noqa: E501
-            _query_params.append(('code_challenge_method', _params['code_challenge_method']))
-
-        if _params.get('code_challenge') is not None:  # noqa: E501
-            _query_params.append(('code_challenge', _params['code_challenge']))
-
-        if _params.get('connection') is not None:  # noqa: E501
-            _query_params.append(('connection', _params['connection']))
-
-        if _params.get('prompt') is not None:  # noqa: E501
-            _query_params.append(('prompt', _params['prompt']))
-
-        if _params.get('response_mode') is not None:  # noqa: E501
-            _query_params.append(('response_mode', _params['response_mode']))
-
+        if client_id is not None:
+            
+            _query_params.append(('client_id', client_id))
+            
+        if return_to is not None:
+            
+            _query_params.append(('returnTo', return_to))
+            
         # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
-        _form_params = []
-        _files = {}
         # process the body parameter
-        _body_params = None
+
+
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/x-www-form-urlencoded'])  # noqa: E501
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'text/html'
+                ]
+            )
+
 
         # authentication setting
-        _auth_settings = ['application']  # noqa: E501
+        _auth_settings: List[str] = [
+            'application'
+        ]
 
-        _response_types_map = {
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/v2/logout',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def authorize_auth0(
+        self,
+        audience: Annotated[StrictStr, Field(description=" The unique identifier of the target API you want to access.")],
+        scope: Annotated[List[StrictStr], Field(description="The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token.")],
+        response_type: Annotated[StrictStr, Field(description="Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow.")],
+        client_id: Annotated[StrictStr, Field(description="Your application's Client ID.")],
+        code_challenge_method: Annotated[StrictStr, Field(description="Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged.")],
+        code_challenge: Annotated[StrictStr, Field(description="Generated challenge from the code_verifier.")],
+        response_mode: StrictStr,
+        state: Annotated[Optional[StrictStr], Field(description="An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.")] = None,
+        redirect_uri: Annotated[Optional[StrictStr], Field(description="The URL to which Auth0 will redirect the browser after authorization has been granted by the user.")] = None,
+        connection: Annotated[Optional[StrictStr], Field(description="The name of the connection configured to your application.")] = None,
+        prompt: Annotated[Optional[StrictStr], Field(description="To initiate a silent authentication request, use prompt=none (see Remarks for more info).")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ResultedPKCE:
+        """https://auth.pieces.services/authorize [GET]
+
+        An endpoint that is used locally authenticate via a PKCE Flow.  Example https://auth.pieces.services /authorize?audience=https%3A%2F%2Fpieces.us.auth0.com%2Fapi%2Fv2%2F&scope=email+profile+offline_access+openid&response_type=code&client_id=9sW4Pa1LEjX67l6VO14u0207NLYeXnu1&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fpkce%2Fresponse%2Fcode&code_challenge_method=S256&code_challenge=yxRssZxdfBpMigRmDxAety1QU72Bd5WnDUbtlsCZOnk&response_mode=form_post&state=4bd0b9a389b4b229602346c33913b4c3c199628a90011ab3a901302ab62b3832
+
+        :param audience:  The unique identifier of the target API you want to access. (required)
+        :type audience: str
+        :param scope: The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token. (required)
+        :type scope: List[str]
+        :param response_type: Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow. (required)
+        :type response_type: str
+        :param client_id: Your application's Client ID. (required)
+        :type client_id: str
+        :param code_challenge_method: Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged. (required)
+        :type code_challenge_method: str
+        :param code_challenge: Generated challenge from the code_verifier. (required)
+        :type code_challenge: str
+        :param response_mode: (required)
+        :type response_mode: str
+        :param state: An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.
+        :type state: str
+        :param redirect_uri: The URL to which Auth0 will redirect the browser after authorization has been granted by the user.
+        :type redirect_uri: str
+        :param connection: The name of the connection configured to your application.
+        :type connection: str
+        :param prompt: To initiate a silent authentication request, use prompt=none (see Remarks for more info).
+        :type prompt: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._authorize_auth0_serialize(
+            audience=audience,
+            scope=scope,
+            response_type=response_type,
+            client_id=client_id,
+            code_challenge_method=code_challenge_method,
+            code_challenge=code_challenge,
+            response_mode=response_mode,
+            state=state,
+            redirect_uri=redirect_uri,
+            connection=connection,
+            prompt=prompt,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultedPKCE",
         }
-
-        return self.api_client.call_api(
-            '/authorize', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        ).data
 
-    @validate_arguments
-    def exchange_for_auth0_token(self, grant_type : Annotated[StrictStr, Field(..., description="Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token.")], client_id : Annotated[StrictStr, Field(..., description="Your application's Client ID.")], code : Annotated[StrictStr, Field(..., description="The Authorization Code received from the initial /authorize call.")], redirect_uri : Annotated[StrictStr, Field(..., description="This is required only if it was set at the GET /authorize endpoint. The values must match.")], code_verifier : Annotated[StrictStr, Field(..., description="Cryptographically random key that was used to generate the code_challenge passed to /authorize.")], var_schema : Optional[EmbeddedModelSchema] = None, audience : Annotated[Optional[StrictStr], Field(description="The audience domain: i.e. https://pieces.us.auth0.com")] = None, **kwargs) -> OAuthToken:  # noqa: E501
-        """https://auth.pieces.services/oauth/token [POST]  # noqa: E501
 
-        An endpoint to generate a OAuth Token for an authentication flow.   # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def authorize_auth0_with_http_info(
+        self,
+        audience: Annotated[StrictStr, Field(description=" The unique identifier of the target API you want to access.")],
+        scope: Annotated[List[StrictStr], Field(description="The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token.")],
+        response_type: Annotated[StrictStr, Field(description="Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow.")],
+        client_id: Annotated[StrictStr, Field(description="Your application's Client ID.")],
+        code_challenge_method: Annotated[StrictStr, Field(description="Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged.")],
+        code_challenge: Annotated[StrictStr, Field(description="Generated challenge from the code_verifier.")],
+        response_mode: StrictStr,
+        state: Annotated[Optional[StrictStr], Field(description="An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.")] = None,
+        redirect_uri: Annotated[Optional[StrictStr], Field(description="The URL to which Auth0 will redirect the browser after authorization has been granted by the user.")] = None,
+        connection: Annotated[Optional[StrictStr], Field(description="The name of the connection configured to your application.")] = None,
+        prompt: Annotated[Optional[StrictStr], Field(description="To initiate a silent authentication request, use prompt=none (see Remarks for more info).")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ResultedPKCE]:
+        """https://auth.pieces.services/authorize [GET]
 
-        >>> thread = api.exchange_for_auth0_token(grant_type, client_id, code, redirect_uri, code_verifier, var_schema, audience, async_req=True)
-        >>> result = thread.get()
+        An endpoint that is used locally authenticate via a PKCE Flow.  Example https://auth.pieces.services /authorize?audience=https%3A%2F%2Fpieces.us.auth0.com%2Fapi%2Fv2%2F&scope=email+profile+offline_access+openid&response_type=code&client_id=9sW4Pa1LEjX67l6VO14u0207NLYeXnu1&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fpkce%2Fresponse%2Fcode&code_challenge_method=S256&code_challenge=yxRssZxdfBpMigRmDxAety1QU72Bd5WnDUbtlsCZOnk&response_mode=form_post&state=4bd0b9a389b4b229602346c33913b4c3c199628a90011ab3a901302ab62b3832
 
-        :param grant_type: Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token. (required)
-        :type grant_type: str
+        :param audience:  The unique identifier of the target API you want to access. (required)
+        :type audience: str
+        :param scope: The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token. (required)
+        :type scope: List[str]
+        :param response_type: Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow. (required)
+        :type response_type: str
         :param client_id: Your application's Client ID. (required)
         :type client_id: str
-        :param code: The Authorization Code received from the initial /authorize call. (required)
-        :type code: str
-        :param redirect_uri: This is required only if it was set at the GET /authorize endpoint. The values must match. (required)
+        :param code_challenge_method: Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged. (required)
+        :type code_challenge_method: str
+        :param code_challenge: Generated challenge from the code_verifier. (required)
+        :type code_challenge: str
+        :param response_mode: (required)
+        :type response_mode: str
+        :param state: An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.
+        :type state: str
+        :param redirect_uri: The URL to which Auth0 will redirect the browser after authorization has been granted by the user.
         :type redirect_uri: str
-        :param code_verifier: Cryptographically random key that was used to generate the code_challenge passed to /authorize. (required)
-        :type code_verifier: str
-        :param var_schema:
-        :type var_schema: EmbeddedModelSchema
-        :param audience: The audience domain: i.e. https://pieces.us.auth0.com
-        :type audience: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: OAuthToken
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the exchange_for_auth0_token_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.exchange_for_auth0_token_with_http_info(grant_type, client_id, code, redirect_uri, code_verifier, var_schema, audience, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def exchange_for_auth0_token_with_http_info(self, grant_type : Annotated[StrictStr, Field(..., description="Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token.")], client_id : Annotated[StrictStr, Field(..., description="Your application's Client ID.")], code : Annotated[StrictStr, Field(..., description="The Authorization Code received from the initial /authorize call.")], redirect_uri : Annotated[StrictStr, Field(..., description="This is required only if it was set at the GET /authorize endpoint. The values must match.")], code_verifier : Annotated[StrictStr, Field(..., description="Cryptographically random key that was used to generate the code_challenge passed to /authorize.")], var_schema : Optional[EmbeddedModelSchema] = None, audience : Annotated[Optional[StrictStr], Field(description="The audience domain: i.e. https://pieces.us.auth0.com")] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """https://auth.pieces.services/oauth/token [POST]  # noqa: E501
-
-        An endpoint to generate a OAuth Token for an authentication flow.   # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.exchange_for_auth0_token_with_http_info(grant_type, client_id, code, redirect_uri, code_verifier, var_schema, audience, async_req=True)
-        >>> result = thread.get()
-
-        :param grant_type: Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token. (required)
-        :type grant_type: str
-        :param client_id: Your application's Client ID. (required)
-        :type client_id: str
-        :param code: The Authorization Code received from the initial /authorize call. (required)
-        :type code: str
-        :param redirect_uri: This is required only if it was set at the GET /authorize endpoint. The values must match. (required)
-        :type redirect_uri: str
-        :param code_verifier: Cryptographically random key that was used to generate the code_challenge passed to /authorize. (required)
-        :type code_verifier: str
-        :param var_schema:
-        :type var_schema: EmbeddedModelSchema
-        :param audience: The audience domain: i.e. https://pieces.us.auth0.com
-        :type audience: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
+        :param connection: The name of the connection configured to your application.
+        :type connection: str
+        :param prompt: To initiate a silent authentication request, use prompt=none (see Remarks for more info).
+        :type prompt: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(OAuthToken, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'grant_type',
-            'client_id',
-            'code',
-            'redirect_uri',
-            'code_verifier',
-            'var_schema',
-            'audience'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._authorize_auth0_serialize(
+            audience=audience,
+            scope=scope,
+            response_type=response_type,
+            client_id=client_id,
+            code_challenge_method=code_challenge_method,
+            code_challenge=code_challenge,
+            response_mode=response_mode,
+            state=state,
+            redirect_uri=redirect_uri,
+            connection=connection,
+            prompt=prompt,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method exchange_for_auth0_token" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ResultedPKCE",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
 
-        _collection_formats = {}
+
+    @validate_call
+    def authorize_auth0_without_preload_content(
+        self,
+        audience: Annotated[StrictStr, Field(description=" The unique identifier of the target API you want to access.")],
+        scope: Annotated[List[StrictStr], Field(description="The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token.")],
+        response_type: Annotated[StrictStr, Field(description="Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow.")],
+        client_id: Annotated[StrictStr, Field(description="Your application's Client ID.")],
+        code_challenge_method: Annotated[StrictStr, Field(description="Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged.")],
+        code_challenge: Annotated[StrictStr, Field(description="Generated challenge from the code_verifier.")],
+        response_mode: StrictStr,
+        state: Annotated[Optional[StrictStr], Field(description="An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.")] = None,
+        redirect_uri: Annotated[Optional[StrictStr], Field(description="The URL to which Auth0 will redirect the browser after authorization has been granted by the user.")] = None,
+        connection: Annotated[Optional[StrictStr], Field(description="The name of the connection configured to your application.")] = None,
+        prompt: Annotated[Optional[StrictStr], Field(description="To initiate a silent authentication request, use prompt=none (see Remarks for more info).")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """https://auth.pieces.services/authorize [GET]
+
+        An endpoint that is used locally authenticate via a PKCE Flow.  Example https://auth.pieces.services /authorize?audience=https%3A%2F%2Fpieces.us.auth0.com%2Fapi%2Fv2%2F&scope=email+profile+offline_access+openid&response_type=code&client_id=9sW4Pa1LEjX67l6VO14u0207NLYeXnu1&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fpkce%2Fresponse%2Fcode&code_challenge_method=S256&code_challenge=yxRssZxdfBpMigRmDxAety1QU72Bd5WnDUbtlsCZOnk&response_mode=form_post&state=4bd0b9a389b4b229602346c33913b4c3c199628a90011ab3a901302ab62b3832
+
+        :param audience:  The unique identifier of the target API you want to access. (required)
+        :type audience: str
+        :param scope: The scopes which you want to request authorization for. These must be separated by a space. You can request any of the standard OpenID Connect (OIDC) scopes about users, such as profile and email, custom claims that must conform to a namespaced format, or any scopes supported by the target API (for example, read:contacts). Include offline_access to get a Refresh Token. (required)
+        :type scope: List[str]
+        :param response_type: Indicates to Auth0 which OAuth 2.0 Flow you want to perform. Use code for Authorization Code Grant (PKCE) Flow. (required)
+        :type response_type: str
+        :param client_id: Your application's Client ID. (required)
+        :type client_id: str
+        :param code_challenge_method: Method used to generate the challenge. The PKCE spec defines two methods, S256 and plain, however, Auth0 supports only S256 since the latter is discouraged. (required)
+        :type code_challenge_method: str
+        :param code_challenge: Generated challenge from the code_verifier. (required)
+        :type code_challenge: str
+        :param response_mode: (required)
+        :type response_mode: str
+        :param state: An opaque value the clients adds to the initial request that Auth0 includes when redirecting the back to the client. This value must be used by the client to prevent CSRF attacks.
+        :type state: str
+        :param redirect_uri: The URL to which Auth0 will redirect the browser after authorization has been granted by the user.
+        :type redirect_uri: str
+        :param connection: The name of the connection configured to your application.
+        :type connection: str
+        :param prompt: To initiate a silent authentication request, use prompt=none (see Remarks for more info).
+        :type prompt: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._authorize_auth0_serialize(
+            audience=audience,
+            scope=scope,
+            response_type=response_type,
+            client_id=client_id,
+            code_challenge_method=code_challenge_method,
+            code_challenge=code_challenge,
+            response_mode=response_mode,
+            state=state,
+            redirect_uri=redirect_uri,
+            connection=connection,
+            prompt=prompt,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ResultedPKCE",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _authorize_auth0_serialize(
+        self,
+        audience,
+        scope,
+        response_type,
+        client_id,
+        code_challenge_method,
+        code_challenge,
+        response_mode,
+        state,
+        redirect_uri,
+        connection,
+        prompt,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+            'scope': 'ssv',
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
 
         # process the path parameters
-        _path_params = {}
-
         # process the query parameters
-        _query_params = []
+        if audience is not None:
+            
+            _query_params.append(('audience', audience))
+            
+        if scope is not None:
+            
+            _query_params.append(('scope', scope))
+            
+        if response_type is not None:
+            
+            _query_params.append(('response_type', response_type))
+            
+        if client_id is not None:
+            
+            _query_params.append(('client_id', client_id))
+            
+        if state is not None:
+            
+            _query_params.append(('state', state))
+            
+        if redirect_uri is not None:
+            
+            _query_params.append(('redirect_uri', redirect_uri))
+            
+        if code_challenge_method is not None:
+            
+            _query_params.append(('code_challenge_method', code_challenge_method))
+            
+        if code_challenge is not None:
+            
+            _query_params.append(('code_challenge', code_challenge))
+            
+        if connection is not None:
+            
+            _query_params.append(('connection', connection))
+            
+        if prompt is not None:
+            
+            _query_params.append(('prompt', prompt))
+            
+        if response_mode is not None:
+            
+            _query_params.append(('response_mode', response_mode))
+            
         # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
-        _form_params = []
-        _files = {}
-        if _params['var_schema'] is not None:
-            _form_params.append(('schema', _params['var_schema']))
-
-        if _params['grant_type'] is not None:
-            _form_params.append(('grant_type', _params['grant_type']))
-
-        if _params['client_id'] is not None:
-            _form_params.append(('client_id', _params['client_id']))
-
-        if _params['code'] is not None:
-            _form_params.append(('code', _params['code']))
-
-        if _params['redirect_uri'] is not None:
-            _form_params.append(('redirect_uri', _params['redirect_uri']))
-
-        if _params['code_verifier'] is not None:
-            _form_params.append(('code_verifier', _params['code_verifier']))
-
-        if _params['audience'] is not None:
-            _form_params.append(('audience', _params['audience']))
-
         # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
 
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/x-www-form-urlencoded']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/x-www-form-urlencoded'
+                ]
+            )
+
 
         # authentication setting
-        _auth_settings = ['application']  # noqa: E501
+        _auth_settings: List[str] = [
+            'application'
+        ]
 
-        _response_types_map = {
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/authorize',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def exchange_for_auth0_token(
+        self,
+        client_id: Annotated[StrictStr, Field(description="Your application's Client ID.")],
+        code: Annotated[StrictStr, Field(description="The Authorization Code received from the initial /authorize call.")],
+        code_verifier: Annotated[StrictStr, Field(description="Cryptographically random key that was used to generate the code_challenge passed to /authorize.")],
+        grant_type: Annotated[StrictStr, Field(description="Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token.")],
+        redirect_uri: Annotated[StrictStr, Field(description="This is required only if it was set at the GET /authorize endpoint. The values must match.")],
+        audience: Annotated[Optional[StrictStr], Field(description="The audience domain: i.e. https://pieces.us.auth0.com")] = None,
+        var_schema: Optional[EmbeddedModelSchema] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> OAuthToken:
+        """https://auth.pieces.services/oauth/token [POST]
+
+        An endpoint to generate a OAuth Token for an authentication flow. 
+
+        :param client_id: Your application's Client ID. (required)
+        :type client_id: str
+        :param code: The Authorization Code received from the initial /authorize call. (required)
+        :type code: str
+        :param code_verifier: Cryptographically random key that was used to generate the code_challenge passed to /authorize. (required)
+        :type code_verifier: str
+        :param grant_type: Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token. (required)
+        :type grant_type: str
+        :param redirect_uri: This is required only if it was set at the GET /authorize endpoint. The values must match. (required)
+        :type redirect_uri: str
+        :param audience: The audience domain: i.e. https://pieces.us.auth0.com
+        :type audience: str
+        :param var_schema:
+        :type var_schema: EmbeddedModelSchema
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._exchange_for_auth0_token_serialize(
+            client_id=client_id,
+            code=code,
+            code_verifier=code_verifier,
+            grant_type=grant_type,
+            redirect_uri=redirect_uri,
+            audience=audience,
+            var_schema=var_schema,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "OAuthToken",
         }
-
-        return self.api_client.call_api(
-            '/oauth/token', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        ).data
 
-    @validate_arguments
-    def get_auth0_user_info(self, **kwargs) -> Auth0User:  # noqa: E501
-        """https://auth.pieces.services/userinfo [GET]  # noqa: E501
 
-        Get the users info from the Auth0 API  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def exchange_for_auth0_token_with_http_info(
+        self,
+        client_id: Annotated[StrictStr, Field(description="Your application's Client ID.")],
+        code: Annotated[StrictStr, Field(description="The Authorization Code received from the initial /authorize call.")],
+        code_verifier: Annotated[StrictStr, Field(description="Cryptographically random key that was used to generate the code_challenge passed to /authorize.")],
+        grant_type: Annotated[StrictStr, Field(description="Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token.")],
+        redirect_uri: Annotated[StrictStr, Field(description="This is required only if it was set at the GET /authorize endpoint. The values must match.")],
+        audience: Annotated[Optional[StrictStr], Field(description="The audience domain: i.e. https://pieces.us.auth0.com")] = None,
+        var_schema: Optional[EmbeddedModelSchema] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[OAuthToken]:
+        """https://auth.pieces.services/oauth/token [POST]
 
-        >>> thread = api.get_auth0_user_info(async_req=True)
-        >>> result = thread.get()
+        An endpoint to generate a OAuth Token for an authentication flow. 
 
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: Auth0User
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the get_auth0_user_info_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.get_auth0_user_info_with_http_info(**kwargs)  # noqa: E501
-
-    @validate_arguments
-    def get_auth0_user_info_with_http_info(self, **kwargs) -> ApiResponse:  # noqa: E501
-        """https://auth.pieces.services/userinfo [GET]  # noqa: E501
-
-        Get the users info from the Auth0 API  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_auth0_user_info_with_http_info(async_req=True)
-        >>> result = thread.get()
-
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
+        :param client_id: Your application's Client ID. (required)
+        :type client_id: str
+        :param code: The Authorization Code received from the initial /authorize call. (required)
+        :type code: str
+        :param code_verifier: Cryptographically random key that was used to generate the code_challenge passed to /authorize. (required)
+        :type code_verifier: str
+        :param grant_type: Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token. (required)
+        :type grant_type: str
+        :param redirect_uri: This is required only if it was set at the GET /authorize endpoint. The values must match. (required)
+        :type redirect_uri: str
+        :param audience: The audience domain: i.e. https://pieces.us.auth0.com
+        :type audience: str
+        :param var_schema:
+        :type var_schema: EmbeddedModelSchema
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(Auth0User, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._exchange_for_auth0_token_serialize(
+            client_id=client_id,
+            code=code,
+            code_verifier=code_verifier,
+            grant_type=grant_type,
+            redirect_uri=redirect_uri,
+            audience=audience,
+            var_schema=var_schema,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_auth0_user_info" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "OAuthToken",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
 
-        _collection_formats = {}
 
-        # process the path parameters
-        _path_params = {}
+    @validate_call
+    def exchange_for_auth0_token_without_preload_content(
+        self,
+        client_id: Annotated[StrictStr, Field(description="Your application's Client ID.")],
+        code: Annotated[StrictStr, Field(description="The Authorization Code received from the initial /authorize call.")],
+        code_verifier: Annotated[StrictStr, Field(description="Cryptographically random key that was used to generate the code_challenge passed to /authorize.")],
+        grant_type: Annotated[StrictStr, Field(description="Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token.")],
+        redirect_uri: Annotated[StrictStr, Field(description="This is required only if it was set at the GET /authorize endpoint. The values must match.")],
+        audience: Annotated[Optional[StrictStr], Field(description="The audience domain: i.e. https://pieces.us.auth0.com")] = None,
+        var_schema: Optional[EmbeddedModelSchema] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """https://auth.pieces.services/oauth/token [POST]
 
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        An endpoint to generate a OAuth Token for an authentication flow. 
 
-        # authentication setting
-        _auth_settings = ['auth0', 'auth0', 'auth0']  # noqa: E501
+        :param client_id: Your application's Client ID. (required)
+        :type client_id: str
+        :param code: The Authorization Code received from the initial /authorize call. (required)
+        :type code: str
+        :param code_verifier: Cryptographically random key that was used to generate the code_challenge passed to /authorize. (required)
+        :type code_verifier: str
+        :param grant_type: Denotes the flow you are using. For Authorization Code, use authorization_code or refresh_token. (required)
+        :type grant_type: str
+        :param redirect_uri: This is required only if it was set at the GET /authorize endpoint. The values must match. (required)
+        :type redirect_uri: str
+        :param audience: The audience domain: i.e. https://pieces.us.auth0.com
+        :type audience: str
+        :param var_schema:
+        :type var_schema: EmbeddedModelSchema
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
 
-        _response_types_map = {
-            '200': "Auth0User",
+        _param = self._exchange_for_auth0_token_serialize(
+            client_id=client_id,
+            code=code,
+            code_verifier=code_verifier,
+            grant_type=grant_type,
+            redirect_uri=redirect_uri,
+            audience=audience,
+            var_schema=var_schema,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "OAuthToken",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _exchange_for_auth0_token_serialize(
+        self,
+        client_id,
+        code,
+        code_verifier,
+        grant_type,
+        redirect_uri,
+        audience,
+        var_schema,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
         }
 
-        return self.api_client.call_api(
-            '/userinfo', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        if audience is not None:
+            _form_params.append(('audience', audience))
+        if client_id is not None:
+            _form_params.append(('client_id', client_id))
+        if code is not None:
+            _form_params.append(('code', code))
+        if code_verifier is not None:
+            _form_params.append(('code_verifier', code_verifier))
+        if grant_type is not None:
+            _form_params.append(('grant_type', grant_type))
+        if redirect_uri is not None:
+            _form_params.append(('redirect_uri', redirect_uri))
+        if var_schema is not None:
+            _form_params.append(('schema', var_schema))
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/x-www-form-urlencoded'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'application'
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/oauth/token',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
             body=_body_params,
             post_params=_form_params,
             files=_files,
-            response_types_map=_response_types_map,
             auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
             collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def get_auth0_user_info(
+        self,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> Auth0User:
+        """https://auth.pieces.services/userinfo [GET]
+
+        Get the users info from the Auth0 API
+
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_auth0_user_info_serialize(
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "Auth0User",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def get_auth0_user_info_with_http_info(
+        self,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[Auth0User]:
+        """https://auth.pieces.services/userinfo [GET]
+
+        Get the users info from the Auth0 API
+
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_auth0_user_info_serialize(
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "Auth0User",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_auth0_user_info_without_preload_content(
+        self,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """https://auth.pieces.services/userinfo [GET]
+
+        Get the users info from the Auth0 API
+
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_auth0_user_info_serialize(
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "Auth0User",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_auth0_user_info_serialize(
+        self,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'auth0', 
+            'auth0', 
+            'auth0'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/userinfo',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+

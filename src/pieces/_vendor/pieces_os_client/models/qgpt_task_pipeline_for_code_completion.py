@@ -18,60 +18,76 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic.v1 import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from typing import Optional, Set
+from typing_extensions import Self
 
 class QGPTTaskPipelineForCodeCompletion(BaseModel):
     """
-    This task is for code_completion ie auto-complete.  This is a class so that we can add optional properties in the future.  context: This is additional snippet context within the file that will be useful for the autocompletion.(PLEASE ONLY pass in Seed.asset.format.fragment.string.raw for the context snippet values, and for the classificaiton pass in Seed.asset.format.classification)  Note: the snippet && language that needs to be Actually AutoCompleted should be within the QGPTQuestionInput.relevant.  # noqa: E501
-    """
+    This task is for code_completion ie auto-complete.  This is a class so that we can add optional properties in the future.  context: This is additional snippet context within the file that will be useful for the autocompletion.(PLEASE ONLY pass in Seed.asset.format.fragment.string.raw for the context snippet values, and for the classificaiton pass in Seed.asset.format.classification)  Note: the snippet && language that needs to be Actually AutoCompleted should be within the QGPTQuestionInput.relevant.
+    """ # noqa: E501
+    context: Optional[List[StrictStr]] = None
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    context: Optional[conlist(StrictStr)] = None
-    __properties = ["schema", "context"]
+    __properties: ClassVar[List[str]] = ["context", "schema"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> QGPTTaskPipelineForCodeCompletion:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of QGPTTaskPipelineForCodeCompletion from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> QGPTTaskPipelineForCodeCompletion:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of QGPTTaskPipelineForCodeCompletion from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return QGPTTaskPipelineForCodeCompletion.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = QGPTTaskPipelineForCodeCompletion.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "context": obj.get("context")
+        _obj = cls.model_validate({
+            "context": obj.get("context"),
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None
         })
         return _obj
 

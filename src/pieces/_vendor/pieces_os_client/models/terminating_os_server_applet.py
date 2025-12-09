@@ -18,80 +18,96 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.applet_serving_handler_type import AppletServingHandlerType
 from pieces._vendor.pieces_os_client.models.application import Application
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.os_applet_enum import OSAppletEnum
+from typing import Optional, Set
+from typing_extensions import Self
 
 class TerminatingOSServerApplet(BaseModel):
     """
-    TODO  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    TODO
+    """ # noqa: E501
+    handler: Optional[AppletServingHandlerType] = None
     parent: Optional[Application] = None
     port: Optional[StrictInt] = Field(default=None, description="Validation check if the port is passed in.")
-    type: OSAppletEnum = Field(...)
-    handler: Optional[AppletServingHandlerType] = None
-    __properties = ["schema", "parent", "port", "type", "handler"]
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    type: OSAppletEnum
+    __properties: ClassVar[List[str]] = ["handler", "parent", "port", "schema", "type"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> TerminatingOSServerApplet:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of TerminatingOSServerApplet from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of parent
-        if self.parent:
-            _dict['parent'] = self.parent.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of handler
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of handler
         if self.handler:
             _dict['handler'] = self.handler.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of parent
+        if self.parent:
+            _dict['parent'] = self.parent.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
         # set to None if port (nullable) is None
-        # and __fields_set__ contains the field
-        if self.port is None and "port" in self.__fields_set__:
+        # and model_fields_set contains the field
+        if self.port is None and "port" in self.model_fields_set:
             _dict['port'] = None
 
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> TerminatingOSServerApplet:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of TerminatingOSServerApplet from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return TerminatingOSServerApplet.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = TerminatingOSServerApplet.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "parent": Application.from_dict(obj.get("parent")) if obj.get("parent") is not None else None,
+        _obj = cls.model_validate({
+            "handler": AppletServingHandlerType.from_dict(obj["handler"]) if obj.get("handler") is not None else None,
+            "parent": Application.from_dict(obj["parent"]) if obj.get("parent") is not None else None,
             "port": obj.get("port"),
-            "type": obj.get("type"),
-            "handler": AppletServingHandlerType.from_dict(obj.get("handler")) if obj.get("handler") is not None else None
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "type": obj.get("type")
         })
         return _obj
 

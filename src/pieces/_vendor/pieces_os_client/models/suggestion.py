@@ -18,84 +18,100 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Dict, Optional, Union
-from pydantic.v1 import BaseModel, Field, StrictFloat, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pieces._vendor.pieces_os_client.models.assets import Assets
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.reuse_suggestion import ReuseSuggestion
 from pieces._vendor.pieces_os_client.models.save_suggestion import SaveSuggestion
 from pieces._vendor.pieces_os_client.models.suggestion_target import SuggestionTarget
+from typing import Optional, Set
+from typing_extensions import Self
 
 class Suggestion(BaseModel):
     """
-    This is the model return by the connector's suggest endpoint.  Note: assets are the assets that this target was ran against.  distribution is the distribution that we generated from comparing the target to the asset's vectors.(currently uuid(assetid) : value that is the difference between the asset and the target) **could potentially make an additional model here that is an array from most to least relevent.  *** distribution is required but we are currently unable to reflect that with our current dart generation.  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    reuse: ReuseSuggestion = Field(...)
-    save: SaveSuggestion = Field(...)
-    target: SuggestionTarget = Field(...)
-    assets: Assets = Field(...)
+    This is the model return by the connector's suggest endpoint.  Note: assets are the assets that this target was ran against.  distribution is the distribution that we generated from comparing the target to the asset's vectors.(currently uuid(assetid) : value that is the difference between the asset and the target) **could potentially make an additional model here that is an array from most to least relevent.  *** distribution is required but we are currently unable to reflect that with our current dart generation.
+    """ # noqa: E501
+    assets: Assets
     distribution: Optional[Dict[str, Union[StrictFloat, StrictInt]]] = None
-    __properties = ["schema", "reuse", "save", "target", "assets", "distribution"]
+    reuse: ReuseSuggestion
+    save: SaveSuggestion
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    target: SuggestionTarget
+    __properties: ClassVar[List[str]] = ["assets", "distribution", "reuse", "save", "schema", "target"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> Suggestion:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of Suggestion from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of reuse
-        if self.reuse:
-            _dict['reuse'] = self.reuse.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of save
-        if self.save:
-            _dict['save'] = self.save.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of target
-        if self.target:
-            _dict['target'] = self.target.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of assets
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of assets
         if self.assets:
             _dict['assets'] = self.assets.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of reuse
+        if self.reuse:
+            _dict['reuse'] = self.reuse.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of save
+        if self.save:
+            _dict['save'] = self.save.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of target
+        if self.target:
+            _dict['target'] = self.target.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Suggestion:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of Suggestion from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return Suggestion.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = Suggestion.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "reuse": ReuseSuggestion.from_dict(obj.get("reuse")) if obj.get("reuse") is not None else None,
-            "save": SaveSuggestion.from_dict(obj.get("save")) if obj.get("save") is not None else None,
-            "target": SuggestionTarget.from_dict(obj.get("target")) if obj.get("target") is not None else None,
-            "assets": Assets.from_dict(obj.get("assets")) if obj.get("assets") is not None else None,
-            "distribution": obj.get("distribution")
+        _obj = cls.model_validate({
+            "assets": Assets.from_dict(obj["assets"]) if obj.get("assets") is not None else None,
+            "distribution": obj.get("distribution"),
+            "reuse": ReuseSuggestion.from_dict(obj["reuse"]) if obj.get("reuse") is not None else None,
+            "save": SaveSuggestion.from_dict(obj["save"]) if obj.get("save") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "target": SuggestionTarget.from_dict(obj["target"]) if obj.get("target") is not None else None
         })
         return _obj
 

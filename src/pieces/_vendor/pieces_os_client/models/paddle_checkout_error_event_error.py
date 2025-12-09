@@ -18,60 +18,76 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-
-from pydantic.v1 import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictStr
+from typing import Any, ClassVar, Dict, List
+from typing import Optional, Set
+from typing_extensions import Self
 
 class PaddleCheckoutErrorEventError(BaseModel):
     """
     PaddleCheckoutErrorEventError
-    """
-    type: StrictStr = Field(...)
-    code: StrictStr = Field(...)
-    detail: StrictStr = Field(...)
-    documentation_url: StrictStr = Field(...)
-    __properties = ["type", "code", "detail", "documentation_url"]
+    """ # noqa: E501
+    code: StrictStr
+    detail: StrictStr
+    documentation_url: StrictStr
+    type: StrictStr
+    __properties: ClassVar[List[str]] = ["code", "detail", "documentation_url", "type"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> PaddleCheckoutErrorEventError:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of PaddleCheckoutErrorEventError from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> PaddleCheckoutErrorEventError:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of PaddleCheckoutErrorEventError from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return PaddleCheckoutErrorEventError.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = PaddleCheckoutErrorEventError.parse_obj({
-            "type": obj.get("type"),
+        _obj = cls.model_validate({
             "code": obj.get("code"),
             "detail": obj.get("detail"),
-            "documentation_url": obj.get("documentation_url")
+            "documentation_url": obj.get("documentation_url"),
+            "type": obj.get("type")
         })
         return _obj
 

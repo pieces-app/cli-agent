@@ -13,13 +13,10 @@
 """  # noqa: E501
 
 
+from __future__ import annotations
 import json
-import pprint
-import re  # noqa: F401
-from aenum import Enum, no_arg
-
-
-
+from enum import Enum
+from typing_extensions import Self
 
 
 class ApplicationNameEnum(str, Enum):
@@ -73,11 +70,17 @@ class ApplicationNameEnum(str, Enum):
     X_CODE = 'X_CODE'
     NETBEANS = 'NETBEANS'
     OPERA = 'OPERA'
+    PIECES_SAVED_MATERIALS_APPLET = 'PIECES_SAVED_MATERIALS_APPLET'
+    PIECES_SETTINGS_APPLET = 'PIECES_SETTINGS_APPLET'
+    PIECES_WORKSTREAM_ACTIVITY_APPLET = 'PIECES_WORKSTREAM_ACTIVITY_APPLET'
+    PIECES_OS_TOOLBAR_APPLET = 'PIECES_OS_TOOLBAR_APPLET'
+    PIECES_COPILOT_APPLET = 'PIECES_COPILOT_APPLET'
+    MCP_CLIENT = 'MCP_CLIENT'
 
     @classmethod
-    def from_json(cls, json_str: str) -> ApplicationNameEnum:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of ApplicationNameEnum from a JSON string"""
-        return ApplicationNameEnum(json.loads(json_str))
+        return cls(json.loads(json_str))
 
 
 

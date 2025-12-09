@@ -18,9 +18,8 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.anchor_type_enum import AnchorTypeEnum
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.flattened_anchor_points import FlattenedAnchorPoints
@@ -35,132 +34,149 @@ from pieces._vendor.pieces_os_client.models.flattened_workstream_events import F
 from pieces._vendor.pieces_os_client.models.flattened_workstream_summaries import FlattenedWorkstreamSummaries
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 from pieces._vendor.pieces_os_client.models.score import Score
+from typing import Optional, Set
+from typing_extensions import Self
 
 class Anchor(BaseModel):
     """
     Anchor
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(...)
-    name: Optional[StrictStr] = None
-    type: AnchorTypeEnum = Field(...)
-    watch: Optional[StrictBool] = None
-    points: FlattenedAnchorPoints = Field(...)
-    created: GroupedTimestamp = Field(...)
-    updated: GroupedTimestamp = Field(...)
-    deleted: Optional[GroupedTimestamp] = None
-    assets: Optional[FlattenedAssets] = None
+    """ # noqa: E501
     annotations: Optional[FlattenedAnnotations] = None
+    assets: Optional[FlattenedAssets] = None
     conversations: Optional[FlattenedConversations] = None
-    score: Optional[Score] = None
-    summaries: Optional[FlattenedWorkstreamSummaries] = None
-    persons: Optional[FlattenedPersons] = None
+    created: GroupedTimestamp
+    deleted: Optional[GroupedTimestamp] = None
+    id: StrictStr
     messages: Optional[FlattenedConversationMessages] = None
-    workstream_events: Optional[FlattenedWorkstreamEvents] = None
+    name: Optional[StrictStr] = None
+    persons: Optional[FlattenedPersons] = None
+    points: FlattenedAnchorPoints
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    score: Optional[Score] = None
     sources: Optional[FlattenedIdentifiedWorkstreamPatternEngineSources] = None
+    summaries: Optional[FlattenedWorkstreamSummaries] = None
     tags: Optional[FlattenedTags] = None
-    __properties = ["schema", "id", "name", "type", "watch", "points", "created", "updated", "deleted", "assets", "annotations", "conversations", "score", "summaries", "persons", "messages", "workstream_events", "sources", "tags"]
+    type: AnchorTypeEnum
+    updated: GroupedTimestamp
+    watch: Optional[StrictBool] = None
+    workstream_events: Optional[FlattenedWorkstreamEvents] = None
+    __properties: ClassVar[List[str]] = ["annotations", "assets", "conversations", "created", "deleted", "id", "messages", "name", "persons", "points", "schema", "score", "sources", "summaries", "tags", "type", "updated", "watch", "workstream_events"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> Anchor:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of Anchor from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of points
-        if self.points:
-            _dict['points'] = self.points.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of created
-        if self.created:
-            _dict['created'] = self.created.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of updated
-        if self.updated:
-            _dict['updated'] = self.updated.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of deleted
-        if self.deleted:
-            _dict['deleted'] = self.deleted.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of assets
-        if self.assets:
-            _dict['assets'] = self.assets.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of annotations
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of annotations
         if self.annotations:
             _dict['annotations'] = self.annotations.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of conversations
+        # override the default output from pydantic by calling `to_dict()` of assets
+        if self.assets:
+            _dict['assets'] = self.assets.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of conversations
         if self.conversations:
             _dict['conversations'] = self.conversations.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of score
-        if self.score:
-            _dict['score'] = self.score.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of summaries
-        if self.summaries:
-            _dict['summaries'] = self.summaries.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of persons
-        if self.persons:
-            _dict['persons'] = self.persons.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of messages
+        # override the default output from pydantic by calling `to_dict()` of created
+        if self.created:
+            _dict['created'] = self.created.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of deleted
+        if self.deleted:
+            _dict['deleted'] = self.deleted.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of messages
         if self.messages:
             _dict['messages'] = self.messages.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_events
-        if self.workstream_events:
-            _dict['workstream_events'] = self.workstream_events.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of sources
+        # override the default output from pydantic by calling `to_dict()` of persons
+        if self.persons:
+            _dict['persons'] = self.persons.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of points
+        if self.points:
+            _dict['points'] = self.points.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of score
+        if self.score:
+            _dict['score'] = self.score.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of sources
         if self.sources:
             _dict['sources'] = self.sources.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of tags
+        # override the default output from pydantic by calling `to_dict()` of summaries
+        if self.summaries:
+            _dict['summaries'] = self.summaries.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of tags
         if self.tags:
             _dict['tags'] = self.tags.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of updated
+        if self.updated:
+            _dict['updated'] = self.updated.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of workstream_events
+        if self.workstream_events:
+            _dict['workstream_events'] = self.workstream_events.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Anchor:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of Anchor from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return Anchor.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = Anchor.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
+        _obj = cls.model_validate({
+            "annotations": FlattenedAnnotations.from_dict(obj["annotations"]) if obj.get("annotations") is not None else None,
+            "assets": FlattenedAssets.from_dict(obj["assets"]) if obj.get("assets") is not None else None,
+            "conversations": FlattenedConversations.from_dict(obj["conversations"]) if obj.get("conversations") is not None else None,
+            "created": GroupedTimestamp.from_dict(obj["created"]) if obj.get("created") is not None else None,
+            "deleted": GroupedTimestamp.from_dict(obj["deleted"]) if obj.get("deleted") is not None else None,
             "id": obj.get("id"),
+            "messages": FlattenedConversationMessages.from_dict(obj["messages"]) if obj.get("messages") is not None else None,
             "name": obj.get("name"),
+            "persons": FlattenedPersons.from_dict(obj["persons"]) if obj.get("persons") is not None else None,
+            "points": FlattenedAnchorPoints.from_dict(obj["points"]) if obj.get("points") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "score": Score.from_dict(obj["score"]) if obj.get("score") is not None else None,
+            "sources": FlattenedIdentifiedWorkstreamPatternEngineSources.from_dict(obj["sources"]) if obj.get("sources") is not None else None,
+            "summaries": FlattenedWorkstreamSummaries.from_dict(obj["summaries"]) if obj.get("summaries") is not None else None,
+            "tags": FlattenedTags.from_dict(obj["tags"]) if obj.get("tags") is not None else None,
             "type": obj.get("type"),
+            "updated": GroupedTimestamp.from_dict(obj["updated"]) if obj.get("updated") is not None else None,
             "watch": obj.get("watch"),
-            "points": FlattenedAnchorPoints.from_dict(obj.get("points")) if obj.get("points") is not None else None,
-            "created": GroupedTimestamp.from_dict(obj.get("created")) if obj.get("created") is not None else None,
-            "updated": GroupedTimestamp.from_dict(obj.get("updated")) if obj.get("updated") is not None else None,
-            "deleted": GroupedTimestamp.from_dict(obj.get("deleted")) if obj.get("deleted") is not None else None,
-            "assets": FlattenedAssets.from_dict(obj.get("assets")) if obj.get("assets") is not None else None,
-            "annotations": FlattenedAnnotations.from_dict(obj.get("annotations")) if obj.get("annotations") is not None else None,
-            "conversations": FlattenedConversations.from_dict(obj.get("conversations")) if obj.get("conversations") is not None else None,
-            "score": Score.from_dict(obj.get("score")) if obj.get("score") is not None else None,
-            "summaries": FlattenedWorkstreamSummaries.from_dict(obj.get("summaries")) if obj.get("summaries") is not None else None,
-            "persons": FlattenedPersons.from_dict(obj.get("persons")) if obj.get("persons") is not None else None,
-            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None,
-            "workstream_events": FlattenedWorkstreamEvents.from_dict(obj.get("workstream_events")) if obj.get("workstream_events") is not None else None,
-            "sources": FlattenedIdentifiedWorkstreamPatternEngineSources.from_dict(obj.get("sources")) if obj.get("sources") is not None else None,
-            "tags": FlattenedTags.from_dict(obj.get("tags")) if obj.get("tags") is not None else None
+            "workstream_events": FlattenedWorkstreamEvents.from_dict(obj["workstream_events"]) if obj.get("workstream_events") is not None else None
         })
         return _obj
 

@@ -18,77 +18,93 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.byte_descriptor import ByteDescriptor
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.workstream_pattern_engine_vision_event import WorkstreamPatternEngineVisionEvent
+from typing import Optional, Set
+from typing_extensions import Self
 
 class WorkstreamPatternEngineVisionEventsMetadata(BaseModel):
     """
-    This is specific model that will return the size of the WPE in bytes  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    bytes: ByteDescriptor = Field(...)
-    total: StrictInt = Field(default=..., description="This is the total number of events.")
-    oldest: Optional[WorkstreamPatternEngineVisionEvent] = None
+    This is specific model that will return the size of the WPE in bytes
+    """ # noqa: E501
+    bytes: ByteDescriptor
     newest: Optional[WorkstreamPatternEngineVisionEvent] = None
-    __properties = ["schema", "bytes", "total", "oldest", "newest"]
+    oldest: Optional[WorkstreamPatternEngineVisionEvent] = None
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    total: StrictInt = Field(description="This is the total number of events.")
+    __properties: ClassVar[List[str]] = ["bytes", "newest", "oldest", "schema", "total"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> WorkstreamPatternEngineVisionEventsMetadata:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of WorkstreamPatternEngineVisionEventsMetadata from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of bytes
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of bytes
         if self.bytes:
             _dict['bytes'] = self.bytes.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of oldest
-        if self.oldest:
-            _dict['oldest'] = self.oldest.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of newest
+        # override the default output from pydantic by calling `to_dict()` of newest
         if self.newest:
             _dict['newest'] = self.newest.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of oldest
+        if self.oldest:
+            _dict['oldest'] = self.oldest.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> WorkstreamPatternEngineVisionEventsMetadata:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of WorkstreamPatternEngineVisionEventsMetadata from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return WorkstreamPatternEngineVisionEventsMetadata.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = WorkstreamPatternEngineVisionEventsMetadata.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "bytes": ByteDescriptor.from_dict(obj.get("bytes")) if obj.get("bytes") is not None else None,
-            "total": obj.get("total"),
-            "oldest": WorkstreamPatternEngineVisionEvent.from_dict(obj.get("oldest")) if obj.get("oldest") is not None else None,
-            "newest": WorkstreamPatternEngineVisionEvent.from_dict(obj.get("newest")) if obj.get("newest") is not None else None
+        _obj = cls.model_validate({
+            "bytes": ByteDescriptor.from_dict(obj["bytes"]) if obj.get("bytes") is not None else None,
+            "newest": WorkstreamPatternEngineVisionEvent.from_dict(obj["newest"]) if obj.get("newest") is not None else None,
+            "oldest": WorkstreamPatternEngineVisionEvent.from_dict(obj["oldest"]) if obj.get("oldest") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "total": obj.get("total")
         })
         return _obj
 

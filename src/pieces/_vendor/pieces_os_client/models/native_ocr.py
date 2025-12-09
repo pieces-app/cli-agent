@@ -18,74 +18,90 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from typing import Optional, Set
+from typing_extensions import Self
 
 class NativeOCR(BaseModel):
     """
-    This is a specific model to encapsulate nativeOCR(previously named WorkflowMapping) data from the LTM(used within the WorkstreamEvent.  # noqa: E501
-    """
+    This is a specific model to encapsulate nativeOCR(previously named WorkflowMapping) data from the LTM(used within the WorkstreamEvent.
+    """ # noqa: E501
+    app_title: StrictStr = Field(description="The title of the application.", alias="appTitle")
+    browser_url: Optional[StrictStr] = Field(default=None, description="The URL of the browser.", alias="browserUrl")
+    embedding_model_unique_name: Optional[StrictStr] = Field(default=None, description="Optional unique name for the embedding model.", alias="embeddingModelUniqueName")
+    is_cached: StrictBool = Field(description="Indicates whether the workflow mapping is cached. `cached` means that it has been used as context either in a conversation or in a summary, xyz", alias="isCached")
+    is_merged: StrictBool = Field(description="Indicates whether the workflow mapping is merged.", alias="isMerged")
+    ocr_text: StrictStr = Field(description="The OCR text extracted.", alias="ocrText")
+    ocr_text_hash: StrictStr = Field(description="The hash of the OCR text.", alias="ocrTextHash")
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    ocr_text: StrictStr = Field(default=..., alias="ocrText", description="The OCR text extracted.")
-    ocr_text_hash: StrictStr = Field(default=..., alias="ocrTextHash", description="The hash of the OCR text.")
-    app_title: StrictStr = Field(default=..., alias="appTitle", description="The title of the application.")
-    window_title: StrictStr = Field(default=..., alias="windowTitle", description="The title of the window.")
-    browser_url: Optional[StrictStr] = Field(default=None, alias="browserUrl", description="The URL of the browser.")
-    is_merged: StrictBool = Field(default=..., alias="isMerged", description="Indicates whether the workflow mapping is merged.")
-    is_cached: StrictBool = Field(default=..., alias="isCached", description="Indicates whether the workflow mapping is cached.")
-    embedding_model_unique_name: Optional[StrictStr] = Field(default=None, alias="embeddingModelUniqueName", description="Optional unique name for the embedding model.")
-    __properties = ["schema", "ocrText", "ocrTextHash", "appTitle", "windowTitle", "browserUrl", "isMerged", "isCached", "embeddingModelUniqueName"]
+    window_title: StrictStr = Field(description="The title of the window.", alias="windowTitle")
+    __properties: ClassVar[List[str]] = ["appTitle", "browserUrl", "embeddingModelUniqueName", "isCached", "isMerged", "ocrText", "ocrTextHash", "schema", "windowTitle"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> NativeOCR:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of NativeOCR from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> NativeOCR:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of NativeOCR from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return NativeOCR.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = NativeOCR.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "ocr_text": obj.get("ocrText"),
-            "ocr_text_hash": obj.get("ocrTextHash"),
-            "app_title": obj.get("appTitle"),
-            "window_title": obj.get("windowTitle"),
-            "browser_url": obj.get("browserUrl"),
-            "is_merged": obj.get("isMerged"),
-            "is_cached": obj.get("isCached"),
-            "embedding_model_unique_name": obj.get("embeddingModelUniqueName")
+        _obj = cls.model_validate({
+            "appTitle": obj.get("appTitle"),
+            "browserUrl": obj.get("browserUrl"),
+            "embeddingModelUniqueName": obj.get("embeddingModelUniqueName"),
+            "isCached": obj.get("isCached"),
+            "isMerged": obj.get("isMerged"),
+            "ocrText": obj.get("ocrText"),
+            "ocrTextHash": obj.get("ocrTextHash"),
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "windowTitle": obj.get("windowTitle")
         })
         return _obj
 

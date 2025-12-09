@@ -18,95 +18,111 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 from pieces._vendor.pieces_os_client.models.platform_enum import PlatformEnum
 from pieces._vendor.pieces_os_client.models.referenced_anchor import ReferencedAnchor
 from pieces._vendor.pieces_os_client.models.score import Score
+from typing import Optional, Set
+from typing_extensions import Self
 
 class AnchorPoint(BaseModel):
     """
     AnchorPoint
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(...)
-    verified: Optional[StrictBool] = None
-    fullpath: StrictStr = Field(default=..., description="This is the text of the path.")
-    created: GroupedTimestamp = Field(...)
-    updated: GroupedTimestamp = Field(...)
+    """ # noqa: E501
+    anchor: ReferencedAnchor
+    created: GroupedTimestamp
     deleted: Optional[GroupedTimestamp] = None
+    fullpath: StrictStr = Field(description="This is the text of the path.")
+    id: StrictStr
     platform: Optional[PlatformEnum] = None
-    anchor: ReferencedAnchor = Field(...)
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     score: Optional[Score] = None
-    __properties = ["schema", "id", "verified", "fullpath", "created", "updated", "deleted", "platform", "anchor", "score"]
+    updated: GroupedTimestamp
+    verified: Optional[StrictBool] = None
+    __properties: ClassVar[List[str]] = ["anchor", "created", "deleted", "fullpath", "id", "platform", "schema", "score", "updated", "verified"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> AnchorPoint:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of AnchorPoint from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of created
-        if self.created:
-            _dict['created'] = self.created.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of updated
-        if self.updated:
-            _dict['updated'] = self.updated.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of deleted
-        if self.deleted:
-            _dict['deleted'] = self.deleted.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of anchor
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of anchor
         if self.anchor:
             _dict['anchor'] = self.anchor.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of score
+        # override the default output from pydantic by calling `to_dict()` of created
+        if self.created:
+            _dict['created'] = self.created.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of deleted
+        if self.deleted:
+            _dict['deleted'] = self.deleted.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of score
         if self.score:
             _dict['score'] = self.score.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of updated
+        if self.updated:
+            _dict['updated'] = self.updated.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> AnchorPoint:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of AnchorPoint from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return AnchorPoint.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = AnchorPoint.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "id": obj.get("id"),
-            "verified": obj.get("verified"),
+        _obj = cls.model_validate({
+            "anchor": ReferencedAnchor.from_dict(obj["anchor"]) if obj.get("anchor") is not None else None,
+            "created": GroupedTimestamp.from_dict(obj["created"]) if obj.get("created") is not None else None,
+            "deleted": GroupedTimestamp.from_dict(obj["deleted"]) if obj.get("deleted") is not None else None,
             "fullpath": obj.get("fullpath"),
-            "created": GroupedTimestamp.from_dict(obj.get("created")) if obj.get("created") is not None else None,
-            "updated": GroupedTimestamp.from_dict(obj.get("updated")) if obj.get("updated") is not None else None,
-            "deleted": GroupedTimestamp.from_dict(obj.get("deleted")) if obj.get("deleted") is not None else None,
+            "id": obj.get("id"),
             "platform": obj.get("platform"),
-            "anchor": ReferencedAnchor.from_dict(obj.get("anchor")) if obj.get("anchor") is not None else None,
-            "score": Score.from_dict(obj.get("score")) if obj.get("score") is not None else None
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "score": Score.from_dict(obj["score"]) if obj.get("score") is not None else None,
+            "updated": GroupedTimestamp.from_dict(obj["updated"]) if obj.get("updated") is not None else None,
+            "verified": obj.get("verified")
         })
         return _obj
 

@@ -18,65 +18,82 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictBool, constr, validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
+from typing import Optional, Set
+from typing_extensions import Self
 
 class InteractedAssetInteractions(BaseModel):
     """
     InteractedAssetInteractions
-    """
-    viewed: constr(strict=True) = Field(default=..., description="https://en.wikipedia.org/wiki/ISO_8601#Time_intervals")
-    touched: Optional[StrictBool] = Field(default=False, description="If the user touched or panned over the asset.")
+    """ # noqa: E501
     scrolled: Optional[StrictBool] = Field(default=False, description="If the user scrolled over the asset.")
-    __properties = ["viewed", "touched", "scrolled"]
+    touched: Optional[StrictBool] = Field(default=False, description="If the user touched or panned over the asset.")
+    viewed: Annotated[str, Field(strict=True)] = Field(description="https://en.wikipedia.org/wiki/ISO_8601#Time_intervals")
+    __properties: ClassVar[List[str]] = ["scrolled", "touched", "viewed"]
 
-    @validator('viewed')
+    @field_validator('viewed')
     def viewed_validate_regular_expression(cls, value):
         """Validates the regular expression"""
         if not re.match(r"P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]", value):
             raise ValueError(r"must validate the regular expression /P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]/")
         return value
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> InteractedAssetInteractions:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of InteractedAssetInteractions from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> InteractedAssetInteractions:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of InteractedAssetInteractions from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return InteractedAssetInteractions.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = InteractedAssetInteractions.parse_obj({
-            "viewed": obj.get("viewed"),
+        _obj = cls.model_validate({
+            "scrolled": obj.get("scrolled") if obj.get("scrolled") is not None else False,
             "touched": obj.get("touched") if obj.get("touched") is not None else False,
-            "scrolled": obj.get("scrolled") if obj.get("scrolled") is not None else False
+            "viewed": obj.get("viewed")
         })
         return _obj
 

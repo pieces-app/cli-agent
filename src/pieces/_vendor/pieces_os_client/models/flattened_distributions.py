@@ -18,68 +18,84 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic.v1 import BaseModel, Field, conlist
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.referenced_distribution import ReferencedDistribution
+from typing import Optional, Set
+from typing_extensions import Self
 
 class FlattenedDistributions(BaseModel):
     """
     FlattenedDistributions
-    """
+    """ # noqa: E501
+    iterable: List[ReferencedDistribution]
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    iterable: conlist(ReferencedDistribution) = Field(...)
-    __properties = ["schema", "iterable"]
+    __properties: ClassVar[List[str]] = ["iterable", "schema"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> FlattenedDistributions:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of FlattenedDistributions from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of each item in iterable (list)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of each item in iterable (list)
         _items = []
         if self.iterable:
-            for _item in self.iterable:
-                if _item:
-                    _items.append(_item.to_dict())
+            for _item_iterable in self.iterable:
+                if _item_iterable:
+                    _items.append(_item_iterable.to_dict())
             _dict['iterable'] = _items
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> FlattenedDistributions:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of FlattenedDistributions from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return FlattenedDistributions.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = FlattenedDistributions.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "iterable": [ReferencedDistribution.from_dict(_item) for _item in obj.get("iterable")] if obj.get("iterable") is not None else None
+        _obj = cls.model_validate({
+            "iterable": [ReferencedDistribution.from_dict(_item) for _item in obj["iterable"]] if obj.get("iterable") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None
         })
         return _obj
 

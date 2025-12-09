@@ -18,128 +18,144 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, StrictBool, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class ExternalProviderProfileData(BaseModel):
     """
-    All of these will be optional.  Will support ProfileData from all our social providers.  # noqa: E501
-    """
-    name: Optional[StrictStr] = None
-    picture: Optional[StrictStr] = None
-    nickname: Optional[StrictStr] = None
+    All of these will be optional.  Will support ProfileData from all our social providers.
+    """ # noqa: E501
+    anchor: Optional[StrictStr] = None
+    bio: Optional[StrictStr] = None
+    blog: Optional[StrictStr] = None
+    collaborators: Optional[StrictInt] = None
+    company: Optional[StrictStr] = None
+    created_at: Optional[StrictStr] = None
+    disk_usage: Optional[StrictInt] = None
     email: Optional[StrictStr] = None
     email_verified: Optional[StrictBool] = None
-    node_id: Optional[StrictStr] = None
-    gravatar_id: Optional[StrictStr] = None
-    url: Optional[StrictStr] = None
-    html_url: Optional[StrictStr] = None
+    events_url: Optional[StrictStr] = None
+    followers: Optional[StrictInt] = None
     followers_url: Optional[StrictStr] = None
+    following: Optional[StrictInt] = None
     following_url: Optional[StrictStr] = None
     gists_url: Optional[StrictStr] = None
+    gravatar_id: Optional[StrictStr] = None
+    hireable: Optional[StrictBool] = None
+    html_url: Optional[StrictStr] = None
+    name: Optional[StrictStr] = None
+    nickname: Optional[StrictStr] = None
+    node_id: Optional[StrictStr] = None
+    organizations_url: Optional[StrictStr] = None
+    owned_private_repos: Optional[StrictInt] = None
+    picture: Optional[StrictStr] = None
+    private_gists: Optional[StrictInt] = None
+    public_gists: Optional[StrictInt] = None
+    public_repos: Optional[StrictInt] = None
+    received_events_url: Optional[StrictStr] = None
+    repos_url: Optional[StrictStr] = None
+    site_admin: Optional[StrictBool] = None
     starred_url: Optional[StrictStr] = None
     subscriptions_url: Optional[StrictStr] = None
-    organizations_url: Optional[StrictStr] = None
-    repos_url: Optional[StrictStr] = None
-    events_url: Optional[StrictStr] = None
-    received_events_url: Optional[StrictStr] = None
-    type: Optional[StrictStr] = None
-    site_admin: Optional[StrictBool] = None
-    company: Optional[StrictStr] = None
-    blog: Optional[StrictStr] = None
-    anchor: Optional[StrictStr] = None
-    hireable: Optional[StrictBool] = None
-    bio: Optional[StrictStr] = None
-    twitter_username: Optional[StrictStr] = None
-    public_repos: Optional[StrictInt] = None
-    public_gists: Optional[StrictInt] = None
-    followers: Optional[StrictInt] = None
-    following: Optional[StrictInt] = None
-    created_at: Optional[StrictStr] = None
-    updated_at: Optional[StrictStr] = None
-    private_gists: Optional[StrictInt] = None
     total_private_repos: Optional[StrictInt] = None
-    owned_private_repos: Optional[StrictInt] = None
-    disk_usage: Optional[StrictInt] = None
-    collaborators: Optional[StrictInt] = None
+    twitter_username: Optional[StrictStr] = None
     two_factor_authentication: Optional[StrictBool] = None
-    __properties = ["name", "picture", "nickname", "email", "email_verified", "node_id", "gravatar_id", "url", "html_url", "followers_url", "following_url", "gists_url", "starred_url", "subscriptions_url", "organizations_url", "repos_url", "events_url", "received_events_url", "type", "site_admin", "company", "blog", "anchor", "hireable", "bio", "twitter_username", "public_repos", "public_gists", "followers", "following", "created_at", "updated_at", "private_gists", "total_private_repos", "owned_private_repos", "disk_usage", "collaborators", "two_factor_authentication"]
+    type: Optional[StrictStr] = None
+    updated_at: Optional[StrictStr] = None
+    url: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["anchor", "bio", "blog", "collaborators", "company", "created_at", "disk_usage", "email", "email_verified", "events_url", "followers", "followers_url", "following", "following_url", "gists_url", "gravatar_id", "hireable", "html_url", "name", "nickname", "node_id", "organizations_url", "owned_private_repos", "picture", "private_gists", "public_gists", "public_repos", "received_events_url", "repos_url", "site_admin", "starred_url", "subscriptions_url", "total_private_repos", "twitter_username", "two_factor_authentication", "type", "updated_at", "url"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ExternalProviderProfileData:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of ExternalProviderProfileData from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ExternalProviderProfileData:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of ExternalProviderProfileData from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ExternalProviderProfileData.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = ExternalProviderProfileData.parse_obj({
-            "name": obj.get("name"),
-            "picture": obj.get("picture"),
-            "nickname": obj.get("nickname"),
+        _obj = cls.model_validate({
+            "anchor": obj.get("anchor"),
+            "bio": obj.get("bio"),
+            "blog": obj.get("blog"),
+            "collaborators": obj.get("collaborators"),
+            "company": obj.get("company"),
+            "created_at": obj.get("created_at"),
+            "disk_usage": obj.get("disk_usage"),
             "email": obj.get("email"),
             "email_verified": obj.get("email_verified"),
-            "node_id": obj.get("node_id"),
-            "gravatar_id": obj.get("gravatar_id"),
-            "url": obj.get("url"),
-            "html_url": obj.get("html_url"),
+            "events_url": obj.get("events_url"),
+            "followers": obj.get("followers"),
             "followers_url": obj.get("followers_url"),
+            "following": obj.get("following"),
             "following_url": obj.get("following_url"),
             "gists_url": obj.get("gists_url"),
+            "gravatar_id": obj.get("gravatar_id"),
+            "hireable": obj.get("hireable"),
+            "html_url": obj.get("html_url"),
+            "name": obj.get("name"),
+            "nickname": obj.get("nickname"),
+            "node_id": obj.get("node_id"),
+            "organizations_url": obj.get("organizations_url"),
+            "owned_private_repos": obj.get("owned_private_repos"),
+            "picture": obj.get("picture"),
+            "private_gists": obj.get("private_gists"),
+            "public_gists": obj.get("public_gists"),
+            "public_repos": obj.get("public_repos"),
+            "received_events_url": obj.get("received_events_url"),
+            "repos_url": obj.get("repos_url"),
+            "site_admin": obj.get("site_admin"),
             "starred_url": obj.get("starred_url"),
             "subscriptions_url": obj.get("subscriptions_url"),
-            "organizations_url": obj.get("organizations_url"),
-            "repos_url": obj.get("repos_url"),
-            "events_url": obj.get("events_url"),
-            "received_events_url": obj.get("received_events_url"),
-            "type": obj.get("type"),
-            "site_admin": obj.get("site_admin"),
-            "company": obj.get("company"),
-            "blog": obj.get("blog"),
-            "anchor": obj.get("anchor"),
-            "hireable": obj.get("hireable"),
-            "bio": obj.get("bio"),
-            "twitter_username": obj.get("twitter_username"),
-            "public_repos": obj.get("public_repos"),
-            "public_gists": obj.get("public_gists"),
-            "followers": obj.get("followers"),
-            "following": obj.get("following"),
-            "created_at": obj.get("created_at"),
-            "updated_at": obj.get("updated_at"),
-            "private_gists": obj.get("private_gists"),
             "total_private_repos": obj.get("total_private_repos"),
-            "owned_private_repos": obj.get("owned_private_repos"),
-            "disk_usage": obj.get("disk_usage"),
-            "collaborators": obj.get("collaborators"),
-            "two_factor_authentication": obj.get("two_factor_authentication")
+            "twitter_username": obj.get("twitter_username"),
+            "two_factor_authentication": obj.get("two_factor_authentication"),
+            "type": obj.get("type"),
+            "updated_at": obj.get("updated_at"),
+            "url": obj.get("url")
         })
         return _obj
 

@@ -18,99 +18,116 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 from pieces._vendor.pieces_os_client.models.score import Score
+from typing import Optional, Set
+from typing_extensions import Self
 
 class FlattenedWorkstreamPatternEngineSourceWindow(BaseModel):
     """
-    This is the flattened source window for the workstream pattern engine  # noqa: E501
-    """
+    This is the flattened source window for the workstream pattern engine
+    """ # noqa: E501
+    created: GroupedTimestamp
+    id: StrictStr = Field(description="The id of the flattened source window")
+    name: StrictStr = Field(description="The name of the flattened source window")
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(default=..., description="The id of the flattened source window")
-    name: StrictStr = Field(default=..., description="The name of the flattened source window")
-    created: GroupedTimestamp = Field(...)
-    updated: GroupedTimestamp = Field(...)
     score: Optional[Score] = None
-    workstream_events: Optional[FlattenedWorkstreamEvents] = None
-    websites: Optional[FlattenedWebsites] = None
     tags: Optional[FlattenedTags] = None
-    __properties = ["schema", "id", "name", "created", "updated", "score", "workstream_events", "websites", "tags"]
+    updated: GroupedTimestamp
+    websites: Optional[FlattenedWebsites] = None
+    workstream_events: Optional[FlattenedWorkstreamEvents] = None
+    __properties: ClassVar[List[str]] = ["created", "id", "name", "schema", "score", "tags", "updated", "websites", "workstream_events"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> FlattenedWorkstreamPatternEngineSourceWindow:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of FlattenedWorkstreamPatternEngineSourceWindow from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of created
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of created
         if self.created:
             _dict['created'] = self.created.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of updated
-        if self.updated:
-            _dict['updated'] = self.updated.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of score
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of score
         if self.score:
             _dict['score'] = self.score.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_events
-        if self.workstream_events:
-            _dict['workstream_events'] = self.workstream_events.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of websites
-        if self.websites:
-            _dict['websites'] = self.websites.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of tags
+        # override the default output from pydantic by calling `to_dict()` of tags
         if self.tags:
             _dict['tags'] = self.tags.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of updated
+        if self.updated:
+            _dict['updated'] = self.updated.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of websites
+        if self.websites:
+            _dict['websites'] = self.websites.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of workstream_events
+        if self.workstream_events:
+            _dict['workstream_events'] = self.workstream_events.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> FlattenedWorkstreamPatternEngineSourceWindow:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of FlattenedWorkstreamPatternEngineSourceWindow from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return FlattenedWorkstreamPatternEngineSourceWindow.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = FlattenedWorkstreamPatternEngineSourceWindow.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
+        _obj = cls.model_validate({
+            "created": GroupedTimestamp.from_dict(obj["created"]) if obj.get("created") is not None else None,
             "id": obj.get("id"),
             "name": obj.get("name"),
-            "created": GroupedTimestamp.from_dict(obj.get("created")) if obj.get("created") is not None else None,
-            "updated": GroupedTimestamp.from_dict(obj.get("updated")) if obj.get("updated") is not None else None,
-            "score": Score.from_dict(obj.get("score")) if obj.get("score") is not None else None,
-            "workstream_events": FlattenedWorkstreamEvents.from_dict(obj.get("workstream_events")) if obj.get("workstream_events") is not None else None,
-            "websites": FlattenedWebsites.from_dict(obj.get("websites")) if obj.get("websites") is not None else None,
-            "tags": FlattenedTags.from_dict(obj.get("tags")) if obj.get("tags") is not None else None
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "score": Score.from_dict(obj["score"]) if obj.get("score") is not None else None,
+            "tags": FlattenedTags.from_dict(obj["tags"]) if obj.get("tags") is not None else None,
+            "updated": GroupedTimestamp.from_dict(obj["updated"]) if obj.get("updated") is not None else None,
+            "websites": FlattenedWebsites.from_dict(obj["websites"]) if obj.get("websites") is not None else None,
+            "workstream_events": FlattenedWorkstreamEvents.from_dict(obj["workstream_events"]) if obj.get("workstream_events") is not None else None
         })
         return _obj
 
 from pieces._vendor.pieces_os_client.models.flattened_tags import FlattenedTags
 from pieces._vendor.pieces_os_client.models.flattened_websites import FlattenedWebsites
 from pieces._vendor.pieces_os_client.models.flattened_workstream_events import FlattenedWorkstreamEvents
-FlattenedWorkstreamPatternEngineSourceWindow.update_forward_refs()
+# TODO: Rewrite to not use raise_errors
+FlattenedWorkstreamPatternEngineSourceWindow.model_rebuild(raise_errors=False)
 

@@ -18,74 +18,90 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.asset_filters import AssetFilters
 from pieces._vendor.pieces_os_client.models.asset_search_space import AssetSearchSpace
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from typing import Optional, Set
+from typing_extensions import Self
 
 class AssetsSearchWithFiltersInput(BaseModel):
     """
     AssetsSearchWithFiltersInput
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    query: Optional[StrictStr] = None
-    space: Optional[AssetSearchSpace] = None
-    filters: Optional[AssetFilters] = None
+    """ # noqa: E501
     casing: Optional[StrictBool] = Field(default=None, description="This is an optional bool that will let us know, if we want to ignore case or not.(default is to allow casing)ie casing:true.")
-    __properties = ["schema", "query", "space", "filters", "casing"]
+    filters: Optional[AssetFilters] = None
+    query: Optional[StrictStr] = None
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    space: Optional[AssetSearchSpace] = None
+    __properties: ClassVar[List[str]] = ["casing", "filters", "query", "schema", "space"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> AssetsSearchWithFiltersInput:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of AssetsSearchWithFiltersInput from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of space
-        if self.space:
-            _dict['space'] = self.space.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of filters
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of filters
         if self.filters:
             _dict['filters'] = self.filters.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of space
+        if self.space:
+            _dict['space'] = self.space.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> AssetsSearchWithFiltersInput:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of AssetsSearchWithFiltersInput from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return AssetsSearchWithFiltersInput.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = AssetsSearchWithFiltersInput.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
+        _obj = cls.model_validate({
+            "casing": obj.get("casing"),
+            "filters": AssetFilters.from_dict(obj["filters"]) if obj.get("filters") is not None else None,
             "query": obj.get("query"),
-            "space": AssetSearchSpace.from_dict(obj.get("space")) if obj.get("space") is not None else None,
-            "filters": AssetFilters.from_dict(obj.get("filters")) if obj.get("filters") is not None else None,
-            "casing": obj.get("casing")
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "space": AssetSearchSpace.from_dict(obj["space"]) if obj.get("space") is not None else None
         })
         return _obj
 

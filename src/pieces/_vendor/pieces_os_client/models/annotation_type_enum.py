@@ -13,13 +13,10 @@
 """  # noqa: E501
 
 
+from __future__ import annotations
 import json
-import pprint
-import re  # noqa: F401
-from aenum import Enum, no_arg
-
-
-
+from enum import Enum
+from typing_extensions import Self
 
 
 class AnnotationTypeEnum(str, Enum):
@@ -37,11 +34,22 @@ class AnnotationTypeEnum(str, Enum):
     SUMMARY = 'SUMMARY'
     EXPLANATION = 'EXPLANATION'
     GIT_COMMIT = 'GIT_COMMIT'
+    KNOWLEDGE_GRAPH = 'KNOWLEDGE_GRAPH'
+    GENERIC_HIERARCHICAL_SUMMARY = 'GENERIC_HIERARCHICAL_SUMMARY'
+    QUERY_DRIVEN_HIERARCHICAL_SUMMARY = 'QUERY_DRIVEN_HIERARCHICAL_SUMMARY'
+    DEEP_STUDY_HIERARCHICAL_SUMMARY = 'DEEP_STUDY_HIERARCHICAL_SUMMARY'
+    CONVERSATIONALLY_GENERATED_HIERARCHICAL_SUMMARY = 'CONVERSATIONALLY_GENERATED_HIERARCHICAL_SUMMARY'
+    TEMPORAL_DAY_HIERARCHICAL_SUMMARY = 'TEMPORAL_DAY_HIERARCHICAL_SUMMARY'
+    TEMPORAL_WEEK_HIERARCHICAL_SUMMARY = 'TEMPORAL_WEEK_HIERARCHICAL_SUMMARY'
+    TEMPORAL_MONTH_HIERARCHICAL_SUMMARY = 'TEMPORAL_MONTH_HIERARCHICAL_SUMMARY'
+    TEMPORAL_QUARTER_HIERARCHICAL_SUMMARY = 'TEMPORAL_QUARTER_HIERARCHICAL_SUMMARY'
+    TEMPORAL_YEAR_HIERARCHICAL_SUMMARY = 'TEMPORAL_YEAR_HIERARCHICAL_SUMMARY'
+    SPECIFIC_HIERARCHICAL_SUMMARY = 'SPECIFIC_HIERARCHICAL_SUMMARY'
 
     @classmethod
-    def from_json(cls, json_str: str) -> AnnotationTypeEnum:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of AnnotationTypeEnum from a JSON string"""
-        return AnnotationTypeEnum(json.loads(json_str))
+        return cls(json.loads(json_str))
 
 
 

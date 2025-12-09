@@ -18,145 +18,161 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Dict, List, Optional, Union
-from pydantic.v1 import BaseModel, Field, StrictFloat, StrictInt, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 from pieces._vendor.pieces_os_client.models.mechanism_enum import MechanismEnum
 from pieces._vendor.pieces_os_client.models.relationship import Relationship
 from pieces._vendor.pieces_os_client.models.score import Score
 from pieces._vendor.pieces_os_client.models.tag_category_enum import TagCategoryEnum
+from typing import Optional, Set
+from typing_extensions import Self
 
 class FlattenedTag(BaseModel):
     """
-    This is a Flattened Version of a Tag.  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(...)
-    text: StrictStr = Field(...)
-    mechanisms: Optional[Dict[str, MechanismEnum]] = Field(default=None, description="This is a Map<String, MechanismEnum> where the the key is an asset id.")
-    assets: Optional[FlattenedAssets] = None
-    created: GroupedTimestamp = Field(...)
-    updated: GroupedTimestamp = Field(...)
-    deleted: Optional[GroupedTimestamp] = None
-    category: TagCategoryEnum = Field(...)
-    relationship: Optional[Relationship] = None
-    interactions: Optional[StrictInt] = Field(default=None, description="This is an optional value that will keep track of the number of times this has been interacted with.")
-    persons: Optional[FlattenedPersons] = None
-    score: Optional[Score] = None
-    summaries: Optional[FlattenedWorkstreamSummaries] = None
-    workstream_events: Optional[FlattenedWorkstreamEvents] = None
-    messages: Optional[FlattenedConversationMessages] = None
-    annotations: Optional[FlattenedAnnotations] = None
-    tags_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="tagsVector", description="This is the embedding for the format.(NEEDs to collectionection.vector) and specific here because we can only index on a single name NOTE: this the the vector index that corresponds the the couchbase lite index.")
-    source_windows: Optional[FlattenedWorkstreamPatternEngineSourceWindows] = None
-    websites: Optional[FlattenedWebsites] = None
+    This is a Flattened Version of a Tag.
+    """ # noqa: E501
     anchors: Optional[FlattenedAnchors] = None
-    __properties = ["schema", "id", "text", "mechanisms", "assets", "created", "updated", "deleted", "category", "relationship", "interactions", "persons", "score", "summaries", "workstream_events", "messages", "annotations", "tagsVector", "source_windows", "websites", "anchors"]
+    annotations: Optional[FlattenedAnnotations] = None
+    assets: Optional[FlattenedAssets] = None
+    category: TagCategoryEnum
+    created: GroupedTimestamp
+    deleted: Optional[GroupedTimestamp] = None
+    id: StrictStr
+    interactions: Optional[StrictInt] = Field(default=None, description="This is an optional value that will keep track of the number of times this has been interacted with.")
+    mechanisms: Optional[Dict[str, MechanismEnum]] = Field(default=None, description="This is a Map<String, MechanismEnum> where the the key is an asset id.")
+    messages: Optional[FlattenedConversationMessages] = None
+    persons: Optional[FlattenedPersons] = None
+    relationship: Optional[Relationship] = None
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    score: Optional[Score] = None
+    source_windows: Optional[FlattenedWorkstreamPatternEngineSourceWindows] = None
+    summaries: Optional[FlattenedWorkstreamSummaries] = None
+    tags_vector: Optional[List[Union[StrictFloat, StrictInt]]] = Field(default=None, description="This is the embedding for the format.(NEEDs to collection.vector) and specific here because we can only index on a single name NOTE: this is the vector index that corresponds to the couchbase lite index.", alias="tagsVector")
+    text: StrictStr
+    updated: GroupedTimestamp
+    websites: Optional[FlattenedWebsites] = None
+    workstream_events: Optional[FlattenedWorkstreamEvents] = None
+    __properties: ClassVar[List[str]] = ["anchors", "annotations", "assets", "category", "created", "deleted", "id", "interactions", "mechanisms", "messages", "persons", "relationship", "schema", "score", "source_windows", "summaries", "tagsVector", "text", "updated", "websites", "workstream_events"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> FlattenedTag:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of FlattenedTag from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of assets
-        if self.assets:
-            _dict['assets'] = self.assets.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of created
-        if self.created:
-            _dict['created'] = self.created.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of updated
-        if self.updated:
-            _dict['updated'] = self.updated.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of deleted
-        if self.deleted:
-            _dict['deleted'] = self.deleted.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of relationship
-        if self.relationship:
-            _dict['relationship'] = self.relationship.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of persons
-        if self.persons:
-            _dict['persons'] = self.persons.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of score
-        if self.score:
-            _dict['score'] = self.score.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of summaries
-        if self.summaries:
-            _dict['summaries'] = self.summaries.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_events
-        if self.workstream_events:
-            _dict['workstream_events'] = self.workstream_events.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of messages
-        if self.messages:
-            _dict['messages'] = self.messages.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of annotations
-        if self.annotations:
-            _dict['annotations'] = self.annotations.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of source_windows
-        if self.source_windows:
-            _dict['source_windows'] = self.source_windows.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of websites
-        if self.websites:
-            _dict['websites'] = self.websites.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of anchors
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of anchors
         if self.anchors:
             _dict['anchors'] = self.anchors.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of annotations
+        if self.annotations:
+            _dict['annotations'] = self.annotations.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of assets
+        if self.assets:
+            _dict['assets'] = self.assets.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of created
+        if self.created:
+            _dict['created'] = self.created.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of deleted
+        if self.deleted:
+            _dict['deleted'] = self.deleted.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of messages
+        if self.messages:
+            _dict['messages'] = self.messages.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of persons
+        if self.persons:
+            _dict['persons'] = self.persons.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of relationship
+        if self.relationship:
+            _dict['relationship'] = self.relationship.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of score
+        if self.score:
+            _dict['score'] = self.score.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of source_windows
+        if self.source_windows:
+            _dict['source_windows'] = self.source_windows.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of summaries
+        if self.summaries:
+            _dict['summaries'] = self.summaries.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of updated
+        if self.updated:
+            _dict['updated'] = self.updated.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of websites
+        if self.websites:
+            _dict['websites'] = self.websites.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of workstream_events
+        if self.workstream_events:
+            _dict['workstream_events'] = self.workstream_events.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> FlattenedTag:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of FlattenedTag from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return FlattenedTag.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = FlattenedTag.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "id": obj.get("id"),
-            "text": obj.get("text"),
-            "mechanisms": dict((_k, _v) for _k, _v in obj.get("mechanisms").items()),
-            "assets": FlattenedAssets.from_dict(obj.get("assets")) if obj.get("assets") is not None else None,
-            "created": GroupedTimestamp.from_dict(obj.get("created")) if obj.get("created") is not None else None,
-            "updated": GroupedTimestamp.from_dict(obj.get("updated")) if obj.get("updated") is not None else None,
-            "deleted": GroupedTimestamp.from_dict(obj.get("deleted")) if obj.get("deleted") is not None else None,
+        _obj = cls.model_validate({
+            "anchors": FlattenedAnchors.from_dict(obj["anchors"]) if obj.get("anchors") is not None else None,
+            "annotations": FlattenedAnnotations.from_dict(obj["annotations"]) if obj.get("annotations") is not None else None,
+            "assets": FlattenedAssets.from_dict(obj["assets"]) if obj.get("assets") is not None else None,
             "category": obj.get("category"),
-            "relationship": Relationship.from_dict(obj.get("relationship")) if obj.get("relationship") is not None else None,
+            "created": GroupedTimestamp.from_dict(obj["created"]) if obj.get("created") is not None else None,
+            "deleted": GroupedTimestamp.from_dict(obj["deleted"]) if obj.get("deleted") is not None else None,
+            "id": obj.get("id"),
             "interactions": obj.get("interactions"),
-            "persons": FlattenedPersons.from_dict(obj.get("persons")) if obj.get("persons") is not None else None,
-            "score": Score.from_dict(obj.get("score")) if obj.get("score") is not None else None,
-            "summaries": FlattenedWorkstreamSummaries.from_dict(obj.get("summaries")) if obj.get("summaries") is not None else None,
-            "workstream_events": FlattenedWorkstreamEvents.from_dict(obj.get("workstream_events")) if obj.get("workstream_events") is not None else None,
-            "messages": FlattenedConversationMessages.from_dict(obj.get("messages")) if obj.get("messages") is not None else None,
-            "annotations": FlattenedAnnotations.from_dict(obj.get("annotations")) if obj.get("annotations") is not None else None,
-            "tags_vector": obj.get("tagsVector"),
-            "source_windows": FlattenedWorkstreamPatternEngineSourceWindows.from_dict(obj.get("source_windows")) if obj.get("source_windows") is not None else None,
-            "websites": FlattenedWebsites.from_dict(obj.get("websites")) if obj.get("websites") is not None else None,
-            "anchors": FlattenedAnchors.from_dict(obj.get("anchors")) if obj.get("anchors") is not None else None
+            "mechanisms": dict((_k, _v) for _k, _v in obj.get("mechanisms").items()) if obj.get("mechanisms") is not None else None,
+            "messages": FlattenedConversationMessages.from_dict(obj["messages"]) if obj.get("messages") is not None else None,
+            "persons": FlattenedPersons.from_dict(obj["persons"]) if obj.get("persons") is not None else None,
+            "relationship": Relationship.from_dict(obj["relationship"]) if obj.get("relationship") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "score": Score.from_dict(obj["score"]) if obj.get("score") is not None else None,
+            "source_windows": FlattenedWorkstreamPatternEngineSourceWindows.from_dict(obj["source_windows"]) if obj.get("source_windows") is not None else None,
+            "summaries": FlattenedWorkstreamSummaries.from_dict(obj["summaries"]) if obj.get("summaries") is not None else None,
+            "tagsVector": obj.get("tagsVector"),
+            "text": obj.get("text"),
+            "updated": GroupedTimestamp.from_dict(obj["updated"]) if obj.get("updated") is not None else None,
+            "websites": FlattenedWebsites.from_dict(obj["websites"]) if obj.get("websites") is not None else None,
+            "workstream_events": FlattenedWorkstreamEvents.from_dict(obj["workstream_events"]) if obj.get("workstream_events") is not None else None
         })
         return _obj
 
@@ -169,5 +185,6 @@ from pieces._vendor.pieces_os_client.models.flattened_websites import FlattenedW
 from pieces._vendor.pieces_os_client.models.flattened_workstream_events import FlattenedWorkstreamEvents
 from pieces._vendor.pieces_os_client.models.flattened_workstream_pattern_engine_source_windows import FlattenedWorkstreamPatternEngineSourceWindows
 from pieces._vendor.pieces_os_client.models.flattened_workstream_summaries import FlattenedWorkstreamSummaries
-FlattenedTag.update_forward_refs()
+# TODO: Rewrite to not use raise_errors
+FlattenedTag.model_rebuild(raise_errors=False)
 

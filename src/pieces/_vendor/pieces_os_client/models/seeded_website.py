@@ -18,71 +18,87 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.mechanism_enum import MechanismEnum
+from typing import Optional, Set
+from typing_extensions import Self
 
 class SeededWebsite(BaseModel):
     """
-    This is the minimum information required to create a website for a specific asset.  you can optionally add an asset, or person id to attach this website directly to it  TODO consider updating these asset,format to referenced Models  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    This is the minimum information required to create a website for a specific asset.  you can optionally add an asset, or person id to attach this website directly to it  TODO consider updating these asset,format to referenced Models
+    """ # noqa: E501
     asset: Optional[StrictStr] = Field(default=None, description="This is the specific asset that this website is going to get attached to!!")
     conversation: Optional[StrictStr] = Field(default=None, description="This is the specific conversation that this website is going to get attached to!!")
-    url: StrictStr = Field(default=..., description="this is the url of the website.")
-    name: StrictStr = Field(default=..., description="name of the website.(customizable and updateable as well.)")
     mechanism: Optional[MechanismEnum] = None
+    name: StrictStr = Field(description="name of the website.(customizable and updateable as well.)")
     person: Optional[StrictStr] = Field(default=None, description="this is a uuid of a person that we are going to add the website too.")
-    __properties = ["schema", "asset", "conversation", "url", "name", "mechanism", "person"]
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    url: StrictStr = Field(description="this is the url of the website.")
+    __properties: ClassVar[List[str]] = ["asset", "conversation", "mechanism", "name", "person", "schema", "url"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> SeededWebsite:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of SeededWebsite from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> SeededWebsite:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of SeededWebsite from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return SeededWebsite.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = SeededWebsite.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
+        _obj = cls.model_validate({
             "asset": obj.get("asset"),
             "conversation": obj.get("conversation"),
-            "url": obj.get("url"),
-            "name": obj.get("name"),
             "mechanism": obj.get("mechanism"),
-            "person": obj.get("person")
+            "name": obj.get("name"),
+            "person": obj.get("person"),
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "url": obj.get("url")
         })
         return _obj
 

@@ -18,89 +18,105 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic.v1 import BaseModel, Field, conlist
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.access_enum import AccessEnum
 from pieces._vendor.pieces_os_client.models.asset import Asset
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.seed import Seed
 from pieces._vendor.pieces_os_client.models.seeded_distributions import SeededDistributions
 from pieces._vendor.pieces_os_client.models.seeded_user import SeededUser
+from typing import Optional, Set
+from typing_extensions import Self
 
 class Linkify(BaseModel):
     """
-    This is the incoming linkify model.  if access is PRIVATE then please provide and array of users to enable the link for.   # noqa: E501
-    """
+    This is the incoming linkify model.  if access is PRIVATE then please provide and array of users to enable the link for. 
+    """ # noqa: E501
+    access: AccessEnum
+    asset: Optional[Asset] = None
+    distributions: Optional[SeededDistributions] = None
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     seed: Optional[Seed] = None
-    asset: Optional[Asset] = None
-    users: Optional[conlist(SeededUser)] = Field(default=None, description="this is an array of users.")
-    access: AccessEnum = Field(...)
-    distributions: Optional[SeededDistributions] = None
-    __properties = ["schema", "seed", "asset", "users", "access", "distributions"]
+    users: Optional[List[SeededUser]] = Field(default=None, description="this is an array of users.")
+    __properties: ClassVar[List[str]] = ["access", "asset", "distributions", "schema", "seed", "users"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> Linkify:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of Linkify from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of seed
-        if self.seed:
-            _dict['seed'] = self.seed.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of asset
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of asset
         if self.asset:
             _dict['asset'] = self.asset.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of each item in users (list)
-        _items = []
-        if self.users:
-            for _item in self.users:
-                if _item:
-                    _items.append(_item.to_dict())
-            _dict['users'] = _items
-        # override the default output from pydantic.v1 by calling `to_dict()` of distributions
+        # override the default output from pydantic by calling `to_dict()` of distributions
         if self.distributions:
             _dict['distributions'] = self.distributions.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of seed
+        if self.seed:
+            _dict['seed'] = self.seed.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in users (list)
+        _items = []
+        if self.users:
+            for _item_users in self.users:
+                if _item_users:
+                    _items.append(_item_users.to_dict())
+            _dict['users'] = _items
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Linkify:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of Linkify from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return Linkify.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = Linkify.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "seed": Seed.from_dict(obj.get("seed")) if obj.get("seed") is not None else None,
-            "asset": Asset.from_dict(obj.get("asset")) if obj.get("asset") is not None else None,
-            "users": [SeededUser.from_dict(_item) for _item in obj.get("users")] if obj.get("users") is not None else None,
+        _obj = cls.model_validate({
             "access": obj.get("access"),
-            "distributions": SeededDistributions.from_dict(obj.get("distributions")) if obj.get("distributions") is not None else None
+            "asset": Asset.from_dict(obj["asset"]) if obj.get("asset") is not None else None,
+            "distributions": SeededDistributions.from_dict(obj["distributions"]) if obj.get("distributions") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "seed": Seed.from_dict(obj["seed"]) if obj.get("seed") is not None else None,
+            "users": [SeededUser.from_dict(_item) for _item in obj["users"]] if obj.get("users") is not None else None
         })
         return _obj
 

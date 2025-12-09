@@ -18,98 +18,126 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional, Union
-from pydantic.v1 import BaseModel, Field, StrictFloat, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pieces._vendor.pieces_os_client.models.migration_progress import MigrationProgress
 from pieces._vendor.pieces_os_client.models.qgpt_agent_routes import QGPTAgentRoutes
 from pieces._vendor.pieces_os_client.models.qgpt_question_output import QGPTQuestionOutput
 from pieces._vendor.pieces_os_client.models.qgpt_relevance_output import QGPTRelevanceOutput
 from pieces._vendor.pieces_os_client.models.qgpt_stream_enum import QGPTStreamEnum
 from pieces._vendor.pieces_os_client.models.qgpt_streamed_output_extracted_materials import QGPTStreamedOutputExtractedMaterials
+from pieces._vendor.pieces_os_client.models.qgpt_streamed_output_intermediate_messages import QGPTStreamedOutputIntermediateMessages
+from pieces._vendor.pieces_os_client.models.qgpt_streamed_output_prompt_context_materials import QGPTStreamedOutputPromptContextMaterials
+from typing import Optional, Set
+from typing_extensions import Self
 
 class QGPTStreamOutput(BaseModel):
     """
-    This is the out for the /qgpt/stream endpoint.  200: success 401: invalid authentication/api key 429: Rate limit/Quota exceeded 500: server had an error 503: the engine is currently overloaded  # noqa: E501
-    """
-    request: Optional[StrictStr] = Field(default=None, description="This is the id used to represent the stream of response. this will always be present. We will use the value passed inby the client, or we will generate one.")
-    relevance: Optional[QGPTRelevanceOutput] = None
-    question: Optional[QGPTQuestionOutput] = None
-    status: Optional[QGPTStreamEnum] = None
-    conversation: StrictStr = Field(default=..., description="This is the ID of a predefined persisted conversation, if this is not present we will create a new conversation for the input/output.(in the case of a question)")
-    status_code: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, alias="statusCode", description="This will be provided")
-    error_message: Optional[StrictStr] = Field(default=None, alias="errorMessage", description="optional error message is the status code is NOT 200")
+    This is the out for the /qgpt/stream endpoint.  200: success 401: invalid authentication/api key 429: Rate limit/Quota exceeded 500: server had an error 503: the engine is currently overloaded
+    """ # noqa: E501
     agent_routes: Optional[QGPTAgentRoutes] = Field(default=None, alias="agentRoutes")
+    conversation: StrictStr = Field(description="This is the ID of a predefined persisted conversation, if this is not present we will create a new conversation for the input/output.(in the case of a question)")
+    error_message: Optional[StrictStr] = Field(default=None, description="optional error message is the status code is NOT 200", alias="errorMessage")
     extracted: Optional[QGPTStreamedOutputExtractedMaterials] = None
+    intermediate_messages: Optional[QGPTStreamedOutputIntermediateMessages] = None
     migration: Optional[MigrationProgress] = None
-    __properties = ["request", "relevance", "question", "status", "conversation", "statusCode", "errorMessage", "agentRoutes", "extracted", "migration"]
+    prompt_context_materials: Optional[QGPTStreamedOutputPromptContextMaterials] = None
+    question: Optional[QGPTQuestionOutput] = None
+    relevance: Optional[QGPTRelevanceOutput] = None
+    request: Optional[StrictStr] = Field(default=None, description="This is the id used to represent the stream of response. this will always be present. We will use the value passed inby the client, or we will generate one.")
+    status: Optional[QGPTStreamEnum] = None
+    status_code: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="This will be provided", alias="statusCode")
+    __properties: ClassVar[List[str]] = ["agentRoutes", "conversation", "errorMessage", "extracted", "intermediate_messages", "migration", "prompt_context_materials", "question", "relevance", "request", "status", "statusCode"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> QGPTStreamOutput:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of QGPTStreamOutput from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of relevance
-        if self.relevance:
-            _dict['relevance'] = self.relevance.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of question
-        if self.question:
-            _dict['question'] = self.question.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of agent_routes
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of agent_routes
         if self.agent_routes:
             _dict['agentRoutes'] = self.agent_routes.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of extracted
+        # override the default output from pydantic by calling `to_dict()` of extracted
         if self.extracted:
             _dict['extracted'] = self.extracted.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of migration
+        # override the default output from pydantic by calling `to_dict()` of intermediate_messages
+        if self.intermediate_messages:
+            _dict['intermediate_messages'] = self.intermediate_messages.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of migration
         if self.migration:
             _dict['migration'] = self.migration.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of prompt_context_materials
+        if self.prompt_context_materials:
+            _dict['prompt_context_materials'] = self.prompt_context_materials.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of question
+        if self.question:
+            _dict['question'] = self.question.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of relevance
+        if self.relevance:
+            _dict['relevance'] = self.relevance.to_dict()
         # set to None if status_code (nullable) is None
-        # and __fields_set__ contains the field
-        if self.status_code is None and "status_code" in self.__fields_set__:
+        # and model_fields_set contains the field
+        if self.status_code is None and "status_code" in self.model_fields_set:
             _dict['statusCode'] = None
 
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> QGPTStreamOutput:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of QGPTStreamOutput from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return QGPTStreamOutput.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = QGPTStreamOutput.parse_obj({
-            "request": obj.get("request"),
-            "relevance": QGPTRelevanceOutput.from_dict(obj.get("relevance")) if obj.get("relevance") is not None else None,
-            "question": QGPTQuestionOutput.from_dict(obj.get("question")) if obj.get("question") is not None else None,
-            "status": obj.get("status"),
+        _obj = cls.model_validate({
+            "agentRoutes": QGPTAgentRoutes.from_dict(obj["agentRoutes"]) if obj.get("agentRoutes") is not None else None,
             "conversation": obj.get("conversation"),
-            "status_code": obj.get("statusCode"),
-            "error_message": obj.get("errorMessage"),
-            "agent_routes": QGPTAgentRoutes.from_dict(obj.get("agentRoutes")) if obj.get("agentRoutes") is not None else None,
-            "extracted": QGPTStreamedOutputExtractedMaterials.from_dict(obj.get("extracted")) if obj.get("extracted") is not None else None,
-            "migration": MigrationProgress.from_dict(obj.get("migration")) if obj.get("migration") is not None else None
+            "errorMessage": obj.get("errorMessage"),
+            "extracted": QGPTStreamedOutputExtractedMaterials.from_dict(obj["extracted"]) if obj.get("extracted") is not None else None,
+            "intermediate_messages": QGPTStreamedOutputIntermediateMessages.from_dict(obj["intermediate_messages"]) if obj.get("intermediate_messages") is not None else None,
+            "migration": MigrationProgress.from_dict(obj["migration"]) if obj.get("migration") is not None else None,
+            "prompt_context_materials": QGPTStreamedOutputPromptContextMaterials.from_dict(obj["prompt_context_materials"]) if obj.get("prompt_context_materials") is not None else None,
+            "question": QGPTQuestionOutput.from_dict(obj["question"]) if obj.get("question") is not None else None,
+            "relevance": QGPTRelevanceOutput.from_dict(obj["relevance"]) if obj.get("relevance") is not None else None,
+            "request": obj.get("request"),
+            "status": obj.get("status"),
+            "statusCode": obj.get("statusCode")
         })
         return _obj
 

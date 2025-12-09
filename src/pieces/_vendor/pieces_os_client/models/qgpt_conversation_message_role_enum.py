@@ -13,18 +13,15 @@
 """  # noqa: E501
 
 
+from __future__ import annotations
 import json
-import pprint
-import re  # noqa: F401
-from aenum import Enum, no_arg
-
-
-
+from enum import Enum
+from typing_extensions import Self
 
 
 class QGPTConversationMessageRoleEnum(str, Enum):
     """
-    This is the role enum used for a QGPT conversation
+    This is the role enum used for a QGPT conversation  SYSTEM_THINKING is a special role that is used to indicate that the message is a system thinking message. This is used to indicate that the message is a system thinking message. 'search for relevant files'... xyz 'searching google for xyz'...  USER: is the user message SYSTEM: is the system message(ie the message from the LLM)  NOTE: can expand in the future to anything that doesn't fit into a \"SYSTEM_THINKING\" bucket  i.e. \"SYSTEM_ACTION\" or \"SYSTEM_QUESTION\" where the system waits on a response from a user or even a  \"SYSTEM_CHECKIN\" where it's like should I keep going or something 
     """
 
     """
@@ -34,11 +31,12 @@ class QGPTConversationMessageRoleEnum(str, Enum):
     USER = 'USER'
     SYSTEM = 'SYSTEM'
     ASSISTANT = 'ASSISTANT'
+    SYSTEM_THINKING = 'SYSTEM_THINKING'
 
     @classmethod
-    def from_json(cls, json_str: str) -> QGPTConversationMessageRoleEnum:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of QGPTConversationMessageRoleEnum from a JSON string"""
-        return QGPTConversationMessageRoleEnum(json.loads(json_str))
+        return cls(json.loads(json_str))
 
 
 

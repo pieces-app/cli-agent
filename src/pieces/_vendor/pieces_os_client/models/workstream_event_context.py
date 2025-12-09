@@ -18,84 +18,107 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.native_accessibility import NativeAccessibility
+from pieces._vendor.pieces_os_client.models.native_clipboard import NativeClipboard
 from pieces._vendor.pieces_os_client.models.native_ocr import NativeOCR
+from typing import Optional, Set
+from typing_extensions import Self
 
 class WorkstreamEventContext(BaseModel):
     """
-    This is a free form data object that will enable additional data to be passed into SeededWorkstreamEvent, that corresponds to the event on the WorkstreamEvent.  This is a WIP object.  Need to think if we want to do something like raw:string (that is just a jsonObject) that is stringified, or if we add specific bits of data that we want. and specific fields for each event.  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    ide: Optional[WorkstreamEventTriggerContextIDE] = None
-    browser: Optional[WorkstreamEventTriggerContextBrowser] = None
-    native_ocr: Optional[NativeOCR] = None
+    This is a free form data object that will enable additional data to be passed into SeededWorkstreamEvent, that corresponds to the event on the WorkstreamEvent.  This is a WIP object.  Need to think if we want to do something like raw:string (that is just a jsonObject) that is stringified, or if we add specific bits of data that we want. and specific fields for each event.
+    """ # noqa: E501
     accessibility: Optional[NativeAccessibility] = None
-    __properties = ["schema", "ide", "browser", "native_ocr", "accessibility"]
+    browser: Optional[WorkstreamEventTriggerContextBrowser] = None
+    ide: Optional[WorkstreamEventTriggerContextIDE] = None
+    native_clipboard: Optional[NativeClipboard] = None
+    native_ocr: Optional[NativeOCR] = None
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    __properties: ClassVar[List[str]] = ["accessibility", "browser", "ide", "native_clipboard", "native_ocr", "schema"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> WorkstreamEventContext:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of WorkstreamEventContext from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of ide
-        if self.ide:
-            _dict['ide'] = self.ide.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of browser
-        if self.browser:
-            _dict['browser'] = self.browser.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of native_ocr
-        if self.native_ocr:
-            _dict['native_ocr'] = self.native_ocr.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of accessibility
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of accessibility
         if self.accessibility:
             _dict['accessibility'] = self.accessibility.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of browser
+        if self.browser:
+            _dict['browser'] = self.browser.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of ide
+        if self.ide:
+            _dict['ide'] = self.ide.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of native_clipboard
+        if self.native_clipboard:
+            _dict['native_clipboard'] = self.native_clipboard.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of native_ocr
+        if self.native_ocr:
+            _dict['native_ocr'] = self.native_ocr.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> WorkstreamEventContext:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of WorkstreamEventContext from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return WorkstreamEventContext.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = WorkstreamEventContext.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "ide": WorkstreamEventTriggerContextIDE.from_dict(obj.get("ide")) if obj.get("ide") is not None else None,
-            "browser": WorkstreamEventTriggerContextBrowser.from_dict(obj.get("browser")) if obj.get("browser") is not None else None,
-            "native_ocr": NativeOCR.from_dict(obj.get("native_ocr")) if obj.get("native_ocr") is not None else None,
-            "accessibility": NativeAccessibility.from_dict(obj.get("accessibility")) if obj.get("accessibility") is not None else None
+        _obj = cls.model_validate({
+            "accessibility": NativeAccessibility.from_dict(obj["accessibility"]) if obj.get("accessibility") is not None else None,
+            "browser": WorkstreamEventTriggerContextBrowser.from_dict(obj["browser"]) if obj.get("browser") is not None else None,
+            "ide": WorkstreamEventTriggerContextIDE.from_dict(obj["ide"]) if obj.get("ide") is not None else None,
+            "native_clipboard": NativeClipboard.from_dict(obj["native_clipboard"]) if obj.get("native_clipboard") is not None else None,
+            "native_ocr": NativeOCR.from_dict(obj["native_ocr"]) if obj.get("native_ocr") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None
         })
         return _obj
 
 from pieces._vendor.pieces_os_client.models.workstream_event_trigger_context_browser import WorkstreamEventTriggerContextBrowser
 from pieces._vendor.pieces_os_client.models.workstream_event_trigger_context_ide import WorkstreamEventTriggerContextIDE
-WorkstreamEventContext.update_forward_refs()
+# TODO: Rewrite to not use raise_errors
+WorkstreamEventContext.model_rebuild(raise_errors=False)
 

@@ -13,13 +13,10 @@
 """  # noqa: E501
 
 
+from __future__ import annotations
 import json
-import pprint
-import re  # noqa: F401
-from aenum import Enum, no_arg
-
-
-
+from enum import Enum
+from typing_extensions import Self
 
 
 class TLPDirectedDiscoveryFilterEnum(str, Enum):
@@ -43,9 +40,9 @@ class TLPDirectedDiscoveryFilterEnum(str, Enum):
     RETURN = 'RETURN'
 
     @classmethod
-    def from_json(cls, json_str: str) -> TLPDirectedDiscoveryFilterEnum:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of TLPDirectedDiscoveryFilterEnum from a JSON string"""
-        return TLPDirectedDiscoveryFilterEnum(json.loads(json_str))
+        return cls(json.loads(json_str))
 
 
 

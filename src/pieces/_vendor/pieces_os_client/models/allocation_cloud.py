@@ -18,86 +18,102 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.allocation_cloud_status import AllocationCloudStatus
 from pieces._vendor.pieces_os_client.models.allocation_cloud_urls import AllocationCloudUrls
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
+from typing import Optional, Set
+from typing_extensions import Self
 
 class AllocationCloud(BaseModel):
     """
-    update && version: will be present only if your cloud was successfully spun up && running.  updated: is the last time this was updated.  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    id: StrictStr = Field(default=..., description="This is a uuid that represents this cloud.(this is the same as the userid)")
-    user: StrictStr = Field(default=..., description="this is your useruuid.")
-    urls: AllocationCloudUrls = Field(...)
-    status: AllocationCloudStatus = Field(...)
-    project: StrictStr = Field(default=..., description="This is the project that this is attached to.")
-    updated: Optional[GroupedTimestamp] = None
-    version: Optional[StrictStr] = Field(default=None, description="this is the current version of the server.")
+    update && version: will be present only if your cloud was successfully spun up && running.  updated: is the last time this was updated.
+    """ # noqa: E501
+    id: StrictStr = Field(description="This is a uuid that represents this cloud.(this is the same as the userid)")
+    project: StrictStr = Field(description="This is the project that this is attached to.")
     region: Optional[StrictStr] = Field(default=None, description="this is the region where the project is defined.")
-    __properties = ["schema", "id", "user", "urls", "status", "project", "updated", "version", "region"]
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    status: AllocationCloudStatus
+    updated: Optional[GroupedTimestamp] = None
+    urls: AllocationCloudUrls
+    user: StrictStr = Field(description="this is your useruuid.")
+    version: Optional[StrictStr] = Field(default=None, description="this is the current version of the server.")
+    __properties: ClassVar[List[str]] = ["id", "project", "region", "schema", "status", "updated", "urls", "user", "version"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> AllocationCloud:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of AllocationCloud from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of urls
-        if self.urls:
-            _dict['urls'] = self.urls.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of status
+        # override the default output from pydantic by calling `to_dict()` of status
         if self.status:
             _dict['status'] = self.status.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of updated
+        # override the default output from pydantic by calling `to_dict()` of updated
         if self.updated:
             _dict['updated'] = self.updated.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of urls
+        if self.urls:
+            _dict['urls'] = self.urls.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> AllocationCloud:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of AllocationCloud from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return AllocationCloud.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = AllocationCloud.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
+        _obj = cls.model_validate({
             "id": obj.get("id"),
-            "user": obj.get("user"),
-            "urls": AllocationCloudUrls.from_dict(obj.get("urls")) if obj.get("urls") is not None else None,
-            "status": AllocationCloudStatus.from_dict(obj.get("status")) if obj.get("status") is not None else None,
             "project": obj.get("project"),
-            "updated": GroupedTimestamp.from_dict(obj.get("updated")) if obj.get("updated") is not None else None,
-            "version": obj.get("version"),
-            "region": obj.get("region")
+            "region": obj.get("region"),
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "status": AllocationCloudStatus.from_dict(obj["status"]) if obj.get("status") is not None else None,
+            "updated": GroupedTimestamp.from_dict(obj["updated"]) if obj.get("updated") is not None else None,
+            "urls": AllocationCloudUrls.from_dict(obj["urls"]) if obj.get("urls") is not None else None,
+            "user": obj.get("user"),
+            "version": obj.get("version")
         })
         return _obj
 

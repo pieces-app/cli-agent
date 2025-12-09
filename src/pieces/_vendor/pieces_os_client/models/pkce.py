@@ -18,9 +18,8 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.auth0 import Auth0
 from pieces._vendor.pieces_os_client.models.challenged_pkce import ChallengedPKCE
 from pieces._vendor.pieces_os_client.models.descope import Descope
@@ -29,89 +28,106 @@ from pieces._vendor.pieces_os_client.models.resulted_pkce import ResultedPKCE
 from pieces._vendor.pieces_os_client.models.revoked_pkce import RevokedPKCE
 from pieces._vendor.pieces_os_client.models.seeded_pkce import SeededPKCE
 from pieces._vendor.pieces_os_client.models.tokenized_pkce import TokenizedPKCE
+from typing import Optional, Set
+from typing_extensions import Self
 
 class PKCE(BaseModel):
     """
-    An object representing all of the properties involved in a PKCE Authentication Flow  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    result: Optional[ResultedPKCE] = None
+    An object representing all of the properties involved in a PKCE Authentication Flow
+    """ # noqa: E501
+    auth0: Optional[Auth0] = None
     challenge: Optional[ChallengedPKCE] = None
+    descope: Optional[Descope] = None
+    result: Optional[ResultedPKCE] = None
     revocation: Optional[RevokedPKCE] = None
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     seed: Optional[SeededPKCE] = None
     token: Optional[TokenizedPKCE] = None
-    auth0: Optional[Auth0] = None
-    descope: Optional[Descope] = None
-    __properties = ["schema", "result", "challenge", "revocation", "seed", "token", "auth0", "descope"]
+    __properties: ClassVar[List[str]] = ["auth0", "challenge", "descope", "result", "revocation", "schema", "seed", "token"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> PKCE:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of PKCE from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of result
-        if self.result:
-            _dict['result'] = self.result.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of challenge
-        if self.challenge:
-            _dict['challenge'] = self.challenge.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of revocation
-        if self.revocation:
-            _dict['revocation'] = self.revocation.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of seed
-        if self.seed:
-            _dict['seed'] = self.seed.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of token
-        if self.token:
-            _dict['token'] = self.token.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of auth0
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of auth0
         if self.auth0:
             _dict['auth0'] = self.auth0.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of descope
+        # override the default output from pydantic by calling `to_dict()` of challenge
+        if self.challenge:
+            _dict['challenge'] = self.challenge.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of descope
         if self.descope:
             _dict['descope'] = self.descope.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of result
+        if self.result:
+            _dict['result'] = self.result.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of revocation
+        if self.revocation:
+            _dict['revocation'] = self.revocation.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of seed
+        if self.seed:
+            _dict['seed'] = self.seed.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of token
+        if self.token:
+            _dict['token'] = self.token.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> PKCE:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of PKCE from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return PKCE.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = PKCE.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "result": ResultedPKCE.from_dict(obj.get("result")) if obj.get("result") is not None else None,
-            "challenge": ChallengedPKCE.from_dict(obj.get("challenge")) if obj.get("challenge") is not None else None,
-            "revocation": RevokedPKCE.from_dict(obj.get("revocation")) if obj.get("revocation") is not None else None,
-            "seed": SeededPKCE.from_dict(obj.get("seed")) if obj.get("seed") is not None else None,
-            "token": TokenizedPKCE.from_dict(obj.get("token")) if obj.get("token") is not None else None,
-            "auth0": Auth0.from_dict(obj.get("auth0")) if obj.get("auth0") is not None else None,
-            "descope": Descope.from_dict(obj.get("descope")) if obj.get("descope") is not None else None
+        _obj = cls.model_validate({
+            "auth0": Auth0.from_dict(obj["auth0"]) if obj.get("auth0") is not None else None,
+            "challenge": ChallengedPKCE.from_dict(obj["challenge"]) if obj.get("challenge") is not None else None,
+            "descope": Descope.from_dict(obj["descope"]) if obj.get("descope") is not None else None,
+            "result": ResultedPKCE.from_dict(obj["result"]) if obj.get("result") is not None else None,
+            "revocation": RevokedPKCE.from_dict(obj["revocation"]) if obj.get("revocation") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "seed": SeededPKCE.from_dict(obj["seed"]) if obj.get("seed") is not None else None,
+            "token": TokenizedPKCE.from_dict(obj["token"]) if obj.get("token") is not None else None
         })
         return _obj
 

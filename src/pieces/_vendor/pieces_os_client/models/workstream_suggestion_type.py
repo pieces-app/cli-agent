@@ -18,106 +18,122 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class WorkstreamSuggestionType(BaseModel):
     """
-    This is used to map the types of the iterable to given booleans of their respective material types  # noqa: E501
-    """
-    var_schema: Optional[StrictBool] = Field(default=None, alias="schema")
-    summary: Optional[StrictBool] = None
-    asset: Optional[StrictBool] = None
-    tag: Optional[StrictBool] = None
-    website: Optional[StrictBool] = None
+    This is used to map the types of the iterable to given booleans of their respective material types
+    """ # noqa: E501
     anchor: Optional[StrictBool] = None
-    conversation: Optional[StrictBool] = None
-    person: Optional[StrictBool] = None
-    seed: Optional[StrictBool] = None
-    seeds: Optional[StrictBool] = None
-    summaries: Optional[StrictBool] = None
-    assets: Optional[StrictBool] = None
-    tags: Optional[StrictBool] = None
-    websites: Optional[StrictBool] = None
     anchors: Optional[StrictBool] = None
-    conversations: Optional[StrictBool] = None
-    persons: Optional[StrictBool] = None
     annotation: Optional[StrictBool] = None
     annotations: Optional[StrictBool] = None
+    asset: Optional[StrictBool] = None
+    assets: Optional[StrictBool] = None
+    conversation: Optional[StrictBool] = None
     conversation_message: Optional[StrictBool] = Field(default=None, alias="conversationMessage")
     conversation_messages: Optional[StrictBool] = Field(default=None, alias="conversationMessages")
+    conversations: Optional[StrictBool] = None
     hint: Optional[StrictBool] = None
     hints: Optional[StrictBool] = None
+    person: Optional[StrictBool] = None
+    persons: Optional[StrictBool] = None
+    var_schema: Optional[StrictBool] = Field(default=None, alias="schema")
+    seed: Optional[StrictBool] = None
+    seeds: Optional[StrictBool] = None
     sensitive: Optional[StrictBool] = None
     sensitives: Optional[StrictBool] = None
     source: Optional[StrictBool] = None
     sources: Optional[StrictBool] = None
-    __properties = ["schema", "summary", "asset", "tag", "website", "anchor", "conversation", "person", "seed", "seeds", "summaries", "assets", "tags", "websites", "anchors", "conversations", "persons", "annotation", "annotations", "conversationMessage", "conversationMessages", "hint", "hints", "sensitive", "sensitives", "source", "sources"]
+    summaries: Optional[StrictBool] = None
+    summary: Optional[StrictBool] = None
+    tag: Optional[StrictBool] = None
+    tags: Optional[StrictBool] = None
+    website: Optional[StrictBool] = None
+    websites: Optional[StrictBool] = None
+    __properties: ClassVar[List[str]] = ["anchor", "anchors", "annotation", "annotations", "asset", "assets", "conversation", "conversationMessage", "conversationMessages", "conversations", "hint", "hints", "person", "persons", "schema", "seed", "seeds", "sensitive", "sensitives", "source", "sources", "summaries", "summary", "tag", "tags", "website", "websites"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> WorkstreamSuggestionType:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of WorkstreamSuggestionType from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> WorkstreamSuggestionType:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of WorkstreamSuggestionType from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return WorkstreamSuggestionType.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = WorkstreamSuggestionType.parse_obj({
-            "var_schema": obj.get("schema"),
-            "summary": obj.get("summary"),
-            "asset": obj.get("asset"),
-            "tag": obj.get("tag"),
-            "website": obj.get("website"),
+        _obj = cls.model_validate({
             "anchor": obj.get("anchor"),
-            "conversation": obj.get("conversation"),
-            "person": obj.get("person"),
-            "seed": obj.get("seed"),
-            "seeds": obj.get("seeds"),
-            "summaries": obj.get("summaries"),
-            "assets": obj.get("assets"),
-            "tags": obj.get("tags"),
-            "websites": obj.get("websites"),
             "anchors": obj.get("anchors"),
-            "conversations": obj.get("conversations"),
-            "persons": obj.get("persons"),
             "annotation": obj.get("annotation"),
             "annotations": obj.get("annotations"),
-            "conversation_message": obj.get("conversationMessage"),
-            "conversation_messages": obj.get("conversationMessages"),
+            "asset": obj.get("asset"),
+            "assets": obj.get("assets"),
+            "conversation": obj.get("conversation"),
+            "conversationMessage": obj.get("conversationMessage"),
+            "conversationMessages": obj.get("conversationMessages"),
+            "conversations": obj.get("conversations"),
             "hint": obj.get("hint"),
             "hints": obj.get("hints"),
+            "person": obj.get("person"),
+            "persons": obj.get("persons"),
+            "schema": obj.get("schema"),
+            "seed": obj.get("seed"),
+            "seeds": obj.get("seeds"),
             "sensitive": obj.get("sensitive"),
             "sensitives": obj.get("sensitives"),
             "source": obj.get("source"),
-            "sources": obj.get("sources")
+            "sources": obj.get("sources"),
+            "summaries": obj.get("summaries"),
+            "summary": obj.get("summary"),
+            "tag": obj.get("tag"),
+            "tags": obj.get("tags"),
+            "website": obj.get("website"),
+            "websites": obj.get("websites")
         })
         return _obj
 
