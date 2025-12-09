@@ -13,13 +13,10 @@
 """  # noqa: E501
 
 
+from __future__ import annotations
 import json
-import pprint
-import re  # noqa: F401
-from aenum import Enum, no_arg
-
-
-
+from enum import Enum
+from typing_extensions import Self
 
 
 class AnchorTypeEnum(str, Enum):
@@ -35,9 +32,9 @@ class AnchorTypeEnum(str, Enum):
     DIRECTORY = 'DIRECTORY'
 
     @classmethod
-    def from_json(cls, json_str: str) -> AnchorTypeEnum:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of AnchorTypeEnum from a JSON string"""
-        return AnchorTypeEnum(json.loads(json_str))
+        return cls(json.loads(json_str))
 
 
 

@@ -18,9 +18,8 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 from pieces._vendor.pieces_os_client.models.referenced_activity import ReferencedActivity
 from pieces._vendor.pieces_os_client.models.referenced_anchor import ReferencedAnchor
@@ -30,6 +29,9 @@ from pieces._vendor.pieces_os_client.models.referenced_application import Refere
 from pieces._vendor.pieces_os_client.models.referenced_asset import ReferencedAsset
 from pieces._vendor.pieces_os_client.models.referenced_conversation import ReferencedConversation
 from pieces._vendor.pieces_os_client.models.referenced_conversation_message import ReferencedConversationMessage
+from pieces._vendor.pieces_os_client.models.referenced_entity import ReferencedEntity
+from pieces._vendor.pieces_os_client.models.referenced_entity_to_subscription_association import ReferencedEntityToSubscriptionAssociation
+from pieces._vendor.pieces_os_client.models.referenced_entity_to_user_association import ReferencedEntityToUserAssociation
 from pieces._vendor.pieces_os_client.models.referenced_format import ReferencedFormat
 from pieces._vendor.pieces_os_client.models.referenced_hint import ReferencedHint
 from pieces._vendor.pieces_os_client.models.referenced_identified_workstream_pattern_engine_source import ReferencedIdentifiedWorkstreamPatternEngineSource
@@ -42,156 +44,194 @@ from pieces._vendor.pieces_os_client.models.referenced_tag import ReferencedTag
 from pieces._vendor.pieces_os_client.models.referenced_website import ReferencedWebsite
 from pieces._vendor.pieces_os_client.models.referenced_workstream_pattern_engine_source_window import ReferencedWorkstreamPatternEngineSourceWindow
 from pieces._vendor.pieces_os_client.models.referenced_workstream_summary import ReferencedWorkstreamSummary
+from pieces._vendor.pieces_os_client.models.referenced_workstream_summary_to_workstream_summary_association import ReferencedWorkstreamSummaryToWorkstreamSummaryAssociation
+from typing import Optional, Set
+from typing_extensions import Self
 
 class StreamedIdentifier(BaseModel):
     """
-    This is currently only used within /assets/steam/identifiers && /conversations/steam/identifiers && annotations but can be used with other as well, if we want to expand this class.  # noqa: E501
-    """
-    asset: Optional[ReferencedAsset] = None
-    conversation: Optional[ReferencedConversation] = None
-    annotation: Optional[ReferencedAnnotation] = None
+    This is currently only used within /assets/steam/identifiers && /conversations/steam/identifiers && annotations but can be used with other as well, if we want to expand this class.
+    """ # noqa: E501
     activity: Optional[ReferencedActivity] = None
     anchor: Optional[ReferencedAnchor] = None
     anchor_point: Optional[ReferencedAnchorPoint] = Field(default=None, alias="anchorPoint")
-    hint: Optional[ReferencedHint] = None
+    annotation: Optional[ReferencedAnnotation] = None
+    application: Optional[ReferencedApplication] = None
+    asset: Optional[ReferencedAsset] = None
+    conversation: Optional[ReferencedConversation] = None
     conversation_message: Optional[ReferencedConversationMessage] = Field(default=None, alias="conversationMessage")
+    deleted: Optional[StrictBool] = Field(default=None, description="This is a specific bool that will let us know if we deleted an Identifierfrom the db.")
+    entity: Optional[ReferencedEntity] = None
+    entity_to_subscription_association: Optional[ReferencedEntityToSubscriptionAssociation] = None
+    entity_to_user_association: Optional[ReferencedEntityToUserAssociation] = None
     format: Optional[ReferencedFormat] = None
+    hint: Optional[ReferencedHint] = None
+    model: Optional[ReferencedModel] = None
     person: Optional[ReferencedPerson] = None
     range: Optional[ReferencedRange] = None
     sensitive: Optional[ReferencedSensitive] = None
+    subscription: Optional[ReferencedSubscription] = None
     tag: Optional[ReferencedTag] = None
+    updated: Optional[GroupedTimestamp] = None
     website: Optional[ReferencedWebsite] = None
-    application: Optional[ReferencedApplication] = None
-    model: Optional[ReferencedModel] = None
-    workstream_summary: Optional[ReferencedWorkstreamSummary] = None
     workstream_pattern_engine_source: Optional[ReferencedIdentifiedWorkstreamPatternEngineSource] = Field(default=None, alias="workstreamPatternEngineSource")
     workstream_pattern_engine_source_window: Optional[ReferencedWorkstreamPatternEngineSourceWindow] = Field(default=None, alias="workstreamPatternEngineSourceWindow")
-    subscription: Optional[ReferencedSubscription] = None
-    updated: Optional[GroupedTimestamp] = None
-    deleted: Optional[StrictBool] = Field(default=None, description="This is a specific bool that will let us know if we deleted an Identifierfrom the db.")
-    __properties = ["asset", "conversation", "annotation", "activity", "anchor", "anchorPoint", "hint", "conversationMessage", "format", "person", "range", "sensitive", "tag", "website", "application", "model", "workstream_summary", "workstreamPatternEngineSource", "workstreamPatternEngineSourceWindow", "subscription", "updated", "deleted"]
+    workstream_summary: Optional[ReferencedWorkstreamSummary] = None
+    workstream_summary_to_workstream_summary_association: Optional[ReferencedWorkstreamSummaryToWorkstreamSummaryAssociation] = None
+    __properties: ClassVar[List[str]] = ["activity", "anchor", "anchorPoint", "annotation", "application", "asset", "conversation", "conversationMessage", "deleted", "entity", "entity_to_subscription_association", "entity_to_user_association", "format", "hint", "model", "person", "range", "sensitive", "subscription", "tag", "updated", "website", "workstreamPatternEngineSource", "workstreamPatternEngineSourceWindow", "workstream_summary", "workstream_summary_to_workstream_summary_association"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> StreamedIdentifier:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of StreamedIdentifier from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of asset
-        if self.asset:
-            _dict['asset'] = self.asset.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of conversation
-        if self.conversation:
-            _dict['conversation'] = self.conversation.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of annotation
-        if self.annotation:
-            _dict['annotation'] = self.annotation.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of activity
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of activity
         if self.activity:
             _dict['activity'] = self.activity.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of anchor
+        # override the default output from pydantic by calling `to_dict()` of anchor
         if self.anchor:
             _dict['anchor'] = self.anchor.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of anchor_point
+        # override the default output from pydantic by calling `to_dict()` of anchor_point
         if self.anchor_point:
             _dict['anchorPoint'] = self.anchor_point.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of hint
-        if self.hint:
-            _dict['hint'] = self.hint.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of conversation_message
-        if self.conversation_message:
-            _dict['conversationMessage'] = self.conversation_message.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of format
-        if self.format:
-            _dict['format'] = self.format.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of person
-        if self.person:
-            _dict['person'] = self.person.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of range
-        if self.range:
-            _dict['range'] = self.range.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of sensitive
-        if self.sensitive:
-            _dict['sensitive'] = self.sensitive.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of tag
-        if self.tag:
-            _dict['tag'] = self.tag.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of website
-        if self.website:
-            _dict['website'] = self.website.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of application
+        # override the default output from pydantic by calling `to_dict()` of annotation
+        if self.annotation:
+            _dict['annotation'] = self.annotation.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of application
         if self.application:
             _dict['application'] = self.application.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of model
+        # override the default output from pydantic by calling `to_dict()` of asset
+        if self.asset:
+            _dict['asset'] = self.asset.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of conversation
+        if self.conversation:
+            _dict['conversation'] = self.conversation.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of conversation_message
+        if self.conversation_message:
+            _dict['conversationMessage'] = self.conversation_message.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of entity
+        if self.entity:
+            _dict['entity'] = self.entity.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of entity_to_subscription_association
+        if self.entity_to_subscription_association:
+            _dict['entity_to_subscription_association'] = self.entity_to_subscription_association.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of entity_to_user_association
+        if self.entity_to_user_association:
+            _dict['entity_to_user_association'] = self.entity_to_user_association.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of format
+        if self.format:
+            _dict['format'] = self.format.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of hint
+        if self.hint:
+            _dict['hint'] = self.hint.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of model
         if self.model:
             _dict['model'] = self.model.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_summary
-        if self.workstream_summary:
-            _dict['workstream_summary'] = self.workstream_summary.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_pattern_engine_source
-        if self.workstream_pattern_engine_source:
-            _dict['workstreamPatternEngineSource'] = self.workstream_pattern_engine_source.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_pattern_engine_source_window
-        if self.workstream_pattern_engine_source_window:
-            _dict['workstreamPatternEngineSourceWindow'] = self.workstream_pattern_engine_source_window.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of subscription
+        # override the default output from pydantic by calling `to_dict()` of person
+        if self.person:
+            _dict['person'] = self.person.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of range
+        if self.range:
+            _dict['range'] = self.range.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of sensitive
+        if self.sensitive:
+            _dict['sensitive'] = self.sensitive.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of subscription
         if self.subscription:
             _dict['subscription'] = self.subscription.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of updated
+        # override the default output from pydantic by calling `to_dict()` of tag
+        if self.tag:
+            _dict['tag'] = self.tag.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of updated
         if self.updated:
             _dict['updated'] = self.updated.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of website
+        if self.website:
+            _dict['website'] = self.website.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of workstream_pattern_engine_source
+        if self.workstream_pattern_engine_source:
+            _dict['workstreamPatternEngineSource'] = self.workstream_pattern_engine_source.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of workstream_pattern_engine_source_window
+        if self.workstream_pattern_engine_source_window:
+            _dict['workstreamPatternEngineSourceWindow'] = self.workstream_pattern_engine_source_window.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of workstream_summary
+        if self.workstream_summary:
+            _dict['workstream_summary'] = self.workstream_summary.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of workstream_summary_to_workstream_summary_association
+        if self.workstream_summary_to_workstream_summary_association:
+            _dict['workstream_summary_to_workstream_summary_association'] = self.workstream_summary_to_workstream_summary_association.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> StreamedIdentifier:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of StreamedIdentifier from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return StreamedIdentifier.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = StreamedIdentifier.parse_obj({
-            "asset": ReferencedAsset.from_dict(obj.get("asset")) if obj.get("asset") is not None else None,
-            "conversation": ReferencedConversation.from_dict(obj.get("conversation")) if obj.get("conversation") is not None else None,
-            "annotation": ReferencedAnnotation.from_dict(obj.get("annotation")) if obj.get("annotation") is not None else None,
-            "activity": ReferencedActivity.from_dict(obj.get("activity")) if obj.get("activity") is not None else None,
-            "anchor": ReferencedAnchor.from_dict(obj.get("anchor")) if obj.get("anchor") is not None else None,
-            "anchor_point": ReferencedAnchorPoint.from_dict(obj.get("anchorPoint")) if obj.get("anchorPoint") is not None else None,
-            "hint": ReferencedHint.from_dict(obj.get("hint")) if obj.get("hint") is not None else None,
-            "conversation_message": ReferencedConversationMessage.from_dict(obj.get("conversationMessage")) if obj.get("conversationMessage") is not None else None,
-            "format": ReferencedFormat.from_dict(obj.get("format")) if obj.get("format") is not None else None,
-            "person": ReferencedPerson.from_dict(obj.get("person")) if obj.get("person") is not None else None,
-            "range": ReferencedRange.from_dict(obj.get("range")) if obj.get("range") is not None else None,
-            "sensitive": ReferencedSensitive.from_dict(obj.get("sensitive")) if obj.get("sensitive") is not None else None,
-            "tag": ReferencedTag.from_dict(obj.get("tag")) if obj.get("tag") is not None else None,
-            "website": ReferencedWebsite.from_dict(obj.get("website")) if obj.get("website") is not None else None,
-            "application": ReferencedApplication.from_dict(obj.get("application")) if obj.get("application") is not None else None,
-            "model": ReferencedModel.from_dict(obj.get("model")) if obj.get("model") is not None else None,
-            "workstream_summary": ReferencedWorkstreamSummary.from_dict(obj.get("workstream_summary")) if obj.get("workstream_summary") is not None else None,
-            "workstream_pattern_engine_source": ReferencedIdentifiedWorkstreamPatternEngineSource.from_dict(obj.get("workstreamPatternEngineSource")) if obj.get("workstreamPatternEngineSource") is not None else None,
-            "workstream_pattern_engine_source_window": ReferencedWorkstreamPatternEngineSourceWindow.from_dict(obj.get("workstreamPatternEngineSourceWindow")) if obj.get("workstreamPatternEngineSourceWindow") is not None else None,
-            "subscription": ReferencedSubscription.from_dict(obj.get("subscription")) if obj.get("subscription") is not None else None,
-            "updated": GroupedTimestamp.from_dict(obj.get("updated")) if obj.get("updated") is not None else None,
-            "deleted": obj.get("deleted")
+        _obj = cls.model_validate({
+            "activity": ReferencedActivity.from_dict(obj["activity"]) if obj.get("activity") is not None else None,
+            "anchor": ReferencedAnchor.from_dict(obj["anchor"]) if obj.get("anchor") is not None else None,
+            "anchorPoint": ReferencedAnchorPoint.from_dict(obj["anchorPoint"]) if obj.get("anchorPoint") is not None else None,
+            "annotation": ReferencedAnnotation.from_dict(obj["annotation"]) if obj.get("annotation") is not None else None,
+            "application": ReferencedApplication.from_dict(obj["application"]) if obj.get("application") is not None else None,
+            "asset": ReferencedAsset.from_dict(obj["asset"]) if obj.get("asset") is not None else None,
+            "conversation": ReferencedConversation.from_dict(obj["conversation"]) if obj.get("conversation") is not None else None,
+            "conversationMessage": ReferencedConversationMessage.from_dict(obj["conversationMessage"]) if obj.get("conversationMessage") is not None else None,
+            "deleted": obj.get("deleted"),
+            "entity": ReferencedEntity.from_dict(obj["entity"]) if obj.get("entity") is not None else None,
+            "entity_to_subscription_association": ReferencedEntityToSubscriptionAssociation.from_dict(obj["entity_to_subscription_association"]) if obj.get("entity_to_subscription_association") is not None else None,
+            "entity_to_user_association": ReferencedEntityToUserAssociation.from_dict(obj["entity_to_user_association"]) if obj.get("entity_to_user_association") is not None else None,
+            "format": ReferencedFormat.from_dict(obj["format"]) if obj.get("format") is not None else None,
+            "hint": ReferencedHint.from_dict(obj["hint"]) if obj.get("hint") is not None else None,
+            "model": ReferencedModel.from_dict(obj["model"]) if obj.get("model") is not None else None,
+            "person": ReferencedPerson.from_dict(obj["person"]) if obj.get("person") is not None else None,
+            "range": ReferencedRange.from_dict(obj["range"]) if obj.get("range") is not None else None,
+            "sensitive": ReferencedSensitive.from_dict(obj["sensitive"]) if obj.get("sensitive") is not None else None,
+            "subscription": ReferencedSubscription.from_dict(obj["subscription"]) if obj.get("subscription") is not None else None,
+            "tag": ReferencedTag.from_dict(obj["tag"]) if obj.get("tag") is not None else None,
+            "updated": GroupedTimestamp.from_dict(obj["updated"]) if obj.get("updated") is not None else None,
+            "website": ReferencedWebsite.from_dict(obj["website"]) if obj.get("website") is not None else None,
+            "workstreamPatternEngineSource": ReferencedIdentifiedWorkstreamPatternEngineSource.from_dict(obj["workstreamPatternEngineSource"]) if obj.get("workstreamPatternEngineSource") is not None else None,
+            "workstreamPatternEngineSourceWindow": ReferencedWorkstreamPatternEngineSourceWindow.from_dict(obj["workstreamPatternEngineSourceWindow"]) if obj.get("workstreamPatternEngineSourceWindow") is not None else None,
+            "workstream_summary": ReferencedWorkstreamSummary.from_dict(obj["workstream_summary"]) if obj.get("workstream_summary") is not None else None,
+            "workstream_summary_to_workstream_summary_association": ReferencedWorkstreamSummaryToWorkstreamSummaryAssociation.from_dict(obj["workstream_summary_to_workstream_summary_association"]) if obj.get("workstream_summary_to_workstream_summary_association") is not None else None
         })
         return _obj
 

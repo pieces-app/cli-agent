@@ -18,83 +18,99 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Dict, List, Optional, Union
-from pydantic.v1 import BaseModel, Field, StrictFloat, StrictInt, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pieces._vendor.pieces_os_client.models.classification_generic_enum import ClassificationGenericEnum
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.model import Model
+from typing import Optional, Set
+from typing_extensions import Self
 
 class CodeAnalysis(BaseModel):
     """
-    This is the ML Analysis object Specific to code.  prediction and similarity are custom types. ** please dont not modify **  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    tokenized: Optional[conlist(StrictStr)] = None
+    This is the ML Analysis object Specific to code.  prediction and similarity are custom types. ** please dont not modify **
+    """ # noqa: E501
+    analysis: StrictStr = Field(description="this is just a reference to the analysis parent object.")
+    id: StrictStr
     language: Optional[StrictStr] = None
-    type: ClassificationGenericEnum = Field(...)
+    model: Model
     prediction: Optional[Dict[str, Union[StrictFloat, StrictInt]]] = None
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     similarity: Optional[Dict[str, Union[StrictFloat, StrictInt]]] = None
-    top5_colors: Optional[conlist(StrictInt)] = Field(default=None, alias="top5Colors")
-    top5_sorted: Optional[conlist(StrictStr)] = Field(default=None, alias="top5Sorted")
-    id: StrictStr = Field(...)
-    analysis: StrictStr = Field(default=..., description="this is just a reference to the analysis parent object.")
-    model: Model = Field(...)
-    __properties = ["schema", "tokenized", "language", "type", "prediction", "similarity", "top5Colors", "top5Sorted", "id", "analysis", "model"]
+    tokenized: Optional[List[StrictStr]] = None
+    top5_colors: Optional[List[StrictInt]] = Field(default=None, alias="top5Colors")
+    top5_sorted: Optional[List[StrictStr]] = Field(default=None, alias="top5Sorted")
+    type: ClassificationGenericEnum
+    __properties: ClassVar[List[str]] = ["analysis", "id", "language", "model", "prediction", "schema", "similarity", "tokenized", "top5Colors", "top5Sorted", "type"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> CodeAnalysis:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of CodeAnalysis from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of model
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of model
         if self.model:
             _dict['model'] = self.model.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> CodeAnalysis:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of CodeAnalysis from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return CodeAnalysis.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = CodeAnalysis.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "tokenized": obj.get("tokenized"),
-            "language": obj.get("language"),
-            "type": obj.get("type"),
-            "prediction": obj.get("prediction"),
-            "similarity": obj.get("similarity"),
-            "top5_colors": obj.get("top5Colors"),
-            "top5_sorted": obj.get("top5Sorted"),
-            "id": obj.get("id"),
+        _obj = cls.model_validate({
             "analysis": obj.get("analysis"),
-            "model": Model.from_dict(obj.get("model")) if obj.get("model") is not None else None
+            "id": obj.get("id"),
+            "language": obj.get("language"),
+            "model": Model.from_dict(obj["model"]) if obj.get("model") is not None else None,
+            "prediction": obj.get("prediction"),
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "similarity": obj.get("similarity"),
+            "tokenized": obj.get("tokenized"),
+            "top5Colors": obj.get("top5Colors"),
+            "top5Sorted": obj.get("top5Sorted"),
+            "type": obj.get("type")
         })
         return _obj
 

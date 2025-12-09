@@ -18,74 +18,90 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.qgpt_question_input import QGPTQuestionInput
 from pieces._vendor.pieces_os_client.models.qgpt_relevance_input import QGPTRelevanceInput
+from typing import Optional, Set
+from typing_extensions import Self
 
 class QGPTStreamInput(BaseModel):
     """
-    This is the input for the /qgpt/stream endpoint.  # noqa: E501
-    """
-    relevance: Optional[QGPTRelevanceInput] = None
-    question: Optional[QGPTQuestionInput] = None
-    request: Optional[StrictStr] = Field(default=None, description="This is an optional Id you can use to identify the result from your request.")
-    conversation: Optional[StrictStr] = Field(default=None, description="This is the ID of a predefined persisted conversation, if this is not present we will create a new conversation for the input/output.(in the case of a question)")
-    stop: Optional[StrictBool] = Field(default=None, description="This will stop the output of the current LLM")
-    reset: Optional[StrictBool] = Field(default=None, description="This will fully reset all current Activity within the QGPT stream Flows.")
+    This is the input for the /qgpt/stream endpoint.
+    """ # noqa: E501
     agent: Optional[StrictBool] = Field(default=None, description="This will let us know if we want to run the agent routing as well, this is default to true. However if set to false you will save on processing and you will recieve null for the agentRoutes class on the QGPTStreamOutput.")
-    __properties = ["relevance", "question", "request", "conversation", "stop", "reset", "agent"]
+    conversation: Optional[StrictStr] = Field(default=None, description="This is the ID of a predefined persisted conversation, if this is not present we will create a new conversation for the input/output.(in the case of a question)")
+    question: Optional[QGPTQuestionInput] = None
+    relevance: Optional[QGPTRelevanceInput] = None
+    request: Optional[StrictStr] = Field(default=None, description="This is an optional Id you can use to identify the result from your request.")
+    reset: Optional[StrictBool] = Field(default=None, description="This will fully reset all current Activity within the QGPT stream Flows.")
+    stop: Optional[StrictBool] = Field(default=None, description="This will stop the output of the current LLM")
+    __properties: ClassVar[List[str]] = ["agent", "conversation", "question", "relevance", "request", "reset", "stop"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> QGPTStreamInput:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of QGPTStreamInput from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of relevance
-        if self.relevance:
-            _dict['relevance'] = self.relevance.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of question
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of question
         if self.question:
             _dict['question'] = self.question.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of relevance
+        if self.relevance:
+            _dict['relevance'] = self.relevance.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> QGPTStreamInput:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of QGPTStreamInput from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return QGPTStreamInput.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = QGPTStreamInput.parse_obj({
-            "relevance": QGPTRelevanceInput.from_dict(obj.get("relevance")) if obj.get("relevance") is not None else None,
-            "question": QGPTQuestionInput.from_dict(obj.get("question")) if obj.get("question") is not None else None,
-            "request": obj.get("request"),
+        _obj = cls.model_validate({
+            "agent": obj.get("agent"),
             "conversation": obj.get("conversation"),
-            "stop": obj.get("stop"),
+            "question": QGPTQuestionInput.from_dict(obj["question"]) if obj.get("question") is not None else None,
+            "relevance": QGPTRelevanceInput.from_dict(obj["relevance"]) if obj.get("relevance") is not None else None,
+            "request": obj.get("request"),
             "reset": obj.get("reset"),
-            "agent": obj.get("agent")
+            "stop": obj.get("stop")
         })
         return _obj
 

@@ -13,13 +13,10 @@
 """  # noqa: E501
 
 
+from __future__ import annotations
 import json
-import pprint
-import re  # noqa: F401
-from aenum import Enum, no_arg
-
-
-
+from enum import Enum
+from typing_extensions import Self
 
 
 class UpdatingStatusEnum(str, Enum):
@@ -37,11 +34,12 @@ class UpdatingStatusEnum(str, Enum):
     UP_TO_DATE = 'UP_TO_DATE'
     REINSTALL_REQUIRED = 'REINSTALL_REQUIRED'
     CONTACT_SUPPORT = 'CONTACT_SUPPORT'
+    UPDATE_VIA_MICROSOFT_STORE = 'UPDATE_VIA_MICROSOFT_STORE'
 
     @classmethod
-    def from_json(cls, json_str: str) -> UpdatingStatusEnum:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of UpdatingStatusEnum from a JSON string"""
-        return UpdatingStatusEnum(json.loads(json_str))
+        return cls(json.loads(json_str))
 
 
 

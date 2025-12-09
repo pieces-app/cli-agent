@@ -14,21 +14,19 @@
 
 
 from __future__ import annotations
-from inspect import getfullargspec
 import json
 import pprint
-import re  # noqa: F401
-
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from pydantic.v1 import BaseModel, Field, StrictStr, ValidationError, validator
 from pieces._vendor.pieces_os_client.models.paddle_checkout_closed_event import PaddleCheckoutClosedEvent
 from pieces._vendor.pieces_os_client.models.paddle_checkout_completed_event import PaddleCheckoutCompletedEvent
 from pieces._vendor.pieces_os_client.models.paddle_checkout_error_event import PaddleCheckoutErrorEvent
 from pieces._vendor.pieces_os_client.models.paddle_checkout_loaded_event import PaddleCheckoutLoadedEvent
 from pieces._vendor.pieces_os_client.models.paddle_checkout_updated_event import PaddleCheckoutUpdatedEvent
 from pieces._vendor.pieces_os_client.models.paddle_checkout_warning_event import PaddleCheckoutWarningEvent
-from typing import Union, Any, List, TYPE_CHECKING
-from pydantic.v1 import StrictStr, Field
+from pydantic import StrictStr, Field
+from typing import Union, List, Set, Optional, Dict
+from typing_extensions import Literal, Self
 
 PADDLECHECKOUTEVENT_ONE_OF_SCHEMAS = ["PaddleCheckoutClosedEvent", "PaddleCheckoutCompletedEvent", "PaddleCheckoutErrorEvent", "PaddleCheckoutLoadedEvent", "PaddleCheckoutUpdatedEvent", "PaddleCheckoutWarningEvent"]
 
@@ -48,16 +46,16 @@ class PaddleCheckoutEvent(BaseModel):
     oneof_schema_5_validator: Optional[PaddleCheckoutWarningEvent] = None
     # data type: PaddleCheckoutErrorEvent
     oneof_schema_6_validator: Optional[PaddleCheckoutErrorEvent] = None
-    if TYPE_CHECKING:
-        actual_instance: Union[PaddleCheckoutClosedEvent, PaddleCheckoutCompletedEvent, PaddleCheckoutErrorEvent, PaddleCheckoutLoadedEvent, PaddleCheckoutUpdatedEvent, PaddleCheckoutWarningEvent]
-    else:
-        actual_instance: Any
-    one_of_schemas: List[str] = Field(PADDLECHECKOUTEVENT_ONE_OF_SCHEMAS, const=True)
+    actual_instance: Optional[Union[PaddleCheckoutClosedEvent, PaddleCheckoutCompletedEvent, PaddleCheckoutErrorEvent, PaddleCheckoutLoadedEvent, PaddleCheckoutUpdatedEvent, PaddleCheckoutWarningEvent]] = None
+    one_of_schemas: Set[str] = { "PaddleCheckoutClosedEvent", "PaddleCheckoutCompletedEvent", "PaddleCheckoutErrorEvent", "PaddleCheckoutLoadedEvent", "PaddleCheckoutUpdatedEvent", "PaddleCheckoutWarningEvent" }
 
-    class Config:
-        validate_assignment = True
+    model_config = ConfigDict(
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
 
-    discriminator_value_class_map = {
+
+    discriminator_value_class_map: Dict[str, str] = {
     }
 
     def __init__(self, *args, **kwargs) -> None:
@@ -70,9 +68,9 @@ class PaddleCheckoutEvent(BaseModel):
         else:
             super().__init__(**kwargs)
 
-    @validator('actual_instance')
+    @field_validator('actual_instance')
     def actual_instance_must_validate_oneof(cls, v):
-        instance = PaddleCheckoutEvent.construct()
+        instance = PaddleCheckoutEvent.model_construct()
         error_messages = []
         match = 0
         # validate data type: PaddleCheckoutLoadedEvent
@@ -115,13 +113,13 @@ class PaddleCheckoutEvent(BaseModel):
             return v
 
     @classmethod
-    def from_dict(cls, obj: dict) -> PaddleCheckoutEvent:
+    def from_dict(cls, obj: Union[str, Dict[str, Any]]) -> Self:
         return cls.from_json(json.dumps(obj))
 
     @classmethod
-    def from_json(cls, json_str: str) -> PaddleCheckoutEvent:
+    def from_json(cls, json_str: str) -> Self:
         """Returns the object represented by the json string"""
-        instance = PaddleCheckoutEvent.construct()
+        instance = cls.model_construct()
         error_messages = []
         match = 0
 
@@ -176,19 +174,17 @@ class PaddleCheckoutEvent(BaseModel):
         if self.actual_instance is None:
             return "null"
 
-        to_json = getattr(self.actual_instance, "to_json", None)
-        if callable(to_json):
+        if hasattr(self.actual_instance, "to_json") and callable(self.actual_instance.to_json):
             return self.actual_instance.to_json()
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], PaddleCheckoutClosedEvent, PaddleCheckoutCompletedEvent, PaddleCheckoutErrorEvent, PaddleCheckoutLoadedEvent, PaddleCheckoutUpdatedEvent, PaddleCheckoutWarningEvent]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None
 
-        to_dict = getattr(self.actual_instance, "to_dict", None)
-        if callable(to_dict):
+        if hasattr(self.actual_instance, "to_dict") and callable(self.actual_instance.to_dict):
             return self.actual_instance.to_dict()
         else:
             # primitive type
@@ -196,6 +192,6 @@ class PaddleCheckoutEvent(BaseModel):
 
     def to_str(self) -> str:
         """Returns the string representation of the actual instance"""
-        return pprint.pformat(self.dict())
+        return pprint.pformat(self.model_dump())
 
 

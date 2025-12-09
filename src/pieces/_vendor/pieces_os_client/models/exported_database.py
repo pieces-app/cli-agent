@@ -18,130 +18,146 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic.v1 import BaseModel, Field, StrictInt, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.exported_database_formats import ExportedDatabaseFormats
+from typing import Optional, Set
+from typing_extensions import Self
 
 class ExportedDatabase(BaseModel):
     """
     ExportedDatabase
-    """
-    analyses: conlist(StrictInt) = Field(...)
-    applications: conlist(StrictInt) = Field(...)
-    assets: conlist(StrictInt) = Field(...)
-    code_analyses: conlist(StrictInt) = Field(default=..., alias="codeAnalyses")
-    files: conlist(StrictInt) = Field(...)
-    format_metrics: conlist(StrictInt) = Field(default=..., alias="formatMetrics")
-    formats: conlist(StrictInt) = Field(...)
-    fragments: conlist(StrictInt) = Field(...)
-    image_analyses: conlist(StrictInt) = Field(default=..., alias="imageAnalyses")
-    models: conlist(StrictInt) = Field(...)
-    ocr_analyses: conlist(StrictInt) = Field(default=..., alias="ocrAnalyses")
-    persons: conlist(StrictInt) = Field(...)
-    sensitives: conlist(StrictInt) = Field(...)
-    tags: conlist(StrictInt) = Field(...)
-    websites: conlist(StrictInt) = Field(...)
-    values: ExportedDatabaseFormats = Field(...)
-    version: StrictStr = Field(default=..., description="This is the version of your os_server or cloud_server that we we exporting from.")
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    relationships: Optional[conlist(StrictInt)] = None
-    activities: Optional[conlist(StrictInt)] = None
-    annotations: Optional[conlist(StrictInt)] = None
-    hints: Optional[conlist(StrictInt)] = None
-    anchors: Optional[conlist(StrictInt)] = None
-    anchor_points: Optional[conlist(StrictInt)] = Field(default=None, alias="anchorPoints")
-    conversations: Optional[conlist(StrictInt)] = None
-    conversation_messages: Optional[conlist(StrictInt)] = Field(default=None, alias="conversationMessages")
-    workstream_events: Optional[conlist(StrictInt)] = Field(default=None, alias="workstreamEvents")
-    ranges: Optional[conlist(StrictInt)] = None
-    workstream_summaries: Optional[conlist(StrictInt)] = Field(default=None, alias="workstreamSummaries")
-    workstream_pattern_engine_sources: Optional[conlist(StrictInt)] = Field(default=None, alias="workstreamPatternEngineSources")
+    """ # noqa: E501
+    activities: Optional[List[StrictInt]] = None
+    analyses: List[StrictInt]
+    anchor_points: Optional[List[StrictInt]] = Field(default=None, alias="anchorPoints")
+    anchors: Optional[List[StrictInt]] = None
+    annotations: Optional[List[StrictInt]] = None
+    applications: List[StrictInt]
+    assets: List[StrictInt]
+    code_analyses: List[StrictInt] = Field(alias="codeAnalyses")
+    conversation_messages: Optional[List[StrictInt]] = Field(default=None, alias="conversationMessages")
+    conversations: Optional[List[StrictInt]] = None
+    files: List[StrictInt]
+    format_metrics: List[StrictInt] = Field(alias="formatMetrics")
+    formats: List[StrictInt]
+    fragments: List[StrictInt]
+    hints: Optional[List[StrictInt]] = None
+    image_analyses: List[StrictInt] = Field(alias="imageAnalyses")
     message_values: Optional[ExportedDatabaseFormats] = Field(default=None, alias="messageValues")
+    models: List[StrictInt]
+    ocr_analyses: List[StrictInt] = Field(alias="ocrAnalyses")
+    persons: List[StrictInt]
+    ranges: Optional[List[StrictInt]] = None
+    relationships: Optional[List[StrictInt]] = None
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    sensitives: List[StrictInt]
+    tags: List[StrictInt]
+    values: ExportedDatabaseFormats
+    version: StrictStr = Field(description="This is the version of your os_server or cloud_server that we we exporting from.")
+    websites: List[StrictInt]
     workstream_event_values: Optional[ExportedDatabaseFormats] = Field(default=None, alias="workstreamEventValues")
-    __properties = ["analyses", "applications", "assets", "codeAnalyses", "files", "formatMetrics", "formats", "fragments", "imageAnalyses", "models", "ocrAnalyses", "persons", "sensitives", "tags", "websites", "values", "version", "schema", "relationships", "activities", "annotations", "hints", "anchors", "anchorPoints", "conversations", "conversationMessages", "workstreamEvents", "ranges", "workstreamSummaries", "workstreamPatternEngineSources", "messageValues", "workstreamEventValues"]
+    workstream_events: Optional[List[StrictInt]] = Field(default=None, alias="workstreamEvents")
+    workstream_pattern_engine_sources: Optional[List[StrictInt]] = Field(default=None, alias="workstreamPatternEngineSources")
+    workstream_summaries: Optional[List[StrictInt]] = Field(default=None, alias="workstreamSummaries")
+    __properties: ClassVar[List[str]] = ["activities", "analyses", "anchorPoints", "anchors", "annotations", "applications", "assets", "codeAnalyses", "conversationMessages", "conversations", "files", "formatMetrics", "formats", "fragments", "hints", "imageAnalyses", "messageValues", "models", "ocrAnalyses", "persons", "ranges", "relationships", "schema", "sensitives", "tags", "values", "version", "websites", "workstreamEventValues", "workstreamEvents", "workstreamPatternEngineSources", "workstreamSummaries"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ExportedDatabase:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of ExportedDatabase from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of values
-        if self.values:
-            _dict['values'] = self.values.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of message_values
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of message_values
         if self.message_values:
             _dict['messageValues'] = self.message_values.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of workstream_event_values
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of values
+        if self.values:
+            _dict['values'] = self.values.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of workstream_event_values
         if self.workstream_event_values:
             _dict['workstreamEventValues'] = self.workstream_event_values.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ExportedDatabase:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of ExportedDatabase from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ExportedDatabase.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = ExportedDatabase.parse_obj({
+        _obj = cls.model_validate({
+            "activities": obj.get("activities"),
             "analyses": obj.get("analyses"),
+            "anchorPoints": obj.get("anchorPoints"),
+            "anchors": obj.get("anchors"),
+            "annotations": obj.get("annotations"),
             "applications": obj.get("applications"),
             "assets": obj.get("assets"),
-            "code_analyses": obj.get("codeAnalyses"),
+            "codeAnalyses": obj.get("codeAnalyses"),
+            "conversationMessages": obj.get("conversationMessages"),
+            "conversations": obj.get("conversations"),
             "files": obj.get("files"),
-            "format_metrics": obj.get("formatMetrics"),
+            "formatMetrics": obj.get("formatMetrics"),
             "formats": obj.get("formats"),
             "fragments": obj.get("fragments"),
-            "image_analyses": obj.get("imageAnalyses"),
+            "hints": obj.get("hints"),
+            "imageAnalyses": obj.get("imageAnalyses"),
+            "messageValues": ExportedDatabaseFormats.from_dict(obj["messageValues"]) if obj.get("messageValues") is not None else None,
             "models": obj.get("models"),
-            "ocr_analyses": obj.get("ocrAnalyses"),
+            "ocrAnalyses": obj.get("ocrAnalyses"),
             "persons": obj.get("persons"),
+            "ranges": obj.get("ranges"),
+            "relationships": obj.get("relationships"),
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
             "sensitives": obj.get("sensitives"),
             "tags": obj.get("tags"),
-            "websites": obj.get("websites"),
-            "values": ExportedDatabaseFormats.from_dict(obj.get("values")) if obj.get("values") is not None else None,
+            "values": ExportedDatabaseFormats.from_dict(obj["values"]) if obj.get("values") is not None else None,
             "version": obj.get("version"),
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "relationships": obj.get("relationships"),
-            "activities": obj.get("activities"),
-            "annotations": obj.get("annotations"),
-            "hints": obj.get("hints"),
-            "anchors": obj.get("anchors"),
-            "anchor_points": obj.get("anchorPoints"),
-            "conversations": obj.get("conversations"),
-            "conversation_messages": obj.get("conversationMessages"),
-            "workstream_events": obj.get("workstreamEvents"),
-            "ranges": obj.get("ranges"),
-            "workstream_summaries": obj.get("workstreamSummaries"),
-            "workstream_pattern_engine_sources": obj.get("workstreamPatternEngineSources"),
-            "message_values": ExportedDatabaseFormats.from_dict(obj.get("messageValues")) if obj.get("messageValues") is not None else None,
-            "workstream_event_values": ExportedDatabaseFormats.from_dict(obj.get("workstreamEventValues")) if obj.get("workstreamEventValues") is not None else None
+            "websites": obj.get("websites"),
+            "workstreamEventValues": ExportedDatabaseFormats.from_dict(obj["workstreamEventValues"]) if obj.get("workstreamEventValues") is not None else None,
+            "workstreamEvents": obj.get("workstreamEvents"),
+            "workstreamPatternEngineSources": obj.get("workstreamPatternEngineSources"),
+            "workstreamSummaries": obj.get("workstreamSummaries")
         })
         return _obj
 

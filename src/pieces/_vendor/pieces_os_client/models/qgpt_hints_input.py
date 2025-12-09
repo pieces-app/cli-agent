@@ -18,70 +18,86 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.qgpt_question_answer import QGPTQuestionAnswer
 from pieces._vendor.pieces_os_client.models.relevant_qgpt_seeds import RelevantQGPTSeeds
+from typing import Optional, Set
+from typing_extensions import Self
 
 class QGPTHintsInput(BaseModel):
     """
-    Query is your hints question. Relevant is the relevant snippets. Answer is the previous answer.(that we are asking a hint up for.)  Query and Answer are both optional here because, you may pass over relevant snippets over ahead of hand if you already have them to answer your questions.  # noqa: E501
-    """
-    query: Optional[StrictStr] = None
+    Query is your hints question. Relevant is the relevant snippets. Answer is the previous answer.(that we are asking a hint up for.)  Query and Answer are both optional here because, you may pass over relevant snippets over ahead of hand if you already have them to answer your questions.
+    """ # noqa: E501
     answer: Optional[QGPTQuestionAnswer] = None
-    relevant: RelevantQGPTSeeds = Field(...)
     application: Optional[StrictStr] = Field(default=None, description="optional application id")
     model: Optional[StrictStr] = Field(default=None, description="optional model id")
-    __properties = ["query", "answer", "relevant", "application", "model"]
+    query: Optional[StrictStr] = None
+    relevant: RelevantQGPTSeeds
+    __properties: ClassVar[List[str]] = ["answer", "application", "model", "query", "relevant"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> QGPTHintsInput:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of QGPTHintsInput from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of answer
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of answer
         if self.answer:
             _dict['answer'] = self.answer.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of relevant
+        # override the default output from pydantic by calling `to_dict()` of relevant
         if self.relevant:
             _dict['relevant'] = self.relevant.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> QGPTHintsInput:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of QGPTHintsInput from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return QGPTHintsInput.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = QGPTHintsInput.parse_obj({
-            "query": obj.get("query"),
-            "answer": QGPTQuestionAnswer.from_dict(obj.get("answer")) if obj.get("answer") is not None else None,
-            "relevant": RelevantQGPTSeeds.from_dict(obj.get("relevant")) if obj.get("relevant") is not None else None,
+        _obj = cls.model_validate({
+            "answer": QGPTQuestionAnswer.from_dict(obj["answer"]) if obj.get("answer") is not None else None,
             "application": obj.get("application"),
-            "model": obj.get("model")
+            "model": obj.get("model"),
+            "query": obj.get("query"),
+            "relevant": RelevantQGPTSeeds.from_dict(obj["relevant"]) if obj.get("relevant") is not None else None
         })
         return _obj
 

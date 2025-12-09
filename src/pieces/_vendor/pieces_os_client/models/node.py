@@ -18,65 +18,81 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-
-from pydantic.v1 import BaseModel, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
 from pieces._vendor.pieces_os_client.models.node_type_enum import NodeTypeEnum
+from typing import Optional, Set
+from typing_extensions import Self
 
 class Node(BaseModel):
     """
-    This describes a node within a relationship graph used to related like types. ie asset to asset, tag to tag, ...etc  created: is here to let us know when the node was attached.  id: this is the the id of the type ie, if the type is Asset the id here points to the asset that this node represents.  # noqa: E501
-    """
-    id: StrictStr = Field(...)
-    type: NodeTypeEnum = Field(...)
-    root: StrictBool = Field(default=..., description="This is a boolean to let us know if this node is the root or origin of the relationship graph.")
-    created: GroupedTimestamp = Field(...)
-    __properties = ["id", "type", "root", "created"]
+    This describes a node within a relationship graph used to related like types. ie asset to asset, tag to tag, ...etc  created: is here to let us know when the node was attached.  id: this is the the id of the type ie, if the type is Asset the id here points to the asset that this node represents.
+    """ # noqa: E501
+    created: GroupedTimestamp
+    id: StrictStr
+    root: StrictBool = Field(description="This is a boolean to let us know if this node is the root or origin of the relationship graph.")
+    type: NodeTypeEnum
+    __properties: ClassVar[List[str]] = ["created", "id", "root", "type"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> Node:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of Node from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of created
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of created
         if self.created:
             _dict['created'] = self.created.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Node:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of Node from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return Node.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = Node.parse_obj({
+        _obj = cls.model_validate({
+            "created": GroupedTimestamp.from_dict(obj["created"]) if obj.get("created") is not None else None,
             "id": obj.get("id"),
-            "type": obj.get("type"),
             "root": obj.get("root"),
-            "created": GroupedTimestamp.from_dict(obj.get("created")) if obj.get("created") is not None else None
+            "type": obj.get("type")
         })
         return _obj
 

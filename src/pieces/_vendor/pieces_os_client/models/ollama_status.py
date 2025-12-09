@@ -18,85 +18,101 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.ollama_deployment import OllamaDeployment
 from pieces._vendor.pieces_os_client.models.ollama_recommendation import OllamaRecommendation
+from typing import Optional, Set
+from typing_extensions import Self
 
 class OllamaStatus(BaseModel):
     """
-    This will get used in the Websocket and in the get request for Ollama Note:  - updating (nullable) will be used in the case an update is underway  - installing (nullable) will be used in the case an installation is underway  - updateRequired (nullable) will be used in the case an update is required  - installation (nullable) will be provided in the case Ollama is installed.  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    updating: Optional[OllamaDeployment] = None
-    installing: Optional[OllamaDeployment] = None
-    update_required: Optional[OllamaDeployment] = Field(default=None, alias="updateRequired")
+    This will get used in the Websocket and in the get request for Ollama Note:  - updating (nullable) will be used in the case an update is underway  - installing (nullable) will be used in the case an installation is underway  - updateRequired (nullable) will be used in the case an update is required  - installation (nullable) will be provided in the case Ollama is installed.
+    """ # noqa: E501
     installation: Optional[OllamaDeployment] = None
+    installing: Optional[OllamaDeployment] = None
     recommendation: Optional[OllamaRecommendation] = None
-    __properties = ["schema", "updating", "installing", "updateRequired", "installation", "recommendation"]
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    update_required: Optional[OllamaDeployment] = Field(default=None, alias="updateRequired")
+    updating: Optional[OllamaDeployment] = None
+    __properties: ClassVar[List[str]] = ["installation", "installing", "recommendation", "schema", "updateRequired", "updating"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> OllamaStatus:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of OllamaStatus from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of updating
-        if self.updating:
-            _dict['updating'] = self.updating.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of installing
-        if self.installing:
-            _dict['installing'] = self.installing.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of update_required
-        if self.update_required:
-            _dict['updateRequired'] = self.update_required.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of installation
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of installation
         if self.installation:
             _dict['installation'] = self.installation.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of recommendation
+        # override the default output from pydantic by calling `to_dict()` of installing
+        if self.installing:
+            _dict['installing'] = self.installing.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of recommendation
         if self.recommendation:
             _dict['recommendation'] = self.recommendation.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of update_required
+        if self.update_required:
+            _dict['updateRequired'] = self.update_required.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of updating
+        if self.updating:
+            _dict['updating'] = self.updating.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> OllamaStatus:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of OllamaStatus from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return OllamaStatus.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = OllamaStatus.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "updating": OllamaDeployment.from_dict(obj.get("updating")) if obj.get("updating") is not None else None,
-            "installing": OllamaDeployment.from_dict(obj.get("installing")) if obj.get("installing") is not None else None,
-            "update_required": OllamaDeployment.from_dict(obj.get("updateRequired")) if obj.get("updateRequired") is not None else None,
-            "installation": OllamaDeployment.from_dict(obj.get("installation")) if obj.get("installation") is not None else None,
-            "recommendation": OllamaRecommendation.from_dict(obj.get("recommendation")) if obj.get("recommendation") is not None else None
+        _obj = cls.model_validate({
+            "installation": OllamaDeployment.from_dict(obj["installation"]) if obj.get("installation") is not None else None,
+            "installing": OllamaDeployment.from_dict(obj["installing"]) if obj.get("installing") is not None else None,
+            "recommendation": OllamaRecommendation.from_dict(obj["recommendation"]) if obj.get("recommendation") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "updateRequired": OllamaDeployment.from_dict(obj["updateRequired"]) if obj.get("updateRequired") is not None else None,
+            "updating": OllamaDeployment.from_dict(obj["updating"]) if obj.get("updating") is not None else None
         })
         return _obj
 

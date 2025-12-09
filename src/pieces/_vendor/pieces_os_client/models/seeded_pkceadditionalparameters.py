@@ -18,74 +18,90 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, StrictStr, validator
+from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class SeededPKCEADDITIONALPARAMETERS(BaseModel):
     """
-    Append any additional parameter to the end of your request, and it will be sent to the provider. For example, access_type=offline (for Google Refresh Tokens) , display=popup (for Windows Live popup mode).  # noqa: E501
-    """
+    Append any additional parameter to the end of your request, and it will be sent to the provider. For example, access_type=offline (for Google Refresh Tokens) , display=popup (for Windows Live popup mode).
+    """ # noqa: E501
     access_type: Optional[StrictStr] = 'UNKNOWN'
     display: Optional[StrictStr] = 'UNKNOWN'
-    __properties = ["access_type", "display"]
+    __properties: ClassVar[List[str]] = ["access_type", "display"]
 
-    @validator('access_type')
+    @field_validator('access_type')
     def access_type_validate_enum(cls, value):
         """Validates the enum"""
         if value is None:
             return value
 
-        if value not in ('UNKNOWN', 'offline',):
+        if value not in set(['UNKNOWN', 'offline']):
             raise ValueError("must be one of enum values ('UNKNOWN', 'offline')")
         return value
 
-    @validator('display')
+    @field_validator('display')
     def display_validate_enum(cls, value):
         """Validates the enum"""
         if value is None:
             return value
 
-        if value not in ('UNKNOWN', 'popup',):
+        if value not in set(['UNKNOWN', 'popup']):
             raise ValueError("must be one of enum values ('UNKNOWN', 'popup')")
         return value
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> SeededPKCEADDITIONALPARAMETERS:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of SeededPKCEADDITIONALPARAMETERS from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> SeededPKCEADDITIONALPARAMETERS:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of SeededPKCEADDITIONALPARAMETERS from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return SeededPKCEADDITIONALPARAMETERS.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = SeededPKCEADDITIONALPARAMETERS.parse_obj({
+        _obj = cls.model_validate({
             "access_type": obj.get("access_type") if obj.get("access_type") is not None else 'UNKNOWN',
             "display": obj.get("display") if obj.get("display") is not None else 'UNKNOWN'
         })

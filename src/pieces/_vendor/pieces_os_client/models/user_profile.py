@@ -18,119 +18,141 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic.v1 import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.aesthetics import Aesthetics
 from pieces._vendor.pieces_os_client.models.allocation_cloud import AllocationCloud
 from pieces._vendor.pieces_os_client.models.auth0_user_metadata import Auth0UserMetadata
 from pieces._vendor.pieces_os_client.models.descope_user_metadata import DescopeUserMetadata
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.external_providers import ExternalProviders
+from pieces._vendor.pieces_os_client.models.flattened_entities import FlattenedEntities
 from pieces._vendor.pieces_os_client.models.flattened_subscriptions import FlattenedSubscriptions
 from pieces._vendor.pieces_os_client.models.grouped_timestamp import GroupedTimestamp
+from typing import Optional, Set
+from typing_extensions import Self
 
 class UserProfile(BaseModel):
     """
-    This is the model for a user logged into Pieces.  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    picture: Optional[StrictStr] = Field(default='https://picsum.photos/200', description="mapped from picture.URL pointing to the user's profile picture. ")
-    email: Optional[StrictStr] = 'user@pieces.app'
+    This is the model for a user logged into Pieces.
+    """ # noqa: E501
+    aesthetics: Aesthetics
+    allocation: Optional[AllocationCloud] = None
+    api_keys: Optional[List[StrictStr]] = Field(default=None, alias="apiKeys")
+    auth0: Optional[Auth0UserMetadata] = None
     created: Optional[GroupedTimestamp] = None
+    descope: Optional[DescopeUserMetadata] = None
+    email: Optional[StrictStr] = 'user@pieces.app'
+    entities: Optional[FlattenedEntities] = None
+    id: StrictStr
+    name: Optional[StrictStr] = Field(default=None, description="This is the name of the User.")
+    picture: Optional[StrictStr] = Field(default='https://picsum.photos/200', description="mapped from picture.URL pointing to the user's profile picture. ")
+    providers: Optional[ExternalProviders] = None
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    subscriptions: Optional[FlattenedSubscriptions] = None
     updated: Optional[GroupedTimestamp] = None
     username: Optional[StrictStr] = Field(default=None, description=" (unique) User's username.  ")
-    id: StrictStr = Field(...)
-    name: Optional[StrictStr] = Field(default=None, description="This is the name of the User.")
-    aesthetics: Aesthetics = Field(...)
     vanityname: Optional[StrictStr] = None
-    allocation: Optional[AllocationCloud] = None
-    providers: Optional[ExternalProviders] = None
-    auth0: Optional[Auth0UserMetadata] = None
-    descope: Optional[DescopeUserMetadata] = None
-    subscriptions: Optional[FlattenedSubscriptions] = None
-    api_keys: Optional[conlist(StrictStr)] = Field(default=None, alias="apiKeys")
-    __properties = ["schema", "picture", "email", "created", "updated", "username", "id", "name", "aesthetics", "vanityname", "allocation", "providers", "auth0", "descope", "subscriptions", "apiKeys"]
+    __properties: ClassVar[List[str]] = ["aesthetics", "allocation", "apiKeys", "auth0", "created", "descope", "email", "entities", "id", "name", "picture", "providers", "schema", "subscriptions", "updated", "username", "vanityname"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> UserProfile:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of UserProfile from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of created
-        if self.created:
-            _dict['created'] = self.created.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of updated
-        if self.updated:
-            _dict['updated'] = self.updated.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of aesthetics
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of aesthetics
         if self.aesthetics:
             _dict['aesthetics'] = self.aesthetics.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of allocation
+        # override the default output from pydantic by calling `to_dict()` of allocation
         if self.allocation:
             _dict['allocation'] = self.allocation.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of providers
-        if self.providers:
-            _dict['providers'] = self.providers.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of auth0
+        # override the default output from pydantic by calling `to_dict()` of auth0
         if self.auth0:
             _dict['auth0'] = self.auth0.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of descope
+        # override the default output from pydantic by calling `to_dict()` of created
+        if self.created:
+            _dict['created'] = self.created.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of descope
         if self.descope:
             _dict['descope'] = self.descope.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of subscriptions
+        # override the default output from pydantic by calling `to_dict()` of entities
+        if self.entities:
+            _dict['entities'] = self.entities.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of providers
+        if self.providers:
+            _dict['providers'] = self.providers.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of subscriptions
         if self.subscriptions:
             _dict['subscriptions'] = self.subscriptions.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of updated
+        if self.updated:
+            _dict['updated'] = self.updated.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> UserProfile:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of UserProfile from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return UserProfile.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = UserProfile.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "picture": obj.get("picture") if obj.get("picture") is not None else 'https://picsum.photos/200',
+        _obj = cls.model_validate({
+            "aesthetics": Aesthetics.from_dict(obj["aesthetics"]) if obj.get("aesthetics") is not None else None,
+            "allocation": AllocationCloud.from_dict(obj["allocation"]) if obj.get("allocation") is not None else None,
+            "apiKeys": obj.get("apiKeys"),
+            "auth0": Auth0UserMetadata.from_dict(obj["auth0"]) if obj.get("auth0") is not None else None,
+            "created": GroupedTimestamp.from_dict(obj["created"]) if obj.get("created") is not None else None,
+            "descope": DescopeUserMetadata.from_dict(obj["descope"]) if obj.get("descope") is not None else None,
             "email": obj.get("email") if obj.get("email") is not None else 'user@pieces.app',
-            "created": GroupedTimestamp.from_dict(obj.get("created")) if obj.get("created") is not None else None,
-            "updated": GroupedTimestamp.from_dict(obj.get("updated")) if obj.get("updated") is not None else None,
-            "username": obj.get("username"),
+            "entities": FlattenedEntities.from_dict(obj["entities"]) if obj.get("entities") is not None else None,
             "id": obj.get("id"),
             "name": obj.get("name"),
-            "aesthetics": Aesthetics.from_dict(obj.get("aesthetics")) if obj.get("aesthetics") is not None else None,
-            "vanityname": obj.get("vanityname"),
-            "allocation": AllocationCloud.from_dict(obj.get("allocation")) if obj.get("allocation") is not None else None,
-            "providers": ExternalProviders.from_dict(obj.get("providers")) if obj.get("providers") is not None else None,
-            "auth0": Auth0UserMetadata.from_dict(obj.get("auth0")) if obj.get("auth0") is not None else None,
-            "descope": DescopeUserMetadata.from_dict(obj.get("descope")) if obj.get("descope") is not None else None,
-            "subscriptions": FlattenedSubscriptions.from_dict(obj.get("subscriptions")) if obj.get("subscriptions") is not None else None,
-            "api_keys": obj.get("apiKeys")
+            "picture": obj.get("picture") if obj.get("picture") is not None else 'https://picsum.photos/200',
+            "providers": ExternalProviders.from_dict(obj["providers"]) if obj.get("providers") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "subscriptions": FlattenedSubscriptions.from_dict(obj["subscriptions"]) if obj.get("subscriptions") is not None else None,
+            "updated": GroupedTimestamp.from_dict(obj["updated"]) if obj.get("updated") is not None else None,
+            "username": obj.get("username"),
+            "vanityname": obj.get("vanityname")
         })
         return _obj
 

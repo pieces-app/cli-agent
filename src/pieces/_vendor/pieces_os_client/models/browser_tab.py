@@ -18,92 +18,109 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.anonymous_temporal_range import AnonymousTemporalRange
 from pieces._vendor.pieces_os_client.models.browser_tab_values import BrowserTabValues
 from pieces._vendor.pieces_os_client.models.document_contributors import DocumentContributors
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.seeded_website import SeededWebsite
+from typing import Optional, Set
+from typing_extensions import Self
 
 class BrowserTab(BaseModel):
     """
-    a tab can have many values because you might want to pass in a value that represents the code_blocks(snippets) or a md represenet note: please only pass 1 representation, I will clean on POS side tho (txt || md || html)  anchor: can be defined in the browser if view a local file  website: this is the given url of the tab  range: this is the amount of time this user is current on this given tab  current: means that this is the current tab that is open  contributors: these are all the extracted people from this given tab  # noqa: E501
-    """
+    a tab can have many values because you might want to pass in a value that represents the code_blocks(snippets) or a md represenet note: please only pass 1 representation, I will clean on POS side tho (txt || md || html)  anchor: can be defined in the browser if view a local file  website: this is the given url of the tab  range: this is the amount of time this user is current on this given tab  current: means that this is the current tab that is open  contributors: these are all the extracted people from this given tab
+    """ # noqa: E501
+    anchor: Optional[SeededAnchor] = None
+    contributors: Optional[DocumentContributors] = None
+    current: Optional[StrictBool] = None
+    range: Optional[AnonymousTemporalRange] = None
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     values: Optional[BrowserTabValues] = None
-    anchor: Optional[SeededAnchor] = None
     website: Optional[SeededWebsite] = None
-    range: Optional[AnonymousTemporalRange] = None
-    current: Optional[StrictBool] = None
-    contributors: Optional[DocumentContributors] = None
-    __properties = ["schema", "values", "anchor", "website", "range", "current", "contributors"]
+    __properties: ClassVar[List[str]] = ["anchor", "contributors", "current", "range", "schema", "values", "website"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> BrowserTab:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of BrowserTab from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of values
-        if self.values:
-            _dict['values'] = self.values.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of anchor
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of anchor
         if self.anchor:
             _dict['anchor'] = self.anchor.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of website
-        if self.website:
-            _dict['website'] = self.website.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of range
-        if self.range:
-            _dict['range'] = self.range.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of contributors
+        # override the default output from pydantic by calling `to_dict()` of contributors
         if self.contributors:
             _dict['contributors'] = self.contributors.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of range
+        if self.range:
+            _dict['range'] = self.range.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of values
+        if self.values:
+            _dict['values'] = self.values.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of website
+        if self.website:
+            _dict['website'] = self.website.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> BrowserTab:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of BrowserTab from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return BrowserTab.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = BrowserTab.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "values": BrowserTabValues.from_dict(obj.get("values")) if obj.get("values") is not None else None,
-            "anchor": SeededAnchor.from_dict(obj.get("anchor")) if obj.get("anchor") is not None else None,
-            "website": SeededWebsite.from_dict(obj.get("website")) if obj.get("website") is not None else None,
-            "range": AnonymousTemporalRange.from_dict(obj.get("range")) if obj.get("range") is not None else None,
+        _obj = cls.model_validate({
+            "anchor": SeededAnchor.from_dict(obj["anchor"]) if obj.get("anchor") is not None else None,
+            "contributors": DocumentContributors.from_dict(obj["contributors"]) if obj.get("contributors") is not None else None,
             "current": obj.get("current"),
-            "contributors": DocumentContributors.from_dict(obj.get("contributors")) if obj.get("contributors") is not None else None
+            "range": AnonymousTemporalRange.from_dict(obj["range"]) if obj.get("range") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "values": BrowserTabValues.from_dict(obj["values"]) if obj.get("values") is not None else None,
+            "website": SeededWebsite.from_dict(obj["website"]) if obj.get("website") is not None else None
         })
         return _obj
 
 from pieces._vendor.pieces_os_client.models.seeded_anchor import SeededAnchor
-BrowserTab.update_forward_refs()
+# TODO: Rewrite to not use raise_errors
+BrowserTab.model_rebuild(raise_errors=False)
 

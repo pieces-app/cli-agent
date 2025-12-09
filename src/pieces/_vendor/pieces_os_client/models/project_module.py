@@ -18,84 +18,101 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.anonymous_temporal_range import AnonymousTemporalRange
 from pieces._vendor.pieces_os_client.models.classifications import Classifications
 from pieces._vendor.pieces_os_client.models.document_contributors import DocumentContributors
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
+from typing import Optional, Set
+from typing_extensions import Self
 
 class ProjectModule(BaseModel):
     """
-    This is a representation of a Module or a Project  anchor: is the folder path of this repo/module  contributors: is a nice to have is all the contributors of this repo/module  range: is the amount of time this user has been working on this repo  classifications: if all the languages that are used within this repo/module  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    anchor: SeededAnchor = Field(...)
-    range: Optional[AnonymousTemporalRange] = None
-    contributors: Optional[DocumentContributors] = None
+    This is a representation of a Module or a Project  anchor: is the folder path of this repo/module  contributors: is a nice to have is all the contributors of this repo/module  range: is the amount of time this user has been working on this repo  classifications: if all the languages that are used within this repo/module
+    """ # noqa: E501
+    anchor: SeededAnchor
     classifications: Optional[Classifications] = None
-    __properties = ["schema", "anchor", "range", "contributors", "classifications"]
+    contributors: Optional[DocumentContributors] = None
+    range: Optional[AnonymousTemporalRange] = None
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    __properties: ClassVar[List[str]] = ["anchor", "classifications", "contributors", "range", "schema"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ProjectModule:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of ProjectModule from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of anchor
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of anchor
         if self.anchor:
             _dict['anchor'] = self.anchor.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of range
-        if self.range:
-            _dict['range'] = self.range.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of contributors
-        if self.contributors:
-            _dict['contributors'] = self.contributors.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of classifications
+        # override the default output from pydantic by calling `to_dict()` of classifications
         if self.classifications:
             _dict['classifications'] = self.classifications.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of contributors
+        if self.contributors:
+            _dict['contributors'] = self.contributors.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of range
+        if self.range:
+            _dict['range'] = self.range.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ProjectModule:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of ProjectModule from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ProjectModule.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = ProjectModule.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "anchor": SeededAnchor.from_dict(obj.get("anchor")) if obj.get("anchor") is not None else None,
-            "range": AnonymousTemporalRange.from_dict(obj.get("range")) if obj.get("range") is not None else None,
-            "contributors": DocumentContributors.from_dict(obj.get("contributors")) if obj.get("contributors") is not None else None,
-            "classifications": Classifications.from_dict(obj.get("classifications")) if obj.get("classifications") is not None else None
+        _obj = cls.model_validate({
+            "anchor": SeededAnchor.from_dict(obj["anchor"]) if obj.get("anchor") is not None else None,
+            "classifications": Classifications.from_dict(obj["classifications"]) if obj.get("classifications") is not None else None,
+            "contributors": DocumentContributors.from_dict(obj["contributors"]) if obj.get("contributors") is not None else None,
+            "range": AnonymousTemporalRange.from_dict(obj["range"]) if obj.get("range") is not None else None,
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None
         })
         return _obj
 
 from pieces._vendor.pieces_os_client.models.seeded_anchor import SeededAnchor
-ProjectModule.update_forward_refs()
+# TODO: Rewrite to not use raise_errors
+ProjectModule.model_rebuild(raise_errors=False)
 

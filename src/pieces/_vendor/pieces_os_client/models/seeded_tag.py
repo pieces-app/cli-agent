@@ -18,72 +18,88 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional, Union
-from pydantic.v1 import BaseModel, Field, StrictFloat, StrictInt, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
 from pieces._vendor.pieces_os_client.models.mechanism_enum import MechanismEnum
 from pieces._vendor.pieces_os_client.models.tag_category_enum import TagCategoryEnum
+from typing import Optional, Set
+from typing_extensions import Self
 
 class SeededTag(BaseModel):
     """
-    This is the minimum information needed when creating a Tag.  Default we will attach manual to a tag unless otherwise specified for mechanism.  you can optionally add an asset, format, or person uuid to attach this tag directly to it  TODO consider updating these asset,format to referenced Models  # noqa: E501
-    """
-    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
-    text: StrictStr = Field(default=..., description="This is the description of the tag.")
+    This is the minimum information needed when creating a Tag.  Default we will attach manual to a tag unless otherwise specified for mechanism.  you can optionally add an asset, format, or person uuid to attach this tag directly to it  TODO consider updating these asset,format to referenced Models
+    """ # noqa: E501
     asset: Optional[StrictStr] = Field(default=None, description="this is a uuid that references an asset.")
-    mechanism: Optional[MechanismEnum] = None
     category: Optional[TagCategoryEnum] = None
+    mechanism: Optional[MechanismEnum] = None
     person: Optional[StrictStr] = Field(default=None, description="uuid of the person, you want to add this tag too")
-    tags_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="tagsVector", description="This is the embedding for the format.(NEEDs to collectionection.vector) and specific here because we can only index on a single name NOTE: this the the vector index that corresponds the the couchbase lite index.")
-    __properties = ["schema", "text", "asset", "mechanism", "category", "person", "tagsVector"]
+    var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
+    tags_vector: Optional[List[Union[StrictFloat, StrictInt]]] = Field(default=None, description="This is the embedding for the format.(NEEDs to collection.vector) and specific here because we can only index on a single name NOTE: this is the vector index that corresponds to the couchbase lite index.", alias="tagsVector")
+    text: StrictStr = Field(description="This is the description of the tag.")
+    __properties: ClassVar[List[str]] = ["asset", "category", "mechanism", "person", "schema", "tagsVector", "text"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> SeededTag:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of SeededTag from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of var_schema
         if self.var_schema:
             _dict['schema'] = self.var_schema.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> SeededTag:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of SeededTag from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return SeededTag.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = SeededTag.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "text": obj.get("text"),
+        _obj = cls.model_validate({
             "asset": obj.get("asset"),
-            "mechanism": obj.get("mechanism"),
             "category": obj.get("category"),
+            "mechanism": obj.get("mechanism"),
             "person": obj.get("person"),
-            "tags_vector": obj.get("tagsVector")
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "tagsVector": obj.get("tagsVector"),
+            "text": obj.get("text")
         })
         return _obj
 

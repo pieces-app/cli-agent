@@ -18,9 +18,8 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional, Union
-from pydantic.v1 import BaseModel, Field, StrictFloat, StrictInt, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pieces._vendor.pieces_os_client.models.application import Application
 from pieces._vendor.pieces_os_client.models.capabilities_enum import CapabilitiesEnum
 from pieces._vendor.pieces_os_client.models.embedded_model_schema import EmbeddedModelSchema
@@ -32,107 +31,124 @@ from pieces._vendor.pieces_os_client.models.referenced_workstream_summary import
 from pieces._vendor.pieces_os_client.models.score import Score
 from pieces._vendor.pieces_os_client.models.workstream_event_context import WorkstreamEventContext
 from pieces._vendor.pieces_os_client.models.workstream_event_trigger import WorkstreamEventTrigger
+from typing import Optional, Set
+from typing_extensions import Self
 
 class SeededWorkstreamEvent(BaseModel):
     """
-    This is a precreated version of a WorkstreamEvent event, this will be used ingested into PiecesOS and PiecesOS will do all the magic to transform this into relevant data show in the workstream feed.  NOTE: the source on the WorkstreamEvent is calculated based on the WorkstreamEvent's Context.(associated and created at the db level)  # noqa: E501
-    """
+    This is a precreated version of a WorkstreamEvent event, this will be used ingested into PiecesOS and PiecesOS will do all the magic to transform this into relevant data show in the workstream feed.  NOTE: the source on the WorkstreamEvent is calculated based on the WorkstreamEvent's Context.(associated and created at the db level)
+    """ # noqa: E501
+    anchors: Optional[FlattenedAnchors] = None
+    application: Application
+    context: Optional[WorkstreamEventContext] = None
+    internal_identifier: Optional[StrictStr] = Field(default=None, description="This is used to override the event identifier, if this was an event that was originally in the internal events collection.")
+    persons: Optional[FlattenedPersons] = None
+    processing: Optional[CapabilitiesEnum] = None
+    readable: Optional[StrictStr] = None
     var_schema: Optional[EmbeddedModelSchema] = Field(default=None, alias="schema")
     score: Optional[Score] = None
-    application: Application = Field(...)
-    trigger: WorkstreamEventTrigger = Field(...)
-    context: Optional[WorkstreamEventContext] = None
     summary: Optional[ReferencedWorkstreamSummary] = None
-    internal_identifier: Optional[StrictStr] = Field(default=None, description="This is used to override the event identifier, if this was an event that was originally in the internal events collection.")
-    readable: Optional[StrictStr] = None
-    workstream_events_vector: Optional[conlist(Union[StrictFloat, StrictInt])] = Field(default=None, alias="workstreamEventsVector", description="This is the embedding for the format.(NEEDs to connection.vector) and specific here because we can only index on a single name NOTE: this the the vector index that corresponds the the couchbase lite index.")
-    processing: Optional[CapabilitiesEnum] = None
     tags: Optional[FlattenedTags] = None
-    anchors: Optional[FlattenedAnchors] = None
+    trigger: WorkstreamEventTrigger
     websites: Optional[FlattenedWebsites] = None
-    persons: Optional[FlattenedPersons] = None
-    __properties = ["schema", "score", "application", "trigger", "context", "summary", "internal_identifier", "readable", "workstreamEventsVector", "processing", "tags", "anchors", "websites", "persons"]
+    workstream_events_vector: Optional[List[Union[StrictFloat, StrictInt]]] = Field(default=None, description="This is the embedding for the format.(NEEDs to connection.vector) and specific here because we can only index on a single name NOTE: this is the vector index that corresponds to the couchbase lite index.", alias="workstreamEventsVector")
+    __properties: ClassVar[List[str]] = ["anchors", "application", "context", "internal_identifier", "persons", "processing", "readable", "schema", "score", "summary", "tags", "trigger", "websites", "workstreamEventsVector"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> SeededWorkstreamEvent:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of SeededWorkstreamEvent from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of var_schema
-        if self.var_schema:
-            _dict['schema'] = self.var_schema.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of score
-        if self.score:
-            _dict['score'] = self.score.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of application
-        if self.application:
-            _dict['application'] = self.application.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of trigger
-        if self.trigger:
-            _dict['trigger'] = self.trigger.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of context
-        if self.context:
-            _dict['context'] = self.context.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of summary
-        if self.summary:
-            _dict['summary'] = self.summary.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of tags
-        if self.tags:
-            _dict['tags'] = self.tags.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of anchors
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of anchors
         if self.anchors:
             _dict['anchors'] = self.anchors.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of websites
-        if self.websites:
-            _dict['websites'] = self.websites.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of persons
+        # override the default output from pydantic by calling `to_dict()` of application
+        if self.application:
+            _dict['application'] = self.application.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of context
+        if self.context:
+            _dict['context'] = self.context.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of persons
         if self.persons:
             _dict['persons'] = self.persons.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of var_schema
+        if self.var_schema:
+            _dict['schema'] = self.var_schema.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of score
+        if self.score:
+            _dict['score'] = self.score.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of summary
+        if self.summary:
+            _dict['summary'] = self.summary.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of tags
+        if self.tags:
+            _dict['tags'] = self.tags.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of trigger
+        if self.trigger:
+            _dict['trigger'] = self.trigger.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of websites
+        if self.websites:
+            _dict['websites'] = self.websites.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> SeededWorkstreamEvent:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of SeededWorkstreamEvent from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return SeededWorkstreamEvent.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = SeededWorkstreamEvent.parse_obj({
-            "var_schema": EmbeddedModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None,
-            "score": Score.from_dict(obj.get("score")) if obj.get("score") is not None else None,
-            "application": Application.from_dict(obj.get("application")) if obj.get("application") is not None else None,
-            "trigger": WorkstreamEventTrigger.from_dict(obj.get("trigger")) if obj.get("trigger") is not None else None,
-            "context": WorkstreamEventContext.from_dict(obj.get("context")) if obj.get("context") is not None else None,
-            "summary": ReferencedWorkstreamSummary.from_dict(obj.get("summary")) if obj.get("summary") is not None else None,
+        _obj = cls.model_validate({
+            "anchors": FlattenedAnchors.from_dict(obj["anchors"]) if obj.get("anchors") is not None else None,
+            "application": Application.from_dict(obj["application"]) if obj.get("application") is not None else None,
+            "context": WorkstreamEventContext.from_dict(obj["context"]) if obj.get("context") is not None else None,
             "internal_identifier": obj.get("internal_identifier"),
-            "readable": obj.get("readable"),
-            "workstream_events_vector": obj.get("workstreamEventsVector"),
+            "persons": FlattenedPersons.from_dict(obj["persons"]) if obj.get("persons") is not None else None,
             "processing": obj.get("processing"),
-            "tags": FlattenedTags.from_dict(obj.get("tags")) if obj.get("tags") is not None else None,
-            "anchors": FlattenedAnchors.from_dict(obj.get("anchors")) if obj.get("anchors") is not None else None,
-            "websites": FlattenedWebsites.from_dict(obj.get("websites")) if obj.get("websites") is not None else None,
-            "persons": FlattenedPersons.from_dict(obj.get("persons")) if obj.get("persons") is not None else None
+            "readable": obj.get("readable"),
+            "schema": EmbeddedModelSchema.from_dict(obj["schema"]) if obj.get("schema") is not None else None,
+            "score": Score.from_dict(obj["score"]) if obj.get("score") is not None else None,
+            "summary": ReferencedWorkstreamSummary.from_dict(obj["summary"]) if obj.get("summary") is not None else None,
+            "tags": FlattenedTags.from_dict(obj["tags"]) if obj.get("tags") is not None else None,
+            "trigger": WorkstreamEventTrigger.from_dict(obj["trigger"]) if obj.get("trigger") is not None else None,
+            "websites": FlattenedWebsites.from_dict(obj["websites"]) if obj.get("websites") is not None else None,
+            "workstreamEventsVector": obj.get("workstreamEventsVector")
         })
         return _obj
 

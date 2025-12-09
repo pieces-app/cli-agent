@@ -18,112 +18,128 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic.v1 import BaseModel, Field, StrictBool, StrictInt, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.anonymous_temporal_range import AnonymousTemporalRange
 from pieces._vendor.pieces_os_client.models.auth0_open_ai_user_metadata import Auth0OpenAIUserMetadata
 from pieces._vendor.pieces_os_client.models.auth0_user_allocation_metadata import Auth0UserAllocationMetadata
-from pieces._vendor.pieces_os_client.models.descope_user_subscriptions import DescopeUserSubscriptions
+from pieces._vendor.pieces_os_client.models.user_team_service_organization_subscriptions import UserTeamServiceOrganizationSubscriptions
+from typing import Optional, Set
+from typing_extensions import Self
 
 class DescopeUser(BaseModel):
     """
-    An object representing all of the properties that are available within a DescopeUser  # noqa: E501
-    """
-    user_id: StrictStr = Field(default=..., alias="userId")
-    id: StrictStr = Field(default=..., description="This is the user's global id")
-    given_name: StrictStr = Field(default=..., alias="givenName", description="i.e Mark")
-    middle_name: Optional[StrictStr] = Field(default=None, alias="middleName", description="i.e '' or Donald")
-    family_name: StrictStr = Field(default=..., alias="familyName", description="i.e Widman")
+    An object representing all of the properties that are available within a DescopeUser
+    """ # noqa: E501
+    allocation: Optional[Auth0UserAllocationMetadata] = None
+    api_keys: Optional[List[StrictStr]] = Field(default=None, alias="apiKeys")
+    beta: Optional[AnonymousTemporalRange] = None
+    cloud_key: Optional[StrictStr] = None
+    created_time: Optional[StrictInt] = Field(default=None, alias="createdTime")
+    email: StrictStr = Field(description="i.e brian.powell@pieces.app")
+    family_name: StrictStr = Field(description="i.e Widman", alias="familyName")
+    given_name: StrictStr = Field(description="i.e Mark", alias="givenName")
+    id: StrictStr = Field(description="This is the user's global id")
+    is_verified_email: Optional[StrictBool] = Field(default=None, alias="isVerifiedEmail")
+    login_ids: Optional[List[StrictStr]] = Field(default=None, description="these are the ids for the social providers ie google/github", alias="loginIds")
+    middle_name: Optional[StrictStr] = Field(default=None, description="i.e '' or Donald", alias="middleName")
     name: Optional[StrictStr] = Field(default=None, description="i.e Mark Widman")
-    email: StrictStr = Field(default=..., description="i.e brian.powell@pieces.app")
+    oauth: Optional[List[StrictStr]] = Field(default=None, description="these are all of the registered social providers")
+    open_ai: Optional[Auth0OpenAIUserMetadata] = None
     phone: Optional[StrictStr] = Field(default=None, description="a users phone number")
     picture: Optional[StrictStr] = Field(default=None, description="the url of the users picture")
-    created_time: Optional[StrictInt] = Field(default=None, alias="createdTime")
-    login_ids: Optional[conlist(StrictStr)] = Field(default=None, alias="loginIds", description="these are the ids for the social providers ie google/github")
-    oauth: Optional[conlist(StrictStr)] = Field(default=None, description="these are all of the registered social providers")
-    is_verified_email: Optional[StrictBool] = Field(default=None, alias="isVerifiedEmail")
     status: Optional[StrictStr] = None
-    welcome_email: Optional[StrictBool] = None
+    subscriptions: Optional[UserTeamServiceOrganizationSubscriptions] = None
+    user_id: StrictStr = Field(alias="userId")
     vanity: Optional[StrictStr] = None
-    cloud_key: Optional[StrictStr] = None
-    allocation: Optional[Auth0UserAllocationMetadata] = None
-    open_ai: Optional[Auth0OpenAIUserMetadata] = None
-    beta: Optional[AnonymousTemporalRange] = None
-    subscriptions: Optional[DescopeUserSubscriptions] = None
-    api_keys: Optional[conlist(StrictStr)] = Field(default=None, alias="apiKeys")
-    __properties = ["userId", "id", "givenName", "middleName", "familyName", "name", "email", "phone", "picture", "createdTime", "loginIds", "oauth", "isVerifiedEmail", "status", "welcome_email", "vanity", "cloud_key", "allocation", "open_ai", "beta", "subscriptions", "apiKeys"]
+    welcome_email: Optional[StrictBool] = None
+    __properties: ClassVar[List[str]] = ["allocation", "apiKeys", "beta", "cloud_key", "createdTime", "email", "familyName", "givenName", "id", "isVerifiedEmail", "loginIds", "middleName", "name", "oauth", "open_ai", "phone", "picture", "status", "subscriptions", "userId", "vanity", "welcome_email"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> DescopeUser:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of DescopeUser from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of allocation
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of allocation
         if self.allocation:
             _dict['allocation'] = self.allocation.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of open_ai
-        if self.open_ai:
-            _dict['open_ai'] = self.open_ai.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of beta
+        # override the default output from pydantic by calling `to_dict()` of beta
         if self.beta:
             _dict['beta'] = self.beta.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of subscriptions
+        # override the default output from pydantic by calling `to_dict()` of open_ai
+        if self.open_ai:
+            _dict['open_ai'] = self.open_ai.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of subscriptions
         if self.subscriptions:
             _dict['subscriptions'] = self.subscriptions.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> DescopeUser:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of DescopeUser from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return DescopeUser.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = DescopeUser.parse_obj({
-            "user_id": obj.get("userId"),
-            "id": obj.get("id"),
-            "given_name": obj.get("givenName"),
-            "middle_name": obj.get("middleName"),
-            "family_name": obj.get("familyName"),
-            "name": obj.get("name"),
+        _obj = cls.model_validate({
+            "allocation": Auth0UserAllocationMetadata.from_dict(obj["allocation"]) if obj.get("allocation") is not None else None,
+            "apiKeys": obj.get("apiKeys"),
+            "beta": AnonymousTemporalRange.from_dict(obj["beta"]) if obj.get("beta") is not None else None,
+            "cloud_key": obj.get("cloud_key"),
+            "createdTime": obj.get("createdTime"),
             "email": obj.get("email"),
+            "familyName": obj.get("familyName"),
+            "givenName": obj.get("givenName"),
+            "id": obj.get("id"),
+            "isVerifiedEmail": obj.get("isVerifiedEmail"),
+            "loginIds": obj.get("loginIds"),
+            "middleName": obj.get("middleName"),
+            "name": obj.get("name"),
+            "oauth": obj.get("oauth"),
+            "open_ai": Auth0OpenAIUserMetadata.from_dict(obj["open_ai"]) if obj.get("open_ai") is not None else None,
             "phone": obj.get("phone"),
             "picture": obj.get("picture"),
-            "created_time": obj.get("createdTime"),
-            "login_ids": obj.get("loginIds"),
-            "oauth": obj.get("oauth"),
-            "is_verified_email": obj.get("isVerifiedEmail"),
             "status": obj.get("status"),
-            "welcome_email": obj.get("welcome_email"),
+            "subscriptions": UserTeamServiceOrganizationSubscriptions.from_dict(obj["subscriptions"]) if obj.get("subscriptions") is not None else None,
+            "userId": obj.get("userId"),
             "vanity": obj.get("vanity"),
-            "cloud_key": obj.get("cloud_key"),
-            "allocation": Auth0UserAllocationMetadata.from_dict(obj.get("allocation")) if obj.get("allocation") is not None else None,
-            "open_ai": Auth0OpenAIUserMetadata.from_dict(obj.get("open_ai")) if obj.get("open_ai") is not None else None,
-            "beta": AnonymousTemporalRange.from_dict(obj.get("beta")) if obj.get("beta") is not None else None,
-            "subscriptions": DescopeUserSubscriptions.from_dict(obj.get("subscriptions")) if obj.get("subscriptions") is not None else None,
-            "api_keys": obj.get("apiKeys")
+            "welcome_email": obj.get("welcome_email")
         })
         return _obj
 

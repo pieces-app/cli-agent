@@ -18,101 +18,117 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Any, Dict, List, Optional
-from pydantic.v1 import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from pieces._vendor.pieces_os_client.models.paddle_checkout_customer import PaddleCheckoutCustomer
 from pieces._vendor.pieces_os_client.models.paddle_checkout_item import PaddleCheckoutItem
 from pieces._vendor.pieces_os_client.models.paddle_checkout_payment import PaddleCheckoutPayment
 from pieces._vendor.pieces_os_client.models.paddle_checkout_settings import PaddleCheckoutSettings
 from pieces._vendor.pieces_os_client.models.paddle_checkout_totals import PaddleCheckoutTotals
+from typing import Optional, Set
+from typing_extensions import Self
 
 class PaddleCheckoutLoadedEventData(BaseModel):
     """
     PaddleCheckoutLoadedEventData
-    """
-    id: StrictStr = Field(...)
-    transaction_id: StrictStr = Field(...)
-    status: StrictStr = Field(...)
+    """ # noqa: E501
+    currency_code: StrictStr
     custom_data: Optional[Dict[str, Any]] = None
-    currency_code: StrictStr = Field(...)
-    customer: PaddleCheckoutCustomer = Field(...)
-    items: conlist(PaddleCheckoutItem) = Field(...)
-    totals: PaddleCheckoutTotals = Field(...)
-    payment: PaddleCheckoutPayment = Field(...)
-    settings: PaddleCheckoutSettings = Field(...)
-    recurring_totals: PaddleCheckoutTotals = Field(...)
-    __properties = ["id", "transaction_id", "status", "custom_data", "currency_code", "customer", "items", "totals", "payment", "settings", "recurring_totals"]
+    customer: PaddleCheckoutCustomer
+    id: StrictStr
+    items: List[PaddleCheckoutItem]
+    payment: PaddleCheckoutPayment
+    recurring_totals: PaddleCheckoutTotals
+    settings: PaddleCheckoutSettings
+    status: StrictStr
+    totals: PaddleCheckoutTotals
+    transaction_id: StrictStr
+    __properties: ClassVar[List[str]] = ["currency_code", "custom_data", "customer", "id", "items", "payment", "recurring_totals", "settings", "status", "totals", "transaction_id"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> PaddleCheckoutLoadedEventData:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of PaddleCheckoutLoadedEventData from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic.v1 by calling `to_dict()` of customer
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # override the default output from pydantic by calling `to_dict()` of customer
         if self.customer:
             _dict['customer'] = self.customer.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of each item in items (list)
+        # override the default output from pydantic by calling `to_dict()` of each item in items (list)
         _items = []
         if self.items:
-            for _item in self.items:
-                if _item:
-                    _items.append(_item.to_dict())
+            for _item_items in self.items:
+                if _item_items:
+                    _items.append(_item_items.to_dict())
             _dict['items'] = _items
-        # override the default output from pydantic.v1 by calling `to_dict()` of totals
-        if self.totals:
-            _dict['totals'] = self.totals.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of payment
+        # override the default output from pydantic by calling `to_dict()` of payment
         if self.payment:
             _dict['payment'] = self.payment.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of settings
-        if self.settings:
-            _dict['settings'] = self.settings.to_dict()
-        # override the default output from pydantic.v1 by calling `to_dict()` of recurring_totals
+        # override the default output from pydantic by calling `to_dict()` of recurring_totals
         if self.recurring_totals:
             _dict['recurring_totals'] = self.recurring_totals.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of settings
+        if self.settings:
+            _dict['settings'] = self.settings.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of totals
+        if self.totals:
+            _dict['totals'] = self.totals.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> PaddleCheckoutLoadedEventData:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of PaddleCheckoutLoadedEventData from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return PaddleCheckoutLoadedEventData.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = PaddleCheckoutLoadedEventData.parse_obj({
-            "id": obj.get("id"),
-            "transaction_id": obj.get("transaction_id"),
-            "status": obj.get("status"),
-            "custom_data": obj.get("custom_data"),
+        _obj = cls.model_validate({
             "currency_code": obj.get("currency_code"),
-            "customer": PaddleCheckoutCustomer.from_dict(obj.get("customer")) if obj.get("customer") is not None else None,
-            "items": [PaddleCheckoutItem.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
-            "totals": PaddleCheckoutTotals.from_dict(obj.get("totals")) if obj.get("totals") is not None else None,
-            "payment": PaddleCheckoutPayment.from_dict(obj.get("payment")) if obj.get("payment") is not None else None,
-            "settings": PaddleCheckoutSettings.from_dict(obj.get("settings")) if obj.get("settings") is not None else None,
-            "recurring_totals": PaddleCheckoutTotals.from_dict(obj.get("recurring_totals")) if obj.get("recurring_totals") is not None else None
+            "custom_data": obj.get("custom_data"),
+            "customer": PaddleCheckoutCustomer.from_dict(obj["customer"]) if obj.get("customer") is not None else None,
+            "id": obj.get("id"),
+            "items": [PaddleCheckoutItem.from_dict(_item) for _item in obj["items"]] if obj.get("items") is not None else None,
+            "payment": PaddleCheckoutPayment.from_dict(obj["payment"]) if obj.get("payment") is not None else None,
+            "recurring_totals": PaddleCheckoutTotals.from_dict(obj["recurring_totals"]) if obj.get("recurring_totals") is not None else None,
+            "settings": PaddleCheckoutSettings.from_dict(obj["settings"]) if obj.get("settings") is not None else None,
+            "status": obj.get("status"),
+            "totals": PaddleCheckoutTotals.from_dict(obj["totals"]) if obj.get("totals") is not None else None,
+            "transaction_id": obj.get("transaction_id")
         })
         return _obj
 
