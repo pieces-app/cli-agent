@@ -47,9 +47,11 @@ def check_asset_selected(func):
         try:
             if AssetsCommands.current_asset is None:
                 raise ValueError("No material selected")
-            AssetsCommands.current_asset.asset  # Check if the current asset is vaild
+            AssetsCommands.current_asset.asset  # Check if the current asset is valid
         except (ValueError, NotFoundException):
             ListCommand.list_assets()
+        if AssetsCommands.current_asset is None:
+            return
         return func(asset=AssetsCommands.current_asset, *args, **kwargs)
 
     return wrapper
