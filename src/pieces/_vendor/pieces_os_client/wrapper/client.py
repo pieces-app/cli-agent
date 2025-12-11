@@ -188,7 +188,7 @@ class PiecesClient(PiecesApiClient):
     def model_name(self, model):
         models = self.get_models()
         if model not in models:
-            raise ValueError("Not a vaild model name, the available models are"
+            raise ValueError("Not a valid model name, the available models are"
                              f"{', '.join(models.keys())}")
         self._model_name = model
         self._model_id = models[model]
@@ -281,15 +281,6 @@ class PiecesClient(PiecesApiClient):
             PosInstaller: An instance of PosInstaller handling the installation process.
         """
         return PosInstaller(callback, self.app_name)
-
-    def pool(self, api_call, args):
-        """
-            call the api async without stopping the main thread
-            Create thread pool on first request
-            avoids instantiating unused threadpool for blocking clients.
-            return the ThreadPool created
-        """
-        return self.api_client.pool.apply_async(api_call, args)
 
 
 # Register the function to be called on exit

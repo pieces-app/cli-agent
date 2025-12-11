@@ -1,4 +1,7 @@
 import argparse
+from pieces._vendor.pieces_os_client.models.allocation_status_enum import (
+    AllocationStatusEnum,
+)
 from pieces.base_command import BaseCommand
 from pieces.urls import URLs
 from pieces.settings import Settings
@@ -40,9 +43,13 @@ class LoginCommand(BaseCommand):
             Settings.pieces_client.user_api.user_snapshot().user
         )
         if Settings.pieces_client.user.user_profile:
+            status = Settings.pieces_client.user.cloud_status or AllocationStatusEnum.DISCONNECTED
             Settings.logger.print(
-                f"Signed in as {Settings.pieces_client.user.name}\nemail: {Settings.pieces_client.user.email}"
+                f"Signed in as {Settings.pieces_client.user.name}\nEmail: {Settings.pieces_client.user.email}\nCloud status: {status.value.title()}"
             )
+            if status == AllocationStatusEnum.DISCONNECTED:
+                Settings.logger.print("Connecting to the Pieces Cloud...")
+                Settings.pieces_client.user.connect()
             return 0
         try:
             Settings.pieces_client.user.login(True)
