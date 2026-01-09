@@ -7,7 +7,7 @@ messages that guide users toward solutions.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, List, Dict, Type, Callable
+from typing import Optional, List, Dict
 import re
 import socket
 
@@ -365,24 +365,27 @@ def get_user_friendly_message(
     # Combine exception type and message for matching
     full_error = f"{exception_type}: {error_message}"
     
-    # Try to match against known patterns
-    config = _match_error_pattern(full_error)
+    # Check specific exception types FIRST (before pattern matching)
+    # This ensures we get the most specific handler for known exception types
     
-    if config:
+    if isinstance(exception, ConnectionRefusedError):
         return UserFriendlyError(
-            title=config["title"],
-            reasons=config.get("reasons", []),
-            solutions=config.get("solutions", []),
-            help_link=config.get("help_link", default_help_link),
-            category=config.get("category", ErrorCategory.UNKNOWN),
+            title="Cannot connect to Pieces OS",
+            reasons=[
+                "Pieces OS may not be running",
+                "The service port may be blocked",
+            ],
+            solutions=[
+                "Ensure Pieces OS is running: `pieces open`",
+                "Restart Pieces OS: `pieces restart`",
+            ],
+            help_link="https://docs.pieces.app/products/cli/troubleshooting",
+            category=ErrorCategory.CONNECTION,
             original_error=exception,
             technical_details=full_error,
         )
     
-    # Handle specific exception types that might not match patterns
-    if isinstance(exception, ConnectionRefusedError) or (
-        isinstance(exception, OSError) and exception.errno in (61, 111, 10061)
-    ):
+    if isinstance(exception, OSError) and getattr(exception, "errno", None) in (61, 111, 10061):
         return UserFriendlyError(
             title="Cannot connect to Pieces OS",
             reasons=[
@@ -451,6 +454,20 @@ def get_user_friendly_message(
             technical_details=full_error,
         )
     
+    # Try to match against known patterns for other errors
+    config = _match_error_pattern(full_error)
+    
+    if config:
+        return UserFriendlyError(
+            title=config["title"],
+            reasons=config.get("reasons", []),
+            solutions=config.get("solutions", []),
+            help_link=config.get("help_link", default_help_link),
+            category=config.get("category", ErrorCategory.UNKNOWN),
+            original_error=exception,
+            technical_details=full_error,
+        )
+    
     # Default fallback for unknown errors
     return UserFriendlyError(
         title="An unexpected error occurred",
@@ -491,28 +508,3 @@ def format_error(
     """
     friendly_error = get_user_friendly_message(exception, default_help_link)
     return friendly_error.format_error(include_technical)
-
-
-# Exception type to handler mapping for direct type-based lookups
-EXCEPTION_HANDLERS: Dict[Type[Exception], Callable[[Exception], UserFriendlyError]] = {}
-
-
-def register_exception_handler(
-    exception_type: Type[Exception],
-) -> Callable[[Callable[[Exception], UserFriendlyError]], Callable[[Exception], UserFriendlyError]]:
-    """
-    Decorator to register a custom handler for a specific exception type.
-    
-    Usage:
-        @register_exception_handler(MyCustomException)
-        def handle_my_exception(e: MyCustomException) -> UserFriendlyError:
-            return UserFriendlyError(
-                title="My custom error",
-                reasons=["Custom reason"],
-                solutions=["Custom solution"],
-            )
-    """
-    def decorator(handler: Callable[[Exception], UserFriendlyError]) -> Callable[[Exception], UserFriendlyError]:
-        EXCEPTION_HANDLERS[exception_type] = handler
-        return handler
-    return decorator
