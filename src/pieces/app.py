@@ -5,6 +5,7 @@ import os
 
 from pieces.config.constants import PIECES_DATA_DIR
 from pieces.config.migration import run_migration
+from pieces.errors import format_error
 from pieces.headless.exceptions import HeadlessError
 from pieces.headless.models.base import ErrorCode
 from pieces.headless.output import HeadlessOutput
@@ -171,7 +172,11 @@ def main():
         else:
             Settings.logger.critical(e, ignore_sentry=True)
             try:
-                Settings.show_error("UNKNOWN EXCEPTION", e)
+                # Display user-friendly error message
+                friendly_message = format_error(e, include_technical=False)
+                Settings.logger.console_error.print(f"[red]{friendly_message}[/red]")
+                if not Settings.run_in_loop:
+                    sys.exit(2)
             except SystemExit:
                 sentry_sdk.flush(2)
                 raise
