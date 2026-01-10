@@ -11,6 +11,8 @@ from typing import Optional, List, Dict
 import re
 import socket
 
+from pieces.urls import URLs
+
 
 class ErrorCategory(Enum):
     """Categories of errors for classification."""
@@ -110,7 +112,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Check if Pieces OS is starting: `pieces status`",
             "Restart Pieces OS: `pieces restart`",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/troubleshooting",
+        "help_link": URLs.CLI_HELP_DOCS.value,
         "category": ErrorCategory.CONNECTION,
     },
     
@@ -126,7 +128,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Check your network connection",
             "Try restarting Pieces OS: `pieces restart`",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/troubleshooting",
+        "help_link": URLs.CLI_HELP_DOCS.value,
         "category": ErrorCategory.CONNECTION,
     },
     
@@ -142,7 +144,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Check your network connection",
             "Restart Pieces OS: `pieces restart`",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/troubleshooting",
+        "help_link": URLs.CLI_HELP_DOCS.value,
         "category": ErrorCategory.TIMEOUT,
     },
     
@@ -158,7 +160,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Check if Pieces OS is running: `pieces status`",
             "Check your network connection",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/troubleshooting",
+        "help_link": URLs.CLI_HELP_DOCS.value,
         "category": ErrorCategory.CONNECTION,
     },
     
@@ -174,7 +176,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Sign in to Pieces: `pieces login`",
             "If already signed in, try signing out and back in: `pieces logout` then `pieces login`",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/commands#login",
+        "help_link": URLs.CLI_LOGIN_DOCS.value,
         "category": ErrorCategory.AUTHENTICATION,
     },
     
@@ -189,7 +191,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Verify you're signed in with the correct account: `pieces login`",
             "Check if you have the necessary permissions",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/commands#login",
+        "help_link": URLs.CLI_LOGIN_DOCS.value,
         "category": ErrorCategory.PERMISSION,
     },
     
@@ -206,7 +208,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Check the spelling of the item name or ID",
             "Create the resource if it doesn't exist",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/commands#list",
+        "help_link": URLs.CLI_LIST_DOCS.value,
         "category": ErrorCategory.NOT_FOUND,
     },
     
@@ -223,7 +225,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Update Pieces OS from https://pieces.app",
             "Check versions: `pieces version`",
         ],
-        "help_link": "https://docs.pieces.app/products/meet-pieces/fundamentals",
+        "help_link": URLs.DOCS_INSTALLATION.value,
         "category": ErrorCategory.VERSION,
     },
     
@@ -238,7 +240,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Wait a few moments before trying again",
             "Reduce the frequency of requests",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/troubleshooting",
+        "help_link": URLs.CLI_HELP_DOCS.value,
         "category": ErrorCategory.RATE_LIMIT,
     },
     
@@ -255,7 +257,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Restart Pieces OS: `pieces restart`",
             "Check Pieces status at https://status.pieces.app",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/troubleshooting",
+        "help_link": URLs.CLI_HELP_DOCS.value,
         "category": ErrorCategory.SERVER,
     },
     
@@ -272,7 +274,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Run with appropriate permissions",
             "Close other applications that may be using the file",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/troubleshooting",
+        "help_link": URLs.CLI_HELP_DOCS.value,
         "category": ErrorCategory.PERMISSION,
     },
     
@@ -289,7 +291,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Check configuration: `pieces config --show`",
             "Verify configuration file permissions",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/configuration",
+        "help_link": URLs.CLI_CONFIG_DOCS.value,
         "category": ErrorCategory.CONFIGURATION,
     },
     
@@ -306,7 +308,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Check MCP status: `pieces mcp status`",
             "Repair MCP configuration: `pieces mcp repair`",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/copilot/chat#pieces-mcp",
+        "help_link": URLs.CLI_MCP_DOCS.value,
         "category": ErrorCategory.CONNECTION,
     },
     
@@ -323,7 +325,7 @@ ERROR_PATTERNS: Dict[str, Dict] = {
             "Initialize a git repository: `git init`",
             "Check if there are changes to commit: `git status`",
         ],
-        "help_link": "https://docs.pieces.app/products/cli/commands#commit",
+        "help_link": URLs.CLI_COMMIT_DOCS.value,
         "category": ErrorCategory.CONFIGURATION,
     },
 }
@@ -347,7 +349,7 @@ def _match_error_pattern(error_message: str) -> Optional[Dict]:
 
 def get_user_friendly_message(
     exception: Exception,
-    default_help_link: str = "https://docs.pieces.app/products/cli/troubleshooting",
+    default_help_link: str = None,
 ) -> UserFriendlyError:
     """
     Transform an exception into a user-friendly error message.
@@ -368,6 +370,10 @@ def get_user_friendly_message(
     # Check specific exception types FIRST (before pattern matching)
     # This ensures we get the most specific handler for known exception types
     
+    # Use default help link if not provided
+    if default_help_link is None:
+        default_help_link = URLs.CLI_HELP_DOCS.value
+    
     if isinstance(exception, ConnectionRefusedError):
         return UserFriendlyError(
             title="Cannot connect to Pieces OS",
@@ -379,7 +385,7 @@ def get_user_friendly_message(
                 "Ensure Pieces OS is running: `pieces open`",
                 "Restart Pieces OS: `pieces restart`",
             ],
-            help_link="https://docs.pieces.app/products/cli/troubleshooting",
+            help_link=URLs.CLI_HELP_DOCS.value,
             category=ErrorCategory.CONNECTION,
             original_error=exception,
             technical_details=full_error,
@@ -396,7 +402,7 @@ def get_user_friendly_message(
                 "Ensure Pieces OS is running: `pieces open`",
                 "Restart Pieces OS: `pieces restart`",
             ],
-            help_link="https://docs.pieces.app/products/cli/troubleshooting",
+            help_link=URLs.CLI_HELP_DOCS.value,
             category=ErrorCategory.CONNECTION,
             original_error=exception,
             technical_details=full_error,
@@ -414,7 +420,7 @@ def get_user_friendly_message(
                 "Check your network connection",
                 "Restart Pieces OS: `pieces restart`",
             ],
-            help_link="https://docs.pieces.app/products/cli/troubleshooting",
+            help_link=URLs.CLI_HELP_DOCS.value,
             category=ErrorCategory.TIMEOUT,
             original_error=exception,
             technical_details=full_error,
@@ -431,7 +437,7 @@ def get_user_friendly_message(
                 "Check file/folder permissions",
                 "Run with appropriate permissions",
             ],
-            help_link="https://docs.pieces.app/products/cli/troubleshooting",
+            help_link=URLs.CLI_HELP_DOCS.value,
             category=ErrorCategory.PERMISSION,
             original_error=exception,
             technical_details=full_error,
@@ -448,7 +454,7 @@ def get_user_friendly_message(
                 "Verify the file path is correct",
                 "Check if the file exists",
             ],
-            help_link="https://docs.pieces.app/products/cli/troubleshooting",
+            help_link=URLs.CLI_HELP_DOCS.value,
             category=ErrorCategory.NOT_FOUND,
             original_error=exception,
             technical_details=full_error,
@@ -490,7 +496,7 @@ def get_user_friendly_message(
 def format_error(
     exception: Exception,
     include_technical: bool = False,
-    default_help_link: str = "https://docs.pieces.app/products/cli/troubleshooting",
+    default_help_link: str = None,
 ) -> str:
     """
     Format an exception into a user-friendly error string.
@@ -506,5 +512,7 @@ def format_error(
     Returns:
         A formatted error message string
     """
+    if default_help_link is None:
+        default_help_link = URLs.CLI_HELP_DOCS.value
     friendly_error = get_user_friendly_message(exception, default_help_link)
     return friendly_error.format_error(include_technical)
