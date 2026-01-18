@@ -129,10 +129,29 @@ class Settings:
 
     @classmethod
     def show_error(cls, error, error_message=None):
-        cls.logger.console_error.print(f"[red]{error}")
-        cls.logger.console_error.print(
-            f"[red]{error_message}"
-        ) if error_message else None
+        """Display an error message to the user.
+        
+        Args:
+            error: The error title or Exception object
+            error_message: Optional additional error message
+        """
+        from pieces.errors import format_error
+        
+        # If error is an Exception, format it as user-friendly
+        if isinstance(error, Exception):
+            friendly_message = format_error(error, include_technical=False)
+            cls.logger.console_error.print(f"[red]{friendly_message}[/red]")
+        else:
+            # Legacy behavior for string errors
+            cls.logger.console_error.print(f"[red]{error}[/red]")
+            if error_message:
+                # Check if error_message is an Exception for user-friendly formatting
+                if isinstance(error_message, Exception):
+                    friendly_message = format_error(error_message, include_technical=False)
+                    cls.logger.console_error.print(f"[red]{friendly_message}[/red]")
+                else:
+                    cls.logger.console_error.print(f"[red]{error_message}[/red]")
+        
         if not cls.run_in_loop:
             sys.exit(2)
 
