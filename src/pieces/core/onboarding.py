@@ -67,21 +67,26 @@ class OnboardingStep(BasedOnboardingStep):
 
 
 class OnboardingCommandStep(BasedOnboardingStep):
-    def __init__(self, text, predicted_text: str) -> None:
+    def __init__(self, text, predicted_text: str, prefix_match: bool = False) -> None:
         self.text = text
         self.predicted_text = predicted_text
+        self.prefix_match = prefix_match
+
+    def _is_valid(self, user_input: str) -> bool:
+        if self.prefix_match:
+            s = user_input.strip()
+            return s.startswith(self.predicted_text) and len(s) > len(self.predicted_text)
+        return user_input == self.predicted_text
 
     def run(self):
         Settings.logger.print(Markdown(self.text))
-        # self.click_to_continue(console)
 
         user_input = input(get_prompt()).strip()
-        while user_input != self.predicted_text:
+        while not self._is_valid(user_input):
             if user_input == "exit":
                 sys.exit(1)
-            Settings.logger.print(
-                Markdown(f"❌ Wrong command. Please use: `{self.predicted_text}`")
-            )
+            hint = "e.g. `pieces ask 'your question'`" if self.prefix_match else f"Please use: `{self.predicted_text}`"
+            Settings.logger.print(Markdown(f"❌ Wrong command. {hint}"))
             user_input = input(get_prompt()).strip()
 
         run_command(*extract_text(user_input.removeprefix("pieces ")))
@@ -200,7 +205,7 @@ def onboarding_command(**kwargs):
         "Step 2: Save a Material": [
             OnboardingStep(
                 "Let's get started by saving a material to Pieces.\n"
-                "Copy the following python material: \n"
+                "Copy the following Python material:\n"
                 f"```python\n{demo_snippet}\n```",
                 create_snippet_one_validation,
             ),
@@ -216,18 +221,19 @@ def onboarding_command(**kwargs):
         ],
         "Step 4: Start a Session": [
             OnboardingCommandStep(
-                "Starting a session allows you to run multiple commands without having to start the Pieces CLI every time."
+                "Starting a session allows you to run multiple commands without having to start the Pieces CLI every time. "
                 "Start a session with `pieces run`. To exit your session, use `exit`.",
                 "pieces run",
             )
         ],
         "Step 5: Chat with the Copilot": [
             OnboardingCommandStep(
-                "Start a chat with the Copilot by using `pieces ask 'How to print I love Pieces CLI in Python and Java'`.",
-                "pieces ask 'How to print I love Pieces CLI in Python and Java'",
+                "Start a chat with the Copilot by using `pieces ask 'your question here'`.",
+                "pieces ask ",
+                prefix_match=True,
             ),
             OnboardingCommandStep(
-                "Create a session with Copilot by typing `pieces run` then use `ask` to interact with Copilot.",
+                "Start a session with Copilot by typing `pieces run`, then use `ask` to interact with Copilot.",
                 "pieces run",
             ),
         ],
@@ -237,15 +243,15 @@ def onboarding_command(**kwargs):
                 lambda: (True, ""),
             )
         ],
-        "Step 7: Sharing your Feedback": [
+        "Step 7: Share Your Feedback": [
             OnboardingCommandStep(
-                "Your feedback is very **important** to us. Please share some of your feedback by typing `pieces feedback`.",
+                "Your feedback is very **important** to us. Please share your feedback by typing `pieces feedback`.",
                 "pieces feedback",
             )
         ],
         "Step 8: Contributing": [
             OnboardingCommandStep(
-                "The Pieces CLI is an **open source project** and you can contribute to it by creating a pull request or open an issue by typing `pieces contribute`.",
+                "The Pieces CLI is an **open source project** and you can contribute to it by creating a pull request or opening an issue with `pieces contribute`.",
                 "pieces contribute",
             )
         ],
@@ -263,7 +269,7 @@ def onboarding_command(**kwargs):
         )
     )
 
-    Settings.logger.print("Whenever you want to exit the onboarding flow type `exit`.")
+    Settings.logger.print("Whenever you want to exit the onboarding flow, type `exit`.")
 
     if not Settings.pieces_client.open_pieces_os():
         Settings.logger.print("❌ PiecesOS is not running")
@@ -276,7 +282,7 @@ def onboarding_command(**kwargs):
                 "- **Sublime Text**\n"
                 "- **Visual Studio**\n"
                 "and web browser extensions for Google Chrome and Firefox and more.\n\n"
-                "for more information about the integrations check out the **documentation** https://docs.pieces.app/#ides-and-editors. \n\n"  # TODO: Add a link to the documentation extensions like the old website
+                "For more information about the integrations, check out the **documentation** https://docs.pieces.app/#ides-and-editors. \n\n"  # TODO: Add a link to the documentation extensions like the old website
                 "### Key Functionalities\n"
                 "- Highly contextual generative AI assistant, called **Pieces Copilot**.\n"
                 "- **Materials Management** for efficient code organization enables you to save and share materials\n"
@@ -286,7 +292,7 @@ def onboarding_command(**kwargs):
         )
 
         OnboardingCommandStep(
-            "To install PiecesOS run `pieces install`", "pieces install"
+            "To install PiecesOS, run `pieces install`", "pieces install"
         ).run()
 
     else:
@@ -307,7 +313,7 @@ def onboarding_command(**kwargs):
     Settings.logger.print(
         Markdown("You are now a `10x` more productive developer with Pieces.")
     )
-    Settings.logger.print("For more information visit " + URLs.DOCS_CLI.value)
+    Settings.logger.print("For more information, visit " + URLs.DOCS_CLI.value)
 
     Settings.user_config.onboarded = True
 
