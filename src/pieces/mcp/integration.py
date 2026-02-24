@@ -1,3 +1,14 @@
+"""
+IDE integration configuration management for MCP.
+
+Handles reading, writing, and repairing IDE-specific configuration files
+(e.g. ``settings.json`` for VS Code/Cursor, ``claude_desktop_config.json``
+for Claude Desktop) so that IDEs can connect to PiecesOS via MCP.
+
+IDE configs use the SSE schema URL (``2024-11-05``) because IDEs connect
+directly to PiecesOS, not through the CLI gateway.
+"""
+
 import json
 import os
 from typing import Callable, Dict, List, Tuple, Optional
@@ -11,12 +22,17 @@ from pieces.copilot.ltm import check_ltm
 from pieces.headless.exceptions import HeadlessError
 from pieces.settings import Settings
 
-from .utils import get_mcp_latest_url, get_mcp_urls
+from .utils import get_mcp_sse_url, get_mcp_urls
 from ..utils import PiecesSelectMenu
 from pieces.config.schemas.mcp import IntegrationDict, mcp_types, mcp_integration_types
 
 
 class MCPProperties:
+    """Defines the JSON property structure for an MCP integration's config file.
+
+    Holds separate property templates for stdio and SSE transports, along
+    with the JSON key names for URL, command, and args fields.
+    """
     pieces_cli_bin_path: Optional[str] = None
 
     def __init__(
@@ -66,7 +82,7 @@ class MCPProperties:
     def mcp_modified_settings(self, mcp_type: mcp_types):
         mcp_settings = self.mcp_settings(mcp_type)
         if mcp_type == "sse":
-            mcp_settings[self.url_property_name] = get_mcp_latest_url()
+            mcp_settings[self.url_property_name] = get_mcp_sse_url()
         else:
             mcp_settings[self.command_property_name] = self.pieces_cli_bin_path
             mcp_settings[self.args_property_name] = [
@@ -78,6 +94,13 @@ class MCPProperties:
 
 
 class Integration:
+    """Manages a single IDE's MCP configuration.
+
+    Each instance represents one IDE (e.g. VS Code, Claude Desktop) and knows
+    how to locate, read, write, validate, and repair that IDE's MCP config
+    file.  Supports both stdio and SSE transport modes.
+    """
+
     def __init__(
         self,
         options: List[Tuple],
@@ -312,7 +335,7 @@ class Integration:
         mcp_settings = self.mcp_properties.mcp_modified_settings(mcp_type)
         for k, value in config.items():
             if k == self.mcp_properties.url_property_name and mcp_type == "sse":
-                if value != get_mcp_latest_url():
+                if value != get_mcp_sse_url():
                     return False
             elif k in mcp_settings:
                 if mcp_settings[k] != value:

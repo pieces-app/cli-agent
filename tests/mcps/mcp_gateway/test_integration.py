@@ -29,7 +29,7 @@ def get_upstream_url():
         return get_mcp_latest_url()
     except Exception:
         # We are mocking the settings so this will raise an exception most of the time we can hardcode the url instead
-        return "http://localhost:39300/model_context_protocol/2024-11-05/sse"
+        return "http://localhost:39300/model_context_protocol/2025-03-26/mcp"
 
 
 @pytest.fixture(scope="module")
