@@ -109,8 +109,9 @@ commands like `pieces restart` or `pieces open`.
 
 `_check_pieces_os_status` is fully async. Blocking SDK calls (health WebSocket
 start, user snapshot, LTM status, etc.) are offloaded via `asyncio.to_thread()`
-so the event loop is never stalled. An `asyncio.Lock` guards the fast-path
-check to prevent redundant health probes.
+so the event loop is never stalled. An `asyncio.Lock` guards the entire method
+(both fast path and slow path) so that only one coroutine runs the health
+probe at a time, preventing redundant health-WS starts and shared-state races.
 
 ## Notification Handling
 

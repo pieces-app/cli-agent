@@ -67,7 +67,7 @@ class PosMcpConnection:
     """
 
     def __init__(
-        self, upstream_url: str, tools_changed_callback: Callable[[], Awaitable[None]]
+        self, upstream_url: str | None, tools_changed_callback: Callable[[], Awaitable[None]]
     ):
         self.upstream_url: str | None = upstream_url
         self.CONNECTION_ESTABLISH_ATTEMPTS: int = 100
@@ -87,6 +87,7 @@ class PosMcpConnection:
 
         self._cleanup_requested: asyncio.Event = asyncio.Event()
         self._connection_task: asyncio.Task | None = None
+        self._event_loop: asyncio.AbstractEventLoop | None = None
 
     def _try_get_upstream_url(self) -> bool:
         """Try to resolve the upstream URL if we don't have one yet.
@@ -109,17 +110,20 @@ class PosMcpConnection:
         return True
 
     def request_cleanup(self) -> None:
-        """Request cleanup from exception handler (thread-safe)."""
+        """Request cleanup from exception handler (thread-safe).
+
+        Uses the stored ``_event_loop`` reference rather than
+        ``asyncio.get_running_loop()`` because this method is invoked
+        from WebSocket callback threads where no asyncio loop is running.
+        """
         Settings.logger.debug("Cleanup requested from exception handler")
 
-        loop = None
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            Settings.logger.debug("No running loop for cleanup request")
+        loop = self._event_loop
+        if loop is None:
+            Settings.logger.debug("No event loop stored yet for cleanup request")
             return
 
-        if loop and not loop.is_closed():
+        if not loop.is_closed():
             loop.call_soon_threadsafe(self._schedule_cleanup)
 
     def _schedule_cleanup(self) -> None:
@@ -196,12 +200,16 @@ class PosMcpConnection:
     async def _check_pieces_os_status(self) -> bool:
         """Check if PiecesOS is running and initialise health state.
 
-        Two-phase check:
-            1. **Fast path** (under ``_health_check_lock``): if the health
-               WebSocket is already running, return immediately.
+        Two-phase check (both under ``_health_check_lock``):
+            1. **Fast path**: if the health WebSocket is already running,
+               return immediately.
             2. **Slow path**: call blocking SDK methods (``is_pieces_running``,
                ``health_ws.start``, ``user_snapshot``, etc.) via
                ``asyncio.to_thread()`` so the event loop is never stalled.
+
+        The lock covers the entire method so that only one coroutine runs
+        the slow-path probe at a time, preventing redundant health-WS
+        starts and shared-state races.
 
         Returns:
             True if PiecesOS is healthy and reachable, False otherwise.
@@ -210,36 +218,38 @@ class PosMcpConnection:
             if HealthWS.is_running() and Settings.pieces_client.is_pos_stream_running:
                 return True
 
-        is_running = await asyncio.to_thread(Settings.pieces_client.is_pieces_running, 2)
-        if not is_running:
-            return False
-
-        try:
-            health_ws = HealthWS.get_instance()
-            if health_ws:
-                await asyncio.to_thread(health_ws.start)
-
-            os_id = await asyncio.to_thread(Settings.get_os_id)
-            sentry_sdk.set_user({"id": os_id or "unknown"})
-
-            snapshot = await asyncio.to_thread(
-                Settings.pieces_client.user_api.user_snapshot
+            is_running = await asyncio.to_thread(
+                Settings.pieces_client.is_pieces_running, 2
             )
-            Settings.pieces_client.user.user_profile = snapshot.user
+            if not is_running:
+                return False
 
-            ltm_status = await asyncio.to_thread(
-                Settings.pieces_client.work_stream_pattern_engine_api
-                .workstream_pattern_engine_processors_vision_status
-            )
-            Settings.pieces_client.copilot.context.ltm.ltm_status = ltm_status
+            try:
+                health_ws = HealthWS.get_instance()
+                if health_ws:
+                    await asyncio.to_thread(health_ws.start)
 
-            invalidate_mcp_url_cache()
-            return True
-        except Exception as e:
-            Settings.logger.warning(
-                f"PiecesOS appears to be running but health check failed: {e}"
-            )
-            return False
+                os_id = await asyncio.to_thread(Settings.get_os_id)
+                sentry_sdk.set_user({"id": os_id or "unknown"})
+
+                snapshot = await asyncio.to_thread(
+                    Settings.pieces_client.user_api.user_snapshot
+                )
+                Settings.pieces_client.user.user_profile = snapshot.user
+
+                ltm_status = await asyncio.to_thread(
+                    Settings.pieces_client.work_stream_pattern_engine_api
+                    .workstream_pattern_engine_processors_vision_status
+                )
+                Settings.pieces_client.copilot.context.ltm.ltm_status = ltm_status
+
+                invalidate_mcp_url_cache()
+                return True
+            except Exception as e:
+                Settings.logger.warning(
+                    f"PiecesOS appears to be running but health check failed: {e}"
+                )
+                return False
 
     def _check_ltm_status(self) -> bool:
         """Check if LTM is enabled."""
@@ -571,6 +581,9 @@ class PosMcpConnection:
             TimeoutError: If the connection is not established within 10 s.
         """
         async with self.connection_lock:
+            if self._event_loop is None:
+                self._event_loop = asyncio.get_running_loop()
+
             session = self.session
             if (
                 session is not None
@@ -1070,8 +1083,16 @@ async def main() -> None:
         Settings.logger.error(f"Unexpected error in main: {e}", exc_info=True)
     finally:
         Settings.logger.info("MCP Gateway shutting down")
-        for ws in [ltm_vision, user_ws, health_ws]:
+
+        async def _close_ws(ws_instance: Any) -> None:
             try:
-                ws.close()
+                await asyncio.wait_for(
+                    asyncio.to_thread(ws_instance.close), timeout=5.0
+                )
             except Exception:
                 pass
+
+        await asyncio.gather(
+            *(_close_ws(ws) for ws in [ltm_vision, user_ws, health_ws]),
+            return_exceptions=True,
+        )

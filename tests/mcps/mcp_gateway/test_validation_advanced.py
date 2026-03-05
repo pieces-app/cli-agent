@@ -21,7 +21,6 @@ class TestMCPGatewayValidationAdvanced:
     @pytest.mark.asyncio
     async def test_concurrent_validation_calls(self, mock_connection):
         """Test that concurrent validation calls don't cause race conditions"""
-        # Mock all components to return True
         with patch.object(
             mock_connection, "_check_pieces_os_status", new=AsyncMock(return_value=True)
         ):
@@ -29,13 +28,13 @@ class TestMCPGatewayValidationAdvanced:
                 mock_connection, "_check_version_compatibility", return_value=(True, "")
             ):
                 with patch.object(mock_connection, "_check_ltm_status", return_value=True):
-                    # Run multiple validations concurrently
-                    results = []
-                    for i in range(10):
-                        result = await mock_connection._validate_system_status(f"tool_{i}")
-                        results.append(result)
+                    results = await asyncio.gather(
+                        *(
+                            mock_connection._validate_system_status(f"tool_{i}")
+                            for i in range(10)
+                        )
+                    )
 
-                    # All should succeed
                     assert all(result[0] for result in results)
                     assert all(result[1] == "" for result in results)
 

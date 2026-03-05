@@ -82,7 +82,14 @@ class MCPProperties:
     def mcp_modified_settings(self, mcp_type: mcp_types):
         mcp_settings = self.mcp_settings(mcp_type)
         if mcp_type == "sse":
-            mcp_settings[self.url_property_name] = get_mcp_sse_url()
+            sse_url = get_mcp_sse_url()
+            if sse_url is None:
+                raise HeadlessError(
+                    "Unable to determine PiecesOS MCP SSE URL. "
+                    "Please ensure PiecesOS is running and reachable before "
+                    "configuring IDE integration."
+                )
+            mcp_settings[self.url_property_name] = sse_url
         else:
             mcp_settings[self.command_property_name] = self.pieces_cli_bin_path
             mcp_settings[self.args_property_name] = [
