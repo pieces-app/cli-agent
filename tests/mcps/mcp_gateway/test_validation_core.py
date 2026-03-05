@@ -5,14 +5,12 @@ Tests basic validation flows: system status, version compatibility, LTM checks.
 
 import pytest
 import mcp.types as types
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from .utils import (
-    mock_tools_changed_callback,
     mock_connection,
     UpdateEnum,
 )
-from pieces.mcp.gateway import PosMcpConnection
 
 
 class TestMCPGatewayValidationCore:
@@ -22,9 +20,9 @@ class TestMCPGatewayValidationCore:
     async def test_validate_system_status_pieces_os_not_running(self, mock_connection):
         """Test validation when PiecesOS is not running"""
         with patch.object(
-            mock_connection, "_check_pieces_os_status", return_value=False
+            mock_connection, "_check_pieces_os_status", new=AsyncMock(return_value=False)
         ):
-            is_valid, error_message = mock_connection._validate_system_status(
+            is_valid, error_message = await mock_connection._validate_system_status(
                 "ask_pieces_ltm"
             )
 
@@ -39,7 +37,7 @@ class TestMCPGatewayValidationCore:
         """Test validation when CLI version needs updating"""
         # Mock PiecesOS running
         with patch.object(
-            mock_connection, "_check_pieces_os_status", return_value=True
+            mock_connection, "_check_pieces_os_status", new=AsyncMock(return_value=True)
         ):
             # Mock version compatibility check to return plugin update needed
             mock_result = Mock()
@@ -47,7 +45,7 @@ class TestMCPGatewayValidationCore:
             mock_result.update = UpdateEnum.Plugin
             mock_connection.result = mock_result
 
-            is_valid, error_message = mock_connection._validate_system_status(
+            is_valid, error_message = await mock_connection._validate_system_status(
                 "ask_pieces_ltm"
             )
 
@@ -63,7 +61,7 @@ class TestMCPGatewayValidationCore:
         """Test validation when PiecesOS version needs updating"""
         # Mock PiecesOS running
         with patch.object(
-            mock_connection, "_check_pieces_os_status", return_value=True
+            mock_connection, "_check_pieces_os_status", new=AsyncMock(return_value=True)
         ):
             # Mock version compatibility check to return POS update needed
             mock_result = Mock()
@@ -71,7 +69,7 @@ class TestMCPGatewayValidationCore:
             mock_result.update = UpdateEnum.PiecesOS  # Or any value that's not Plugin
             mock_connection.result = mock_result
 
-            is_valid, error_message = mock_connection._validate_system_status(
+            is_valid, error_message = await mock_connection._validate_system_status(
                 "ask_pieces_ltm"
             )
 
@@ -85,7 +83,7 @@ class TestMCPGatewayValidationCore:
         """Test validation when LTM is disabled for LTM tools"""
         # Mock PiecesOS running and version compatible
         with patch.object(
-            mock_connection, "_check_pieces_os_status", return_value=True
+            mock_connection, "_check_pieces_os_status", new=AsyncMock(return_value=True)
         ):
             mock_result = Mock()
             mock_result.compatible = True
@@ -93,7 +91,7 @@ class TestMCPGatewayValidationCore:
 
             # Mock LTM disabled
             with patch.object(mock_connection, "_check_ltm_status", return_value=False):
-                is_valid, error_message = mock_connection._validate_system_status(
+                is_valid, error_message = await mock_connection._validate_system_status(
                     "ask_pieces_ltm"
                 )
 
@@ -108,7 +106,7 @@ class TestMCPGatewayValidationCore:
         """Test validation when LTM is disabled for create_pieces_memory tool"""
         # Mock PiecesOS running and version compatible
         with patch.object(
-            mock_connection, "_check_pieces_os_status", return_value=True
+            mock_connection, "_check_pieces_os_status", new=AsyncMock(return_value=True)
         ):
             mock_result = Mock()
             mock_result.compatible = True
@@ -116,7 +114,7 @@ class TestMCPGatewayValidationCore:
 
             # Mock LTM disabled
             with patch.object(mock_connection, "_check_ltm_status", return_value=False):
-                is_valid, error_message = mock_connection._validate_system_status(
+                is_valid, error_message = await mock_connection._validate_system_status(
                     "create_pieces_memory"
                 )
 
@@ -129,7 +127,7 @@ class TestMCPGatewayValidationCore:
         """Test validation success for non-LTM tools when LTM is disabled"""
         # Mock PiecesOS running and version compatible
         with patch.object(
-            mock_connection, "_check_pieces_os_status", return_value=True
+            mock_connection, "_check_pieces_os_status", new=AsyncMock(return_value=True)
         ):
             mock_result = Mock()
             mock_result.compatible = True
@@ -137,7 +135,7 @@ class TestMCPGatewayValidationCore:
 
             # Mock LTM disabled (shouldn't matter for non-LTM tools)
             with patch.object(mock_connection, "_check_ltm_status", return_value=False):
-                is_valid, error_message = mock_connection._validate_system_status(
+                is_valid, error_message = await mock_connection._validate_system_status(
                     "some_other_tool"
                 )
 
@@ -149,7 +147,7 @@ class TestMCPGatewayValidationCore:
         """Test validation when all checks pass"""
         # Mock PiecesOS running
         with patch.object(
-            mock_connection, "_check_pieces_os_status", return_value=True
+            mock_connection, "_check_pieces_os_status", new=AsyncMock(return_value=True)
         ):
             # Mock version compatible
             mock_result = Mock()
@@ -158,7 +156,7 @@ class TestMCPGatewayValidationCore:
 
             # Mock LTM enabled
             with patch.object(mock_connection, "_check_ltm_status", return_value=True):
-                is_valid, error_message = mock_connection._validate_system_status(
+                is_valid, error_message = await mock_connection._validate_system_status(
                     "ask_pieces_ltm"
                 )
 
@@ -171,7 +169,7 @@ class TestMCPGatewayValidationCore:
         # Mock validation failure
         error_msg = "Test validation error"
         with patch.object(
-            mock_connection, "_validate_system_status", return_value=(False, error_msg)
+            mock_connection, "_validate_system_status", new=AsyncMock(return_value=(False, error_msg))
         ):
             result = await mock_connection.call_tool("test_tool", {})
 
@@ -185,7 +183,7 @@ class TestMCPGatewayValidationCore:
         """Test call_tool handles connection failures gracefully"""
         # Mock validation success
         with patch.object(
-            mock_connection, "_validate_system_status", return_value=(True, "")
+            mock_connection, "_validate_system_status", new=AsyncMock(return_value=(True, ""))
         ):
             # Mock connection failure
             with patch.object(
@@ -204,9 +202,9 @@ class TestMCPGatewayValidationCore:
         # Mock validation failure
         error_msg = "Validation failed"
         with patch.object(
-            mock_connection, "_validate_system_status", return_value=(False, error_msg)
+            mock_connection, "_validate_system_status", new=AsyncMock(return_value=(False, error_msg))
         ):
-            result = mock_connection._get_error_message_for_tool("test_tool")
+            result = await mock_connection._get_error_message_for_tool("test_tool")
 
             assert result == error_msg
 
@@ -215,9 +213,9 @@ class TestMCPGatewayValidationCore:
         """Test _get_error_message_for_tool when validation passes but still has error"""
         # Mock validation success
         with patch.object(
-            mock_connection, "_validate_system_status", return_value=(True, "")
+            mock_connection, "_validate_system_status", new=AsyncMock(return_value=(True, ""))
         ):
-            result = mock_connection._get_error_message_for_tool("test_tool")
+            result = await mock_connection._get_error_message_for_tool("test_tool")
 
             assert "Unable to execute 'test_tool' tool" in result
             assert "`pieces restart`" in result
@@ -243,8 +241,9 @@ class TestMCPGatewayValidationCore:
             # VersionChecker should only be called once due to caching
             mock_version_checker.assert_called_once()
 
+    @pytest.mark.asyncio
     @patch("pieces.mcp.gateway.HealthWS")
-    def test_check_pieces_os_status_health_ws_running(
+    async def test_check_pieces_os_status_health_ws_running(
         self, mock_health_ws, mock_connection
     ):
         """Test _check_pieces_os_status when health WS is already running"""
@@ -255,14 +254,15 @@ class TestMCPGatewayValidationCore:
         with patch("pieces.mcp.gateway.Settings") as mock_settings:
             mock_settings.pieces_client.is_pos_stream_running = True
 
-            result = mock_connection._check_pieces_os_status()
+            result = await mock_connection._check_pieces_os_status()
 
             assert result is True
             mock_health_ws.is_running.assert_called_once()
 
+    @pytest.mark.asyncio
     @patch("pieces.mcp.gateway.HealthWS")
     @patch("pieces.mcp.gateway.Settings")
-    def test_check_pieces_os_status_starts_health_ws(
+    async def test_check_pieces_os_status_starts_health_ws(
         self, mock_settings, mock_health_ws, mock_connection
     ):
         """Test _check_pieces_os_status starts health WS when PiecesOS is running"""
@@ -278,7 +278,7 @@ class TestMCPGatewayValidationCore:
         # Mock the workstream API call
         mock_settings.pieces_client.work_stream_pattern_engine_api.workstream_pattern_engine_processors_vision_status.return_value = Mock()
 
-        result = mock_connection._check_pieces_os_status()
+        result = await mock_connection._check_pieces_os_status()
 
         assert result is True
         mock_health_ws_instance.start.assert_called_once()
@@ -297,7 +297,7 @@ class TestMCPGatewayValidationCore:
         """Test that multiple validation calls for the same tool work correctly"""
         # Mock all components
         with (
-            patch.object(mock_connection, "_check_pieces_os_status", return_value=True),
+            patch.object(mock_connection, "_check_pieces_os_status", new=AsyncMock(return_value=True)),
             patch.object(mock_connection, "_check_ltm_status", return_value=True),
         ):
             mock_result = Mock()
@@ -305,8 +305,8 @@ class TestMCPGatewayValidationCore:
             mock_connection.result = mock_result
 
             # Call validation multiple times
-            is_valid1, msg1 = mock_connection._validate_system_status("ask_pieces_ltm")
-            is_valid2, msg2 = mock_connection._validate_system_status("ask_pieces_ltm")
+            is_valid1, msg1 = await mock_connection._validate_system_status("ask_pieces_ltm")
+            is_valid2, msg2 = await mock_connection._validate_system_status("ask_pieces_ltm")
 
             assert is_valid1 == is_valid2
             assert is_valid1 is True

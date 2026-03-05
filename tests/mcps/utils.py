@@ -205,7 +205,7 @@ class MCPTestBase(TestCase):
         cls.mcp_urls_patcher.start()
 
         cls.mcp_latest_url_patcher = patch(
-            "pieces.mcp.integration.get_mcp_latest_url", return_value="pieces_url"
+            "pieces.mcp.utils.get_mcp_latest_url", return_value="pieces_url"
         )
         cls.mcp_latest_url_patcher.start()
 
