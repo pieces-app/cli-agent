@@ -1,4 +1,5 @@
 from .config_command import ConfigCommand
+from .db_commands import ExportCommand, ImportCommand
 from .list_command import ListCommand
 from .auth_commands import LoginCommand, LogoutCommand
 from .search_command import SearchCommand
@@ -27,6 +28,8 @@ from .tui_command import TUICommand
 
 __all__ = [
     "ConfigCommand",
+    "ExportCommand",
+    "ImportCommand",
     "ListCommand",
     "LoginCommand",
     "LogoutCommand",
