@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, Optional
 from threading import Thread
 from .basic import Basic
@@ -7,6 +8,9 @@ from pieces._vendor.pieces_os_client.models.allocation_status_enum import Alloca
 if TYPE_CHECKING:
 	from pieces._vendor.pieces_os_client.wrapper.client import PiecesClient
 	from pieces._vendor.pieces_os_client.models.user_profile import UserProfile
+
+
+logger = logging.getLogger(__name__)
 
 class BasicUser(Basic):
 	"""
@@ -55,26 +59,41 @@ class BasicUser(Basic):
 		"""
 		self.connect()
 
-	def _complete_login(self, connect_after_login=True):
-		user = self.pieces_client.os_api.sign_into_os()
+	def _finalize_login(self, user: Optional["UserProfile"], connect_after_login=True):
 		self.user_profile = user
 		if connect_after_login and user:
 			self._on_login_connect()
 		return user
 
-	def login(self, connect_after_login=True, timeout=120, async_req=False):
+	def _complete_login(self, connect_after_login=True):
+		user = self.pieces_client.os_api.sign_into_os()
+		return self._finalize_login(user, connect_after_login)
+
+	def login(self, connect_after_login=True, timeout=120, async_req=False) -> Optional["UserProfile"] | Thread:
 		"""
 		Logs the user into the OS and optionally connects to the cloud.
 
 		Args:
 				connect_after_login: A flag indicating if the user should connect to the cloud after login (default is True).
-				timeout: The maximum time to wait for the login process (default is 120 seconds).
+				timeout: The maximum time to wait for the sign-in process (default is 120 seconds).
 				async_req: Start the login flow in the background without waiting for it to finish.
+
+		Returns:
+				The logged-in user profile for synchronous calls, or the background thread when async_req is True.
 		"""
 		result = {}
+		error = {}
 
 		def target():
-			result['user'] = self._complete_login(connect_after_login)
+			try:
+				if async_req:
+					result['user'] = self._complete_login(connect_after_login)
+				else:
+					result['user'] = self.pieces_client.os_api.sign_into_os()
+			except Exception as exc:
+				error['exception'] = exc
+				if async_req:
+					logger.exception("PiecesOS login failed in background")
 
 		thread = Thread(target=target, daemon=True)
 		thread.start()
@@ -82,8 +101,12 @@ class BasicUser(Basic):
 			return thread
 
 		thread.join(timeout)
+		if thread.is_alive():
+			raise TimeoutError(f"Login did not complete within {timeout} seconds")
+		if 'exception' in error:
+			raise error['exception']
 
-		return result.get('user')
+		return self._finalize_login(result.get('user'), connect_after_login)
 
 	def logout(self):
 		"""
@@ -104,11 +127,17 @@ class BasicUser(Basic):
 			self.user_profile, True
 		)  # Set the connecting to cloud bool to true
 		if async_req:
-			thread = Thread(
-				target=self.pieces_client.allocations_api.allocations_connect_new_cloud,
-				args=(self.user_profile,),
-			)
+			def target():
+				try:
+					self.pieces_client.allocations_api.allocations_connect_new_cloud(
+						self.user_profile
+					)
+				except Exception:
+					logger.exception("Pieces Cloud connection failed in background")
+
+			thread = Thread(target=target, daemon=True)
 			thread.start()
+			return thread
 		else:
 			self.pieces_client.allocations_api.allocations_connect_new_cloud(
 				self.user_profile

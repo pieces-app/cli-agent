@@ -130,6 +130,27 @@ class TestLoginCommand:
         mock_logger.print.assert_called_once()
         assert "browser" in mock_logger.print.call_args[0][0].lower()
 
+    @patch.object(Settings, "run_in_loop", True)
+    @patch.object(Settings, "logger")
+    @patch.object(Settings, "pieces_client")
+    def test_execute_logged_in_but_disconnected_in_run_loop_uses_async_connect(
+        self, mock_pieces_client, mock_logger, login_command, mock_user_profile
+    ):
+        mock_user = Mock()
+        mock_user.user_profile = mock_user_profile
+        mock_user.name = "Test User"
+        mock_user.email = "test@example.com"
+        mock_user.cloud_status = AllocationStatusEnum.DISCONNECTED
+
+        mock_pieces_client.user = mock_user
+        mock_pieces_client.user_api.user_snapshot.return_value.user = mock_user_profile
+
+        result = login_command.execute()
+
+        assert result == 0
+        mock_user.connect.assert_called_once_with(async_req=True)
+        assert mock_logger.print.call_count == 2
+
     @patch.object(Settings, "logger")
     @patch.object(Settings, "pieces_client")
     def test_execute_login_exception(
@@ -363,6 +384,36 @@ class TestBasicUserLogin:
         release.set()
         thread.join(timeout=1)
         assert not thread.is_alive()
+
+    def test_login_sync_propagates_connect_failures(self):
+        pieces_client = Mock()
+        user_profile = Mock(spec=UserProfile)
+        pieces_client.os_api.sign_into_os.return_value = user_profile
+        pieces_client.allocations_api.allocations_connect_new_cloud.side_effect = RuntimeError(
+            "Cloud connection failed"
+        )
+
+        user = BasicUser(pieces_client)
+
+        with pytest.raises(RuntimeError, match="Cloud connection failed"):
+            user.login()
+
+    def test_login_sync_raises_timeout_when_sign_in_does_not_finish(self):
+        pieces_client = Mock()
+        release = threading.Event()
+
+        def delayed_login():
+            release.wait(timeout=5)
+            return "user-profile"
+
+        pieces_client.os_api.sign_into_os.side_effect = delayed_login
+
+        user = BasicUser(pieces_client)
+
+        with pytest.raises(TimeoutError, match="Login did not complete within 0.01 seconds"):
+            user.login(connect_after_login=False, timeout=0.01)
+
+        release.set()
 
 
 class TestLoginLogoutIntegration:
