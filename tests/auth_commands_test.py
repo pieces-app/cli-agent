@@ -1,4 +1,5 @@
 import pytest
+import threading
 from unittest.mock import Mock, patch
 from pieces.command_interface.auth_commands import LoginCommand, LogoutCommand
 from pieces.settings import Settings
@@ -6,6 +7,7 @@ from pieces._vendor.pieces_os_client.models.allocation_status_enum import (
     AllocationStatusEnum,
 )
 from pieces._vendor.pieces_os_client.models.user_profile import UserProfile
+from pieces._vendor.pieces_os_client.wrapper.basic_identifier.user import BasicUser
 
 
 class TestLoginCommand:
@@ -106,6 +108,48 @@ class TestLoginCommand:
         # Assert
         assert result == 0
         mock_user.login.assert_called_once_with(True)
+
+    @patch.object(Settings, "run_in_loop", True)
+    @patch.object(Settings, "logger")
+    @patch.object(Settings, "pieces_client")
+    def test_execute_not_logged_in_in_run_loop_uses_async_login(
+        self, mock_pieces_client, mock_logger, login_command
+    ):
+        """Test login in run mode uses the non-blocking login path."""
+        mock_user = Mock()
+        mock_user.user_profile = None
+        mock_user.login = Mock()
+
+        mock_pieces_client.user = mock_user
+        mock_pieces_client.user_api.user_snapshot.return_value.user = None
+
+        result = login_command.execute()
+
+        assert result == 0
+        mock_user.login.assert_called_once_with(True, async_req=True)
+        mock_logger.print.assert_called_once()
+        assert "browser" in mock_logger.print.call_args[0][0].lower()
+
+    @patch.object(Settings, "run_in_loop", True)
+    @patch.object(Settings, "logger")
+    @patch.object(Settings, "pieces_client")
+    def test_execute_logged_in_but_disconnected_in_run_loop_uses_async_connect(
+        self, mock_pieces_client, mock_logger, login_command, mock_user_profile
+    ):
+        mock_user = Mock()
+        mock_user.user_profile = mock_user_profile
+        mock_user.name = "Test User"
+        mock_user.email = "test@example.com"
+        mock_user.cloud_status = AllocationStatusEnum.DISCONNECTED
+
+        mock_pieces_client.user = mock_user
+        mock_pieces_client.user_api.user_snapshot.return_value.user = mock_user_profile
+
+        result = login_command.execute()
+
+        assert result == 0
+        mock_user.connect.assert_called_once_with(async_req=True)
+        assert mock_logger.print.call_count == 2
 
     @patch.object(Settings, "logger")
     @patch.object(Settings, "pieces_client")
@@ -315,6 +359,61 @@ class TestLogoutCommand:
         assert result3 == 0
         assert mock_user.logout.call_count == 3
         mock_logger.error.assert_not_called()
+
+
+class TestBasicUserLogin:
+    def test_login_async_returns_background_thread_without_waiting(self):
+        pieces_client = Mock()
+        started = threading.Event()
+        release = threading.Event()
+
+        def delayed_login():
+            started.set()
+            release.wait(timeout=5)
+            return "user-profile"
+
+        pieces_client.os_api.sign_into_os.side_effect = delayed_login
+
+        user = BasicUser(pieces_client)
+
+        thread = user.login(connect_after_login=False, async_req=True)
+
+        assert started.wait(timeout=1)
+        assert thread.is_alive()
+
+        release.set()
+        thread.join(timeout=1)
+        assert not thread.is_alive()
+
+    def test_login_sync_propagates_connect_failures(self):
+        pieces_client = Mock()
+        user_profile = Mock(spec=UserProfile)
+        pieces_client.os_api.sign_into_os.return_value = user_profile
+        pieces_client.allocations_api.allocations_connect_new_cloud.side_effect = RuntimeError(
+            "Cloud connection failed"
+        )
+
+        user = BasicUser(pieces_client)
+
+        with pytest.raises(RuntimeError, match="Cloud connection failed"):
+            user.login()
+
+    def test_login_sync_raises_timeout_when_sign_in_does_not_finish(self):
+        pieces_client = Mock()
+        release = threading.Event()
+
+        def delayed_login():
+            release.wait(timeout=5)
+            return "user-profile"
+
+        pieces_client.os_api.sign_into_os.side_effect = delayed_login
+
+        user = BasicUser(pieces_client)
+
+        with pytest.raises(TimeoutError, match="Login did not complete within 0.01 seconds"):
+            user.login(connect_after_login=False, timeout=0.01)
+
+        release.set()
 
 
 class TestLoginLogoutIntegration:
