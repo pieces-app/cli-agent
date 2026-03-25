@@ -36,6 +36,10 @@ class ListCommand:
             except AttributeError:
                 continue
 
+        if not menu_entries:
+            Settings.logger.print("No materials available to select.")
+            return
+
         select_menu = PiecesSelectMenu(
             menu_entries,
             AssetsCommands.open_asset,
