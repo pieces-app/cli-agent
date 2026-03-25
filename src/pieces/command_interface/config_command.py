@@ -79,11 +79,11 @@ class ConfigCommand(BaseCommand):
         if editor:
             Settings.cli_config.editor = editor
             Settings.logger.print(f"Editor set to: {editor}")
-        elif auto_launch is not None:
+        if auto_launch is not None:
             Settings.cli_config.auto_launch_pieces_os = auto_launch
             status = "Enabled" if auto_launch else "Disabled"
             Settings.logger.print(f"Auto-launch PiecesOS: {status}")
-        else:
+        if editor is None and auto_launch is None:
             Settings.logger.print("Current configuration:")
             Settings.logger.print(f"Editor: {Settings.cli_config.editor or 'Not set'}")
             Settings.logger.print(

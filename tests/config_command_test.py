@@ -1,7 +1,9 @@
+import argparse
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from pieces.command_interface.config_command import ConfigCommand
+from pieces.config.managers.cli import CLIManager
 from pieces.settings import Settings
 
 
@@ -14,16 +16,44 @@ class TestConfigCommand:
         return ConfigCommand()
 
     @patch.object(Settings, "logger")
-    @patch.object(Settings, "cli_config")
-    def test_execute_sets_auto_launch_pieces_os(
-        self, mock_cli_config, mock_logger, config_command
+    def test_execute_persists_auto_launch_pieces_os(
+        self, mock_logger, config_command, tmp_path
     ):
-        result = config_command.execute(auto_launch_pieces_os=False)
+        cli_config = CLIManager(tmp_path / "cli.json")
+
+        with patch.object(Settings, "cli_config", cli_config):
+            result = config_command.execute(auto_launch_pieces_os=False)
 
         assert result == 0
-        assert mock_cli_config.auto_launch_pieces_os is False
+        reloaded_config = CLIManager(tmp_path / "cli.json")
+        assert reloaded_config.auto_launch_pieces_os is False
         mock_logger.print.assert_called_once()
         assert "auto-launch" in mock_logger.print.call_args[0][0].lower()
+
+    @patch.object(Settings, "logger")
+    def test_execute_updates_editor_and_auto_launch_together(
+        self, mock_logger, config_command, tmp_path
+    ):
+        cli_config = CLIManager(tmp_path / "cli.json")
+
+        with patch.object(Settings, "cli_config", cli_config):
+            result = config_command.execute(
+                editor="vim", auto_launch_pieces_os=False
+            )
+
+        assert result == 0
+        reloaded_config = CLIManager(tmp_path / "cli.json")
+        assert reloaded_config.editor == "vim"
+        assert reloaded_config.auto_launch_pieces_os is False
+        assert mock_logger.print.call_count == 2
+
+    def test_add_arguments_supports_no_auto_launch_flag(self, config_command):
+        parser = argparse.ArgumentParser()
+        config_command.add_arguments(parser)
+
+        args = parser.parse_args(["--no-auto-launch-pieces-os"])
+
+        assert args.auto_launch_pieces_os is False
 
 
 class TestSettingsStartup:

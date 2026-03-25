@@ -68,9 +68,7 @@ class Settings:
                 os_id = cls.get_os_id()
                 sentry_sdk.set_user({"id": os_id or "unknown"})
         else:
-            if cls.pieces_client.is_pieces_running() or (
-                cls.cli_config.auto_launch_pieces_os and cls.open_pieces_widget()
-            ):
+            if cls.cli_config.auto_launch_pieces_os and cls.open_pieces_widget():
                 return cls.startup(bypass_login)
             if not cls.cli_config.auto_launch_pieces_os:
                 cls.logger.print(
