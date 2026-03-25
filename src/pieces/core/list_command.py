@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-import threading
 
 from pieces.settings import Settings
 from pieces._vendor.pieces_os_client.wrapper.basic_identifier.asset import BasicAsset
@@ -24,28 +23,29 @@ class ListCommand:
     def list_assets(cls, **kwargs):
         from pieces.utils import PiecesSelectMenu
 
-        assets = kwargs.get(
-            "assets",
-            [BasicAsset(item.id) for item in BasicAsset.get_identifiers()],  # type: ignore[assignment]
-        )
+        assets = kwargs.get("assets")
+        if assets is None:
+            assets = [BasicAsset(item.id) for item in BasicAsset.get_identifiers()]
+
+        menu_entries = []
+        for index, asset in enumerate(assets, start=1):
+            try:
+                menu_entries.append(
+                    (f"{index}: {asset.name}", {"asset_id": asset.id, **kwargs})
+                )
+            except AttributeError:
+                continue
+
+        if not menu_entries:
+            Settings.logger.print("No materials available to select.")
+            return
 
         select_menu = PiecesSelectMenu(
-            [],
+            menu_entries,
             AssetsCommands.open_asset,
             kwargs.get("footer"),
             title="Select a material",
         )
-
-        def update_assets():
-            for i, asset in enumerate(assets, start=1):
-                try:
-                    select_menu.add_entry(
-                        (f"{i}: {asset.name}", {"asset_id": asset.id, **kwargs})
-                    )
-                except AttributeError:
-                    pass
-
-        threading.Thread(target=update_assets).start()
         select_menu.run()
 
     @classmethod
