@@ -5,6 +5,7 @@ from unittest.mock import patch, Mock
 from pieces.settings import Settings
 import sys
 from pieces.core.assets_command import AssetsCommands
+from pieces.core.list_command import ListCommand
 
 MODULE_NAME = "pieces.core.list_command"
 OPEN_MODULE_NAME = "pieces.core.assets_command"
@@ -66,3 +67,28 @@ def test_open_asset_success(mock_run, mock_assets, mock_basic_asset, mock_sh, tm
 
     assert result is None
     mock_run.assert_called_once()
+
+
+@patch("pieces.utils.PiecesSelectMenu")
+@patch(f"{OPEN_MODULE_NAME}.Settings.pieces_client.assets")
+def test_list_assets_builds_menu_entries_with_asset_ids(
+    mock_assets_api, mock_menu_cls, mock_assets
+):
+    mock_assets_api.return_value = mock_assets
+
+    ListCommand.list_assets(assets=mock_assets, footer="Search results")
+
+    mock_menu_cls.assert_called_once()
+    menu_entries, on_enter, footer = mock_menu_cls.call_args.args
+
+    assert footer == "Search results"
+    assert on_enter == AssetsCommands.open_asset
+    assert len(menu_entries) == len(mock_assets)
+    assert [label for label, _ in menu_entries] == [
+        f"{index}: {asset.name}" for index, asset in enumerate(mock_assets, start=1)
+    ]
+    assert [payload["asset_id"] for _, payload in menu_entries] == [
+        asset.id for asset in mock_assets
+    ]
+    mock_menu_cls.return_value.run.assert_called_once()
+    mock_menu_cls.return_value.add_entry.assert_not_called()
