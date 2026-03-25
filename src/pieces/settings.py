@@ -68,8 +68,14 @@ class Settings:
                 os_id = cls.get_os_id()
                 sentry_sdk.set_user({"id": os_id or "unknown"})
         else:
-            if cls.pieces_client.is_pieces_running() or cls.open_pieces_widget():
+            if cls.cli_config.auto_launch_pieces_os and cls.open_pieces_widget():
                 return cls.startup(bypass_login)
+            if not cls.cli_config.auto_launch_pieces_os:
+                cls.logger.print(
+                    "PiecesOS is required but isn't running.\n"
+                    "Start it manually or enable auto-launch with `pieces config --auto-launch-pieces-os`."
+                )
+                sys.exit(2)
             if cls.logger.confirm(
                 "Pieces OS is required but wasn’t found or couldn’t be launched.\n"
                 "Do you want to install it now and get started?"
