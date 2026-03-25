@@ -55,26 +55,35 @@ class BasicUser(Basic):
 		"""
 		self.connect()
 
-	def login(self, connect_after_login=True, timeout=120):
+	def _complete_login(self, connect_after_login=True):
+		user = self.pieces_client.os_api.sign_into_os()
+		self.user_profile = user
+		if connect_after_login and user:
+			self._on_login_connect()
+		return user
+
+	def login(self, connect_after_login=True, timeout=120, async_req=False):
 		"""
 		Logs the user into the OS and optionally connects to the cloud.
 
 		Args:
 				connect_after_login: A flag indicating if the user should connect to the cloud after login (default is True).
 				timeout: The maximum time to wait for the login process (default is 120 seconds).
+				async_req: Start the login flow in the background without waiting for it to finish.
 		"""
 		result = {}
 
 		def target():
-			result['user'] = self.pieces_client.os_api.sign_into_os()
+			result['user'] = self._complete_login(connect_after_login)
 
-		thread = Thread(target=target)
+		thread = Thread(target=target, daemon=True)
 		thread.start()
+		if async_req:
+			return thread
+
 		thread.join(timeout)
 
-		if connect_after_login:
-			self.user_profile = result.get('user')
-			self._on_login_connect()
+		return result.get('user')
 
 	def logout(self):
 		"""

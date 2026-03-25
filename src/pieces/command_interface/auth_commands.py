@@ -49,10 +49,19 @@ class LoginCommand(BaseCommand):
             )
             if status == AllocationStatusEnum.DISCONNECTED:
                 Settings.logger.print("Connecting to the Pieces Cloud...")
-                Settings.pieces_client.user.connect()
+                if Settings.run_in_loop:
+                    Settings.pieces_client.user.connect(async_req=True)
+                else:
+                    Settings.pieces_client.user.connect()
             return 0
         try:
-            Settings.pieces_client.user.login(True)
+            if Settings.run_in_loop:
+                Settings.pieces_client.user.login(True, async_req=True)
+                Settings.logger.print(
+                    "Sign-in opened in your browser. You can keep using `pieces run` while it completes."
+                )
+            else:
+                Settings.pieces_client.user.login(True)
         except Exception as e:
             Settings.logger.error(f"Sign in failed: {e}")
         return 0
