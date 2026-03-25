@@ -38,6 +38,17 @@ class ConfigCommand(BaseCommand):
             "pieces config --editor nvim", "Set Neovim as default editor"
         ).example("pieces config --editor vim", "Set Vim as default editor")
 
+        builder.section(
+            header="PiecesOS Launch:",
+            command_template="pieces config --auto-launch-pieces-os",
+        ).example(
+            "pieces config --auto-launch-pieces-os",
+            "Enable automatic PiecesOS startup when a command needs it",
+        ).example(
+            "pieces config --no-auto-launch-pieces-os",
+            "Disable automatic PiecesOS startup",
+        )
+
         return builder.build()
 
     def get_docs(self) -> str:
@@ -52,15 +63,31 @@ class ConfigCommand(BaseCommand):
             type=str,
             help="Set the default code editor",
         )
+        parser.add_argument(
+            "--auto-launch-pieces-os",
+            dest="auto_launch_pieces_os",
+            action=argparse.BooleanOptionalAction,
+            default=None,
+            help="Automatically launch PiecesOS when a command requires it",
+        )
 
     def execute(self, **kwargs) -> int:
         """Execute the config command."""
 
         editor = kwargs.get("editor")
+        auto_launch = kwargs.get("auto_launch_pieces_os")
         if editor:
             Settings.cli_config.editor = editor
             Settings.logger.print(f"Editor set to: {editor}")
+        elif auto_launch is not None:
+            Settings.cli_config.auto_launch_pieces_os = auto_launch
+            status = "Enabled" if auto_launch else "Disabled"
+            Settings.logger.print(f"Auto-launch PiecesOS: {status}")
         else:
             Settings.logger.print("Current configuration:")
             Settings.logger.print(f"Editor: {Settings.cli_config.editor or 'Not set'}")
+            Settings.logger.print(
+                "Auto-launch PiecesOS: "
+                + ("Enabled" if Settings.cli_config.auto_launch_pieces_os else "Disabled")
+            )
         return 0

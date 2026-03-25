@@ -43,3 +43,14 @@ class CLIManager(BaseConfigManager[CLIConfigSchema]):
         self.config.theme = value
         self.save()
 
+    @property
+    def auto_launch_pieces_os(self) -> bool:
+        """Get whether the CLI should auto-launch PiecesOS."""
+        return self.config.auto_launch_pieces_os
+
+    @auto_launch_pieces_os.setter
+    def auto_launch_pieces_os(self, value: bool) -> None:
+        """Set whether the CLI should auto-launch PiecesOS."""
+        self.config.auto_launch_pieces_os = value
+        self.save()
+
