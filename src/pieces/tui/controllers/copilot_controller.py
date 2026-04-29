@@ -70,6 +70,13 @@ class CopilotController(BaseController):
                 "No active chat, copilot will create new one automatically"
             )
 
+        # Auto-enable Chat-LTM (opt-in via cli_config.auto_enable_chat_ltm)
+        # right before the stream goes out, so the *first* message of the
+        # chat receives LTM context. Hooking only on chat creation would
+        # miss the very common case of clicking an existing chat that
+        # never had LTM attached.
+        self._maybe_auto_enable_chat_ltm()
+
         # Emit thinking started event
         self.emit(EventType.COPILOT_THINKING_STARTED, None)
 
@@ -130,6 +137,13 @@ class CopilotController(BaseController):
                         Settings.logger.info(
                             f"Copilot created/switched to chat: {new_chat.id}"
                         )
+                        # Auto-enable LTM on chats the SDK created
+                        # implicitly (user typed before pressing Ctrl+N).
+                        # The first response went out without LTM context
+                        # — we cannot retroactively help it — but every
+                        # follow-up message in this chat will see LTM.
+                        if old_chat is None:
+                            self._maybe_auto_enable_chat_ltm()
                         # Emit event that event hub will bridge to CHAT_SWITCHED
                         self.emit(EventType.CHAT_SWITCHED, new_chat)
 
@@ -211,3 +225,40 @@ class CopilotController(BaseController):
     def is_streaming(self) -> bool:
         """Check if currently streaming a response."""
         return self._current_status == "IN-PROGRESS"
+
+    def _maybe_auto_enable_chat_ltm(self) -> None:
+        """Just-in-time activation of Chat-LTM before sending a message.
+
+        Three preconditions: the user has opted in via
+        ``cli_config.auto_enable_chat_ltm`` (default False); system LTM
+        (workstream pattern engine) is running; the current chat does
+        not already have an LTM range attached. Skipping when already
+        enabled keeps repeated sends idempotent — no piling-on of
+        redundant ranges.
+
+        Called from ``ask_question`` before ``stream_question`` so the
+        first message lands with LTM context. Covers all three chat
+        origin paths: Ctrl+N + send, click-existing-chat + send, and
+        type-and-send-without-active-chat (where ``chat_enable_ltm``
+        creates the chat itself). Failures are logged and swallowed —
+        a transient API hiccup must not break the user's send.
+        """
+        try:
+            if not Settings.cli_config.auto_enable_chat_ltm:
+                return
+            ltm = Settings.pieces_client.copilot.context.ltm
+            if ltm.is_chat_ltm_enabled:
+                return
+            ltm.ltm_status = (
+                Settings.pieces_client
+                .work_stream_pattern_engine_api
+                .workstream_pattern_engine_processors_vision_status()
+            )
+            if not ltm.is_enabled:
+                return
+            from .chat_controller import _activate_chat_ltm_with_lookback
+            _activate_chat_ltm_with_lookback()
+        except Exception as e:
+            Settings.logger.error(
+                f"Auto-enable Chat-LTM failed: {e}"
+            )
