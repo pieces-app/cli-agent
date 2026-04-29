@@ -24,9 +24,16 @@ class PiecesCopilot(BaseDualPaneView):
     """Copilot/chat interface with consistent dual-pane layout."""
 
     BINDINGS = [
-        Binding("ctrl+n", "new_chat", "New Chat"),
+        # priority=True so these screen-level shortcuts fire even when
+        # the chat input has focus. Without it, common readline/terminal
+        # bindings inside the input (notably Ctrl+L = clear-line and
+        # Ctrl+N = next-line) silently swallow the keypress before it
+        # reaches the screen's action handler — the symptom is the
+        # action only firing after the user opens another modal that
+        # transfers focus away from the input.
+        Binding("ctrl+n", "new_chat", "New Chat", priority=True),
         Binding("ctrl+shift+m", "change_model", "Change Model"),
-        Binding("ctrl+l", "toggle_ltm", "Toggle LTM"),
+        Binding("ctrl+l", "toggle_ltm", "Toggle LTM", priority=True),
         Binding("ctrl+shift+w", "switch_to_workstream", "Switch to Workstream"),
         Binding("ctrl+c", "stop_streaming", "Stop Streaming"),
     ]
