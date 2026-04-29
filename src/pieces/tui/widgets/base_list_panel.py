@@ -295,7 +295,12 @@ class BaseListPanel(ScrollableContainer):
                             if prev_item_id in self._item_widgets:
                                 prev_widget = self._item_widgets[prev_item_id]
                                 container.move_child(widget, after=prev_widget)
-                    except (ValueError, RuntimeError):
+                    except NoMatches:
+                        # Sibling not yet in container.children — Textual
+                        # mount is async and settles by the next message
+                        # handler. Caller is expected to defer the reorder
+                        # via call_after_refresh; any other exception here
+                        # is a genuine bug and should propagate.
                         pass
 
     def set_active_item(self, item: Optional[Any]):
