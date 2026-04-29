@@ -145,6 +145,18 @@ Ready to assist with code, questions, and more!"""
     # Message handlers that need view-level handling
     async def on_chat_messages_switched(self, message: ChatMessages.Switched) -> None:
         """Handle chat switch event - load conversation and focus input."""
+        # Refresh LTM status indicator: switching chats (or auto-enabling
+        # LTM on a chat just before sending) changes the per-chat flag,
+        # but the status bar would otherwise hold the previous value
+        # until the next manual toggle.
+        if self.status_bar and self.event_hub:
+            try:
+                self.status_bar.update_ltm_status(
+                    self.event_hub.chat.is_chat_ltm_enabled()
+                )
+            except Exception as e:
+                Settings.logger.error(f"Failed to refresh LTM status bar: {e}")
+
         if self.chat_view_panel:
             Settings.logger.info(
                 f"Updating conversation: {message.chat.id} - {message.chat.name}"
