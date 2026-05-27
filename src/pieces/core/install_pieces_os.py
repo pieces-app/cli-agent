@@ -37,7 +37,7 @@ class PiecesInstaller:
                     )
                     if model.state == DownloadState.FAILED:
                         Settings.logger.print(
-                            "❌ Failed to install PiecesOS, Opening in your webbrowser"
+                            "❌ Failed to install PiecesOS automatically. Opening the PiecesOS download page in your browser."
                         )
                         self.download_docs()
                     elif model.state == DownloadState.COMPLETED:

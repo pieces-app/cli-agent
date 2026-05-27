@@ -14,6 +14,7 @@ import sys
 from pieces.core.cli_loop import run_command, extract_text
 from pieces.settings import Settings
 from pieces.urls import URLs
+from pieces.runtime_readiness import print_pieces_os_not_ready
 
 
 def get_prompt():
@@ -266,7 +267,7 @@ def onboarding_command(**kwargs):
     Settings.logger.print("Whenever you want to exit the onboarding flow type `exit`.")
 
     if not Settings.pieces_client.open_pieces_os():
-        Settings.logger.print("❌ PiecesOS is not running")
+        print_pieces_os_not_ready("running onboarding")
         Settings.logger.print(
             Markdown(
                 "**PiecesOS** is a **required** background service"
