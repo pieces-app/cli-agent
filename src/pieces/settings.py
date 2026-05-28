@@ -20,6 +20,7 @@ from pieces import __version__
 from pieces.gui import (
     print_version_details,
 )
+from pieces.readiness_messages import pieces_os_not_reachable_short
 from pieces.urls import URLs
 from pieces.config.constants import PIECES_DATA_DIR
 from pieces.config.managers import (
@@ -183,5 +184,5 @@ class Settings:
                 progress.update(pos_task, visible=False)
                 return True
 
-            progress.update(pos_task, description="[red]PiecesOS is not installed")
+            progress.update(pos_task, description=pieces_os_not_reachable_short())
             return False
