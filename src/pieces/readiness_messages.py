@@ -52,5 +52,5 @@ def pieces_os_not_reachable_short() -> str:
     """
     return (
         "[red]Could not reach PiecesOS - try `pieces install`, "
-        "then `pieces open`"
+        "then `pieces open`[/red]"
     )

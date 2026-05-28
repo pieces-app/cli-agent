@@ -83,6 +83,12 @@ class TestPiecesOSNotReachableShort:
     def test_contains_pieces_open(self):
         assert "pieces open" in pieces_os_not_reachable_short()
 
+    def test_closes_red_markup_tag(self):
+        msg = pieces_os_not_reachable_short()
+        assert msg.startswith("[red]")
+        assert msg.endswith("[/red]")
+        assert "\n" not in msg
+
 
 def test_import_smoke_no_circular():
     """Regression guard: importing settings, the two edited core call
