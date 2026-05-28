@@ -1,6 +1,9 @@
+from rich.markdown import Markdown
+
 from pieces.urls import URLs
 from pieces.settings import Settings
 from pieces.copilot.ltm import enable_ltm
+from pieces.readiness_messages import pieces_os_not_reachable
 
 def open_command(**kwargs):
     from pieces._vendor.pieces_os_client.models.inactive_os_server_applet import InactiveOSServerApplet
@@ -14,7 +17,7 @@ def open_command(**kwargs):
     health = Settings.pieces_client.open_pieces_os()
 
     if (drive or copilot or settings or ltm) and not health:
-        Settings.logger.print("PiecesOS is not running")
+        Settings.logger.print(Markdown(pieces_os_not_reachable()))
         return
 
     if ltm and enable_ltm(auto_enable=True):
