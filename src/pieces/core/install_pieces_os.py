@@ -3,6 +3,10 @@ from typing import Generator
 from rich.progress import Progress, BarColumn, DownloadColumn, TransferSpeedColumn
 from pieces._vendor.pieces_os_client.wrapper.installation import DownloadModel, DownloadState
 from ..settings import Settings
+from pieces.install_messages import (
+    install_completed_message,
+    install_failed_message,
+)
 from pieces.urls import URLs
 import platform
 
@@ -36,12 +40,12 @@ class PiecesInstaller:
                         task, total=model.total_bytes, completed=model.bytes_received
                     )
                     if model.state == DownloadState.FAILED:
-                        Settings.logger.print(
-                            "❌ Failed to install PiecesOS, Opening in your webbrowser"
-                        )
+                        Settings.logger.print(install_failed_message())
                         self.download_docs()
                     elif model.state == DownloadState.COMPLETED:
-                        Settings.logger.print("✅ Installed PiecesOS successfully")
+                        Settings.logger.print(
+                            install_completed_message(platform.system())
+                        )
                     progress.refresh()
         except KeyboardInterrupt:
             self.installer.cancel_download()
