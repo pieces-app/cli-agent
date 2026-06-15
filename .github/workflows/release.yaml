@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
+    permissions:
+      id-token: write
+      contents: read
     with:
       deploy: true
     secrets:
@@ -15,7 +18,6 @@ jobs:
       pypi_token: ${{ secrets.PYPI_TOKEN }}
       pypi_test_token: ${{ secrets.PYPI_TEST_TOKEN }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
-      credentials_json: ${{ secrets.GCP_CREDENTIALS }}
       apple_app_specific_password: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
       fastlane_password: ${{ secrets.FASTLANE_PASSWORD }}
       match_password: ${{ secrets.MATCH_PASSWORD }}
