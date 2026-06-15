@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
+    permissions:
+      id-token: write
+      contents: read
     with:
       deploy: false
     secrets:
