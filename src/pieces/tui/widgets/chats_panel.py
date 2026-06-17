@@ -14,6 +14,44 @@ from pieces._vendor.pieces_os_client.wrapper.streamed_identifiers import (
     ConversationsSnapshot,
 )
 
+def _chat_sort_key(failures):
+    """Sort key for BasicChat objects, descending by conversation.updated.value.
+
+    Returns (rank, value) tuples — rank=1 for chats with a usable
+    timestamp, rank=0 for chats whose snapshot fails to load. The rank
+    pushes failures to the bottom under reverse=True while keeping the
+    comparable type homogeneous, so a mixed corpus of datetime and str
+    .value representations still sorts (avoids
+    TypeError: '<' not supported between datetime and str). Ties within
+    rank=0 preserve input order via Python's stable sort. Failure ids
+    are appended to ``failures`` for one summary log line.
+    """
+
+    def _key(chat):
+        try:
+            value = chat.conversation.updated.value
+            if value is None:
+                raise ValueError("updated.value is None")
+            return (1, value)
+        except (AttributeError, TypeError, ValueError) as exc:
+            failures.append(
+                str(getattr(chat, "id", "?")) + ":" + type(exc).__name__
+            )
+            return (0, "")
+
+    return _key
+
+
+def _chat_sort_key_tuple(failures):
+    """Same as _chat_sort_key but for (chat, title, subtitle) tuples."""
+    inner = _chat_sort_key(failures)
+
+    def _key(entry):
+        return inner(entry[0])
+
+    return _key
+
+
 if TYPE_CHECKING:
     pass
 
@@ -60,7 +98,25 @@ class ChatListPanel(BaseListPanel):
 
     # Legacy compatibility methods - delegate to base implementation
     def load_chats(self, chats):
-        """Load chats with efficient incremental updates."""
+        """Load chats. Sort by updated.value desc so newest are at top.
+
+        ``copilot_view._load_items`` calls ``copilot.chats()`` which
+        returns ``BasicChat`` instances in the order PiecesOS streamed
+        their identifiers — roughly chronological-ascending. Without
+        sorting here the panel opens with the oldest chats at the top.
+        """
+        sort_failures = []
+        chats = sorted(
+            chats, key=_chat_sort_key(sort_failures), reverse=True
+        )
+        if sort_failures:
+            Settings.logger.warning(
+                "chats_panel.load_chats: "
+                + str(len(sort_failures))
+                + " chat(s) with unloadable updated.value sunk to bottom; "
+                + "first few=" + str(sort_failures[:3])
+            )
+
         # Convert chats to the format expected by base implementation
         converted_chats = []
         for chat in chats:
@@ -68,40 +124,84 @@ class ChatListPanel(BaseListPanel):
             converted_chats.append((chat, title, subtitle))
         self.load_items(converted_chats)
 
-    def add_chat(self, chat: BasicChat, title: str, summary: str = ""):
-        """Add a single new chat efficiently."""
-        self.items = list(self.items) + [(chat, title, summary)]
+    def _sort_items_by_updated(self, items, log_label: str):
+        """Sort (chat, title, subtitle) tuples by conversation.updated.value desc.
 
-        # Add widget incrementally
+        Uses ``_chat_sort_key_tuple`` so chats whose snapshot fails to
+        load sink to the bottom under reverse=True instead of raising.
+        ``log_label`` distinguishes warning lines per call site.
+        """
+        sort_failures = []
+        items.sort(key=_chat_sort_key_tuple(sort_failures), reverse=True)
+        if sort_failures:
+            Settings.logger.warning(
+                "chats_panel." + log_label + ": "
+                + str(len(sort_failures))
+                + " chat(s) sunk to bottom; first="
+                + str(sort_failures[:1])
+            )
+        return items
+
+    def _schedule_reorder(self, items_container):
+        """Reorder DOM widgets to match self.items.
+
+        During first-shot the WS streams chats in arrival order — many
+        per refresh cycle — so we debounce via ``call_after_refresh`` to
+        avoid O(n^2) reorder passes. Post-first-shot, WS events arrive
+        sparsely, so we reorder eagerly.
+        """
+        if ConversationsSnapshot.first_shot:
+            if not getattr(self, "_reorder_pending", False):
+                self._reorder_pending = True
+
+                def _do_reorder() -> None:
+                    self._reorder_pending = False
+                    try:
+                        container = self.query_one("#items-container")
+                    except NoMatches:
+                        return
+                    self._reorder_item_widgets(container)
+
+                self.call_after_refresh(_do_reorder)
+        else:
+            self._reorder_item_widgets(items_container)
+
+    def add_chat(self, chat: BasicChat, title: str, summary: str = ""):
+        """Add a chat, keeping the list sorted by updated.value desc.
+
+        Sorting on every add (rather than only during first_shot) keeps
+        the panel correct even when a chat that *looks* new to the
+        widget map is actually an older chat the panel hadn't seen yet.
+        Without this, ``add_chat_at_top`` previously placed such chats
+        at the top regardless of timestamp, leaving stale chats stuck
+        at position 0.
+        """
+        items = list(self.items) + [(chat, title, summary)]
+        items = self._sort_items_by_updated(items, "add_chat")
+        self.items = items
+
         if chat.id not in self._item_widgets:
             try:
                 items_container = self.query_one("#items-container")
                 self._add_item_widget(chat, title, summary, items_container)
 
-                # Hide empty state
                 empty_state = items_container.query_one("#empty-state")
                 empty_state.display = False
+
+                self._schedule_reorder(items_container)
             except NoMatches:
                 pass
 
     def add_chat_at_top(self, chat: BasicChat, title: str, summary: str = ""):
-        """Add a chat at the top of the list."""
-        self.items = [(chat, title, summary)] + list(self.items)
+        """Compatibility shim — delegates to add_chat.
 
-        # Add widget
-        if chat.id not in self._item_widgets:
-            try:
-                items_container = self.query_one("#items-container")
-                self._add_item_widget(chat, title, summary, items_container)
-
-                # Hide empty state
-                empty_state = items_container.query_one("#empty-state")
-                empty_state.display = False
-
-                # Move the new chat widget to the top
-                self._reorder_item_widgets(items_container)
-            except NoMatches:
-                pass
+        Earlier versions blindly prepended, but a fresh chat with the
+        latest ``updated.value`` already lands at the top under the
+        sorted ordering, and a chat that merely *appears* new to the
+        widget map (e.g. opened from another client) should fall into
+        its correct slot, not jump to the top.
+        """
+        self.add_chat(chat, title, summary)
 
     def remove_chat(self, chat_id: str):
         """Remove a chat from the UI."""
@@ -143,18 +243,31 @@ class ChatListPanel(BaseListPanel):
                 pass
 
     def update_chat(self, chat: BasicChat, title: str, summary: str = ""):
-        """Update a single chat efficiently."""
-        # Update data
+        """Update a chat and re-position it by current updated.value.
+
+        When PiecesOS bumps ``updated.value`` (e.g. a new message lands
+        on an existing chat), the chat should bubble toward the top to
+        match the panel's invariant that items are sorted by
+        ``updated.value`` desc. The previous version mutated only the
+        title/summary in place, so the visible DOM order drifted out of
+        sync with the underlying data on every chat update.
+        """
         updated_chats = []
         for existing_chat, existing_title, existing_summary in self.items:
             if existing_chat == chat:
                 updated_chats.append((chat, title, summary))
             else:
                 updated_chats.append((existing_chat, existing_title, existing_summary))
+        updated_chats = self._sort_items_by_updated(updated_chats, "update_chat")
         self.items = updated_chats
 
-        # Update widget incrementally
         self._update_item_widget(chat.id, chat, title, summary)
+
+        try:
+            items_container = self.query_one("#items-container")
+            self._schedule_reorder(items_container)
+        except NoMatches:
+            pass
 
     def set_active_chat(self, chat: Optional[BasicChat]):
         if not chat or not chat.exists():
