@@ -15,6 +15,10 @@ class CLIConfigSchema(BaseModel):
     )
     editor: Optional[str] = Field(default=None, description="Default editor command")
     theme: str = Field(default="pieces-dark", description="TUI theme preference")
+    auto_launch_pieces_os: bool = Field(
+        default=True,
+        description="Automatically launch PiecesOS when a CLI command requires it",
+    )
 
     @field_validator("editor")
     @classmethod
