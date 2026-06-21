@@ -83,7 +83,7 @@ class PiecesCLI:
             not Settings.user_config.skip_onboarding
             and not onboarded
             and not ignore_onboarding
-            and not self.command == "completion"
+            and self.command not in ("completion", "export", "import", "restore")
         ):
             Settings.logger.print(
                 (
@@ -120,6 +120,9 @@ class PiecesCLI:
             "open",
             "config",
             "completion",
+            "export",
+            "import",
+            "restore",
         ] and not (command == "mcp" and mcp_subcommand == "start"):
             bypass_login = (
                 True if (command in ["version", "logout", "login"]) else False
