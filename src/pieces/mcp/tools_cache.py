@@ -1,6 +1,15 @@
+"""
+Fallback MCP tool definitions for offline operation.
+
+When PiecesOS is not running and no previously discovered tools are cached,
+the gateway returns these hardcoded tool definitions so that IDE clients
+still see the available tool signatures.  The tools won't execute
+successfully until PiecesOS is started, but the IDE can display them and
+queue requests.
+"""
+
 from mcp.types import Tool
 
-# Hardcoded fallback tools when PiecesOS isn't available
 PIECES_MCP_TOOLS_CACHE = [
     Tool(
         name="ask_pieces_ltm",

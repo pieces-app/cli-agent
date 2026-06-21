@@ -11,8 +11,7 @@ This module provides shared components used across validation and integration te
 import urllib.request
 import pytest
 import requests
-import mcp.types as types
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from pieces.mcp.gateway import MCPGateway, PosMcpConnection
 from pieces.mcp.utils import get_mcp_latest_url
 from pieces.settings import Settings
@@ -25,8 +24,8 @@ from pieces._vendor.pieces_os_client.wrapper.version_compatibility import (
 TEST_SERVER_NAME = "pieces-test-mcp"
 """Default server name used in MCP Gateway tests."""
 
-DEFAULT_TEST_URL = "http://localhost:39300/model_context_protocol/2024-11-05/sse"
-"""Fallback URL when Settings.startup() fails."""
+DEFAULT_TEST_URL = "http://localhost:39300/model_context_protocol/2025-03-26/mcp"
+"""Fallback URL when Settings.startup() fails (uses preferred streamable HTTP schema)."""
 
 
 # ===== MOCK HELPERS =====
@@ -244,5 +243,4 @@ __all__ = [
     "MockPiecesOSContext",
     # Re-exports for convenience
     "UpdateEnum",
-    "types",
 ]

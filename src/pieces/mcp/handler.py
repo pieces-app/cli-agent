@@ -1,3 +1,11 @@
+"""
+CLI command handlers for ``pieces mcp`` subcommands.
+
+Provides the entry points for MCP setup, repair, status, and documentation
+commands.  Each handler validates that PiecesOS is reachable before proceeding
+and returns structured ``BaseResponse`` objects for headless mode.
+"""
+
 import json
 import time
 import urllib.parse
@@ -17,7 +25,7 @@ from pieces.headless.models.mcp import (
     create_mcp_repair_success,
     create_mcp_setup_success,
 )
-from pieces.mcp.utils import get_mcp_latest_url
+from pieces.mcp.utils import get_mcp_sse_url
 from pieces.settings import Settings
 from pieces.urls import URLs
 
@@ -55,14 +63,21 @@ supported_mcps: Dict[mcp_integration_types, Integration] = {
 
 
 def check_mcp_running():
+    """Check if the PiecesOS MCP server is reachable.
+
+    Uses a simple HTTP GET with a short timeout that works for both SSE
+    and streamable HTTP endpoints.
+    """
     try:
-        with urllib.request.urlopen(get_mcp_latest_url(), timeout=1) as response:
-            for line in response:
-                message = line.decode("utf-8").strip()
-                if message:
-                    break
+        url = get_mcp_sse_url()
+        if not url:
+            Settings.show_error("No MCP server URL available. Is PiecesOS running?")
+            return False
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=3) as response:
+            response.read(1)
     except Exception as e:
-        Settings.show_error(f"Pieces MCP server is not running {e}")
+        Settings.show_error(f"Pieces MCP server is not running: {e}")
         return False
     return True
 
@@ -72,6 +87,16 @@ def handle_mcp(
     stdio: bool = False,
     **kwargs,
 ) -> BaseResponse:
+    """Set up MCP integration for a specific IDE or show a selection menu.
+
+    Args:
+        integration: Target IDE name, or ``None`` to show a selection menu.
+        stdio: If True, configure stdio transport instead of SSE.
+        **kwargs: Additional arguments (``local``, ``global`` for VS Code/Cursor).
+
+    Returns:
+        A ``BaseResponse`` indicating success or failure with details.
+    """
     if not check_mcp_running():
         return ErrorResponse(
             "mcp setup",
@@ -93,7 +118,7 @@ def handle_mcp(
         )
     elif integration == "warp":
         jsn = (
-            warp_stdio_json if stdio else warp_sse_json.format(url=get_mcp_latest_url())
+            warp_stdio_json if stdio else warp_sse_json.format(url=get_mcp_sse_url())
         )
         text = warp_instructions.format(json=jsn)
         Settings.logger.print(Markdown(text))
@@ -187,6 +212,13 @@ def handle_mcp_docs(
     ide: Union[mcp_integration_types, Literal["all", "current", "raycast", "warp"]],
     **kwargs,
 ):
+    """Display or open documentation URLs for MCP integrations.
+
+    Args:
+        ide: Target IDE, ``"all"`` for every integration, or ``"current"``
+             for only those already set up.
+        **kwargs: Pass ``open=True`` to open the URL in a browser.
+    """
     if ide == "all" or ide == "current":
         for mcp_name, mcp_integration in supported_mcps.items():
             if ide == "current" and not mcp_integration.is_set_up():
@@ -286,6 +318,7 @@ def handle_repair(
 
 
 def handle_status(**kwargs):
+    """Check the status of all MCP integrations and offer to repair broken ones."""
     if supported_mcps["vscode"].check_ltm():
         Settings.logger.print("[green]LTM running[/green]")
     else:
