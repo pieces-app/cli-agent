@@ -88,6 +88,199 @@ After setup, restart your terminal or source your configuration file. Then try t
 
 To refer to the list of all the commands currently supported in the Pieces CLI Agent, visit the [documentation](https://docs.pieces.app/extensions-plugins/cli/commands).
 
+## Accessibility
+
+The Pieces CLI supports accessibility features to ensure it's usable for everyone, including users with visual impairments and those who prefer accessible interfaces.
+
+### NO_COLOR Support
+
+The CLI respects the `NO_COLOR` environment variable as specified in the [no-color.org](https://no-color.org/) standard. When this variable is set (regardless of its value), the CLI will suppress all colored output.
+
+```bash
+# Disable colors
+export NO_COLOR=1
+pieces list
+```
+
+### Color Schemes
+
+The CLI supports multiple color schemes for different accessibility needs:
+
+- **default**: Standard color scheme
+- **high_contrast**: High contrast mode for low vision users
+- **monochrome**: No colors, uses text indicators (✓, ✗, ⚠)
+- **deuteranopia**: Red-green colorblind friendly
+- **protanopia**: Red-green colorblind friendly
+- **tritanopia**: Blue-yellow colorblind friendly
+
+```bash
+# Set color scheme
+export PIECES_COLOR_SCHEME=high_contrast
+pieces list
+```
+
+### Text Indicators
+
+When colors are disabled (via `NO_COLOR` or monochrome scheme), the CLI adds text indicators to preserve semantic meaning:
+
+- ✓ Success messages
+- ✗ Error messages
+- ⚠ Warning messages
+- ℹ Information messages
+
+### System Integration
+
+The CLI automatically detects system accessibility preferences:
+- Windows high contrast mode
+- Standard NO_COLOR environment variable
+- Custom color scheme preferences
+
+### Screen Reader Support
+
+The CLI provides enhanced support for screen readers to ensure accessibility for users with visual impairments.
+
+#### Screen Reader Detection
+
+The CLI automatically detects common screen readers:
+- **Environment Variables**: `PIECES_SCREEN_READER`, `SCREEN_READER`, `JAWS`, `NVDA`, `ORCA`, `VOICEOVER`, `TALKBACK`
+- **Platform Detection**: Windows registry checks for JAWS/NVDA, macOS VoiceOver status, Linux Orca process
+
+```bash
+# Manually enable screen reader mode
+export PIECES_SCREEN_READER=1
+pieces list
+```
+
+#### Screen Reader Optimizations
+
+When screen reader mode is enabled, the CLI:
+- Removes visual-only formatting (box drawing characters, decorative symbols)
+- Uses descriptive text indicators instead of Unicode symbols
+- Adds spoken-friendly prefixes (e.g., "Success:", "Error:", "Warning:")
+- Provides extra spacing for better content separation
+- Simplifies complex table/structure layouts
+
+#### Verbose Mode
+
+Verbose mode provides more descriptive output that's helpful for screen readers and users who prefer detailed information.
+
+```bash
+# Enable verbose mode
+export PIECES_VERBOSE=1
+pieces list
+```
+
+Verbose mode is automatically enabled when screen reader mode is detected.
+
+#### Screen Reader Friendly Output
+
+The CLI provides specialized output methods for screen readers:
+- **Structured Data**: Numbered lists with clear separators
+- **Progress Information**: Spoken percentages and descriptive progress
+- **List Display**: Item-by-item announcement with numbering
+
+### Keyboard Navigation
+
+The CLI provides enhanced keyboard navigation features for users who prefer keyboard-only interaction or require keyboard accessibility.
+
+#### Keyboard Navigation Mode
+
+Keyboard navigation mode can be enabled via environment variable or is automatically enabled when screen reader mode is detected.
+
+```bash
+# Manually enable keyboard navigation
+export PIECES_KEYBOARD_NAVIGATION=1
+pieces list
+```
+
+#### Keyboard Navigation Features
+
+When keyboard navigation is enabled, the CLI provides:
+- **Keyboard Shortcuts**: Quick access to common actions
+- **Numbered Menus**: Easy selection using number keys (1-9, then a-z)
+- **Shortcut Hints**: Visual indicators for keyboard commands
+- **Menu Navigation**: Keyboard-friendly menu layouts
+- **Focus Management**: Clear focus indicators for interactive elements
+
+#### Default Keyboard Shortcuts
+
+The CLI includes default keyboard shortcuts:
+- `q` - Quit/Exit
+- `?` - Show help
+- `h` - Go to home
+
+#### Reduced Motion
+
+For users who prefer reduced motion or have vestibular disorders, the CLI supports reduced motion mode.
+
+```bash
+# Enable reduced motion
+export PIECES_REDUCED_MOTION=1
+pieces list
+```
+
+When reduced motion is enabled:
+- Animations and transitions are disabled
+- Progress bars use simple text format instead of visual bars
+- Dynamic content changes are immediate without transitions
+- System reduced motion preferences are automatically detected (Windows, macOS, Linux)
+
+### Cognitive Accessibility
+
+The CLI provides cognitive accessibility features to help users process information more easily and understand complex technical messages.
+
+#### Simplified Output Mode
+
+Simplified output reduces complexity and makes information easier to process.
+
+```bash
+# Enable simplified output
+export PIECES_SIMPLIFIED_OUTPUT=1
+pieces list
+```
+
+When simplified output is enabled:
+- Large lists are truncated to reduce cognitive load
+- Progress information uses descriptive terms (e.g., "about halfway done" instead of "50%")
+- Debug information and stack traces are removed from error messages
+- Technical details are minimized
+
+Simplified output is automatically enabled when screen reader mode is detected.
+
+#### Clear Language Mode
+
+Clear language mode uses simpler words and provides more context to help users understand technical information.
+
+```bash
+# Enable clear language
+export PIECES_CLEAR_LANGUAGE=1
+pieces list
+```
+
+When clear language is enabled:
+- Technical jargon is replaced with everyday language (e.g., "execute" → "run", "configuration" → "settings")
+- Error messages are translated into clear, actionable guidance
+- Command descriptions use simple, plain language
+- Confirmation prompts are more direct and clear
+- Context-aware help provides simple, actionable suggestions
+
+Clear language is automatically enabled when simplified output is enabled.
+
+#### Error Message Simplification
+
+The CLI automatically simplifies technical error messages into clear language:
+
+- "Connection refused" → "Cannot connect to the service. Please check if PiecesOS is running."
+- "Authentication failed" → "Could not verify your identity. Please check your login credentials."
+- "Permission denied" → "You don't have permission to do this. Please check your access rights."
+
+#### Context-Aware Help
+
+When errors occur, the CLI provides context-aware help suggestions in simple language:
+- Network errors: Suggest checking internet connection
+- Permission errors: Suggest checking login status
+- File errors: Suggest verifying file existence and access
+
 ## Contributing
 
 ### Installation

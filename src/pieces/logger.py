@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.prompt import Prompt
 
 from pieces.headless.exceptions import HeadlessPromptError
+from pieces.accessibility import AccessibilityConfig, AccessibleConsole
 
 
 class Logger:
@@ -27,15 +28,19 @@ class Logger:
         """
         Logger._instance = self
         self.name = "Pieces_CLI"
-        self.console = Console()
-        self.console_error = Console(stderr=True)
-        self._confirm = prompt.Confirm(console=self.console)
-        self._prompt = Prompt(console=self.console)
+        
+        # Use AccessibleConsole for accessibility support
+        self._accessibility_config = AccessibilityConfig()
+        self.console = AccessibleConsole(config=self._accessibility_config)
+        self.console_error = AccessibleConsole(config=self._accessibility_config, stderr=True)
+        
+        self._confirm = prompt.Confirm(console=self.console.console)
+        self._prompt = Prompt(console=self.console.console)
 
         # Wrap the ask methods with proper typing
         self.confirm: Callable[..., bool] = self.headless_wrapper(self._confirm.ask)
         self.prompt: Callable[..., str] = self.headless_wrapper(self._prompt.ask)
-        self.input: Callable[..., str] = self.headless_wrapper(self.console.input)
+        self.input: Callable[..., str] = self.headless_wrapper(self.console.console.input)
 
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.DEBUG if debug_mode else logging.ERROR)
